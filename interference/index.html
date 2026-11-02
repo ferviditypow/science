@@ -69,9 +69,10 @@
       <button data-v="diffract" aria-pressed="false"><span class="n">1</span>繞射</button>
       <button data-v="super" aria-pressed="false"><span class="n">2</span>疊加原理</button>
       <button data-v="two" aria-pressed="false"><span class="n">3</span>兩波源干涉</button>
-      <button data-v="young" aria-pressed="false"><span class="n">4</span>楊氏雙狹縫</button>
-      <button data-v="film" aria-pressed="false"><span class="n">5</span>薄膜干涉</button>
-      <button data-v="nature" aria-pressed="false"><span class="n">6</span>光的本質之爭</button>
+      <button data-v="huy" aria-pressed="false"><span class="n">4</span>狹縫作圖（2D／3D）</button>
+      <button data-v="young" aria-pressed="false"><span class="n">5</span>楊氏雙狹縫</button>
+      <button data-v="film" aria-pressed="false"><span class="n">6</span>薄膜干涉</button>
+      <button data-v="nature" aria-pressed="false"><span class="n">7</span>光的本質之爭</button>
     </span>
   </nav>
 
@@ -237,6 +238,53 @@
     </div>
   </section>
 
+  <!-- ============ 4 狹縫作圖 ============ -->
+  <section class="bench" id="b-huy" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="playH">❚❚ 暫停</button>
+        <button class="btn" id="stepH">▸ ¼T</button>
+        <span class="seg" id="modeH"><button data-v="double">雙狹縫</button><button data-v="single">單狹縫</button><button data-v="free">自由點波源</button></span>
+        <span class="seg" id="viewH"><button data-v="2d">2D 平面</button><button data-v="3d">3D 立體</button></span>
+        <span class="seg" id="colH"><button data-v="red">紅光</button><button data-v="green">綠光</button><button data-v="blue">藍光</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="trH">波谷（虛線）</label>
+        <label class="tog"><input type="checkbox" id="dotH" checked>交點（● 加強 ● 抵消）</label>
+        <label class="tog"><input type="checkbox" id="lnH">腹線與節線</label>
+        <label class="tog"><input type="checkbox" id="fdH">疊加後的波</label>
+        <label class="tog"><input type="checkbox" id="cuH" checked>屏幕強度曲線</label>
+        <span id="freeBtnH" hidden><button class="btn" id="addH">＋ 點波源</button> <button class="btn" id="delH">－ 點波源</button></span>
+      </div>
+      <div class="cbox" style="position:relative"><canvas id="cvH" aria-label="狹縫的惠更斯作圖"></canvas><canvas id="cvH3" hidden aria-label="狹縫作圖 3D"></canvas>
+        <div id="h3tip" hidden style="position:absolute;left:18px;top:14px;font-size:.8rem;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px">拖曳空白處旋轉、滾輪或雙指縮放；拖曳橘色球（點波源）或屏幕可以移動</div></div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">波長 λ</span><input type="range" id="lamH" min="3" max="12" step="0.5" value="5"><output id="lamHo"></output></label>
+        <label class="slider" id="dHw"><span class="tlabel">縫距 d</span><input type="range" id="dH" min="3" max="40" step="0.5" value="16"><output id="dHo"></output></label>
+        <label class="slider" id="aHw"><span class="tlabel">縫寬 a</span><input type="range" id="aH" min="2" max="30" step="0.5" value="12"><output id="aHo"></output></label>
+        <label class="slider" id="nHw"><span class="tlabel">縫上點波源數</span><input type="range" id="nH" min="2" max="12" step="1" value="6"><output id="nHo"></output></label>
+        <label class="slider"><span class="tlabel">屏幕距離 L</span><input type="range" id="LH" min="30" max="90" step="1" value="80"><output id="LHo"></output></label>
+      </div>
+      <p class="hint" id="hintH"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="rHbig"></p>
+        <div class="formula2" id="rHf"></div>
+        <ul class="checks" id="rHc"></ul>
+      </section>
+      <section class="panel box">
+        <h3>用點波源看懂狹縫</h3>
+        <ul>
+          <li><b>雙狹縫</b>：忽略狹縫的寬度，把兩條縫看成 <b>2 個點光源</b>，它們發出的波互相干涉。</li>
+          <li>波峰遇波峰（●）連成的線是<b>腹線</b>，打到屏幕上就是<b>亮紋</b>；波峰遇波谷（●）連成的線是<b>節線</b>，打到屏幕上是<b>暗紋</b>。</li>
+          <li><b>單狹縫</b>：依惠更斯原理，縫上每一點都是新的點波源；光通過單狹縫的繞射，可視為<b>無限多個點光源</b>的干涉結果。把點波源數調多，屏幕上的圖樣越接近真實（中央亮紋最寬）。</li>
+          <li>拖曳 S₁、S₂ 改變縫距，拖曳屏幕改變距離 L；切到 3D 也能直接拖。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
   <!-- ============ 4 楊氏雙狹縫 ============ -->
   <section class="bench" id="b-young" hidden>
     <div class="panel">
@@ -371,7 +419,7 @@ const C={};
 function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','grid','accent','accent-soft','blue','green','red','purple','ray','water','w1','w2','sum'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
-function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);const h=Math.round(clamp(w*ratio,minH,maxH));
+function fit(cv,ratio,minH,maxH){if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}const w=Math.max(10,cv.clientWidth);const h=Math.round(clamp(w*ratio,minH,maxH));
   cv.style.height=h+'px';const d=DPR();cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
 function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
 function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
@@ -424,7 +472,7 @@ function waveGraph(cv,parts,ph,sumLabel='合成'){if(cv._w!==cv.clientWidth||!cv
   let lx=L+4;parts.forEach(p=>{text(g,p.label,lx,H-6,{col:p.col,size:11,bold:true});lx+=g.measureText(p.label).width+14;});text(g,sumLabel,lx,H-6,{col:C.sum,size:11,bold:true});}
 
 // ================= bench switching / loop =================
-let bench='tank';const BENCHES=['tank','diffract','super','two','young','film','nature'];
+let bench='tank';const BENCHES=['tank','diffract','super','two','huy','young','film','nature'];
 const SIZE={},DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='tank';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();UI[b]&&UI[b]();kick();}
@@ -432,7 +480,7 @@ segOn($('benchSeg'),v=>{hideStory();setBench(v);});
 let raf=0,lastT=0;
 function kick(){if(!raf)raf=requestAnimationFrame(loop);}
 function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
-  const more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=true;}
   if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();UI[bench]&&UI[bench]();kick();});
 function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
@@ -523,7 +571,7 @@ function drawTg(){const cv=$('cvTg');if(cv._w!==cv.clientWidth||!cv._h){const r=
 const T3={ren:null,loading:false};
 async function init3T(){if(T3.ren||T3.loading)return;T3.loading=true;
   const THREE=await import('three');const{OrbitControls}=await import('../vendor/three/OrbitControls.js');T3.THREE=THREE;
-  const cv=$('cvT3');const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});ren.setPixelRatio(DPR());
+  const cv=$('cvT3');const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});cv.addEventListener('webglcontextlost',e=>{e.preventDefault();T3.lost=true;});cv.addEventListener('webglcontextrestored',()=>{T3.lost=false;T.wv++;kick();});ren.setPixelRatio(DPR());
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x0e1318);
   const cam=new THREE.PerspectiveCamera(42,1,1,2000);cam.position.set(0,150,210);
   const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.target.set(0,0,0);ctl.maxPolarAngle=Math.PI*.49;ctl.minDistance=60;ctl.maxDistance=520;ctl.addEventListener('change',kick);
@@ -535,7 +583,7 @@ async function init3T(){if(T3.ren||T3.loading)return;T3.loading=true;
   const srcG=new THREE.Group();scene.add(srcG);
   Object.assign(T3,{ren,scene,cam,ctl,geo,col,mesh,box,wm,walls:null,wv:-1,srcM,srcG});T3.loading=false;resize3T();kick();}
 function resize3T(){if(!T3.ren)return;const cv3=$('cvT3');cv3.style.width='100%';const w=Math.max(200,cv3.parentElement.clientWidth-20),h=Math.round(w*NY/NX*1.05);T3.ren.setSize(w,clamp(h,260,720),false);$('cvT3').style.width='100%';$('cvT3').style.height=clamp(h,260,720)+'px';T3.cam.aspect=w/clamp(h,260,720);T3.cam.updateProjectionMatrix();}
-function draw3T(){const R=T3;if(!R.ren)return;const THREE=R.THREE;
+function draw3T(){const R=T3;if(!R.ren||R.lost)return;const THREE=R.THREE;
   if(R.wv!==T.wv){if(R.walls){R.scene.remove(R.walls);R.walls.dispose();}let n=0;for(let k=0;k<NN;k++)if(tWall[k])n++;
     const im=new THREE.InstancedMesh(R.box,R.wm,Math.max(1,n));const m=new THREE.Matrix4();let c=0;for(let j=0;j<NY;j++)for(let i=0;i<NX;i++)if(tWall[idx(i,j)]){m.makeTranslation(i-NX/2+.5,1.5,j-NY/2+.5);im.setMatrixAt(c++,m);}im.count=n;R.scene.add(im);R.walls=im;R.wv=T.wv;}
   const pos=R.geo.attributes.position.array,col=R.col,H3=T.show==='int'?0:9;let imax=1e-6;if(T.show==='int'){const i0=iMin();for(let k=0;k<NN;k++)if(!tWall[k]&&tDamp[k]===0&&k%NX>=i0&&tI[k]>imax)imax=tI[k];}
@@ -571,7 +619,7 @@ Object.entries(TPRE).forEach(([k,P])=>{const b=document.createElement('button');
 $('lamT').addEventListener('input',e=>setT({lam:+e.target.value}));
 $('spdT').addEventListener('input',e=>setT({spd:+e.target.value}));
 $('parT').addEventListener('input',e=>setT({par:+e.target.value},true,true));
-segOn($('viewT'),v=>{T.view=v;$('cvT').hidden=v==='3d';$('cvT3').hidden=v!=='3d';if(v==='3d')init3T().then(()=>{resize3T();kick();});uiTread();kick();});
+segOn($('viewT'),v=>{T.view=v;$('cvT').hidden=v==='3d';$('cvT3').hidden=v!=='3d';if(v==='3d')init3T().then(()=>{resize3T();kick();});else SIZE.tank();uiTread();kick();});
 segOn($('showT'),v=>setT({show:v}));segOn($('toolT'),v=>setT({tool:v}));
 $('scrT').addEventListener('change',e=>setT({scr:e.target.checked}));$('prbT').addEventListener('change',e=>setT({prb:e.target.checked}));
 $('playT').addEventListener('click',()=>setT({run:!T.run}));
@@ -892,7 +940,7 @@ const Y3={ren:null,loading:false};S4.view='2d';S4.pha=false;
 function sprite3(THREE,txt,size=.42,col='#e6ebf0'){const c=document.createElement('canvas'),g=c.getContext('2d');g.font=`700 44px ${FONT}`;const w=Math.ceil(g.measureText(txt).width)+24;c.width=w;c.height=64;g.font=`700 44px ${FONT}`;g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,w,64);g.fillStyle=col;g.textBaseline='middle';g.fillText(txt,12,34);
   const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),depthTest:false}));sp.scale.set(size*w/64,size,1);sp.renderOrder=5;return sp;}
 async function init3Y(){if(Y3.ren||Y3.loading)return;Y3.loading=true;const THREE=await import('three');const{OrbitControls}=await import('../vendor/three/OrbitControls.js');Y3.THREE=THREE;
-  const cv=$('cv4b'),ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});ren.setPixelRatio(DPR());
+  const cv=$('cv4b'),ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});cv.addEventListener('webglcontextlost',e=>{e.preventDefault();Y3.lost=true;});cv.addEventListener('webglcontextrestored',()=>{Y3.lost=false;upd3Y();kick();});ren.setPixelRatio(DPR());
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0f14);const cam=new THREE.PerspectiveCamera(40,1,.1,200);cam.position.set(-11,5.5,-.5);
   const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.target.set(0,0,2.6);ctl.minDistance=4;ctl.maxDistance=40;ctl.addEventListener('change',kick);
   scene.add(new THREE.HemisphereLight(0xcfe0ff,0x202830,.8));const dl=new THREE.DirectionalLight(0xffffff,1);dl.position.set(-6,10,-4);scene.add(dl);
@@ -938,7 +986,7 @@ function upd3Y(){const R=Y3;if(!R.ren)return;const THREE=R.THREE,zs=1.2+S4.r*2.3
   R.lbl.laser.position.set(0,.9,-5);R.lbl.slit.position.set(0,2.4,0);R.lbl.scr.position.set(0,2.5,zs);R.lbl.r.position.set(0,-2.1,zs/2);
   const sl=R.lbl.slit;sl.material.map.dispose();const ns=sprite3(THREE,S4.type==='single'?'單狹縫':'雙狹縫');sl.material=ns.material;sl.scale.copy(ns.scale);
   const rl=R.lbl.r;const nr=sprite3(THREE,'r＝'+f1(S4.r)+' m',.4,'#ffd27a');rl.material=nr.material;rl.scale.copy(nr.scale);}
-function draw3Y(){if(!Y3.ren)return;Y3.ctl.update();Y3.ren.render(Y3.scene,Y3.cam);}
+function draw3Y(){if(!Y3.ren||Y3.lost)return;Y3.ctl.update();Y3.ren.render(Y3.scene,Y3.cam);}
 // ----- 相量圖 -----
 function drawPhasor4(){const box=$('ph4box');box.hidden=!S4.pha;if(!S4.pha)return;const cv=$('cv4p');if(cv._w!==cv.clientWidth||!cv._h){const r=fit(cv,.55,180,280);cv._w=cv.clientWidth;cv._h=r.H;}
   const g=cv.getContext('2d'),W=cv._w,H=cv._h;g.clearRect(0,0,W,H);g.fillStyle='#0d1117';g.fillRect(0,0,W,H);
@@ -951,8 +999,156 @@ function drawPhasor4(){const box=$('ph4box');box.hidden=!S4.pha;if(!S4.pha)retur
   const e=pts[pts.length-1];arrow(g,ox,oy,ox+e[0],oy+e[1],'#ffd27a',3);
   const A=Math.hypot(e[0],e[1])/(sc*2);text(g,`合成振幅 ${f2(A)}　強度 ${f2(A*A)}（中央＝1）`,10,H-10,{col:'#ffd27a',size:12,bold:true});
   $('ph4cap').textContent=nsl===2?`相量圖：把每條縫分成 ${N} 小段，每段發出的光畫成一支小箭頭（藍＝上縫、綠＝下縫），首尾相接；黃箭頭＝P 點的合成振幅。`:`相量圖：把狹縫分成 ${N} 小段，每段發出的光是一支小箭頭，到 P 點的路程越來越長、箭頭逐漸轉向；首尾相接後的黃箭頭＝合成振幅。在暗紋處，箭頭剛好繞成一個圓，合成為 0。`;}
-segOn($('view4'),v=>{S4.view=v;$('cv4').hidden=v==='3d';$('cv4b').hidden=v!=='3d';$('y3tip').hidden=v!=='3d';segSet($('view4'),v);if(v==='3d')init3Y().then(()=>{resize3Y();upd3Y();kick();});kick();});
+segOn($('view4'),v=>{S4.view=v;$('cv4').hidden=v==='3d';$('cv4b').hidden=v!=='3d';$('y3tip').hidden=v!=='3d';segSet($('view4'),v);if(v==='3d')init3Y().then(()=>{resize3Y();upd3Y();kick();});else{SIZE.young();ui4();}kick();});
 $('pha4').addEventListener('change',e=>{S4.pha=e.target.checked;drawPhasor4();});
+// =====================================================================
+// 4 狹縫作圖（惠更斯原理，2D／3D）
+// =====================================================================
+const HX0=-25,HX1=95,HY0=-40,HY1=40;
+const H={mode:'double',view:'2d',col:'red',lam:5,d:24,a:20,n:8,L:80,ph:0,run:true,tr:false,dot:true,ln:false,fd:false,cu:true,free:[{x:0,y:-12},{x:8,y:6},{x:-4,y:18}],ver:0};
+const HCOL={red:['#e0402f',[1,.25,.18],0xe0402f],green:['#2e9e4f',[.3,.9,.4],0x2fbf5a],blue:['#2f6fe0',[.35,.55,1],0x3a7af0]};
+function srcH(){if(H.mode==='double')return[{x:0,y:-H.d/2},{x:0,y:H.d/2}];if(H.mode==='single'){const a=[];for(let k=0;k<H.n;k++)a.push({x:0,y:-H.a/2+H.a*(k+.5)/H.n});return a;}return H.free;}
+const cvH=$('cvH'),gH=cvH.getContext('2d');let WH=800,HH=533;const FH=Field();let dirtyH=true,normH=1,scrH=null;
+SIZE.huy=()=>{const r=fit(cvH,2/3,240,720);WH=r.W;HH=r.H;fieldResize(FH,WH,HH,WH<600?4:3);dirtyH=true;if(HZ.ren)resize3H();};
+const hS=()=>WH/(HX1-HX0),hx=x=>(x-HX0)*hS(),hy=y=>(y-HY0)*hS();
+function rawH(S,k,x,y){let re=0,im=0;for(const s of S){const r=Math.hypot(x-s.x,y-s.y),a=1/Math.sqrt(Math.max(r,H.lam*.5)/H.lam);re+=a*Math.cos(k*r);im+=a*Math.sin(k*r);}return[re,im];}
+function fieldAtH(S,k,x,y){if(H.mode!=='free'&&x<0)return[Math.cos(k*x)*.9,Math.sin(k*x)*.9];const[re,im]=rawH(S,k,x,y);return[re*normH,im*normH];}
+function prepH(){const S=srcH(),k=TAU/H.lam;let mx=1e-6;for(let x=2*H.lam;x<H.L;x+=3)for(let y=HY0+4;y<HY1-4;y+=3){const[re,im]=rawH(S,k,x,y);const m=Math.hypot(re,im);if(m>mx)mx=m;}normH=.95/mx;
+  // 屏幕強度
+  const N=240,arr=new Float32Array(N);let im=1e-9;for(let i=0;i<N;i++){const y=HY0+(i+.5)*(HY1-HY0)/N,[re,ii]=rawH(S,k,H.L,y),v=re*re+ii*ii;arr[i]=v;if(v>im)im=v;}for(let i=0;i<N;i++)arr[i]/=im;scrH=arr;}
+function computeH(){const S=srcH(),k=TAU/H.lam,F=FH;for(let j=0;j<F.h;j++){const y=HY0+(j+.5)*F.cell/hS();for(let i=0;i<F.w;i++){const x=HX0+(i+.5)*F.cell/hS(),o=j*F.w+i;
+  if(x>H.L+.5){F.re[o]=0;F.im[o]=0;F.mask[o]=1;continue;}F.mask[o]=0;const[re,im]=fieldAtH(S,k,x,y);F.re[o]=re;F.im[o]=im;}}}
+const scrI=y=>{if(!scrH)return 0;const i=Math.floor((y-HY0)/(HY1-HY0)*scrH.length);return scrH[clamp(i,0,scrH.length-1)];};
+function circX(a,ra,b,rb){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<1e-6||d>ra+rb||d<Math.abs(ra-rb))return null;const l=(ra*ra-rb*rb+d*d)/(2*d),h=Math.sqrt(Math.max(0,ra*ra-l*l)),mx=a.x+dx*l/d,my=a.y+dy*l/d;
+  return[[mx+dy*h/d,my-dx*h/d],[mx-dy*h/d,my+dx*h/d]];}
+function dotsH(){const S=srcH();if(S.length!==2)return{b:[],r:[]};const[A,B]=S,f=((H.ph/TAU)%1+1)%1,lam=H.lam,R=Math.hypot(HX1-HX0,HY1-HY0),b=[],r=[],xmin=H.mode==='free'?HX0:0;
+  const ok=([x,y])=>x>=xmin&&x<=H.L&&y>HY0&&y<HY1;
+  for(let n1=0;(n1+f)*lam<R;n1++)for(let n2=0;(n2+f)*lam<R;n2++){const r1=(n1+f)*lam,r2=(n2+f)*lam;
+    (circX(A,r1,B,r2)||[]).forEach(p=>ok(p)&&b.push(p));(circX(A,r1,B,r2+lam/2)||[]).forEach(p=>ok(p)&&r.push(p));(circX(A,r1+lam/2,B,r2)||[]).forEach(p=>ok(p)&&r.push(p));}
+  return{b,r};}
+// 一般位置的雙曲線（焦點 A、B，r_B − r_A＝δ）
+function hyperPts(A,B,delta){const c=Math.hypot(B.x-A.x,B.y-A.y)/2,a=Math.abs(delta)/2;if(a>=c)return null;const ux=(A.x-B.x)/(2*c),uy=(A.y-B.y)/(2*c),Mx=(A.x+B.x)/2,My=(A.y+B.y)/2,sg=delta>=0?1:-1,bb=Math.sqrt(c*c-a*a),out=[];
+  for(let i=0;i<=200;i++){const t=-3.2+6.4*i/200;out.push([Mx+ux*sg*a*Math.cosh(t)-uy*bb*Math.sinh(t),My+uy*sg*a*Math.cosh(t)+ux*bb*Math.sinh(t)]);}return out;}
+DRAW.huy=()=>{if(H.view==='3d'){draw3H();return;}if(dirtyH){prepH();if(H.fd)computeH();dirtyH=false;uiH();}
+  const g=gH,s=hS(),S=srcH(),f=((H.ph/TAU)%1+1)%1,lam=H.lam,free=H.mode==='free',cc=HCOL[H.col][0];g.clearRect(0,0,WH,HH);
+  if(H.fd)fieldDraw(g,FH,H.ph,'w');else{g.fillStyle=C.panel;g.fillRect(0,0,WH,HH);}
+  const ac=H.fd?'rgba(255,255,255,.8)':cc;
+  // 入射平面波
+  if(!free){g.strokeStyle=ac;g.lineWidth=1.3;for(let m=1;;m++){const x=(f-m)*lam;if(x<HX0)break;g.beginPath();g.moveTo(hx(x),hy(-14));g.lineTo(hx(x),hy(14));g.stroke();}
+    arrow(g,hx(-22),hy(0),hx(-4),hy(0),H.fd?'#fff':C.ink,2);text(g,'雷射光',hx(-22),hy(0)-8,{col:H.fd?'#fff':C.ink,size:13,bold:true});}
+  // 圓弧
+  g.save();g.beginPath();g.rect(hx(free?HX0:0),0,hx(H.L)-hx(free?HX0:0),HH);g.clip();const Rm=Math.hypot(HX1-HX0,HY1-HY0);
+  S.forEach(p=>{for(let n=0;(n+f)*lam<Rm;n++){const r=(n+f)*lam;if(r<.05)continue;g.strokeStyle=ac;g.lineWidth=H.mode==='single'?1:1.4;g.globalAlpha=H.mode==='single'?.75:1;g.setLineDash([]);g.beginPath();g.arc(hx(p.x),hy(p.y),r*s,free?0:-Math.PI/2,free?TAU:Math.PI/2);g.stroke();
+      if(H.tr){const rt=r+lam/2;g.lineWidth=1;g.globalAlpha=.6;g.setLineDash([4,4]);g.beginPath();g.arc(hx(p.x),hy(p.y),rt*s,free?0:-Math.PI/2,free?TAU:Math.PI/2);g.stroke();g.setLineDash([]);}g.globalAlpha=1;}});
+  if(H.ln&&S.length===2){const[A,B]=S,D=Math.hypot(B.x-A.x,B.y-A.y);for(let m=-20;m<=20;m++){[[m*lam,'#16202a'],[(m+.5)*lam,'#e0402f']].forEach(([dl,col])=>{if(Math.abs(dl)>=D)return;const P=hyperPts(A,B,dl);if(!P)return;g.strokeStyle=H.fd?(col==='#16202a'?'#ffd27a':'#ff7468'):col;g.lineWidth=1.3;g.setLineDash(col==='#16202a'?[]:[6,4]);g.beginPath();P.forEach(([x,y],i)=>i?g.lineTo(hx(x),hy(y)):g.moveTo(hx(x),hy(y)));g.stroke();g.setLineDash([]);});}}
+  if(H.dot){const D=dotsH();g.fillStyle=H.fd?'#ffd27a':'#16202a';D.b.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});g.fillStyle='#e0402f';D.r.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});}
+  g.restore();
+  // 擋板
+  if(!free){g.fillStyle=H.fd?'#2b3138':C.ink;const gaps=H.mode==='double'?[[-H.d/2-.7,-H.d/2+.7],[H.d/2-.7,H.d/2+.7]]:[[-H.a/2,H.a/2]];let y0=HY0;gaps.forEach(([a,b])=>{g.fillRect(hx(-.5),hy(y0),s,hy(a)-hy(y0));y0=b;});g.fillRect(hx(-.5),hy(y0),s,hy(HY1)-hy(y0));
+    text(g,H.mode==='double'?'雙狹縫':'單狹縫',hx(0),hy(HY0)+14,{col:H.fd?'#fff':C.ink,size:13,bold:true,align:'center',bg:H.fd?'rgba(0,0,0,.4)':C.panel});}
+  // 屏幕
+  const sx0=hx(H.L),sw=Math.max(10,2.6*s),rgb=HCOL[H.col][1];g.fillStyle='#05070a';g.fillRect(sx0,0,sw,HH);
+  for(let py=0;py<HH;py+=1){const y=HY0+py/s,v=scrI(y),hw=sw*.48*Math.sqrt(v);if(hw<.3)continue;g.fillStyle=rgbStr(rgb,Math.pow(v,.6)*1.1);g.fillRect(sx0+sw/2-hw,py,2*hw,1.2);}
+  text(g,'屏幕',sx0+sw/2,14,{col:H.fd?'#fff':C.ink,size:12,bold:true,align:'center',bg:H.fd?'rgba(0,0,0,.4)':C.panel});
+  if(H.cu){const cx0=sx0+sw+3,cw=WH-cx0-4;if(cw>12){g.strokeStyle=H.fd?'#ffd27a':cc;g.lineWidth=1.6;g.beginPath();for(let py=0;py<HH;py+=2){const v=scrI(HY0+py/s),x=cx0+cw*v;py?g.lineTo(x,py):g.moveTo(x,py);}g.stroke();}}
+  handle(g,sx0+sw/2,HH-14,7);
+  // 點波源
+  S.forEach((p,i)=>{g.fillStyle=H.mode==='single'?(H.fd?'#ffd27a':C.ink):C.accent;g.beginPath();g.arc(hx(p.x),hy(p.y),H.mode==='single'?3.2:6,0,TAU);g.fill();if(H.mode!=='single'){g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+    if(H.mode==='double')text(g,i?'S₂':'S₁',hx(p.x)+9,hy(p.y)+(i?16:-8),{col:H.fd?'#fff':C.ink,size:13,bold:true});});
+  if(H.dot&&S.length===2){text(g,'● 波峰遇波峰（加強）',hx(H.mode==='free'?HX0+2:2),HH-24,{col:H.fd?'#ffd27a':'#16202a',size:12,bold:true,bg:H.fd?'rgba(0,0,0,.45)':C.panel});text(g,'● 波峰遇波谷（抵消）',hx(H.mode==='free'?HX0+2:2),HH-8,{col:'#e0402f',size:12,bold:true,bg:H.fd?'rgba(0,0,0,.45)':C.panel});}
+};
+TICK.huy=dt=>{if(H.run)H.ph+=dt*TAU*.45;return H.run||(H.view==='3d'&&!!HZ.ren);};
+function uiH(){segSet($('modeH'),H.mode);segSet($('viewH'),H.view);segSet($('colH'),H.col);playTxt($('playH'),H.run);
+  ['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').checked=H[k]);
+  $('dHw').hidden=H.mode!=='double';$('aHw').hidden=H.mode!=='single';$('nHw').hidden=H.mode!=='single';$('freeBtnH').hidden=H.mode!=='free';
+  $('lamHo').textContent=f1(H.lam);$('lamH').value=H.lam;$('dHo').textContent=f1(H.d);$('dH').value=H.d;$('aHo').textContent=f1(H.a);$('aH').value=H.a;$('nHo').textContent=H.n+' 個';$('nH').value=H.n;$('LHo').textContent=Math.round(H.L);$('LH').value=H.L;
+  $('cvH').hidden=H.view==='3d';$('cvH3').hidden=H.view!=='3d';$('h3tip').hidden=H.view!=='3d';
+  $('hintH').textContent=H.mode==='double'?'仿課本畫法：每條縫當成一個點光源，實線是波峰、虛線是波谷。拖曳 S₁ 或 S₂ 改變縫距，拖曳屏幕下方的橘點改變屏幕距離。（長度單位任意）':H.mode==='single'?'縫上每一點都是新的點波源（惠更斯原理）。把「縫上點波源數」調多，屏幕上的圖樣越接近單狹縫繞射；拖曳任一個點波源可以改變縫寬。':'沒有擋板：點波源可以放在任何地方、拖到任何位置，最多 6 個；兩個時會畫出交點。';
+  const S=srcH(),L=[];
+  if(H.mode==='double'){const dy=H.L*H.lam/H.d;$('rHbig').innerHTML=`亮紋間距 Δy ≈ <span class="mono">${f1(dy)}</span>`;$('rHf').innerHTML=`Δy ≈ Lλ／d＝${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.d)}＝${f1(dy)}（d 比 L 小很多時才準）`;
+    L.push(['info','忽略狹縫寬度，把兩條縫看成 <b>2 個點光源</b>；它們的波互相干涉。']);
+    L.push(['ok','黑點（3D 是黃點，波峰遇波峰）連成的線打到屏幕上是<b>亮紋</b>；紅點（波峰遇波谷）連成的線打到屏幕上是<b>暗紋</b>。']);
+    const nN=2*Math.floor(H.d/H.lam+.5);L.push(['info',`縫距 ÷ 波長＝${f1(H.d/H.lam)}：節線共 ${nN} 條。把縫距拉大或波長變短，條紋變多變密。`]);}
+  else if(H.mode==='single'){const w=2*H.L*H.lam/H.a;$('rHbig').innerHTML=`中央亮紋寬 ≈ <span class="mono">${f1(w)}</span>`;$('rHf').innerHTML=`中央亮紋寬 ≈ 2Lλ／a＝2 × ${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.a)}＝${f1(w)}`;
+    L.push(['info',`縫上放了 <b>${H.n} 個</b>點波源。光通過單狹縫的繞射，可視為<b>無限多個點光源</b>的干涉結果——點波源越多，圖樣越接近真實。`]);
+    L.push(['ok','中央亮紋最寬（約為其他亮紋的 2 倍）、最亮，往兩側快速變暗。']);
+    L.push(['info',H.a<H.lam*1.5?'縫寬比波長還小：幾乎像一個點波源，波向四面八方散開，中央亮紋寬到超出屏幕。':'縫越窄，中央亮紋越寬（繞射越明顯）。']);}
+  else{$('rHbig').innerHTML=`${S.length} 個點波源`;$('rHf').innerHTML='每個點波源同時（同相）振動，發出圓形波。';L.push(['info',S.length===2?'兩個點波源：黑點連線＝腹線，紅點連線＝節線。':'交點只在剛好兩個點波源時畫出；可以按「－ 點波源」減到兩個。']);}
+  checks($('rHc'),L);}
+UI.huy=uiH;
+function setH(o){Object.assign(H,o);H.ver++;dirtyH=true;uiH();kick();}
+segOn($('modeH'),v=>setH(v==='single'?{mode:v,lam:4,a:20,n:8}:v==='double'?{mode:v,lam:5,d:24}:{mode:v,lam:6}));segOn($('colH'),v=>setH({col:v}));
+segOn($('viewH'),v=>{H.view=v;uiH();if(v==='3d')init3H().then(()=>{resize3H();kick();});else{SIZE.huy();}kick();});
+['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').addEventListener('change',e=>setH({[k]:e.target.checked})));
+[['lamH','lam'],['dH','d'],['aH','a'],['nH','n'],['LH','L']].forEach(([id,k])=>$(id).addEventListener('input',e=>setH({[k]:+e.target.value})));
+$('playH').addEventListener('click',()=>{H.run=!H.run;uiH();kick();});
+$('stepH').addEventListener('click',()=>{H.run=false;H.ph+=Math.PI/2;uiH();kick();});
+$('addH').addEventListener('click',()=>{if(H.free.length<6)H.free.push({x:Math.round(rnd()*30),y:Math.round(rnd()*50-25)});setH({});});
+$('delH').addEventListener('click',()=>{if(H.free.length>1)H.free.pop();setH({});});
+function moveSrcH(i,x,y){if(H.mode==='double')H.d=Math.round(clamp(2*Math.abs(y),3,40)*2)/2;
+  else if(H.mode==='single'){const fct=Math.abs(2*(i+.5)/H.n-1);if(fct>.12)H.a=Math.round(clamp(2*Math.abs(y)/fct,2,30)*2)/2;}
+  else{H.free[i].x=clamp(x,HX0+2,H.L-2);H.free[i].y=clamp(y,HY0+2,HY1-2);}H.ver++;dirtyH=true;uiH();}
+dragger(cvH,()=>{const s=hS(),hs=srcH().map((p,i)=>({x:hx(p.x),y:hy(p.y),r:H.mode==='single'?14:22,move:(x,y)=>moveSrcH(i,x/s+HX0,y/s+HY0)}));
+  hs.push({x:hx(H.L)+Math.max(10,2.6*s)/2,y:HH-14,r:22,move:(x,y)=>{H.L=Math.round(clamp(x/s+HX0,30,90));H.ver++;dirtyH=true;uiH();}});return hs;},kick);
+// ----- 3D -----
+const HZ={ren:null,loading:false};
+async function init3H(){if(HZ.ren||HZ.loading)return;HZ.loading=true;const THREE=await import('three');const{OrbitControls}=await import('../vendor/three/OrbitControls.js');HZ.THREE=THREE;
+  const cv=$('cvH3'),ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});ren.setPixelRatio(DPR());
+  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();HZ.lost=true;});cv.addEventListener('webglcontextrestored',()=>{HZ.lost=false;HZ.ver=-1;kick();});
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x0e1318);const cam=new THREE.PerspectiveCamera(42,1,1,2000);cam.position.set(18,78,92);
+  // 拖曳（要在 OrbitControls 之前註冊）
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2(),plane=new THREE.Plane(new THREE.Vector3(0,1,0),0),hit=new THREE.Vector3();let drag=null;
+  const setRay=ev=>{const r=cv.getBoundingClientRect();ndc.set((ev.clientX-r.left)/r.width*2-1,-(ev.clientY-r.top)/r.height*2+1);ray.setFromCamera(ndc,cam);};
+  cv.addEventListener('pointerdown',ev=>{setRay(ev);const objs=[...HZ.srcG.children,HZ.screen];const hs=ray.intersectObjects(objs,false);if(!hs.length)return;
+    const o=hs[0].object;drag=o===HZ.screen?{scr:true}:{i:o.userData.i};ev.stopImmediatePropagation();ev.preventDefault();cv.setPointerCapture(ev.pointerId);});
+  cv.addEventListener('pointermove',ev=>{if(!drag)return;setRay(ev);if(!ray.ray.intersectPlane(plane,hit))return;ev.stopImmediatePropagation();
+    if(drag.scr){H.L=Math.round(clamp(hit.x,30,90));H.ver++;dirtyH=true;uiH();}else moveSrcH(drag.i,hit.x,hit.z);kick();});
+  const endDrag=ev=>{if(drag){drag=null;ev.stopImmediatePropagation();}};cv.addEventListener('pointerup',endDrag);cv.addEventListener('pointercancel',endDrag);
+  const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.target.set(32,0,0);ctl.maxPolarAngle=Math.PI*.49;ctl.minDistance=30;ctl.maxDistance=320;ctl.addEventListener('change',kick);
+  scene.add(new THREE.HemisphereLight(0xdfefff,0x223344,.95));const dl=new THREE.DirectionalLight(0xffffff,1.1);dl.position.set(-40,120,60);scene.add(dl);
+  // 水面
+  const NXs=180,NZs=120,geo=new THREE.PlaneGeometry(120,80,NXs-1,NZs-1);geo.rotateX(-Math.PI/2);geo.translate(35,0,0);const nv=NXs*NZs,cols=new Float32Array(nv*3);geo.setAttribute('color',new THREE.BufferAttribute(cols,3));
+  const surf=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.4,side:THREE.DoubleSide}));scene.add(surf);
+  // 線條（波峰、波谷、入射波）
+  const MAXS=90000,lp=new Float32Array(MAXS*6),lg=new THREE.BufferGeometry();lg.setAttribute('position',new THREE.BufferAttribute(lp,3));const lines=new THREE.LineSegments(lg,new THREE.LineBasicMaterial({color:0xe0402f}));scene.add(lines);
+  const tp=new Float32Array(MAXS*6),tg=new THREE.BufferGeometry();tg.setAttribute('position',new THREE.BufferAttribute(tp,3));const tlines=new THREE.LineSegments(tg,new THREE.LineBasicMaterial({color:0xe0402f,transparent:true,opacity:.35}));scene.add(tlines);
+  const dotG=new THREE.SphereGeometry(.55,10,8),dB=new THREE.InstancedMesh(dotG,new THREE.MeshBasicMaterial({color:0xffd27a}),4000),dR=new THREE.InstancedMesh(dotG,new THREE.MeshBasicMaterial({color:0xff3b2f}),4000);scene.add(dB,dR);
+  const srcG=new THREE.Group();scene.add(srcG);const barrier=new THREE.Group();scene.add(barrier);
+  const scrC=document.createElement('canvas');scrC.width=512;scrC.height=96;const scrT=new THREE.CanvasTexture(scrC);scrT.colorSpace=THREE.SRGBColorSpace;
+  const sgeo=new THREE.PlaneGeometry(80,14);sgeo.rotateY(-Math.PI/2);const screen=new THREE.Mesh(sgeo,new THREE.MeshBasicMaterial({map:scrT,side:THREE.DoubleSide}));scene.add(screen);
+  const back=new THREE.Mesh(new THREE.BoxGeometry(.6,14.6,80.6),new THREE.MeshStandardMaterial({color:0x3a4048}));scene.add(back);
+  Object.assign(HZ,{ren,scene,cam,ctl,geo,cols,nv,surf,lp,lg,lines,tp,tg,tlines,dB,dR,srcG,barrier,scrC,scrT,screen,back,ver:-1,re:new Float32Array(nv),im:new Float32Array(nv)});HZ.loading=false;resize3H();kick();}
+function resize3H(){if(!HZ.ren)return;const cv=$('cvH3');cv.style.width='100%';const w=Math.max(200,cv.parentElement.clientWidth-20),h=clamp(Math.round(w*.62),300,640);HZ.ren.setSize(w,h,false);cv.style.height=h+'px';HZ.cam.aspect=w/h;HZ.cam.updateProjectionMatrix();}
+function draw3H(){const R=HZ;if(!R.ren||R.lost)return;const THREE=R.THREE,S=srcH(),k=TAU/H.lam,f=((H.ph/TAU)%1+1)%1,lam=H.lam,free=H.mode==='free',hc=HCOL[H.col];
+  if(R.ver!==H.ver){R.ver=H.ver;prepH();const pos=R.geo.attributes.position.array;for(let v=0;v<R.nv;v++){const x=pos[v*3],z=pos[v*3+2];if(x>H.L+.3){R.re[v]=0;R.im[v]=0;continue;}const[re,im]=fieldAtH(S,k,x,z);R.re[v]=re;R.im[v]=im;}
+    // 擋板
+    R.barrier.children.slice().forEach(c=>{R.barrier.remove(c);c.geometry.dispose();});if(!free){const m=new THREE.MeshStandardMaterial({color:0x8a939e,roughness:.7}),gaps=H.mode==='double'?[[-H.d/2-.7,-H.d/2+.7],[H.d/2-.7,H.d/2+.7]]:[[-H.a/2,H.a/2]];let z0=HY0;
+      [...gaps,[HY1,HY1]].forEach(([a,b])=>{const w=a-z0;if(w>.05){const bx=new THREE.Mesh(new THREE.BoxGeometry(1,5,w),m);bx.position.set(0,1.5,z0+w/2);R.barrier.add(bx);}z0=b;});}
+    // 點波源球
+    while(R.srcG.children.length<S.length){const sp=new THREE.Mesh(new THREE.SphereGeometry(1.1,18,14),new THREE.MeshStandardMaterial({color:0xff8a57,emissive:0x662200}));R.srcG.add(sp);}
+    while(R.srcG.children.length>S.length)R.srcG.remove(R.srcG.children[R.srcG.children.length-1]);
+    // 屏幕貼圖
+    {const c=R.scrC,g=c.getContext('2d'),W=c.width,Hh=c.height;g.fillStyle='#05070a';g.fillRect(0,0,W,Hh);for(let i=0;i<W;i++){const y=HY0+(i+.5)/W*(HY1-HY0),v=scrI(y),hh=Hh*.46*Math.sqrt(v);if(hh<.3)continue;g.fillStyle=rgbStr(hc[1],Math.pow(v,.6)*1.1);g.fillRect(i,Hh/2-hh,1.2,2*hh);}R.scrT.needsUpdate=true;}
+    R.lines.material.color.setHex(hc[2]);R.lines.material.transparent=true;R.lines.material.opacity=H.mode==='single'?.45:1;R.lines.material.needsUpdate=true;R.tlines.material.color.setHex(hc[2]);}
+  R.screen.position.set(H.L+.4,7,0);R.back.position.set(H.L+.9,7,0);R.surf.visible=H.fd;
+  S.forEach((p,i)=>{const sp=R.srcG.children[i];sp.userData.i=i;sp.position.set(p.x,H.fd?2.2:1.1,p.y);sp.scale.setScalar(H.mode==='single'?.55:1);});
+  // 水面高度
+  if(H.fd){const pos=R.geo.attributes.position.array,c=Math.cos(H.ph),s=Math.sin(H.ph),cl=R.cols;for(let v=0;v<R.nv;v++){const u=R.re[v]*c+R.im[v]*s,x=pos[v*3];pos[v*3+1]=x>H.L+.3?0:u*1.8;
+      const q=Math.round((clamp(u,-1,1)+1)*127.5)*3;const dim=x>H.L+.3?.25:1;cl[v*3]=LUT_W[q]/255*dim;cl[v*3+1]=LUT_W[q+1]/255*dim;cl[v*3+2]=LUT_W[q+2]/255*dim;}
+    R.geo.attributes.position.needsUpdate=true;R.geo.attributes.color.needsUpdate=true;R.geo.computeVertexNormals();}
+  // 線條
+  const lift=H.fd?2.6:.08;let n=0,nt=0;const lp=R.lp,tp=R.tp,MAXS=lp.length/6;
+  const seg=(arr,i,x1,z1,x2,z2)=>{const o=i*6;arr[o]=x1;arr[o+1]=lift;arr[o+2]=z1;arr[o+3]=x2;arr[o+4]=lift;arr[o+5]=z2;};
+  const arc=(arr,cnt,cx,cz,r)=>{const a0=free?0:-Math.PI/2,a1=free?TAU:Math.PI/2,N=Math.max(12,Math.min(96,Math.round(r*1.4)));let px=null,pz=null;
+    for(let i=0;i<=N;i++){const a=a0+(a1-a0)*i/N,x=cx+r*Math.cos(a),z=cz+r*Math.sin(a),inside=x<=H.L&&x>=HX0&&z>=HY0&&z<=HY1&&(free||x>=0);if(px!==null&&inside&&cnt<MAXS){seg(arr,cnt,px,pz,x,z);cnt++;}if(inside){px=x;pz=z;}else px=null;}return cnt;};
+  const Rm=Math.hypot(HX1-HX0,HY1-HY0);
+  S.forEach(p=>{for(let m=0;(m+f)*lam<Rm;m++){const r=(m+f)*lam;if(r>.05)n=arc(lp,n,p.x,p.y,r);if(H.tr)nt=arc(tp,nt,p.x,p.y,r+lam/2);}});
+  if(!free)for(let m=1;;m++){const x=(f-m)*lam;if(x<HX0)break;if(n<MAXS){seg(lp,n,x,-14,x,14);n++;}}
+  R.lg.setDrawRange(0,n*2);R.lg.attributes.position.needsUpdate=true;R.tg.setDrawRange(0,nt*2);R.tg.attributes.position.needsUpdate=true;
+  // 交點
+  const D=H.dot?dotsH():{b:[],r:[]},M=new THREE.Matrix4();[[R.dB,D.b],[R.dR,D.r]].forEach(([im,arr])=>{const c=Math.min(arr.length,4000);for(let i=0;i<c;i++){M.makeTranslation(arr[i][0],lift+.3,arr[i][1]);im.setMatrixAt(i,M);}im.count=c;im.instanceMatrix.needsUpdate=true;});
+  R.ctl.update();R.ren.render(R.scene,R.cam);}
+
 // =====================================================================
 // 5 薄膜干涉
 // =====================================================================
