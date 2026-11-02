@@ -1,0 +1,669 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>光的折射：折射定律、全反射、色散、救生員問題</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+:root{--ray:#d23b2f;--mir:#5b7fa6;--ai:#1c68ad;--ar:#1f8a5b;--water:#d6ebf7;--glass:#e3e8f0;--dia:#ece4f7;--sand:#f3ead2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ray:#ff7468;--mir:#9cc0e6;--ai:#5ba8ec;--ar:#4cc28e;--water:#15304a;--glass:#252d3a;--dia:#2c2440;--sand:#2f2a1d;color-scheme:dark}}
+:root[data-theme="dark"]{--ray:#ff7468;--mir:#9cc0e6;--ai:#5ba8ec;--ar:#4cc28e;--water:#15304a;--glass:#252d3a;--dia:#2c2440;--sand:#2f2a1d;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box p{margin:0 0 6px;font-size:.95rem}
+.box ul{margin:4px 0 0;padding-left:1.2em;font-size:.95rem}
+.box li{margin:2px 0}
+.big{font-family:var(--f-display);font-weight:900;font-size:1.45rem;line-height:1.3;margin:0 0 6px}
+.big .mono{font-family:var(--f-mono);font-weight:600}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.95rem}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.checks li::before{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;margin-top:1px}
+.checks li.ok::before{content:'✓';background:var(--green)}
+.checks li.no::before{content:'✕';background:#c0453b}
+.checks li.info::before{content:'i';background:var(--blue)}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+.pick{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 電磁波與光（三） · <a href="../reflection/">上一頁：光的反射</a></div>
+      <h1>光的折射</h1>
+    </div>
+    <p>拖曳橘色的點操作。六個實驗台對應講義 2-4：折射定律與全反射、惠更斯原理、視深、光纖、色散、救生員問題；最下方有隨堂練習的題目情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="snell" aria-pressed="true"><span class="n">1</span>折射定律與全反射</button>
+      <button data-v="huygens" aria-pressed="false"><span class="n">2</span>波前為什麼轉彎</button>
+      <button data-v="depth" aria-pressed="false"><span class="n">3</span>浮起的硬幣</button>
+      <button data-v="fiber" aria-pressed="false"><span class="n">4</span>光纖</button>
+      <button data-v="prism" aria-pressed="false"><span class="n">5</span>色散與玻璃板</button>
+      <button data-v="guard" aria-pressed="false"><span class="n">6</span>救生員問題</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到講義題目列表</button>
+  </section>
+
+  <!-- ============ 1 折射定律 ============ -->
+  <section class="bench" id="b-snell">
+    <div class="panel">
+      <div class="toolbar">
+        <div class="pick"><span class="tlabel">上方</span><span class="seg" id="m1a"></span></div>
+        <div class="pick"><span class="tlabel">下方</span><span class="seg" id="m1b"></span></div>
+      </div>
+      <div class="toolbar">
+        <span class="chips" id="pre1"></span>
+        <label class="tog"><input type="checkbox" id="wf1">顯示波前</label>
+      </div>
+      <div class="cbox"><canvas id="cv1" aria-label="折射定律，可拖曳雷射筆"></canvas></div>
+      <p class="hint">拖曳橘色的雷射筆繞一圈，上方、下方都可以放。藍色是入射角 θ₁、綠色是折射角 θ₂，都從法線量起。淡淡的那條是同時發生的部分反射（越淡代表反射越少）。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r1big"></p>
+        <div class="formula2" id="r1f"></div>
+        <ul class="checks" id="r1c"></ul>
+      </section>
+      <section class="panel box">
+        <h3>折射率與折射定律</h3>
+        <ul>
+          <li>折射率 <b>n＝c／v</b>：真空 1、空氣 ≈ 1.00、水 ≈ 1.33、玻璃 ≈ 1.5、鑽石 ≈ 2.42。</li>
+          <li>由光速快 → 光速慢（n 小 → n 大）：<b>偏向法線</b>；由慢 → 快：<b>偏離法線</b>。口訣「進慢靠法線，進快離法線」。</li>
+          <li>垂直入射時方向不變，但速率仍會改變。</li>
+          <li>【延伸】<b>n₁ sinθ₁＝n₂ sinθ₂</b>（等價於 sinθ₁／v₁＝sinθ₂／v₂）。</li>
+          <li><b>全反射</b>的兩個條件：① 由 n 大射向 n 小；② 入射角大於臨界角（水約 49°、玻璃約 42°）。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 2 惠更斯 ============ -->
+  <section class="bench" id="b-huygens" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="play2">❚❚ 暫停</button>
+        <label class="tog"><input type="checkbox" id="kid2" checked>看成一排手牽手的同學</label>
+        <label class="slider"><span class="tlabel">入射角</span><input type="range" id="i2" min="0" max="70" step="1" value="35"><output id="i2o"></output></label>
+        <label class="slider"><span class="tlabel">下方折射率</span><input type="range" id="n2" min="1" max="2.5" step="0.01" value="1.5"><output id="n2o"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cv2" aria-label="波前進入慢的介質時轉彎"></canvas></div>
+      <p class="hint">紅色直線是波峰（波前）。上方是空氣，下方是比較「慢」的介質。波前斜斜地進去時，先進去的一端先變慢，整個波前就轉彎了。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r2big"></p>
+        <ul class="checks" id="r2c"></ul>
+      </section>
+      <section class="panel box">
+        <h3>用波動說解釋折射（惠更斯原理）</h3>
+        <ul>
+          <li>波前上的每一點都可以看成新的小波源，向前發出子波；所有子波的包絡面就是新的波前。</li>
+          <li>想像一排手牽手的同學斜斜地從柏油路走進沙灘：先踏進沙灘的人先變慢，整排隊伍就往法線偏轉。</li>
+          <li><b>頻率不變</b>（由波源決定）→ 波速變小 → <b>波長變短</b>（λ＝v／f）。</li>
+          <li>微粒說 vs 波動說：牛頓認為光在水中比較快，惠更斯認為比較慢。1850 年傅科測出水中光速較慢，波動說勝出。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 3 視深 ============ -->
+  <section class="bench" id="b-depth" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="seg" id="obj3"><button data-v="coin" aria-pressed="true">碗底的硬幣</button><button data-v="stick">水中的筷子</button></span>
+        <button class="btn primary" id="pour3">💧 倒水</button>
+        <button class="btn" id="empty3">↺ 把水倒掉</button>
+        <label class="slider"><span class="tlabel">水深</span><input type="range" id="h3" min="0" max="1" step="0.01" value="0"><output id="h3o"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cv3" aria-label="碗底硬幣與水中筷子的視深，可拖曳眼睛"></canvas></div>
+      <p class="hint">拖曳橘色的眼睛。一開始碗裡沒有水，硬幣剛好被碗邊擋住；慢慢倒水，硬幣就「浮」出來了。紅線是光實際走的路，虛線是眼睛以為光來的方向。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r3big"></p>
+        <ul class="checks" id="r3c"></ul>
+      </section>
+      <section class="panel box">
+        <h3>生活中的折射</h3>
+        <ul>
+          <li><b>視深＜實深</b>：杯底的硬幣、泳池的底部看起來比實際淺（游泳池「看起來不深」是很危險的錯覺！）。</li>
+          <li>水中筷子「折斷」：水中部分看起來被抬高。</li>
+          <li>清晨與黃昏：大氣越低越密、光速越慢，陽光被折彎，我們看到的夕陽實際上已經在地平線下。</li>
+          <li>海市蜃樓：地面附近空氣溫度不同、折射率不同，光線彎曲造成虛像。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 4 光纖 ============ -->
+  <section class="bench" id="b-fiber" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">形狀</span><span class="seg" id="shape4"><button data-v="straight" aria-pressed="true">直的</button><button data-v="bend">彎的</button><button data-v="tight">彎得太急</button></span>
+        <span class="tlabel">外面包著</span><span class="seg" id="out4"><button data-v="1" aria-pressed="true">空氣</button><button data-v="1.33">水</button><button data-v="1.46">包覆層 1.46</button></span>
+      </div>
+      <div class="cbox"><canvas id="cv4" aria-label="光纖中的全反射"></canvas></div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">雷射射入的角度</span><input type="range" id="a4" min="0" max="85" step="1" value="15"><output id="a4o"></output></label>
+      </div>
+      <p class="hint">玻璃芯的折射率 1.5。光每次打到管壁，只要入射角大於臨界角就會全反射，被「關」在裡面一路前進；不夠大就會漏出去（淡色的線）。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r4big"></p>
+        <ul class="checks" id="r4c"></ul>
+      </section>
+      <section class="panel box">
+        <h3>全反射與光纖</h3>
+        <ul>
+          <li>全反射時沒有折射光，光全部反射回原介質，<b>幾乎不損失能量</b>。</li>
+          <li>應用：光纖通訊、內視鏡、鑽石的閃耀、望遠鏡中的全反射稜鏡。</li>
+          <li>光纖外面包一層折射率稍小的包覆層，臨界角變大，射入角度太斜的光會漏掉；但包覆層保護玻璃芯，彎曲或碰到水也不會漏光。</li>
+        </ul>
+        <div class="chips" style="margin-top:8px"><button class="chip" data-story="colladon">柯拉頓的水柱導光</button><button class="chip" data-story="kao">光纖之父高錕</button></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 5 色散 ============ -->
+  <section class="bench" id="b-prism" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="seg" id="mode5"><button data-v="prism" aria-pressed="true">三稜鏡</button><button data-v="slab">平行玻璃板</button></span>
+        <label class="tog" id="boostw"><input type="checkbox" id="boost5" checked>色散放大 6 倍（示意）</label>
+        <label class="tog" id="rvw"><input type="checkbox" id="rv5">只看紅光和紫光</label>
+      </div>
+      <div class="cbox"><canvas id="cv5" aria-label="三稜鏡色散與平行玻璃板"></canvas></div>
+      <div class="toolbar">
+        <label class="slider" id="rotw"><span class="tlabel">轉動三稜鏡</span><input type="range" id="rot5" min="-20" max="20" step="1" value="0"><output id="rot5o"></output></label>
+        <label class="slider" id="incw" hidden><span class="tlabel">入射角</span><input type="range" id="inc5" min="0" max="80" step="1" value="45"><output id="inc5o"></output></label>
+      </div>
+      <p class="hint" id="hint5"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r5big"></p>
+        <ul class="checks" id="r5c"></ul>
+      </section>
+      <section class="panel box" id="note5"></section>
+    </div>
+  </section>
+
+  <!-- ============ 6 救生員 ============ -->
+  <section class="bench" id="b-guard" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="run6">▶ 比賽：跑跑看</button>
+        <span class="tlabel">入水點</span><span class="chips" id="pre6"><button class="chip" data-x="4">(B) 在 (4, 0) 入水</button><button class="chip" data-x="3">(C) 直線</button><button class="chip" data-x="1.6">(D) 在 (1.6, 0) 入水</button><button class="chip" data-x="best">最快的點</button></span>
+      </div>
+      <div class="cbox"><canvas id="cv6" aria-label="救生員問題，可拖曳入水點"></canvas></div>
+      <div class="cbox"><canvas id="cv6g" aria-label="入水點與所需時間的關係圖"></canvas></div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">陸上跑速</span><input type="range" id="v6a" min="1" max="8" step="0.5" value="4"><output id="v6ao"></output></label>
+        <label class="slider"><span class="tlabel">水中游速</span><input type="range" id="v6b" min="0.5" max="8" step="0.5" value="3"><output id="v6bo"></output></label>
+      </div>
+      <p class="hint">救生員在陸地上 R(0, 3)，溺水的人在 H(7, −4)（單位 m），x 軸是池邊。拖曳池邊上橘色的入水點，下方的圖是「入水點 → 所需時間」。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r6big"></p>
+        <div class="formula2" id="r6f"></div>
+        <p class="note" id="r6n"></p>
+      </section>
+      <section class="panel box">
+        <h3>光為什麼要轉彎？費馬原理</h3>
+        <ul>
+          <li>最快的路線不是直線，而是「在跑得快的陸地多走一點」。</li>
+          <li>最快的那一點剛好滿足 <b>sinθ₁／v₁＝sinθ₂／v₂</b>——這正是折射定律！</li>
+          <li>費馬：光走的，就是<b>最省時間的路徑</b>。折射定律不是天外飛來的。</li>
+          <li>改變陸上、水中的速度看看：速度一樣時，最快的路線就是直線（不折射）。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">講義題目情境 <small>高一基礎物理｜電磁波與光（頁碼為學生版）</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>
+
+<script>
+// ================= common =================
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,f)=>a+(b-a)*f,TAU=Math.PI*2,D2R=Math.PI/180;
+const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','grid','accent','accent-soft','blue','green','red','purple','ray','mir','ai','ar','water','glass','dia','sand'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);const h=Math.round(clamp(w*ratio,minH,maxH));
+  cv.style.height=h+'px';const d=DPR();cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null}={}){
+  g.font=`${bold?700:500} ${size}px ${FONT}`;g.textAlign=align;g.textBaseline=base;
+  if(bg){const w=g.measureText(s).width,px=align==='center'?x-w/2:align==='right'?x-w:x,py=base==='middle'?y-size/2:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-4,py-2,w+8,size+6);g.restore();}
+  g.fillStyle=col;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
+function head(g,x,y,ang,col,size=9){g.fillStyle=col;g.beginPath();g.moveTo(x+Math.cos(ang)*size*.5,y+Math.sin(ang)*size*.5);g.lineTo(x-size*Math.cos(ang-.45),y-size*Math.sin(ang-.45));g.lineTo(x-size*Math.cos(ang+.45),y-size*Math.sin(ang+.45));g.closePath();g.fill();}
+function ray(g,x1,y1,x2,y2,col=C.ray,w=2.4,dash=null,arrowAt=.55){line(g,x1,y1,x2,y2,col,w,dash);if(arrowAt!=null)head(g,lerp(x1,x2,arrowAt),lerp(y1,y2,arrowAt),Math.atan2(y2-y1,x2-x1),col,11);}
+function arcAng(g,x,y,r,a1,a2,col,w=2){let d=a2-a1;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;g.strokeStyle=col;g.lineWidth=w;g.beginPath();g.arc(x,y,r,a1,a1+d,d<0);g.stroke();return a1+d/2;}
+function handle(g,x,y,r=9){g.fillStyle=C.accent;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+function eyeIcon(g,x,y,ang,size=14){g.save();g.translate(x,y);g.rotate(ang);g.fillStyle=C.panel;g.strokeStyle=C.ink;g.lineWidth=2;
+  g.beginPath();g.moveTo(-size,0);g.quadraticCurveTo(0,-size*.8,size,0);g.quadraticCurveTo(0,size*.8,-size,0);g.closePath();g.fill();g.stroke();
+  g.fillStyle=C.ink;g.beginPath();g.arc(size*.25,0,size*.32,0,TAU);g.fill();g.restore();}
+function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const h of handles()){const d=h.hit?h.hit(x,y):Math.hypot(x-h.x,y-h.y);if(d<(h.r||26)&&d<bd){bd=d;best=h;}}return best;};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const h=pick(x,y);if(!h)return;cur={h,dx:h.free?0:h.x-x,dy:h.free?0:h.y-y};h.start&&h.start();cv.setPointerCapture(ev.pointerId);ev.preventDefault();});
+  cv.addEventListener('pointermove',ev=>{const[x,y]=pos(ev);if(!cur){cv.style.cursor=pick(x,y)?'grab':'default';return;}cur.h.move(x+cur.dx,y+cur.dy);after();});
+  const up=()=>{cur=null;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const dot=(a,b)=>a[0]*b[0]+a[1]*b[1],norm=v=>{const l=Math.hypot(v[0],v[1])||1;return[v[0]/l,v[1]/l];};
+// 折射：d 入射方向（單位）、nf 指向入射側的法線（單位）
+function refract(d,nf,n1,n2){const ci=-dot(d,nf),k=n1/n2,s2=k*k*(1-ci*ci);if(s2>1)return null;const ct=Math.sqrt(1-s2);return[k*d[0]+(k*ci-ct)*nf[0],k*d[1]+(k*ci-ct)*nf[1]];}
+const reflect=(d,n)=>{const k=dot(d,n);return[d[0]-2*k*n[0],d[1]-2*k*n[1]];};
+function fresnel(ci,n1,n2){const s=n1/n2*Math.sqrt(Math.max(0,1-ci*ci));if(s>=1)return 1;const ct=Math.sqrt(1-s*s);
+  const rs=(n1*ci-n2*ct)/(n1*ci+n2*ct),rp=(n2*ci-n1*ct)/(n2*ci+n1*ct);return(rs*rs+rp*rp)/2;}
+function nmRGB(nm){let r=0,g=0,b=0;if(nm<440){r=-(nm-440)/60;b=1;}else if(nm<490){g=(nm-440)/50;b=1;}else if(nm<510){g=1;b=-(nm-510)/20;}else if(nm<580){r=(nm-510)/70;g=1;}else if(nm<645){r=1;g=-(nm-645)/65;}else r=1;
+  let f=1;if(nm<420)f=.45+.55*(nm-380)/40;else if(nm>700)f=.45+.55*(780-nm)/80;const k=v=>Math.round(255*Math.pow(clamp(v*f,0,1),.8));return`rgb(${k(r)},${k(g)},${k(b)})`;}
+const R2D=r=>r/D2R,f1=x=>(Math.round(x*10)/10).toFixed(1);
+
+// ================= bench switching / loop =================
+let bench='snell';const BENCHES=['snell','huygens','depth','fiber','prism','guard'];
+const SIZE={},DRAW={},TICK={},UI={};
+function setBench(b,noHash){if(!BENCHES.includes(b))b='snell';bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();UI[b]&&UI[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  const more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
+function hideStory(){$('story').hidden=true;}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+const checks=(el,L)=>{el.innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');};
+
+// =====================================================================
+// 1 折射定律與全反射
+// =====================================================================
+const MED={air:{n:1,nm:'空氣',ns:'1.00',col:'panel'},water:{n:4/3,nm:'水',ns:'1.33',col:'water'},glass:{n:1.5,nm:'玻璃',ns:'1.50',col:'glass'},diamond:{n:2.42,nm:'鑽石',ns:'2.42',col:'dia'}};
+const S1={top:'air',bot:'water',a:-45,side:'top',wf:false,t:0};
+const cv1=$('cv1'),g1=cv1.getContext('2d');let W1=800,H1=440;
+SIZE.snell=()=>{const r=fit(cv1,.55,320,540);W1=r.W;H1=r.H;};
+['m1a','m1b'].forEach((id,k)=>{$(id).innerHTML=Object.entries(MED).map(([key,m])=>`<button data-v="${key}">${m.nm} ${m.ns}</button>`).join('');segOn($(id),v=>{S1[k?'bot':'top']=v;UI.snell();kick();});});
+const PRE1=[['空氣→水 53°（第 21 題）',{top:'air',bot:'water',side:'top',a:-53}],['水→空氣 30°',{top:'air',bot:'water',side:'bot',a:-30}],['玻璃→空氣 50°（全反射）',{top:'glass',bot:'air',side:'top',a:-50}],['空氣→鑽石 60°',{top:'air',bot:'diamond',side:'top',a:-60}],['垂直入射',{top:'air',bot:'glass',side:'top',a:0}]];
+$('pre1').innerHTML=PRE1.map(([n],i)=>`<button class="chip" data-i="${i}">${n}</button>`).join('');
+$('pre1').addEventListener('click',e=>{const b=e.target.closest('[data-i]');if(b)set1(PRE1[+b.dataset.i][1]);});
+function set1(o){Object.assign(S1,o);UI.snell();kick();}
+function geo1(){const O=[W1/2,H1/2],R=Math.min(W1*.42,H1*.46);return{O,R};}
+function solve1(){const{O,R}=geo1(),a=S1.a*D2R,top=S1.side==='top';
+  const S=top?[O[0]+R*Math.sin(a),O[1]-R*Math.cos(a)]:[O[0]+R*Math.sin(a),O[1]+R*Math.cos(a)];
+  const d=norm([O[0]-S[0],O[1]-S[1]]),nf=top?[0,-1]:[0,1],ni=MED[top?S1.top:S1.bot].n,nt=MED[top?S1.bot:S1.top].n;
+  const t=refract(d,nf,ni,nt),r=reflect(d,nf),ci=-dot(d,nf),Rf=fresnel(ci,ni,nt);
+  return{O,R,S,d,nf,ni,nt,t,r,Rf,top,th1:Math.abs(S1.a),th2:t?R2D(Math.asin(Math.min(1,Math.abs(t[0])))):null};}
+DRAW.snell=()=>{const g=g1,W=W1,H=H1;g.clearRect(0,0,W,H);const s=solve1(),{O,R,S}=s;
+  g.fillStyle=C[MED[S1.top].col];g.fillRect(0,0,W,O[1]);g.fillStyle=C[MED[S1.bot].col];g.fillRect(0,O[1],W,H-O[1]);
+  line(g,0,O[1],W,O[1],C.muted,1.5);
+  text(g,`${MED[S1.top].nm}  n＝${MED[S1.top].ns}`,10,22,{col:C.ink,size:14,bold:true});text(g,`${MED[S1.bot].nm}  n＝${MED[S1.bot].ns}`,10,H-12,{col:C.ink,size:14,bold:true});
+  line(g,O[0],O[1]-R*1.05,O[0],O[1]+R*1.05,C.muted,1.4,[6,5]);text(g,'法線',O[0]+6,O[1]-R*1.05+12,{col:C.muted,size:12,bold:true});
+  const E=(v,L)=>[O[0]+v[0]*L,O[1]+v[1]*L];
+  // 波前
+  if(S1.wf){const lam0=Math.max(26,Math.min(W,H)*.075),ft=S1.t*.8,mark=(p,v,lam,dir,len)=>{const pv=[-v[1],v[0]];for(let k=-40;k<40;k++){const u=lam*(k+(dir*ft%1+1)%1);if(u<6||u>len)continue;const c=[p[0]+v[0]*u*dir,p[1]+v[1]*u*dir];line(g,c[0]-pv[0]*16,c[1]-pv[1]*16,c[0]+pv[0]*16,c[1]+pv[1]*16,C.ray,1.6);}};
+    mark(O,[-s.d[0],-s.d[1]],lam0/s.ni,1,R);if(s.t)mark(O,s.t,lam0/s.nt,1,R);}
+  // 入射、反射、折射
+  ray(g,S[0],S[1],O[0],O[1],C.ray,2.6);
+  const rA=s.t?clamp(s.Rf*1.6,.14,1):1,rE=E(s.r,R);g.globalAlpha=rA;ray(g,O[0],O[1],rE[0],rE[1],C.ray,s.t?2:2.6,null,.6);g.globalAlpha=1;
+  if(s.t){const tE=E(s.t,R);g.globalAlpha=clamp(1-s.Rf,.3,1);ray(g,O[0],O[1],tE[0],tE[1],C.ray,2.6,null,.6);g.globalAlpha=1;}
+  // 角度
+  const nUp=s.top?-Math.PI/2:Math.PI/2,aS=Math.atan2(S[1]-O[1],S[0]-O[0]),rr=Math.min(R*.26,70);
+  if(S1.a!==0){const m1=arcAng(g,O[0],O[1],rr,nUp,aS,C.ai,3);text(g,'θ₁',O[0]+Math.cos(m1)*(rr+16),O[1]+Math.sin(m1)*(rr+16)+5,{col:C.ai,size:15,bold:true,align:'center'});
+    if(s.t){const aT=Math.atan2(s.t[1],s.t[0]),m2=arcAng(g,O[0],O[1],rr+8,-nUp,aT,C.ar,3);text(g,'θ₂',O[0]+Math.cos(m2)*(rr+26),O[1]+Math.sin(m2)*(rr+26)+5,{col:C.ar,size:15,bold:true,align:'center'});}}
+  if(!s.t)text(g,'全反射！沒有折射光',O[0]+(S1.a<0?20:-20),s.top?O[1]+30:O[1]-18,{col:C.ray,size:15,bold:true,align:S1.a<0?'left':'right',bg:C.panel});
+  else if(s.Rf>.02){const rp=E(s.r,R*.75);text(g,'部分反射 '+Math.round(s.Rf*100)+'%',rp[0]+(S1.a<0?8:-8),rp[1]+(s.top?-6:16),{col:C.ray,size:12,align:S1.a<0?'left':'right',bg:C.panel});}
+  // 雷射筆
+  const la=Math.atan2(O[1]-S[1],O[0]-S[0]);g.save();g.translate(S[0],S[1]);g.rotate(la);g.fillStyle=C.ink;g.fillRect(-46,-7,46,14);g.fillStyle=C.ray;g.fillRect(-4,-4,4,8);g.restore();
+  handle(g,S[0]-Math.cos(la)*30,S[1]-Math.sin(la)*30,10);
+};
+TICK.snell=dt=>{if(!S1.wf)return false;S1.t+=dt;return true;};
+UI.snell=()=>{segSet($('m1a'),S1.top);segSet($('m1b'),S1.bot);$('wf1').checked=S1.wf;const s=solve1(),mi=MED[s.top?S1.top:S1.bot],mt=MED[s.top?S1.bot:S1.top];
+  $('r1big').innerHTML=s.t?`θ₁ ＝ <span class="mono">${s.th1}°</span> → θ₂ ＝ <span class="mono">${f1(s.th2)}°</span>`:`θ₁ ＝ <span class="mono">${s.th1}°</span> → 全反射`;
+  const sv=mi.n*Math.sin(s.th1*D2R);
+  $('r1f').innerHTML=s.t?`n₁ sinθ₁ ＝ ${mi.ns} × sin${s.th1}° ＝ ${sv.toFixed(3)}<br>n₂ sinθ₂ ＝ ${mt.ns} × sin${f1(s.th2)}° ＝ ${(mt.n*Math.sin(s.th2*D2R)).toFixed(3)}`
+    :`n₁ sinθ₁ ＝ ${mi.ns} × sin${s.th1}° ＝ ${sv.toFixed(3)}，sinθ₂ 要等於 ${(sv/mt.n).toFixed(3)} ＞ 1，不可能 → 沒有折射光`;
+  const L=[];const v1=3/mi.n,v2=3/mt.n;
+  if(mi.n===mt.n)L.push(['info','兩邊是同一種介質，光不會轉彎。']);
+  else if(s.th1===0)L.push(['info','垂直入射：方向不變，但速率仍會改變。']);
+  else if(!s.t)L.push(['ok',`光由 n 大（${mi.nm}）射向 n 小（${mt.nm}），而且入射角 ${s.th1}° ＞ 臨界角 ${f1(R2D(Math.asin(mt.n/mi.n)))}°：<b>全反射</b>，光全部反射回${mi.nm}。`]);
+  else L.push(['info',mi.n<mt.n?`由快到慢（${mi.nm} → ${mt.nm}）：<b>偏向法線</b>（θ₂ ＜ θ₁）`:`由慢到快（${mi.nm} → ${mt.nm}）：<b>偏離法線</b>（θ₂ ＞ θ₁）`]);
+  L.push(['info',`光速 v＝c／n：${mi.nm}中 ${v1.toFixed(2)}×10⁸ m/s，${mt.nm}中 ${v2.toFixed(2)}×10⁸ m/s。頻率不變，波長變成 ${(mi.n/mt.n).toFixed(2)} 倍（打開「顯示波前」看波峰間距）。`]);
+  if(mi.n>mt.n&&s.t)L.push(['info',`由 n 大射向 n 小時有臨界角：sinθc ＝ ${mt.ns}／${mi.ns}，θc ≈ ${f1(R2D(Math.asin(mt.n/mi.n)))}°。入射角再大一點就會全反射。`]);
+  if(mi.n<mt.n)L.push(['info','由 n 小射向 n 大時，不管入射角多大都不會全反射。']);
+  checks($('r1c'),L);};
+dragger(cv1,()=>{const s=solve1(),la=Math.atan2(s.O[1]-s.S[1],s.O[0]-s.S[0]);return[{x:s.S[0]-Math.cos(la)*30,y:s.S[1]-Math.sin(la)*30,r:34,move:(x,y)=>{const{O}=geo1(),dx=x-O[0],dy=y-O[1];
+  if(dy<=0){S1.side='top';S1.a=clamp(Math.round(R2D(Math.atan2(dx,-dy))),-89,89);}else{S1.side='bot';S1.a=clamp(Math.round(R2D(Math.atan2(dx,dy))),-89,89);}UI.snell();}}];},kick);
+$('wf1').addEventListener('change',e=>{S1.wf=e.target.checked;kick();});
+
+// =====================================================================
+// 2 惠更斯：波前轉彎
+// =====================================================================
+const S2={i:35,n2:1.5,play:true,t:0,kid:true};
+const cv2=$('cv2'),g2=cv2.getContext('2d');let W2=800,H2=420;
+SIZE.huygens=()=>{const r=fit(cv2,.5,300,500);W2=r.W;H2=r.H;};
+function geo2(){const y0=H2*.5,lam=Math.max(30,Math.min(W2,H2)*.11),v=lam*.9,i=S2.i*D2R,r=Math.asin(Math.sin(i)/S2.n2);return{y0,lam,v,i,r,d1:[Math.sin(i),Math.cos(i)],d2:[Math.sin(r),Math.cos(r)],O:[W2*.5,y0]};}
+DRAW.huygens=()=>{const g=g2,W=W2,H=H2,G=geo2(),{y0,lam,v,O,d1,d2}=G;g.clearRect(0,0,W,H);
+  g.fillStyle=C.panel;g.fillRect(0,0,W,y0);g.fillStyle=C.sand;g.fillRect(0,y0,W,H-y0);line(g,0,y0,W,y0,C.muted,1.5);
+  text(g,'空氣（快）n＝1',10,22,{col:C.ink,size:14,bold:true});text(g,`慢的介質 n＝${S2.n2.toFixed(2)}`,10,H-12,{col:C.ink,size:14,bold:true});
+  const off=(v*S2.t)%lam,L=Math.hypot(W,H)*1.5,p1=[d1[1],-d1[0]],p2=[d2[1],-d2[0]];
+  // 波峰：上方 d1·(r−O)＝c，下方 d2·(r−O)＝c／n
+  g.save();g.beginPath();g.rect(0,0,W,y0);g.clip();
+  for(let m=-30;m<=30;m++){const c=m*lam+off,b=[O[0]+d1[0]*c,O[1]+d1[1]*c];line(g,b[0]-p1[0]*L,b[1]-p1[1]*L,b[0]+p1[0]*L,b[1]+p1[1]*L,C.ray,2);}
+  g.restore();g.save();g.beginPath();g.rect(0,y0,W,H-y0);g.clip();
+  for(let m=-30;m<=30;m++){const c=(m*lam+off)/S2.n2,b=[O[0]+d2[0]*c,O[1]+d2[1]*c];line(g,b[0]-p2[0]*L,b[1]-p2[1]*L,b[0]+p2[0]*L,b[1]+p2[1]*L,C.ray,2);}
+  g.restore();
+  // 前進方向箭頭與法線
+  line(g,O[0],y0-H*.45,O[0],y0+H*.45,C.muted,1.2,[6,5]);
+  const A1=[O[0]-d1[0]*H*.36,y0-d1[1]*H*.36];ray(g,A1[0],A1[1],O[0],O[1],C.ai,2.4,[8,5],.75);ray(g,O[0],O[1],O[0]+d2[0]*H*.36,y0+d2[1]*H*.36,C.ar,2.4,[8,5],.75);
+  text(g,'前進方向',A1[0]-6,A1[1]-6,{col:C.ai,size:12,bold:true,align:'right',bg:C.panel});
+  // 波長標示
+  const lb=(p,d,lm,col,lab)=>{const q=[p[0]+d[0]*lm,p[1]+d[1]*lm],pv=[-d[1],d[0]];const a=[p[0]+pv[0]*26,p[1]+pv[1]*26],b=[q[0]+pv[0]*26,q[1]+pv[1]*26];line(g,a[0],a[1],b[0],b[1],col,2);head(g,a[0],a[1],Math.atan2(a[1]-b[1],a[0]-b[0]),col,8);head(g,b[0],b[1],Math.atan2(b[1]-a[1],b[0]-a[0]),col,8);text(g,lab,(a[0]+b[0])/2+pv[0]*14,(a[1]+b[1])/2+pv[1]*14+4,{col,size:13,bold:true,align:'center',bg:C.panel});};
+  // 在上方找一個波峰，量一個波長
+  {const c0=Math.ceil((-H*.3)/lam)*lam+off-lam,P=[W*.82+d1[0]*0,0];const base=[O[0]+d1[0]*(-lam*2+off)+p1[0]*W*.28,O[1]+d1[1]*(-lam*2+off)+p1[1]*W*.28];if(base[1]>20&&base[1]+d1[1]*lam<y0-10)lb(base,d1,lam,C.ai,'λ₁');
+   const base2=[O[0]+d2[0]*((lam*2+off)/S2.n2)+p2[0]*W*.28,O[1]+d2[1]*((lam*2+off)/S2.n2)+p2[1]*W*.28];if(base2[1]>y0+10&&base2[1]<H-20)lb(base2,d2,lam/S2.n2,C.ar,'λ₂');}
+  // 手牽手的同學：每個人沿自己的路線走，碰到界面後變慢、轉向
+  if(S2.kid){const N=7,sp=Math.min(W,H)*.06,T=S2.t%(H*1.6/v),c0=-H*.55,pts=[];
+    for(let j=0;j<N;j++){const s=(j-(N-1)/2)*sp,P=[O[0]+d1[0]*c0+p1[0]*s,O[1]+d1[1]*c0+p1[1]*s];const tau=(y0-P[1])/(d1[1]*v);
+      let q;if(T<tau)q=[P[0]+d1[0]*v*T,P[1]+d1[1]*v*T];else{const X=[P[0]+d1[0]*v*tau,y0];q=[X[0]+d2[0]*v/S2.n2*(T-tau),X[1]+d2[1]*v/S2.n2*(T-tau)];}pts.push(q);}
+    g.strokeStyle=C.ink;g.lineWidth=2.5;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();
+    pts.forEach(q=>{g.fillStyle=q[1]>y0?C.accent:C.blue;g.beginPath();g.arc(q[0],q[1],7,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();});}
+};
+TICK.huygens=dt=>{if(S2.play)S2.t+=dt;return S2.play;};
+UI.huygens=()=>{const G=geo2();$('i2o').textContent=S2.i+'°';$('n2o').textContent=S2.n2.toFixed(2);$('i2').value=S2.i;$('n2').value=S2.n2;$('kid2').checked=S2.kid;$('play2').textContent=S2.play?'❚❚ 暫停':'▶ 播放';
+  $('r2big').innerHTML=`入射角 <span class="mono">${S2.i}°</span> → 折射角 <span class="mono">${f1(R2D(G.r))}°</span>`;
+  checks($('r2c'),[['info',`下方的波速是上方的 1／${S2.n2.toFixed(2)}，<b>波長也變成 1／${S2.n2.toFixed(2)}</b>（λ₂ ＜ λ₁）。`],
+    ['ok','<b>頻率不變</b>：上、下兩邊每秒通過界面的波峰數一樣多，否則波峰會在界面上堆積或消失。'],
+    ['info',S2.i===0?'垂直入射：整排同時進入，同時變慢，所以不轉彎。':'先進入下方的那一端先變慢，另一端還在上方用原速前進，整條波前就往法線偏轉。'],
+    ['info',`sin${S2.i}° ／ sin${f1(R2D(G.r))}° ＝ ${(Math.sin(G.i)/Math.sin(G.r||1e-9)).toFixed(2)} ＝ v₁／v₂（入射角 0° 時無法相除）。`]].filter((x,k)=>!(k===3&&S2.i===0)));};
+$('play2').addEventListener('click',()=>{S2.play=!S2.play;UI.huygens();kick();});
+$('kid2').addEventListener('change',e=>{S2.kid=e.target.checked;kick();});
+$('i2').addEventListener('input',e=>{S2.i=+e.target.value;UI.huygens();kick();});
+$('n2').addEventListener('input',e=>{S2.n2=+e.target.value;UI.huygens();kick();});
+
+// =====================================================================
+// 3 浮起的硬幣、折斷的筷子
+// =====================================================================
+const NW=4/3,S3={obj:'coin',h:0,target:0,pour:false,eye:{fx:.12,fy:.12}};
+const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;
+SIZE.depth=()=>{const r=fit(cv3,.5,320,500);W3=r.W;H3=r.H;};
+function cup3(){const cx0=W3*.34,cx1=W3*.82,yt=H3*.3,yb=H3*.88;return{cx0,cx1,yt,yb,yw:yb-S3.h*(yb-yt)*.92,coin:[cx0+(cx1-cx0)*.2,yb-4]};}
+// 從水下的點 Q 到眼睛 E 的光：在水面上找出折射點（二分法）
+function path3(Q,E){const c=cup3();if(Q[1]<=c.yw+.5||S3.h<=0.001)return{P:null,app:Q};
+  const f=x=>{const dw=Math.hypot(x-Q[0],c.yw-Q[1]),da=Math.hypot(E[0]-x,E[1]-c.yw);return NW*(x-Q[0])/dw+(x-E[0])/da;};
+  let a=Math.min(Q[0],E[0]),b=Math.max(Q[0],E[0]);const fa=f(a);for(let k=0;k<60;k++){const m=(a+b)/2;if((f(m)>0)===(fa>0))a=m;else b=m;}
+  const P=[(a+b)/2,c.yw];const k=(Q[0]-E[0])/(P[0]-E[0]);return{P,app:[Q[0],E[1]+(P[1]-E[1])*k]};}
+function blocked3(A,B){const c=cup3();for(const wx of[c.cx0,c.cx1]){if((A[0]-wx)*(B[0]-wx)<0){const y=A[1]+(B[1]-A[1])*(wx-A[0])/(B[0]-A[0]);if(y>c.yt&&y<c.yb)return true;}}return false;}
+function stick3(){const c=cup3();return[[c.cx1+W3*.05,c.yt-H3*.2],[c.cx0+(c.cx1-c.cx0)*.25,c.yb-6]];}
+DRAW.depth=()=>{const g=g3,W=W3,H=H3,c=cup3(),E=[S3.eye.fx*W,S3.eye.fy*H];g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  // 水、碗
+  if(S3.h>0){g.fillStyle=C.water;g.fillRect(c.cx0,c.yw,c.cx1-c.cx0,c.yb-c.yw);line(g,c.cx0,c.yw,c.cx1,c.yw,C.ai,2);}
+  g.strokeStyle=C.ink;g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(c.cx0,c.yt);g.lineTo(c.cx0,c.yb);g.lineTo(c.cx1,c.yb);g.lineTo(c.cx1,c.yt);g.stroke();g.lineCap='butt';
+  let seen=false,info=null;
+  if(S3.obj==='coin'){const Q=c.coin,p=path3(Q,E);
+    const coin=(x,y,ghost)=>{g.save();if(ghost){g.globalAlpha=.6;g.setLineDash([4,3]);}g.fillStyle=ghost?'transparent':'#d9a521';g.strokeStyle='#a87a10';g.lineWidth=2;g.beginPath();g.ellipse(x,y,16,5,0,0,TAU);if(!ghost)g.fill();g.stroke();g.restore();};
+    if(p.P){seen=!blocked3(p.P,E);const col=seen?C.ray:C.muted;ray(g,Q[0],Q[1],p.P[0],p.P[1],col,2.4,seen?null:[4,4]);ray(g,p.P[0],p.P[1],E[0],E[1],col,2.4,seen?null:[4,4]);
+      if(seen){line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.6,[6,5]);coin(p.app[0],p.app[1],true);text(g,'看起來在這裡',p.app[0]+22,p.app[1]-4,{col:C.ray,size:12,bold:true,bg:C.panel});}
+      info={real:(c.yb-c.yw),app:(p.app[1]-c.yw)};}
+    else{seen=!blocked3(Q,E);ray(g,Q[0],Q[1],E[0],E[1],seen?C.ray:C.muted,2.4,seen?null:[4,4]);}
+    coin(Q[0],Q[1],false);text(g,'硬幣',Q[0],Q[1]+22,{col:C.ink,size:12,bold:true,align:'center'});
+    if(!seen)text(g,'光被碗邊擋住，看不到硬幣',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});
+  }else{const[A,B]=stick3();
+    // 實際的筷子
+    line(g,A[0],A[1],B[0],B[1],'#b5793a',6);
+    if(S3.h>0){const t0=(c.yw-A[1])/(B[1]-A[1]),X=[lerp(A[0],B[0],t0),c.yw],pts=[];
+      for(let k=0;k<=24;k++){const Q=[lerp(X[0],B[0],k/24),lerp(X[1],B[1],k/24)];const p=path3(Q,E);pts.push(p.app);}
+      g.save();g.globalAlpha=.85;g.setLineDash([7,5]);g.strokeStyle=C.ray;g.lineWidth=5;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();g.restore();
+      const Q=B,p=path3(Q,E);if(p.P){ray(g,Q[0],Q[1],p.P[0],p.P[1],C.ray,1.8);ray(g,p.P[0],p.P[1],E[0],E[1],C.ray,1.8);line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.2,[4,4]);}
+      text(g,'眼睛看到的筷子（水中部分被抬高）',pts[pts.length-1][0]+12,pts[pts.length-1][1]-10,{col:C.ray,size:12,bold:true,bg:C.panel});seen=true;}
+    text(g,'實際的筷子',A[0]-8,A[1]+4,{col:'#b5793a',size:12,bold:true,align:'right',bg:C.panel});}
+  eyeIcon(g,E[0],E[1],Math.atan2(c.yb-E[1],c.cx0+(c.cx1-c.cx0)*.3-E[0]),15);handle(g,E[0],E[1]+24,7);
+  S3._seen=seen;S3._info=info;
+};
+TICK.depth=dt=>{if(!S3.pour)return false;S3.h=Math.min(S3.target,S3.h+dt*.25);if(S3.h>=S3.target)S3.pour=false;UI.depth();return S3.pour;};
+UI.depth=()=>{$('h3').value=S3.h;$('h3o').textContent=Math.round(S3.h*100)+'%';segSet($('obj3'),S3.obj);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{const L=[];
+    if(S3.obj==='coin'){$('r3big').textContent=S3._seen?(S3.h>0?'硬幣「浮」出來了！':'看得到硬幣'):'看不到硬幣';
+      if(S3.h<=0)L.push(['info','碗裡沒有水：光從硬幣直直射向眼睛，被碗邊擋住了。按「倒水」看看。']);
+      else{L.push(['info','光從水射向空氣時<b>偏離法線</b>，在水面轉彎後繞過了碗邊，進入眼睛。']);
+        if(S3._info&&S3._seen){const real=10*S3.h,app=real*S3._info.app/S3._info.real;L.push(['ok',`水深 ${real.toFixed(1)} cm，硬幣看起來只有 ${app.toFixed(1)} cm 深：<b>視深＜實深</b>（從正上方看約為實深 ÷ 1.33）。`]);}}}
+    else{$('r3big').textContent=S3.h>0?'筷子看起來在水面「折斷」':'倒水看看筷子會怎樣';L.push(['info','水中每一點發出的光在水面偏離法線，眼睛把光往回延長，以為那一點比較淺——水中部分整段被抬高，看起來就折斷了。']);}
+    L.push(['info','拖曳眼睛：從越斜的角度看，被抬高得越多。']);checks($('r3c'),L);}));};
+dragger(cv3,()=>[{x:S3.eye.fx*W3,y:S3.eye.fy*H3+10,r:36,move:(x,y)=>{const c=cup3();S3.eye.fx=clamp(x/W3,.03,.3);S3.eye.fy=clamp((y-10)/H3,.04,.3);UI.depth();}}],kick);
+segOn($('obj3'),v=>{S3.obj=v;UI.depth();kick();});
+$('pour3').addEventListener('click',()=>{S3.target=S3.h>=.99?1:Math.min(1,Math.max(.75,S3.h+.25));S3.pour=true;kick();});
+$('empty3').addEventListener('click',()=>{S3.h=0;S3.pour=false;UI.depth();kick();});
+$('h3').addEventListener('input',e=>{S3.h=+e.target.value;S3.pour=false;UI.depth();kick();});
+
+// =====================================================================
+// 4 光纖
+// =====================================================================
+const NC=1.5,S4={shape:'straight',nout:1,a:15};
+const cv4=$('cv4'),g4=cv4.getContext('2d');let W4=800,H4=380;
+SIZE.fiber=()=>{const r=fit(cv4,.45,280,460);W4=r.W;H4=r.H;};
+function fiberGeo(){const hw=Math.max(16,H4*.07),x0=W4*.14,x1=W4*.96,y=S4.shape==='straight'?H4*.5:H4*.24,pts=[];
+  if(S4.shape==='straight'){for(let k=0;k<=40;k++)pts.push([[lerp(x0,x1,k/40),y],[0,1]]);}
+  else{const R=S4.shape==='bend'?H4*.46:hw*1.04,xa=x0+(x1-x0)*.35;
+    for(let k=0;k<=12;k++)pts.push([[lerp(x0,xa,k/12),y],[0,1]]);
+    const cx=xa,cy=y+R;for(let k=1;k<=40;k++){const t=k/40*Math.PI/2,p=[cx+R*Math.sin(t),cy-R*Math.cos(t)];pts.push([p,[-Math.sin(t),Math.cos(t)]]);}
+    const xe=cx+R,ye0=cy,ye1=H4*.97;for(let k=1;k<=10;k++)pts.push([[xe,lerp(ye0,ye1,k/10)],[-1,0]]);}
+  const top=pts.map(([p,n])=>[p[0]-n[0]*hw,p[1]-n[1]*hw]),bot=pts.map(([p,n])=>[p[0]+n[0]*hw,p[1]+n[1]*hw]);
+  return{hw,pts,top,bot,start:pts[0][0],end:pts[pts.length-1]};}
+function hitSeg(p,d,a,b){const ex=b[0]-a[0],ey=b[1]-a[1],den=d[0]*ey-d[1]*ex;if(Math.abs(den)<1e-12)return null;
+  const t=((a[0]-p[0])*ey-(a[1]-p[1])*ex)/den,u=((a[0]-p[0])*d[1]-(a[1]-p[1])*d[0])/den;return(t>1e-6&&u>=-1e-9&&u<=1+1e-9)?t:null;}
+function trace4(){const F=fiberGeo(),segs=[];
+  for(const side of[F.top,F.bot])for(let k=0;k<side.length-1;k++){const a=side[k],b=side[k+1];segs.push([a,b]);}
+  const endSeg=[F.top[F.top.length-1],F.bot[F.bot.length-1]];
+  const ain=S4.a*D2R,bin=Math.asin(Math.sin(ain)/NC);let p=[F.start[0]+1,F.start[1]],d=[Math.cos(bin),Math.sin(bin)];
+  const path=[p],pI=[1],leaks=[];let I=1,tir=0,first=null,exit=null;
+  for(let k=0;k<400&&I>.03;k++){let best=null,bt=1e9;for(const s of segs){const t=hitSeg(p,d,s[0],s[1]);if(t!=null&&t<bt){bt=t;best=s;}}
+    const te=hitSeg(p,d,endSeg[0],endSeg[1]);if(te!=null&&te<bt){const q=[p[0]+d[0]*te,p[1]+d[1]*te];path.push(q);pI.push(I);exit={q,d,I};break;}
+    if(!best)break;const q=[p[0]+d[0]*bt,p[1]+d[1]*bt];let n=norm([-(best[1][1]-best[0][1]),best[1][0]-best[0][0]]);if(dot(n,d)>0)n=[-n[0],-n[1]];
+    const ci=-dot(d,n),th=R2D(Math.acos(clamp(ci,-1,1)));if(first===null)first=th;const t=refract(d,n,NC,S4.nout);
+    path.push(q);pI.push(I);if(t){const R=fresnel(ci,NC,S4.nout);leaks.push({q,t,I:I*(1-R)});I*=R;}else tir++;d=reflect(d,n);p=q;}
+  return{F,path,pI,leaks,tir,first,exit,I,bin:R2D(bin),thc:S4.nout<NC?R2D(Math.asin(S4.nout/NC)):90};}
+DRAW.fiber=()=>{const g=g4,W=W4,H=H4,T=trace4(),F=T.F;g.clearRect(0,0,W,H);g.fillStyle=S4.nout>1.4?C.glass:S4.nout>1.1?C.water:C.panel;g.fillRect(0,0,W,H);
+  g.fillStyle=C.panel;g.globalAlpha=S4.nout>1.1?.6:1;g.beginPath();F.top.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));for(let k=F.bot.length-1;k>=0;k--)g.lineTo(F.bot[k][0],F.bot[k][1]);g.closePath();g.globalAlpha=1;
+  g.fillStyle=C.glass;g.fill();g.strokeStyle=C.mir;g.lineWidth=2;g.stroke();
+  // 光
+  for(let k=1;k<T.path.length;k++){g.globalAlpha=clamp(T.pI[k]*1.2,.12,1);line(g,T.path[k-1][0],T.path[k-1][1],T.path[k][0],T.path[k][1],C.ray,2.2);}g.globalAlpha=1;
+  for(const L of T.leaks){if(L.I<.03)continue;g.globalAlpha=clamp(L.I*1.3,.2,1);ray(g,L.q[0],L.q[1],L.q[0]+L.t[0]*H*.5,L.q[1]+L.t[1]*H*.5,C.ray,2,null,.5);g.globalAlpha=1;}
+  if(T.exit){const n=T.F.end[1],dn=norm([n[1],-n[0]]);let nn=[-n[1]*0+T.F.end[1][0]*0,0];const tangent=norm([F.end[0][0]-F.pts[F.pts.length-2][0][0],F.end[0][1]-F.pts[F.pts.length-2][0][1]]);
+    const nf=[-tangent[0],-tangent[1]],t=refract(T.exit.d,nf,NC,1);if(t){g.globalAlpha=clamp(T.exit.I,.3,1);ray(g,T.exit.q[0],T.exit.q[1],T.exit.q[0]+t[0]*60,T.exit.q[1]+t[1]*60,C.ray,2.4,null,.6);g.globalAlpha=1;}
+    text(g,T.exit.I>.5?'光從另一端出來 ✓':'只剩 '+Math.round(T.exit.I*100)+'% 的光出來',T.exit.q[0]-10,T.exit.q[1]+(tangent[1]>.5?-10:-F.hw-10),{col:C.green,size:13,bold:true,align:'right',bg:C.panel});}
+  // 雷射
+  const s=F.start,ain=S4.a*D2R,dir=[Math.cos(ain),Math.sin(ain)],L0=[s[0]-dir[0]*W*.1,s[1]-dir[1]*W*.1];
+  ray(g,L0[0],L0[1],s[0],s[1],C.ray,2.4,null,.5);g.save();g.translate(L0[0],L0[1]);g.rotate(ain);g.fillStyle=C.ink;g.fillRect(-36,-6,36,12);g.restore();
+  handle(g,L0[0]-dir[0]*18,L0[1]-dir[1]*18,9);
+  text(g,'玻璃芯 n＝1.5',F.start[0]+12,F.start[1]-F.hw-8,{col:C.mir,size:12,bold:true});
+};
+UI.fiber=()=>{segSet($('shape4'),S4.shape);segSet($('out4'),S4.nout);$('a4').value=S4.a;$('a4o').textContent=S4.a+'°';const T=trace4();
+  const ok=!!T.exit&&T.exit.I>.8,leak=T.leaks.some(l=>l.I>.03);
+  $('r4big').textContent=ok?'光被關在光纖裡，從另一端出來':T.exit?'有光從另一端出來，但一路漏掉不少':'光幾乎都漏光了';
+  const L=[['info',`臨界角：sinθc ＝ ${S4.nout}／1.5，θc ≈ ${f1(T.thc)}°。光打到管壁的入射角要大於它才會全反射。`]];
+  if(T.first!=null)L.push([T.first>T.thc?'ok':'no',`第一次打到管壁時，入射角 ${f1(T.first)}° ${T.first>T.thc?'＞':'＜'} 臨界角 → ${T.first>T.thc?'全反射':'一部分光漏出去'}`]);
+  L.push(['info',`共全反射 ${T.tir} 次${leak?'，途中有漏光':'，完全沒有漏光'}。`]);
+  if(S4.shape==='tight')L.push(['info','彎得太急時，光打到外側管壁的入射角變小，小於臨界角就漏出去了。']);
+  if(S4.nout>1.4)L.push(['info','包覆層的折射率只比玻璃芯小一點，臨界角變大（約 77°），射入的角度要更「正」才行。']);
+  checks($('r4c'),L);};
+segOn($('shape4'),v=>{S4.shape=v;UI.fiber();kick();});
+segOn($('out4'),v=>{S4.nout=+v;UI.fiber();kick();});
+$('a4').addEventListener('input',e=>{S4.a=+e.target.value;UI.fiber();kick();});
+dragger(cv4,()=>{const F=fiberGeo(),s=F.start,ain=S4.a*D2R,dir=[Math.cos(ain),Math.sin(ain)],L0=[s[0]-dir[0]*W4*.1,s[1]-dir[1]*W4*.1];
+  return[{x:L0[0]-dir[0]*18,y:L0[1]-dir[1]*18,r:32,move:(x,y)=>{S4.a=clamp(Math.round(R2D(Math.atan2(s[1]-y,s[0]-x))),0,85);UI.fiber();}}];},kick);
+const STORIES={colladon:['從水柱導光到光纖','1842 年，瑞士物理學家柯拉頓在課堂上示範水柱噴流，觀眾看不清楚，他就從水箱另一側打光進去照亮水柱——光竟然被「關」在彎曲的水柱裡一路前進。\n動手做：寶特瓶側邊下方鑽孔、裝水，用雷射筆從另一側對準小孔，光會沿著流出的水柱彎曲前進（關燈效果最好）。'],
+  kao:['光纖之父高錕','1966 年，出生於上海、在英國工作的高錕和同事提出：只要把玻璃中的雜質去除，光纖的損耗可以低到足以做長距離通訊。當時很多人不相信，如今全世界的網路都跑在光纖上。\n高錕因此獲得 2009 年諾貝爾物理獎。']};
+document.querySelectorAll('[data-story]').forEach(b=>b.addEventListener('click',()=>{const s=STORIES[b.dataset.story];showStory(s[0],s[1]);$('story').scrollIntoView({behavior:'smooth',block:'nearest'});}));
+
+// =====================================================================
+// 5 色散與平行玻璃板
+// =====================================================================
+const COLORS=[[700,'紅'],[620,'橙'],[580,'黃'],[530,'綠'],[470,'藍'],[440,'靛'],[400,'紫']];
+const nGlass=nm=>1.5046+4200/(nm*nm);   // 冕牌玻璃的近似（Cauchy）
+const S5={mode:'prism',rot:0,boost:true,rv:false,inc:45};
+const cv5=$('cv5'),g5=cv5.getContext('2d');let W5=800,H5=420;
+SIZE.prism=()=>{const r=fit(cv5,.5,320,500);W5=r.W;H5=r.H;};
+function polyTrace(p,d,poly,n,maxB=6){const segs=poly.map((a,k)=>[a,poly[(k+1)%poly.length]]),cx=poly.reduce((s,q)=>s+q[0],0)/poly.length,cy=poly.reduce((s,q)=>s+q[1],0)/poly.length;
+  let inside=false;const pts=[p];for(let k=0;k<maxB;k++){let best=null,bt=1e9;for(const s of segs){const t=hitSeg(p,d,s[0],s[1]);if(t!=null&&t<bt&&t>1e-4){bt=t;best=s;}}
+    if(!best)break;const q=[p[0]+d[0]*bt,p[1]+d[1]*bt];let N=norm([-(best[1][1]-best[0][1]),best[1][0]-best[0][0]]);const mid=[(best[0][0]+best[1][0])/2-cx,(best[0][1]+best[1][1])/2-cy];if(dot(N,mid)<0)N=[-N[0],-N[1]];
+    const nf=dot(d,N)<0?N:[-N[0],-N[1]],n1=inside?n:1,n2=inside?1:n,t=refract(d,nf,n1,n2);pts.push(q);
+    if(t){d=t;inside=!inside;}else d=reflect(d,nf);p=q;if(!inside)break;}
+  return{pts,d,inside};}
+function prismPoly(){const L=Math.min(W5*.34,H5*.78),c=[W5*.42,H5*.56],r=L/Math.sqrt(3),a0=-Math.PI/2+S5.rot*D2R;return[0,1,2].map(k=>[c[0]+r*Math.cos(a0+k*TAU/3),c[1]+r*Math.sin(a0+k*TAU/3)]);}
+function slabPoly(){const w=W5*.5,h=Math.min(H5*.3,140),c=[W5*.5,H5*.55];return[[c[0]-w/2,c[1]-h/2],[c[0]+w/2,c[1]-h/2],[c[0]+w/2,c[1]+h/2],[c[0]-w/2,c[1]+h/2]];}
+DRAW.prism=()=>{const g=g5,W=W5,H=H5;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  if(S5.mode==='prism'){const P=prismPoly();g.fillStyle=C.glass;g.strokeStyle=C.mir;g.lineWidth=2;g.beginPath();P.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+    const aim=[lerp(P[0][0],P[2][0],.55),lerp(P[0][1],P[2][1],.55)],ba=-20*D2R,d=[Math.cos(ba),Math.sin(ba)],S=[aim[0]-d[0]*aim[0]/d[0],aim[1]-d[1]*aim[0]/d[0]],y=S[1];
+    const xs=W*.95;line(g,xs,H*.06,xs,H*.94,C.muted,3);text(g,'屏幕',xs-6,H*.06-2<14?H*.98:H*.05,{col:C.muted,size:12,align:'right'});
+    ray(g,S[0],S[1],aim[0],aim[1],C.ink,3,null,.5);text(g,'白光',12,y+22,{col:C.ink,size:13,bold:true});
+    const nMid=nGlass(550),cols=S5.rv?[COLORS[0],COLORS[6]]:COLORS,out=[];
+    for(const[nm,name]of cols){const nn=S5.boost?nMid+(nGlass(nm)-nMid)*6:nGlass(nm),T=polyTrace(S,d,P,nn);
+      g.strokeStyle=nmRGB(nm);g.lineWidth=2;g.beginPath();T.pts.slice(1).forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();
+      if(!T.inside){const q=T.pts[T.pts.length-1],t=T.d[0]>.05?(xs-q[0])/T.d[0]:W;const e=[q[0]+T.d[0]*Math.min(t,W*2),q[1]+T.d[1]*Math.min(t,W*2)];line(g,q[0],q[1],e[0],e[1],nmRGB(nm),2.4);
+        if(T.d[0]>.05&&e[1]>0&&e[1]<H){g.fillStyle=nmRGB(nm);g.beginPath();g.arc(xs,e[1],5,0,TAU);g.fill();out.push([e[1],name,nm]);}}}
+    if(out.length>=2){const ys=out.map(o=>o[0]);text(g,'紅',xs-10,Math.min(...ys)-8,{col:C.ink,size:12,bold:true,align:'right'});text(g,'紫',xs-10,Math.max(...ys)+18,{col:C.ink,size:12,bold:true,align:'right'});}
+    S5._out=out;}
+  else{const P=slabPoly();g.fillStyle=C.glass;g.strokeStyle=C.mir;g.lineWidth=2;g.beginPath();P.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();
+    const top=P[0][1],O=[W*.42,top],a=S5.inc*D2R,d=[Math.sin(a),Math.cos(a)],L=Math.min(H*.4,top-12)/Math.cos(a)||H*.4,S=[O[0]-d[0]*L,O[1]-d[1]*L];
+    const T=polyTrace(S,d,P,1.5);g.strokeStyle=C.ray;g.lineWidth=2.6;g.beginPath();T.pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();
+    const q=T.pts[T.pts.length-1];ray(g,q[0],q[1],q[0]+T.d[0]*H*.5,q[1]+T.d[1]*H*.5,C.ray,2.6,null,.5);head(g,lerp(S[0],O[0],.5),lerp(S[1],O[1],.5),Math.atan2(d[1],d[0]),C.ray,11);
+    // 原本的方向（虛線）
+    line(g,O[0],O[1],O[0]+d[0]*H*.9,O[1]+d[1]*H*.9,C.muted,1.4,[6,5]);
+    const bot=P[2][1];line(g,O[0],top-H*.15,O[0],top+H*.12,C.muted,1,[3,4]);line(g,q[0],bot-H*.12,q[0],bot+H*.15,C.muted,1,[3,4]);
+    // 側向位移
+    const pd=[d[1],-d[0]],sh=dot([q[0]-O[0],q[1]-O[1]],pd),m=[q[0]+T.d[0]*H*.25,q[1]+T.d[1]*H*.25],m2=[m[0]-pd[0]*sh,m[1]-pd[1]*sh];
+    if(Math.abs(sh)>4){line(g,m[0],m[1],m2[0],m2[1],C.accent,2);text(g,'側向位移',(m[0]+m2[0])/2+8,(m[1]+m2[1])/2+4,{col:C.accent,size:12,bold:true,bg:C.panel});}
+    text(g,'玻璃 n＝1.5',P[0][0]+10,P[0][1]+20,{col:C.mir,size:13,bold:true});text(g,'原來的方向',O[0]+d[0]*H*.6+8,O[1]+d[1]*H*.6,{col:C.muted,size:12,bg:C.panel});
+    S5._shift=Math.abs(sh);}
+};
+const NOTE5={prism:'<h3>色散與三稜鏡</h3><ul><li>同一種玻璃對不同顏色的光，折射率略有不同：<b>紫光折射率最大、紅光最小</b>。</li><li>紫光在玻璃中最慢、偏折最多；白光通過三稜鏡分成紅、橙、黃、綠、藍、靛、紫——這叫做<b>色散</b>。</li><li>彩虹也是陽光在雨滴中折射、色散、反射的結果。</li><li>在真空中，各色光速率都相同。</li></ul>',
+  slab:'<h3>平行玻璃板</h3><ul><li>光進去時偏向法線、出來時偏離法線，偏折量剛好抵銷，所以<b>出射光與入射光平行</b>，只有側向位移。</li><li>這就是隔著厚玻璃窗看外面不會「歪掉」的原因。</li><li>玻璃越厚、入射角越大，側向位移越大。</li></ul>'};
+UI.prism=()=>{const pr=S5.mode==='prism';segSet($('mode5'),S5.mode);$('note5').innerHTML=NOTE5[S5.mode];['boostw','rvw','rotw'].forEach(id=>$(id).hidden=!pr);$('incw').hidden=pr;
+  $('rot5o').textContent=S5.rot+'°';$('inc5o').textContent=S5.inc+'°';$('rot5').value=S5.rot;$('inc5').value=S5.inc;$('boost5').checked=S5.boost;$('rv5').checked=S5.rv;
+  $('hint5').textContent=pr?'一道白光從左邊射進三稜鏡。實際的色散很小，預設放大 6 倍讓顏色分得比較開；取消勾選看真實的大小。':'一道光斜斜射進平行玻璃板，看出來的光和原來的方向有什麼關係。';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{if(pr){$('r5big').textContent='白光分成七種顏色';checks($('r5c'),[['info',`玻璃對紅光的折射率約 ${nGlass(700).toFixed(3)}，對紫光約 ${nGlass(400).toFixed(3)}：紫光折射率最大。`],['ok','紫光在玻璃中最慢、偏折最多；紅光偏折最少。'],['info','轉動三稜鏡，看偏折的角度怎麼變；轉太多時光在第二面會全反射。']]);}
+    else{$('r5big').textContent='出射光與入射光平行';checks($('r5c'),[['ok','進去時偏向法線、出來時偏離法線，偏折抵銷，方向和原來一樣。'],['info',`側向位移約 ${Math.round(S5._shift||0)} px（畫面中的長度）。入射角越大，位移越大；垂直入射時沒有位移。`]]);}}));};
+segOn($('mode5'),v=>{S5.mode=v;UI.prism();kick();});
+$('boost5').addEventListener('change',e=>{S5.boost=e.target.checked;kick();});
+$('rv5').addEventListener('change',e=>{S5.rv=e.target.checked;kick();});
+$('rot5').addEventListener('input',e=>{S5.rot=+e.target.value;UI.prism();kick();});
+$('inc5').addEventListener('input',e=>{S5.inc=+e.target.value;UI.prism();kick();});
+
+// =====================================================================
+// 6 救生員問題
+// =====================================================================
+const S6={x:3,v1:4,v2:3,run:false,rt:0};
+const cv6=$('cv6'),g6=cv6.getContext('2d'),cv6g=$('cv6g'),g6g=cv6g.getContext('2d');let W6=800,H6=440,W6g=800,H6g=150;
+SIZE.guard=()=>{const r=fit(cv6,.5,320,500);W6=r.W;H6=r.H;const s=fit(cv6g,.2,130,180);W6g=s.W;H6g=s.H;};
+const RP=[0,3],HP=[7,-4];
+const T6=x=>Math.hypot(x-RP[0],RP[1])/S6.v1+Math.hypot(HP[0]-x,HP[1])/S6.v2;
+function best6(){let a=-1,b=8;for(let k=0;k<80;k++){const m1=a+(b-a)/3,m2=b-(b-a)/3;if(T6(m1)<T6(m2))b=m2;else a=m1;}return(a+b)/2;}
+function map6(){const xmin=-1.2,xmax=8.6,ymin=-5.2,ymax=4.4,s=Math.min(W6/(xmax-xmin),H6/(ymax-ymin)),ox=(W6-(xmax-xmin)*s)/2-xmin*s,oy=(H6-(ymax-ymin)*s)/2+ymax*s;return{s,X:x=>ox+x*s,Y:y=>oy-y*s,inv:px=>(px-ox)/s};}
+DRAW.guard=()=>{const g=g6,W=W6,H=H6,M=map6();g.clearRect(0,0,W,H);g.fillStyle=C.sand;g.fillRect(0,0,W,M.Y(0));g.fillStyle=C.water;g.fillRect(0,M.Y(0),W,H-M.Y(0));
+  line(g,0,M.Y(0),W,M.Y(0),C.mir,2.5);text(g,'陸地：跑 '+S6.v1+' m/s',10,22,{col:C.ink,size:14,bold:true});text(g,'泳池：游 '+S6.v2+' m/s',10,H-12,{col:C.ink,size:14,bold:true});
+  g.strokeStyle=C.line;g.lineWidth=1;g.beginPath();for(let x=-1;x<=8;x++){g.moveTo(M.X(x),M.Y(0)-4);g.lineTo(M.X(x),M.Y(0)+4);}g.stroke();
+  for(let x=0;x<=8;x+=2)text(g,x+'',M.X(x),M.Y(0)+16,{col:C.muted,size:11,align:'center'});
+  const bx=best6(),R=[M.X(RP[0]),M.Y(RP[1])],Hh=[M.X(HP[0]),M.Y(HP[1])];
+  // 直線、最快路線
+  line(g,R[0],R[1],Hh[0],Hh[1],C.muted,1.4,[6,5]);
+  if(Math.abs(bx-S6.x)>.05){g.globalAlpha=.8;line(g,R[0],R[1],M.X(bx),M.Y(0),C.green,1.8,[3,4]);line(g,M.X(bx),M.Y(0),Hh[0],Hh[1],C.green,1.8,[3,4]);g.globalAlpha=1;text(g,'最快',M.X(bx)+6,M.Y(0)-8,{col:C.green,size:12,bold:true,bg:C.sand});}
+  const P=[M.X(S6.x),M.Y(0)];ray(g,R[0],R[1],P[0],P[1],C.ray,3);ray(g,P[0],P[1],Hh[0],Hh[1],C.ray,3);
+  // 法線與角度
+  line(g,P[0],P[1]-M.s*2.6,P[0],P[1]+M.s*2.6,C.muted,1.2,[4,4]);
+  const r=Math.min(M.s*1.1,60),a1=Math.atan2(R[1]-P[1],R[0]-P[0]),a2=Math.atan2(Hh[1]-P[1],Hh[0]-P[0]);
+  const m1=arcAng(g,P[0],P[1],r,-Math.PI/2,a1,C.ai,2.5),m2=arcAng(g,P[0],P[1],r+6,Math.PI/2,a2,C.ar,2.5);
+  text(g,'θ₁',P[0]+Math.cos(m1)*(r+14),P[1]+Math.sin(m1)*(r+14)+5,{col:C.ai,size:14,bold:true,align:'center'});text(g,'θ₂',P[0]+Math.cos(m2)*(r+20),P[1]+Math.sin(m2)*(r+20)+5,{col:C.ar,size:14,bold:true,align:'center'});
+  // R、H
+  g.fillStyle=C.blue;g.beginPath();g.arc(R[0],R[1],8,0,TAU);g.fill();text(g,'R 救生員 (0, 3)',R[0]+12,R[1]-8,{col:C.blue,size:13,bold:true,bg:C.sand});
+  g.fillStyle=C.red;g.beginPath();g.arc(Hh[0],Hh[1],8,0,TAU);g.fill();text(g,'H 溺水者 (7, −4)',Hh[0]-12,Hh[1]+22,{col:C.red,size:13,bold:true,align:'right',bg:C.water});
+  // 比賽
+  if(S6.run||S6.rt>0){const pos=(x,t)=>{const l1=Math.hypot(x-RP[0],RP[1]),t1=l1/S6.v1;if(t<t1){const f=t/t1;return[lerp(RP[0],x,f),lerp(RP[1],0,f)];}const l2=Math.hypot(HP[0]-x,HP[1]),f=Math.min(1,(t-t1)/(l2/S6.v2));return[lerp(x,HP[0],f),lerp(0,HP[1],f)];};
+    const a=pos(S6.x,S6.rt),b=pos(bx,S6.rt);g.fillStyle=C.green;g.beginPath();g.arc(M.X(b[0]),M.Y(b[1]),9,0,TAU);g.fill();g.fillStyle=C.accent;g.beginPath();g.arc(M.X(a[0]),M.Y(a[1]),9,0,TAU);g.fill();
+    text(g,'經過 '+S6.rt.toFixed(2)+' 秒',W-10,22,{col:C.ink,size:14,bold:true,align:'right',font:null});}
+  handle(g,P[0],P[1],10);text(g,'入水點 ('+S6.x.toFixed(1)+', 0)',P[0],P[1]-16,{col:C.accent,size:13,bold:true,align:'center',bg:C.sand});
+  drawGraph6();
+};
+function drawGraph6(){const g=g6g,W=W6g,H=H6g;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);const M=map6(),bx=best6();
+  const xs=[],ts=[];for(let x=-1;x<=8.0001;x+=.05){xs.push(x);ts.push(T6(x));}const tmin=Math.min(...ts),tmax=Math.max(...ts),pad=24;
+  const Y=t=>H-pad-(t-tmin)/((tmax-tmin)||1)*(H-2*pad),X=x=>M.X(x);
+  g.strokeStyle=C.line;g.lineWidth=1;g.beginPath();g.moveTo(X(-1),H-pad);g.lineTo(X(8),H-pad);g.stroke();
+  g.strokeStyle=C.ink;g.lineWidth=2;g.beginPath();xs.forEach((x,k)=>k?g.lineTo(X(x),Y(ts[k])):g.moveTo(X(x),Y(ts[k])));g.stroke();
+  g.fillStyle=C.green;g.beginPath();g.arc(X(bx),Y(T6(bx)),5,0,TAU);g.fill();text(g,'最短 '+T6(bx).toFixed(2)+' s',X(bx),Y(T6(bx))+18,{col:C.green,size:12,bold:true,align:'center'});
+  g.fillStyle=C.accent;g.beginPath();g.arc(X(S6.x),Y(T6(S6.x)),6,0,TAU);g.fill();text(g,T6(S6.x).toFixed(2)+' s',X(S6.x)+8,Y(T6(S6.x))-8,{col:C.accent,size:12,bold:true});
+  text(g,'所需時間',8,16,{col:C.muted,size:12});text(g,'入水點 x（m）',W-8,H-6,{col:C.muted,size:12,align:'right'});}
+TICK.guard=dt=>{if(!S6.run)return false;S6.rt+=dt*.8;const done=Math.max(T6(S6.x),T6(best6()));if(S6.rt>=done){S6.rt=done;S6.run=false;UI.guard();}return S6.run;};
+UI.guard=()=>{const x=S6.x,l1=Math.hypot(x,3),l2=Math.hypot(7-x,4),s1=Math.abs(x)/l1,s2=Math.abs(7-x)/l2,bx=best6(),isBest=Math.abs(x-bx)<.06;
+  $('v6ao').textContent=S6.v1+' m/s';$('v6bo').textContent=S6.v2+' m/s';$('v6a').value=S6.v1;$('v6b').value=S6.v2;$('run6').textContent=S6.run?'❚❚ 暫停':'▶ 比賽：跑跑看';
+  $('r6big').innerHTML=`所需時間 <span class="mono">${T6(x).toFixed(2)}</span> s${isBest?'　✓ 最快！':''}`;
+  $('r6f').innerHTML=`陸上 ${l1.toFixed(2)} m ÷ ${S6.v1} ＋ 水中 ${l2.toFixed(2)} m ÷ ${S6.v2} ＝ ${T6(x).toFixed(2)} s<br>sinθ₁／v₁ ＝ ${s1.toFixed(2)}／${S6.v1} ＝ ${(s1/S6.v1).toFixed(3)}　　sinθ₂／v₂ ＝ ${s2.toFixed(2)}／${S6.v2} ＝ ${(s2/S6.v2).toFixed(3)}`;
+  $('r6n').textContent=isBest?'兩個比值相等——這正是折射定律 sinθ₁／v₁＝sinθ₂／v₂！':`最快的入水點在 x ≈ ${bx.toFixed(2)} m（綠色虛線），只要 ${T6(bx).toFixed(2)} s。按「比賽」看橘色（你選的路線）和綠色（最快的路線）誰先到。`;
+  document.querySelectorAll('#pre6 .chip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.x==='best'?isBest:Math.abs(+b.dataset.x-x)<.01)));};
+dragger(cv6,()=>{const M=map6();return[{x:M.X(S6.x),y:M.Y(0),r:34,move:(x,y)=>{S6.x=clamp(Math.round(map6().inv(x)*10)/10,-1,8);S6.rt=0;S6.run=false;UI.guard();}}];},kick);
+document.querySelectorAll('#pre6 .chip').forEach(b=>b.addEventListener('click',()=>{S6.x=b.dataset.x==='best'?Math.round(best6()*100)/100:+b.dataset.x;S6.rt=0;S6.run=false;UI.guard();kick();}));
+$('run6').addEventListener('click',()=>{if(!S6.run&&S6.rt>=Math.max(T6(S6.x),T6(best6()))-1e-6)S6.rt=0;S6.run=!S6.run;UI.guard();kick();});
+$('v6a').addEventListener('input',e=>{S6.v1=+e.target.value;S6.rt=0;UI.guard();kick();});
+$('v6b').addEventListener('input',e=>{S6.v2=+e.target.value;S6.rt=0;UI.guard();kick();});
+
+// =====================================================================
+// 講義題目情境
+// =====================================================================
+const QS=[{g:'2-4 光的折射',items:[
+  {n:'第 21 題　空氣→水 入射角 53°',pg:'p.20',b:'snell',set:()=>set1({top:'air',bot:'water',side:'top',a:-53}),t:'第 21 題　答案 (B)',
+   p:'1 × sin53° ＝ (4/3) × sinθ₂ ⇒ sinθ₂ ＝ 0.6 ⇒ θ₂ ＝ 37°，折射線偏向法線。\n畫面下方的算式就是這個計算。'},
+  {n:'第 22 題　折射的敘述',pg:'p.20',b:'snell',set:()=>set1({top:'air',bot:'glass',side:'top',a:-40,wf:true}),t:'第 22 題　答案 (C)',
+   p:'n＝c／v：n 越大，v 越小 (C)。\n(A) 頻率不變（打開了「顯示波前」：玻璃中的波峰間距變小，但每秒通過的波峰數一樣）；(B) 由玻璃射入空氣是由慢到快，應偏離法線——把雷射拖到下方看看；(D) 垂直入射方向不變，但速率仍變慢；(E) 紫光折射率較大、速率較慢（看「色散」實驗台）。'},
+  {n:'第 23 題　全反射的條件',pg:'p.21',b:'snell',set:()=>set1({top:'glass',bot:'air',side:'top',a:-50}),t:'第 23 題　答案 (ACE)',
+   p:'全反射兩條件：① 由 n 大射向 n 小（光密到光疏）；② 入射角＞臨界角。\n現在是玻璃射向空氣、入射角 50° ＞ 臨界角 41.8°，所以全反射。把雷射拖小於 41.8° 試試；換成空氣射向水，不管多斜都不會全反射 (B)。光纖、鑽石的閃耀都利用全反射 (E)。'},
+  {n:'第 24 題　三稜鏡色散',pg:'p.21',b:'prism',set:()=>{S5.mode='prism';S5.rot=0;S5.boost=true;S5.rv=false;UI.prism();kick();},t:'第 24 題　答案 (B)',
+   p:'玻璃對紫光的折射率最大 ⇒ 紫光在玻璃中最慢、偏折最多 (B)。紅光偏折最少 (A✕)；各色光在玻璃中速率不同 (C✕)；色散是折射造成的，不是繞射 (D✕)；真空中各色光速率都是 c (E✕)。'},
+  {n:'第 25 題　救生員問題',pg:'p.21',b:'guard',set:()=>{Object.assign(S6,{x:4,v1:4,v2:3,rt:0,run:false});UI.guard();kick();},t:'第 25 題　答案 (B)',
+   p:'(B) 在 (4, 0) 入水：5/4 ＋ 5/3 ≈ 2.92 s；(C) 直線：≈ 2.95 s；(D) 在 (1.6, 0) 入水：≈ 3.1 s。\n最快的路線不是直線，而是「在跑得快的陸地多走一點」。檢查 (B)：sinθ₁／v₁ ＝ 0.8／4 ＝ 0.2，sinθ₂／v₂ ＝ 0.6／3 ＝ 0.2，兩者相等——這正是折射定律！'}]}];
+{const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
+  gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
+    b.addEventListener('click',()=>{setBench(it.b);it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});
+  d.appendChild(c);box.appendChild(d);});}
+
+// ================= start =================
+let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();kick();}).observe(document.querySelector('.wrap'));
+setBench((location.hash||'#snell').slice(1),true);
+window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+</script>
+</body>
+</html>
