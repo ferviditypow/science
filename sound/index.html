@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>聲音：回聲與測距</title>
+<title>聲音：產生、傳播、三要素與回聲</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
 <style>
@@ -48,17 +48,21 @@
   <header>
     <div>
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國二 · 第三章 波動與聲音 · <a href="../doppler/">相關：都卜勒效應</a></div>
-      <h1>聲音的反射：回聲與測距</h1>
+      <h1>聲音</h1>
     </div>
-    <p>聲音碰到障礙物會反射回來，就是回聲。對牆喊、兩峭壁、船駛向山壁、測井深與海深、聲納畫海底地形、反射定律，全部可以拖曳、調整、慢動作播放；最下方有講義與考古題的情境。</p>
+    <p>六個實驗台對應翰林自然(3) 第三章 3-2～3-4：聲音怎麼產生與傳播、聲速、示波器上的響度音調音色、樂器、回聲與測距、可聽範圍與分貝。拖曳橘色的點操作，🔊 可以真的聽；最下方有講義與考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
     <span class="tlabel">實驗台</span>
     <span class="seg" id="benchSeg">
-      <button data-v="echo" aria-pressed="true"><span class="n">5</span>回聲與測距</button>
+      <button data-v="make" aria-pressed="true"><span class="n">1</span>聲音的產生與傳播</button>
+      <button data-v="speed" aria-pressed="false"><span class="n">2</span>聲速</button>
+      <button data-v="scope" aria-pressed="false"><span class="n">3</span>示波器與三要素</button>
+      <button data-v="inst" aria-pressed="false"><span class="n">4</span>樂器與音調</button>
+      <button data-v="echo" aria-pressed="false"><span class="n">5</span>回聲與測距</button>
+      <button data-v="range" aria-pressed="false"><span class="n">6</span>可聽範圍與分貝</button>
     </span>
-    <span class="soon">其他實驗台（聲音的產生與傳播、聲速、示波器與三要素、樂器、可聽範圍）製作中</span>
   </nav>
 
   <section class="panel story" id="story" hidden>
@@ -68,8 +72,150 @@
     <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
   </section>
 
+  <!-- ============ 1 聲音的產生與傳播 ============ -->
+  <section class="bench" id="b-make">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="mkMode"><button data-v="fork">音叉與空氣分子</button><button data-v="jar">波以耳真空鈴</button><button data-v="med">傳聲的介質</button></span>
+        <button class="btn" id="mkSnd" aria-pressed="false">🔊 聲音</button>
+      </div>
+      <div class="toolbar mkc" data-m="fork">
+        <button class="btn primary" id="mkHit">🔨 敲擊音叉</button>
+        <button class="btn" id="mkHold">✋ 用手握住</button>
+        <label class="tog"><input type="checkbox" id="mkWater">碰水面</label>
+        <label class="tog"><input type="checkbox" id="mkSlow" checked>慢動作</label>
+        <label class="slider" style="flex:1 1 220px"><span class="tlabel">音叉頻率</span><input type="range" id="mkF" min="200" max="800" step="10" value="440"><output id="mkFo"></output></label>
+      </div>
+      <div class="toolbar mkc" data-m="jar">
+        <button class="btn primary" id="mkBell">🔔 電鈴通電</button>
+        <span class="seg" id="mkPump"><button data-v="-1">抽氣</button><button data-v="0">停</button><button data-v="1">充氣</button></span>
+        <label class="slider" style="flex:1 1 220px"><span class="tlabel">罩內空氣</span><input type="range" id="mkAir" min="0" max="100" step="1" value="100"><output id="mkAiro"></output></label>
+        <label class="slider" style="flex:1 1 200px"><span class="tlabel">人離鐘罩</span><input type="range" id="mkDist" min="1" max="4" step="0.1" value="1.4"><output id="mkDisto"></output></label>
+      </div>
+      <div class="toolbar mkc" data-m="med">
+        <span class="seg" id="mkMed"><button data-v="air">空氣</button><button data-v="water">水</button><button data-v="solid">固體（牆）</button><button data-v="vac">真空（太空）</button><button data-v="cup">傳話筒</button></span>
+        <span class="seg" id="mkCup"><button data-v="taut">棉線拉緊</button><button data-v="slack">放鬆</button><button data-v="cut">剪斷</button></span>
+        <button class="btn primary" id="mkGo">▶ 發出聲音</button>
+      </div>
+      <div class="cbox"><canvas id="cvMk" aria-label="聲音的產生與傳播"></canvas></div>
+      <p class="hint" id="mkHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mkBig"></p><ul class="checks" id="mkC"></ul></section>
+      <section class="panel box"><h3 id="mkHowT">怎麼看</h3><ul id="mkHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 聲速 ============ -->
+  <section class="bench" id="b-speed" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="spMode"><button data-v="race">各種介質賽跑</button><button data-v="delay">先看到、後聽到</button><button data-v="timer">百米計時</button><button data-v="cross">傳進另一種介質</button></span>
+        <button class="btn primary" id="spPlay">▶ 播放</button><button class="btn" id="spRst">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <label class="slider" id="spTw"><span class="tlabel">氣溫</span><input type="range" id="spT" min="-10" max="40" step="1" value="15"><output id="spTo"></output></label>
+        <label class="slider spc" data-m="race"><span class="tlabel">距離</span><input type="range" id="spD" min="50" max="3000" step="10" value="1000"><output id="spDo"></output></label>
+        <label class="slider spc" data-m="timer"><span class="tlabel">跑者速率</span><input type="range" id="spRun" min="5" max="11" step="0.1" value="8.5"><output id="spRuno"></output></label>
+        <span class="spc" data-m="timer"><span class="seg" id="spCue"><button data-v="sound">聽到槍聲才按</button><button data-v="light">看到槍煙就按</button></span></span>
+      </div>
+      <div class="toolbar spc" data-m="delay">
+        <span class="tlabel">情境</span><span class="seg" id="spPair"></span>
+      </div>
+      <div class="toolbar spc" data-m="delay">
+        <span class="tlabel">已知</span><span class="seg" id="spGiv"><button data-v="t">時間差</button><button data-v="d">距離</button></span>
+        <label class="slider" id="spDtw"><span class="tlabel">時間差</span><input type="range" id="spDt" min="0.1" max="15" step="0.1" value="2"><output id="spDto"></output></label>
+        <label class="slider" id="spDdw"><span class="tlabel">距離</span><input type="range" id="spDd" min="10" max="6000" step="10" value="680"><output id="spDdo"></output></label>
+      </div>
+      <div class="toolbar spc" data-m="cross">
+        <span class="seg" id="spDir"><button data-v="aw">空氣 → 水</button><button data-v="wa">水 → 空氣</button></span>
+        <label class="slider"><span class="tlabel">頻率</span><input type="range" id="spF" min="100" max="1000" step="10" value="340"><output id="spFo"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cvSp" aria-label="聲速"></canvas></div>
+      <p class="hint" id="spHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF2"></div><ul class="checks" id="spC"></ul></section>
+      <section class="panel box"><h3 id="spHowT">怎麼看</h3><ul id="spHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 示波器與三要素 ============ -->
+  <section class="bench" id="b-scope" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">比較</span><span class="seg" id="scN"><button data-v="1">一個聲音</button><button data-v="2">兩個聲音</button><button data-v="4">四個聲音</button></span>
+        <span class="tlabel">調整</span><span class="seg" id="scSel"></span>
+        <button class="btn" id="scPlay">🔊 播放這個聲音</button><button class="btn" id="scPlayAll">🔊 依序播放</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">發聲體</span><span class="seg" id="scSrc"><button data-v="fork">音叉</button><button data-v="flute">長笛</button><button data-v="clar">單簧管</button><button data-v="violin">小提琴</button><button data-v="piano">鋼琴</button><button data-v="voice">人聲</button><button data-v="noise">噪音</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">頻率（音調）</span><input type="range" id="scF" min="100" max="1000" step="1" value="400"><output id="scFo"></output></label>
+        <label class="slider"><span class="tlabel">振幅（響度）</span><input type="range" id="scA" min="0.5" max="4" step="0.5" value="2"><output id="scAo"></output></label>
+        <span class="tlabel">每格</span><span class="seg" id="scDiv"><button data-v="0.5">0.5 ms</button><button data-v="1">1 ms</button><button data-v="2">2 ms</button></span>
+      </div>
+      <div class="cbox"><canvas id="cvSc" aria-label="示波器畫面"></canvas></div>
+      <p class="hint" style="padding:0 12px 10px">示波器把聲音（縱波）的疏密變化畫成橫波的樣子：橫軸是時間，縱軸是振動的位移。上下越高＝振幅大＝響度大；波越密＝頻率高＝音調高；形狀不同＝音色不同。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="scBig"></p><div class="formula2" id="scF2"></div><ul class="checks" id="scC"></ul></section>
+      <section class="panel box">
+        <h3>分貝：每多 10 dB，強度 ×10</h3>
+        <div class="toolbar" style="padding:4px 0">
+          <label class="slider" style="min-width:200px"><span class="tlabel">聲音甲</span><input type="range" id="dbA" min="0" max="140" step="10" value="80"><output id="dbAo"></output></label>
+          <label class="slider" style="min-width:200px"><span class="tlabel">聲音乙</span><input type="range" id="dbB" min="0" max="140" step="10" value="40"><output id="dbBo"></output></label>
+        </div>
+        <canvas id="cvDb" aria-label="分貝與強度"></canvas>
+        <p class="formula2" id="dbTxt"></p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 4 樂器與音調 ============ -->
+  <section class="bench" id="b-inst" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="inMode"><button data-v="string">弦樂器</button><button data-v="bottle">瓶子與試管</button><button data-v="tube">敲管子、吹管子</button><button data-v="reso">共鳴</button></span>
+      </div>
+      <div class="toolbar inc" data-m="string">
+        <span class="tlabel">範例</span><span class="seg" id="inStrPre"><button data-v="uke">烏克麗麗</button><button data-v="sham">三味線</button><button data-v="free">自己調</button></span>
+        <span class="tlabel">調整第</span><span class="seg" id="inStrSel"></span><span class="tlabel">條弦</span>
+      </div>
+      <div class="toolbar inc" data-m="string">
+        <label class="slider"><span class="tlabel">鬆緊</span><input type="range" id="inTen" min="0.5" max="2" step="0.05" value="1"><output id="inTeno"></output></label>
+        <label class="slider"><span class="tlabel">粗細</span><input type="range" id="inThk" min="0.5" max="2" step="0.05" value="1"><output id="inThko"></output></label>
+        <label class="slider"><span class="tlabel">按壓位置（振動長度）</span><input type="range" id="inLen" min="0.4" max="1" step="0.01" value="1"><output id="inLeno"></output></label>
+        <label class="slider"><span class="tlabel">撥弦力道</span><input type="range" id="inPow" min="0.3" max="1" step="0.05" value="0.7"><output id="inPowo"></output></label>
+      </div>
+      <div class="toolbar inc" data-m="bottle">
+        <span class="seg" id="inAct"><button data-v="blow">對瓶口吹氣</button><button data-v="hit">用木棒敲</button></span>
+        <span class="tlabel">範例</span><span class="seg" id="inBotPre"><button data-v="glass">四個玻璃杯</button><button data-v="tube">試管</button><button data-v="cyl">量筒</button></span>
+      </div>
+      <div class="toolbar inc" data-m="tube">
+        <span class="seg" id="inTubeV"><button data-v="len">長度不同</button><button data-v="wall">管壁厚薄不同</button></span>
+        <span class="seg" id="inTubeA"><button data-v="hit">用槌子敲</button><button data-v="blow">對管口吹（下端封閉）</button></span>
+      </div>
+      <div class="toolbar inc" data-m="reso">
+        <span class="tlabel">右邊音叉</span><span class="seg" id="inRes"><button data-v="440">440 Hz（相同）</button><button data-v="500">500 Hz</button><button data-v="360">360 Hz</button></span>
+        <label class="tog"><input type="checkbox" id="inBox" checked>裝在共鳴箱上</label>
+        <button class="btn primary" id="inHitR">🔨 敲左邊音叉</button>
+      </div>
+      <div class="cbox"><canvas id="cvIn" aria-label="樂器與音調"></canvas></div>
+      <p class="hint" id="inHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="inBig"></p><div class="formula2" id="inF2"></div><ul class="checks" id="inC"></ul></section>
+      <section class="panel box"><h3 id="inHowT">怎麼看</h3><ul id="inHow"></ul></section>
+    </div>
+  </section>
+
   <!-- ============ 回聲與測距 ============ -->
-  <section class="bench" id="b-echo">
+  <section class="bench" id="b-echo" hidden>
     <div class="panel">
       <div class="toolbar">
         <span class="tlabel">情境</span>
@@ -179,6 +325,39 @@
     </div>
   </section>
 
+
+  <!-- ============ 6 可聽範圍與分貝 ============ -->
+  <section class="bench" id="b-range" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="rgMode"><button data-v="bars">誰聽得到</button><button data-v="area">頻率＋響度</button><button data-v="audio">聽力檢查</button><button data-v="db">分貝尺與噪音</button></span>
+        <button class="btn" id="rgSnd">🔊 播放這個頻率</button>
+      </div>
+      <div class="toolbar rgc" data-m="bars area">
+        <span class="tlabel">動物</span><span class="chips" id="rgAni"></span>
+      </div>
+      <div class="toolbar rgc" data-m="bars area">
+        <label class="slider"><span class="tlabel">頻率</span><input type="range" id="rgF" min="0" max="1000" step="1" value="500"><output id="rgFo"></output></label>
+        <label class="slider rgc" data-m="area"><span class="tlabel">響度</span><input type="range" id="rgL" min="0" max="140" step="1" value="70"><output id="rgLo"></output></label>
+      </div>
+      <div class="toolbar rgc" data-m="audio">
+        <label class="slider"><span class="tlabel">測試音頻率</span><input type="range" id="rgAf" min="0" max="6" step="1" value="2"><output id="rgAfo"></output></label>
+        <label class="slider"><span class="tlabel">測試音音量</span><input type="range" id="rgAl" min="-10" max="120" step="5" value="40"><output id="rgAlo"></output></label>
+      </div>
+      <div class="toolbar rgc" data-m="db">
+        <label class="slider"><span class="tlabel">聲音甲</span><input type="range" id="rgD1" min="0" max="140" step="1" value="80"><output id="rgD1o"></output></label>
+        <label class="slider"><span class="tlabel">聲音乙</span><input type="range" id="rgD2" min="0" max="140" step="1" value="40"><output id="rgD2o"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cvRg" aria-label="可聽範圍"></canvas></div>
+      <p class="hint" id="rgHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="rgBig"></p><div class="formula2" id="rgF2"></div><ul class="checks" id="rgC"></ul></section>
+      <section class="panel box"><h3 id="rgHowT">怎麼看</h3><ul id="rgHow"></ul></section>
+    </div>
+  </section>
+
   <section class="panel" id="qpanel">
     <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(3)》學生版；考古題標示學校、學年-學期-次別與題號</small></p>
     <div class="cbox" id="qbox"></div>
@@ -218,6 +397,38 @@ const rgbStr=(a,k=1)=>`rgb(${a.map(v=>Math.round(255*Math.pow(clamp(v*k,0,1),.8)
 const nmCol=nm=>rgbStr(nmRGBa(nm));
 const f1=x=>(Math.round(x*10)/10).toFixed(1),f2=x=>(Math.round(x*100)/100).toFixed(2);
 const checks=(el,L)=>{el.innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');};
+// ================= 實驗台切換與迴圈 =================
+let bench='make';const BENCHES=['make','speed','scope','inst','echo','range'];const MODES=['wall','cliff','move','depth','map','law'];
+const SIZE={},DRAW={},TICK={},UI={},STOP=[];
+function setBench(b,noHash){if(MODES.includes(b)){E.mode=b;b='echo';}if(!BENCHES.includes(b))b='make';if(b!==bench)STOP.forEach(f=>f());bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();SIZE[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();readMore();kick();});
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
+function hideStory(){$('story').hidden=true;}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+const playTxt=(el,on)=>{el.textContent=on?'❚❚ 暫停':'▶ 播放';};
+
+
+// ---------- 聲音播放 ----------
+let AC=null;function ac(){if(!AC)AC=new (window.AudioContext||window.webkitAudioContext)();if(AC.state!=='running')AC.resume();return AC;}
+const HARM={fork:[1],flute:[1,.45,.14,.06,.03],clar:[1,0,.6,0,.38,0,.22,0,.12],violin:[1,.75,.55,.42,.33,.26,.2,.16,.12],piano:[1,.55,.32,.2,.1,.08,.05],voice:[1,.9,.5,.65,.2,.3,.1]};
+const PW={};function pwave(k){const c=ac();if(!PW[k]){const h=HARM[k]||[1];const re=new Float32Array(h.length+1),im=new Float32Array(h.length+1);h.forEach((a,i)=>im[i+1]=a);PW[k]=c.createPeriodicWave(re,im);}return PW[k];}
+let NOISEB=null;function noiseBuf(){const c=ac();if(!NOISEB){NOISEB=c.createBuffer(1,c.sampleRate*2,c.sampleRate);const d=NOISEB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;}return NOISEB;}
+function tone(f,{src='fork',dur=1,gain=.25,at=0,decay=false}={}){try{const c=ac(),t0=c.currentTime+.03+at;const g=c.createGain();
+  g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain,t0+.015);if(decay)g.gain.exponentialRampToValueAtTime(.0005,t0+dur);else{g.gain.setValueAtTime(gain,t0+dur-.06);g.gain.linearRampToValueAtTime(0,t0+dur);}
+  g.connect(c.destination);let s;if(src==='noise'){s=c.createBufferSource();s.buffer=noiseBuf();const bp=c.createBiquadFilter();bp.type='lowpass';bp.frequency.value=3000;s.connect(bp);bp.connect(g);}
+  else{s=c.createOscillator();if(src==='fork')s.type='sine';else s.setPeriodicWave(pwave(src));s.frequency.value=f;s.connect(g);}
+  s.start(t0);s.stop(t0+dur+.05);}catch(e){console.error(e);}}
+// 持續發聲（音量每格更新）
+function contSrc(f,src='fork'){const c=ac();const g=c.createGain();g.gain.value=0;g.connect(c.destination);const o=c.createOscillator();if(src==='fork')o.type='sine';else o.setPeriodicWave(pwave(src));o.frequency.value=f;o.connect(g);o.start();
+  return {o,g,set(v){g.gain.setTargetAtTime(v,c.currentTime,.03);},freq(x){o.frequency.setTargetAtTime(x,c.currentTime,.02);},stop(){try{g.gain.setTargetAtTime(0,c.currentTime,.03);o.stop(c.currentTime+.2);}catch(e){}}};}
 
 // ================= 狀態 =================
 function readMore(){const s=getComputedStyle(document.documentElement);['snd','echo','cliff','sea','sky'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
@@ -339,12 +550,12 @@ const PREM=[{n:'講義 p.112',ts:[30,15,28,5,5]},{n:'向上 114 #27',ts:[8,15,8,
   b.addEventListener('click',()=>{E.M.ts=p.ts.slice();restart();});box.appendChild(b);});}
 
 // ---------- 用真實時間聽 ----------
-let AC=null,NB=null;
+let NB=null;
 function clap(t0,gain){const s=AC.createBufferSource();s.buffer=NB;const f=AC.createBiquadFilter();f.type='bandpass';f.frequency.value=1400;f.Q.value=.9;
   const g=AC.createGain();g.gain.setValueAtTime(0,t0);g.gain.linearRampToValueAtTime(gain,t0+.004);g.gain.exponentialRampToValueAtTime(.0008,t0+.09);
   s.connect(f);f.connect(g);g.connect(AC.destination);s.start(t0);s.stop(t0+.12);}
-$('sndE').addEventListener('click',()=>{try{if(!AC){AC=new (window.AudioContext||window.webkitAudioContext)();NB=AC.createBuffer(1,AC.sampleRate*.15,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);}
-  AC.resume();const M=model();const t0=AC.currentTime+.08;(M.hear||[]).forEach(h=>{if(h.t<12)clap(t0+h.t,1.6*Math.max(.04,h.a));});
+$('sndE').addEventListener('click',()=>{try{const AC=ac();if(!NB){NB=AC.createBuffer(1,AC.sampleRate*.15,AC.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1);}
+  const M=model();const t0=AC.currentTime+.08;(M.hear||[]).forEach(h=>{if(h.t<12)clap(t0+h.t,1.6*Math.max(.04,h.a));});
   E.t=0;E.run=true;E.real=true;playTxt($('playE'),true);kick();}catch(e){console.error(e);}});
 
 // ================= 繪圖小工具 =================
@@ -656,24 +867,6 @@ dragger($('cvA'),()=>{const M=model(),m=E.mode,W=W1,H=H1;
 $('cvA').addEventListener('pointerup',()=>{if(E.frz){E.frz=null;kick();}});
 $('cvA').style.touchAction='none';
 
-// ================= 實驗台切換與迴圈 =================
-let bench='echo';const BENCHES=['echo'];const MODES=['wall','cliff','move','depth','map','law'];
-const SIZE={},DRAW={},TICK={},UI={};
-function setBench(b,noHash){if(MODES.includes(b)){E.mode=b;b='echo';}if(!BENCHES.includes(b))b='echo';bench=b;segSet($('benchSeg'),b);
-  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();SIZE[b]();kick();}
-segOn($('benchSeg'),v=>{hideStory();setBench(v);});
-let raf=0,lastT=0;
-function kick(){if(!raf)raf=requestAnimationFrame(loop);}
-function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
-  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
-  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
-matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();readMore();kick();});
-function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
-function hideStory(){$('story').hidden=true;}
-$('storyX').addEventListener('click',hideStory);
-$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
-const playTxt=(el,on)=>{el.textContent=on?'❚❚ 暫停':'▶ 播放';};
-
 SIZE.echo=sizeEcho;UI.echo=()=>{syncUI();showHow();lastRes='';};
 TICK.echo=dt=>{if(!E.run)return false;const M=model();
   if(E.mode==='law'){E.t+=dt*SPDF[E.spd-1]*.8;return true;}
@@ -686,11 +879,516 @@ DRAW.echo=()=>{const M=model(),m=E.mode,g=$('cvA').getContext('2d');g.clearRect(
   if(m!=='law'){$('tE').value=Math.round(E.t/M.tmax*1000);$('tEo').textContent=m==='map'?'第 '+(clamp(Math.floor(E.t/PM),0,NM-1)+1)+' 站':fmtT(E.t)+' / '+fmtT(M.tmax);}
   showResults(M);};
 
+
+// =====================================================================
+// 1 聲音的產生與傳播
+// =====================================================================
+const MK={mode:'fork',t:0,hitT:-99,holdT:null,f:440,water:false,slow:true,snd:false,bell:true,air:1,pump:0,dist:1.4,med:'air',cup:'taut',goT:0};
+let WM=600,HM=320,mkSrc=null;
+const rnd=(i)=>{const x=Math.sin(i*127.1+311.7)*43758.5453;return x-Math.floor(x);};
+function mkAmp(t){if(t<MK.hitT)return 0;let a=Math.exp(-(t-MK.hitT)/4)*Math.min(1,(t-MK.hitT)/.2);if(MK.holdT!==null&&MK.holdT>=MK.hitT&&t>MK.holdT)a*=Math.exp(-(t-MK.holdT)/.07);return a;}
+function mkLoud(){return MK.bell?(.03+.97*MK.air)/MK.dist:0;}
+function mkSyncSnd(){$('mkSnd').setAttribute('aria-pressed',String(MK.snd));$('mkSnd').textContent=MK.snd?'🔊 聲音：開':'🔈 聲音：關';
+  if(MK.snd&&!mkSrc&&(MK.mode==='fork'||MK.mode==='jar')){mkSrc=MK.mode==='fork'?contSrc(MK.f,'fork'):contSrc(880,'clar');}
+  if((!MK.snd||!(MK.mode==='fork'||MK.mode==='jar'))&&mkSrc){mkSrc.stop();mkSrc=null;}}
+STOP.push(()=>{if(mkSrc){mkSrc.stop();mkSrc=null;}});
+function mkUI(){segSet($('mkMode'),MK.mode);document.querySelectorAll('.mkc').forEach(e=>e.hidden=e.dataset.m!==MK.mode);
+  segSet($('mkPump'),String(MK.pump));segSet($('mkMed'),MK.med);segSet($('mkCup'),MK.cup);$('mkCup').hidden=MK.med!=='cup';
+  $('mkF').value=MK.f;$('mkFo').textContent=MK.f+' Hz';$('mkAir').value=Math.round(MK.air*100);$('mkAiro').textContent=Math.round(MK.air*100)+'%';
+  $('mkDist').value=MK.dist;$('mkDisto').textContent=MK.dist<1.6?'近':MK.dist<2.8?'中':'遠';$('mkBell').textContent=MK.bell?'🔔 電鈴：通電中':'🔕 電鈴：斷電';
+  $('mkWater').checked=MK.water;$('mkSlow').checked=MK.slow;
+  $('mkHint').textContent={fork:'按「敲擊音叉」，看音叉振動推動空氣分子，疏密一層一層傳到耳朵；紅色分子只在原地前後振動。',jar:'按「抽氣」把鐘罩內的空氣抽走，聽聽鈴聲怎麼變；拖「人離鐘罩」看走遠時聲音變小。',med:'選一種介質，按「發出聲音」，看聲音經過介質傳到另一邊；真空中沒有分子，聲音傳不過去。'}[MK.mode];
+  const H={fork:['音叉快速振動（左右來回），推擠旁邊的空氣分子，形成「密部」和「疏部」。','疏密一層層往右傳，傳到耳朵使耳膜振動，我們才聽到聲音。','紅色的分子只在原地前後振動，振動方向和傳播方向平行：聲波是縱波。','下方曲線是各處空氣的疏密（壓力）：高的地方是密部、低的地方是疏部。','「用手握住」：音叉停止振動，聲音立刻消失；「碰水面」：振動的音叉會濺起水花。'],
+    jar:['電鈴在鐘罩裡響，聲音經過罩內空氣、玻璃傳到外面。','抽氣時罩內空氣（小點）越來越少，鈴聲越來越小；鈴錘仍在振動，卻幾乎聽不到。','充氣後聲音又恢復：聲音的傳播需要介質。','人走遠，聲音的能量分散到更大範圍，聽起來變小。'],
+    med:['聲音可以在固體、液體、氣體中傳播；一般而言速率：固體＞液體＞氣體。','真空中沒有分子可以振動，聲音無法傳播；光是電磁波，可以在真空中傳播。','傳話筒：拉緊的棉線把振動傳過去；放鬆或剪斷就聽不到。']}[MK.mode];
+  $('mkHowT').textContent={fork:'音叉與空氣分子：怎麼看',jar:'波以耳真空鈴：怎麼看',med:'傳聲的介質：怎麼看'}[MK.mode];$('mkHow').innerHTML=H.map(s=>`<li>${s}</li>`).join('');mkSyncSnd();}
+segOn($('mkMode'),v=>{MK.mode=v;hideStory();if(v==='med')MK.goT=MK.t;mkUI();SIZE.make();kick();});
+$('mkSnd').addEventListener('click',()=>{MK.snd=!MK.snd;mkSyncSnd();kick();});
+$('mkHit').addEventListener('click',()=>{MK.hitT=MK.t;MK.holdT=null;kick();});
+$('mkHold').addEventListener('click',()=>{MK.holdT=MK.t;kick();});
+$('mkWater').addEventListener('change',()=>{MK.water=$('mkWater').checked;kick();});
+$('mkSlow').addEventListener('change',()=>{MK.slow=$('mkSlow').checked;kick();});
+$('mkF').addEventListener('input',()=>{MK.f=+$('mkF').value;$('mkFo').textContent=MK.f+' Hz';if(mkSrc&&MK.mode==='fork')mkSrc.freq(MK.f);kick();});
+$('mkBell').addEventListener('click',()=>{MK.bell=!MK.bell;mkUI();kick();});
+segOn($('mkPump'),v=>{MK.pump=+v;mkUI();kick();});
+$('mkAir').addEventListener('input',()=>{MK.air=+$('mkAir').value/100;MK.pump=0;mkUI();kick();});
+$('mkDist').addEventListener('input',()=>{MK.dist=+$('mkDist').value;mkUI();kick();});
+segOn($('mkMed'),v=>{MK.med=v;MK.goT=MK.t;mkUI();kick();});
+segOn($('mkCup'),v=>{MK.cup=v;MK.goT=MK.t;mkUI();kick();});
+$('mkGo').addEventListener('click',()=>{MK.goT=MK.t;kick();});
+
+function fork(g,x,y0,y1,dx,col=C.ink){// 柄在上、叉在下：柄 y0→中段，叉到 y1
+  const ym=y0+(y1-y0)*.3;g.save();g.lineCap='round';line(g,x,y0,x,ym,col,6);
+  g.strokeStyle=col;g.lineWidth=6;g.beginPath();g.moveTo(x-9-dx,y1);g.lineTo(x-9-dx*.3,ym+14);g.quadraticCurveTo(x-9,ym,x,ym);g.quadraticCurveTo(x+9,ym,x+9+dx*.3,ym+14);g.lineTo(x+9+dx,y1);g.stroke();g.restore();}
+function drawMkFork(g,W,H){const t=MK.t,fv=MK.f/440*(MK.slow?1:2.4),cv=MK.slow?150:330,lam=cv/fv,k=TAU/lam;
+  const x0=86,xL=118,xR=W-92,yT=H*.12,yB=H*.62,sp=Math.max(10,Math.min(14,(xR-xL)/60));
+  const amp0=mkAmp(t);const dx=6*amp0*Math.sin(TAU*fv*t);
+  g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  // 空氣分子
+  const sAt=x=>{const d=x-x0;const tr=t-d/cv;return .62*sp*mkAmp(tr)*Math.sin(TAU*fv*tr);};
+  for(let x=xL;x<xR;x+=4){const d=x-x0,tr=t-d/cv,p=mkAmp(tr)*Math.cos(TAU*fv*tr);if(p>.05){g.fillStyle=C.accent;g.globalAlpha=.16*p;g.fillRect(x,yT-6,4,yB-yT+12);}}g.globalAlpha=1;
+  const rows=Math.floor((yB-yT)/sp);let hl=null;
+  for(let r=0;r<=rows;r++)for(let c=0;;c++){const xr=xL+c*sp+(rnd(r*91+c)-.5)*sp*.25;if(xr>xR)break;const y=yT+r*sp+(rnd(r*37+c*11)-.5)*sp*.3;const x=xr+sAt(xr);
+    const isH=r===Math.floor(rows/2)&&c===Math.round((xR-xL)/sp*.42);if(isH){hl={x,y,xr};continue;}g.fillStyle=C.muted;g.globalAlpha=.75;g.beginPath();g.arc(x,y,2.1,0,TAU);g.fill();}
+  g.globalAlpha=1;
+  if(hl){line(g,hl.xr,hl.y-12,hl.xr,hl.y+12,C.red,1,[2,2]);dot(g,hl.x,hl.y,C.red,5);text(g,'分子只在原地前後振動 ↔',hl.xr,yT-6,{size:12,col:C.red,bold:true,align:'center',bg:C.panel});}
+  arrow(g,xL+10,H*.07,xL+150,H*.07,C.snd,2);text(g,'聲音傳播方向',xL+158,H*.07+4,{size:12,col:C.snd,bold:true});
+  // 音叉
+  const yf0=H*.08,yf1=yB-4;fork(g,x0,yf0,yf1,dx);
+  if(MK.holdT!==null&&MK.holdT>=MK.hitT&&t>MK.holdT){g.fillStyle='#e8b98f';g.beginPath();g.ellipse(x0,(yf0+yf1)*.62,22,30,0,0,TAU);g.fill();text(g,'✋ 握住',x0,(yf0+yf1)*.62+46,{size:12,bold:true,align:'center'});}
+  if(t-MK.hitT<.25&&t>=MK.hitT)text(g,'噹！',x0+26,yf0+30,{size:16,bold:true,col:C.accent});
+  if(MK.water){const by=yB+2;g.fillStyle=C.sea;g.fillRect(x0-34,by,68,22);line(g,x0-34,by,x0+34,by,C.snd,2);g.strokeStyle=C.ink;g.lineWidth=2;g.strokeRect(x0-36,by-6,72,30);
+    if(amp0>.06){for(let i=0;i<10;i++){const ph=(t*3+rnd(i))%1,ang=-Math.PI/2+(rnd(i+5)-.5)*2.2,r=ph*40*amp0;g.fillStyle=C.snd;g.globalAlpha=1-ph;g.beginPath();g.arc(x0+Math.cos(ang)*r,by-2+Math.sin(ang)*r*1.2+ph*ph*30,2.5,0,TAU);g.fill();}g.globalAlpha=1;
+      text(g,'水花四濺',x0+40,by-8,{size:11,col:C.snd,bold:true});}}
+  // 耳朵
+  const xe=W-48,ye=(yT+yB)/2,se=sAt(xe-30);g.strokeStyle=C.ink;g.lineWidth=2.5;g.beginPath();g.ellipse(xe-24+se,ye,5,26,0,0,TAU);g.stroke();ear(g,xe+6,ye,C.ink);text(g,'耳膜',xe-24,ye+44,{size:11,align:'center'});
+  // 疏密曲線
+  const gT=H*.7,gB=H*.95,gm=(gT+gB)/2,ga=(gB-gT)*.42;line(g,xL,gm,xR,gm,C.line,1);text(g,'空氣的疏密（壓力）',xL,gT-4,{size:11,col:C.muted});
+  g.strokeStyle=C.accent;g.lineWidth=2;g.beginPath();let best={v:0,x:0},worst={v:0,x:0};
+  for(let x=xL;x<=xR;x+=2){const d=x-x0,tr=t-d/cv,a=mkAmp(tr),p=a*Math.cos(TAU*fv*tr);const y=gm-ga*p;x===xL?g.moveTo(x,y):g.lineTo(x,y);
+    if(x>xL+40&&x<xR-40){if(p>best.v)best={v:p,x};if(p<worst.v)worst={v:p,x};}}g.stroke();
+  if(best.v>.15){text(g,'密部',best.x,gm-ga*best.v-4,{size:11,bold:true,col:C.accent,align:'center'});}
+  if(worst.v<-.15){text(g,'疏部',worst.x,gm-ga*worst.v+14,{size:11,bold:true,col:C.accent,align:'center'});}
+  if(mkSrc)mkSrc.set(.18*amp0);}
+function drawMkJar(g,W,H){const t=MK.t;g.fillStyle=C.panel;g.fillRect(0,0,W,H);const by=H*.8,cx=W*.36,jw=Math.min(W*.26,240),jt=H*.16;
+  g.fillStyle=C.grid;g.fillRect(0,by,W,H-by);line(g,0,by,W,by,C.muted,1.5);
+  // 抽氣機
+  const px=Math.max(20,cx-jw/2-W*.16);g.fillStyle=C.ink;g.fillRect(px,by-44,54,44);text(g,'抽氣機',px+27,by-50,{size:11,bold:true,align:'center'});
+  g.fillStyle=C.panel;g.beginPath();g.arc(px+27,by-22,12,0,TAU);g.fill();if(MK.pump!==0){const a=t*6*MK.pump;line(g,px+27,by-22,px+27+Math.cos(a)*10,by-22+Math.sin(a)*10,C.ink,2);}
+  g.strokeStyle=C.muted;g.lineWidth=5;g.beginPath();g.moveTo(px+54,by-10);g.lineTo(cx-jw/2+6,by-10);g.stroke();
+  if(MK.pump!==0)text(g,MK.pump<0?'← 空氣被抽出':'空氣充回 →',(px+54+cx-jw/2)/2,by-16,{size:11,col:C.accent,bold:true,align:'center'});
+  // 鐘罩
+  const L=cx-jw/2,R=cx+jw/2,ar=jw/2,yt=jt+ar;g.save();g.beginPath();g.moveTo(L,by-6);g.lineTo(L,yt);g.arc(cx,yt,ar,Math.PI,0);g.lineTo(R,by-6);g.closePath();
+  g.fillStyle=C.sky;g.globalAlpha=.35+.65*MK.air;g.fill();g.globalAlpha=1;g.clip();
+  const n=Math.round(MK.air*110);for(let i=0;i<n;i++){const x=L+8+((rnd(i)*(R-L-16)+Math.sin(t*1.7+i)*14)%(R-L-16)+(R-L-16))%(R-L-16),y=jt+8+((rnd(i+300)*(by-jt-20)+Math.cos(t*1.3+i*2)*12)%(by-jt-20)+(by-jt-20))%(by-jt-20);g.fillStyle=C.snd;g.beginPath();g.arc(x,y,2.2,0,TAU);g.fill();}
+  g.restore();g.strokeStyle=C.ink;g.lineWidth=2.5;g.beginPath();g.moveTo(L,by-6);g.lineTo(L,yt);g.arc(cx,yt,ar,Math.PI,0);g.lineTo(R,by-6);g.stroke();
+  g.fillStyle=C.muted;g.fillRect(L-14,by-6,jw+28,8);
+  // 電鈴
+  const bx=cx,byy=by-H*.24;line(g,bx,by-6,bx,byy+10,C.ink,3);g.fillStyle='#d4a017';g.beginPath();g.arc(bx,byy,20,Math.PI,0);g.lineTo(bx+20,byy+8);g.lineTo(bx-20,byy+8);g.closePath();g.fill();
+  const hk=MK.bell?Math.sin(t*TAU*9)*8:0;line(g,bx+40,byy+30,bx+22+hk,byy+2,C.ink,2.5);dot(g,bx+22+hk,byy+2,C.ink,4);
+  text(g,'電鈴',bx,byy+30,{size:11,align:'center'});
+  // 聲波往外
+  const Ld=mkLoud(),src=(.03+.97*MK.air);if(MK.bell){for(let k=0;k<5;k++){const ph=((t*.8+k/5)%1);const r=jw/2+ph*W*.5;g.save();g.globalAlpha=src*(1-ph)*.9;g.strokeStyle=C.snd;g.lineWidth=3;g.beginPath();g.arc(cx,byy,r,-1,1);g.stroke();g.restore();}}
+  // 聽者
+  const lx=Math.min(W-30,R+20+(MK.dist-.8)*W*.13);person(g,lx,by,-1,C.ink);ear(g,lx-2,by-44,Ld>.15?C.echo:C.muted);
+  // 響度表
+  const mx=W-40,mh=H*.42,my=H*.1;g.strokeStyle=C.ink;g.lineWidth=1.5;g.strokeRect(mx,my,20,mh);g.fillStyle=C.echo;const lv=clamp(Ld*(MK.bell?.85+.15*Math.sin(t*TAU*9):1),0,1);g.fillRect(mx+2,my+mh-mh*lv,16,mh*lv);
+  text(g,'聽到的',mx+10,my-18,{size:11,align:'center'});text(g,'響度',mx+10,my-5,{size:11,align:'center'});
+  text(g,'罩內空氣 '+Math.round(MK.air*100)+'%',cx,jt-8,{size:13,bold:true,align:'center'});
+  if(mkSrc)mkSrc.set(.12*lv);}
+function drawMkMed(g,W,H){const t=MK.t,m=MK.med,el=t-MK.goT;g.fillStyle=C.panel;g.fillRect(0,0,W,H);const xa=96,xb=W-90,ym=H*.5;
+  const VREL={air:340,water:1463,solid:3352},pxs=(xb-xa)/2.2;// 空氣跑完全程約 2.2 秒
+  const bg={air:C.sky,water:C.sea,solid:'#b98a64',vac:'#0b1020',cup:C.sky}[m];g.fillStyle=bg;g.fillRect(xa,H*.14,xb-xa,H*.72);
+  if(m==='vac'){for(let i=0;i<70;i++){g.fillStyle='#fff';g.globalAlpha=.3+.7*rnd(i+9);g.beginPath();g.arc(xa+rnd(i)*(xb-xa),H*.14+rnd(i+50)*H*.72,1.2,0,TAU);g.fill();}g.globalAlpha=1;}
+  if(m==='solid'){g.strokeStyle='rgba(0,0,0,.18)';g.lineWidth=1;for(let y=H*.14;y<H*.86;y+=16){line(g,xa,y,xb,y,'rgba(0,0,0,.18)',1);for(let x=xa+((y/16|0)%2)*20;x<xb;x+=40)line(g,x,y,x,y+16,'rgba(0,0,0,.18)',1);}}
+  if(m==='cup'){const y=ym,cutX=(xa+xb)/2;const sag=MK.cup==='slack'?H*.22:0;g.strokeStyle=C.ink;g.lineWidth=2;g.beginPath();
+    for(let x=xa;x<=xb;x+=4){const u=(x-xa)/(xb-xa);const yy=y+sag*4*u*(1-u);if(MK.cup==='cut'&&Math.abs(x-cutX)<12){g.stroke();g.beginPath();continue;}x===xa?g.moveTo(x,yy):g.lineTo(x,yy);}g.stroke();
+    if(MK.cup==='cut')text(g,'✂',cutX,y-10,{size:18,align:'center'});
+    g.fillStyle=C.accent;[xa,xb].forEach((x,i)=>{g.beginPath();g.moveTo(x+(i?0:-0),y-16);g.lineTo(x+(i?16:-16),y-24);g.lineTo(x+(i?16:-16),y+24);g.lineTo(x,y+16);g.closePath();g.fill();});
+    if(el>0){const v=MK.cup==='taut'?pxs*3.5:pxs*2;const xp=xa+v*el;const decay=MK.cup==='slack'?Math.exp(-(xp-xa)/(xb-xa)*5):1;const stop=MK.cup==='cut'?cutX-12:xb;
+      if(xp<stop){const u=(xp-xa)/(xb-xa);const yy=y+sag*4*u*(1-u);g.globalAlpha=decay;for(let k=-2;k<=2;k++)dot(g,xp-k*6,yy+Math.sin(k*1.4+el*40)*4*decay,C.snd,3);g.globalAlpha=1;}
+      const heard=MK.cup==='taut'&&xp>=xb;if(heard)text(g,'聽到了！',xb,y-40,{size:14,bold:true,col:C.echo,align:'center',bg:C.panel});
+      if(MK.cup!=='taut'&&xp>=stop)text(g,MK.cup==='cut'?'線斷了，振動傳不過去':'線太鬆，振動傳不過去',(xa+xb)/2,y+60,{size:13,bold:true,col:'#c0453b',align:'center',bg:C.panel});}
+    person(g,xa-44,H*.86,1,C.ink,el>=0&&el<.4?1:0);person(g,xb+44,H*.86,-1,C.ink);return;}
+  // 分子
+  if(m!=='vac'){const sp=m==='air'?18:m==='water'?11:9;const v=pxs*VREL[m]/340;const xp=xa+v*el;const w=24;
+    for(let r=0;;r++){const y=H*.18+r*sp;if(y>H*.82)break;for(let c=0;;c++){const xr=xa+8+c*sp+(rnd(r*7+c)-.5)*sp*.3;if(xr>xb-6)break;const d=xr-xp;const s=el>0&&xp<xb+40?10*Math.exp(-(d*d)/(2*w*w))*Math.sign(-d)*Math.min(1,Math.abs(d)/w):0;
+      g.fillStyle=m==='solid'?'#5b3a22':C.snd;g.globalAlpha=.75;g.beginPath();g.arc(xr+s,y,m==='air'?2.2:2.6,0,TAU);g.fill();}}g.globalAlpha=1;
+    if(el>0&&xp<xb){line(g,xp,H*.14,xp,H*.86,C.accent,2,[5,4]);}
+    if(el>0){text(g,xp>=xb?'傳到了！':'傳播中…',W/2,H*.1,{size:13,bold:true,col:C.accent,align:'center'});}}
+  else{if(el>0&&el<1.2){g.save();g.globalAlpha=1-el/1.2;g.fillStyle='#ffd34d';g.beginPath();g.arc(xa+20,ym,30+el*40,0,TAU);g.fill();g.restore();}
+    if(el>0){text(g,'看得到閃光（光可以在真空中傳播），但聽不到爆炸聲',W/2,H*.1,{size:13,bold:true,col:C.accent,align:'center'});}}
+  // 兩端
+  if(m==='vac'){g.fillStyle='#9aa3ab';g.fillRect(xa-50,ym-14,44,28);g.fillRect(xb+8,ym-14,44,28);text(g,'太空船',xb+30,ym+30,{size:11,align:'center'});text(g,'相撞',xa-28,ym+30,{size:11,align:'center'});}
+  else{speaker(g,xa-24,ym);ear(g,xb+30,ym,C.ink);}
+  text(g,{air:'空氣',water:'水',solid:'固體（牆壁）',vac:'真空'}[m],xa+8,H*.14+16,{size:13,bold:true,col:m==='vac'?'#fff':C.ink});}
+function mkResults(){let big='',ck=[];
+  if(MK.mode==='fork'){const a=mkAmp(MK.t);big=a<.02?(MK.hitT<0?'按「敲擊音叉」開始':'音叉停止振動 → 聲音消失'):'音叉振動中：空氣疏密相間往外傳 → 聽到聲音';
+    ck=[['info','聲音由物體快速振動產生；振動停止，聲音就停止。'],['info','聲波傳播方向與空氣分子振動方向平行：縱波。'],['info','空氣分子沒有跟著聲音跑過去，只在原地振動，傳出去的是能量。'],['info','音叉每秒振動幾次，空氣每秒就產生幾次疏密：頻率越高，疏密排得越密。']];}
+  else if(MK.mode==='jar'){const L=mkLoud();big=!MK.bell?'電鈴斷電：沒有振動，沒有聲音':MK.air<.05?'鈴錘還在振動，但幾乎聽不到（空氣幾乎被抽光）':MK.air<.6?'空氣變少，鈴聲變小':'鈴聲清楚';
+    ck=[[MK.dist>2?'ok':'info','甲：人走遠，聲音變小——聲音的能量隨距離分散。'],[MK.air<.95?'ok':'info','乙：抽氣，鈴聲漸小——聲音的傳播要靠介質（空氣）。'],[MK.air<.05&&MK.bell?'ok':'info','丙：空氣抽光，鈴錘仍在振動卻幾乎聽不到——物體有振動，不一定能讓人聽到聲音。'],['info','還聽得到一點點：鐘罩的玻璃、底座等固體也能傳聲。']];}
+  else{const m=MK.med;big={air:'空氣可以傳聲（約 340 m/s）',water:'水可以傳聲：比空氣快（約 1500 m/s）',solid:'固體可以傳聲：最快（木材約 3350 m/s）',vac:'真空不能傳聲',cup:MK.cup==='taut'?'拉緊的棉線把振動傳過去':'棉線'+(MK.cup==='cut'?'斷了':'太鬆')+'，聽不到'}[m];
+    ck=[['info','聲音的傳播需要介質：固體、液體、氣體都可以。'],['info','一般速率：固體＞液體＞氣體（課本：空氣 340、水 1463、木材 3352 m/s）。'],['info','太空中沒有空氣：太空人用無線電（電磁波）通話；頭盔內有空氣，所以自己說話聽得到。']];}
+  $('mkBig').textContent=big;checks($('mkC'),ck);}
+SIZE.make=()=>{({W:WM,H:HM}=fit($('cvMk'),MK.mode==='fork'?.46:.42,280,440));};
+UI.make=()=>{mkUI();};
+TICK.make=dt=>{MK.t+=dt;if(MK.mode==='jar'&&MK.pump!==0){MK.air=clamp(MK.air+MK.pump*dt/5,0,1);if(MK.air===0||MK.air===1)MK.pump=0;$('mkAir').value=Math.round(MK.air*100);$('mkAiro').textContent=Math.round(MK.air*100)+'%';segSet($('mkPump'),String(MK.pump));}return true;};
+let mkLast='';DRAW.make=()=>{const g=$('cvMk').getContext('2d');if(MK.mode==='fork')drawMkFork(g,WM,HM);else if(MK.mode==='jar')drawMkJar(g,WM,HM);else drawMkMed(g,WM,HM);
+  const key=MK.mode+Math.round(mkAmp(MK.t)*20)+MK.bell+Math.round(MK.air*20)+(MK.dist>2)+MK.med+MK.cup+MK.hitT;if(key!==mkLast){mkLast=key;mkResults();}};
+
+// =====================================================================
+// 2 聲速
+// =====================================================================
+const SP={mode:'race',t:0,run:false,T:15,D:1000,pair:'fire',giv:'t',dt:2,dd:680,rv:8.5,cue:'sound',dir:'aw',f:340};
+let WS=600,HS=300;
+const PAIRS={
+  fire:{n:'煙火：光與聲',src:'煙火',dst:'觀眾',P:[{n:'光',v:3e8,c:'#e0a800'},{n:'聲音（空氣）',v:'air',c:'snd'}],def:{giv:'t',dt:2,T:15}},
+  ship:{n:'甲乙船：海水與空氣',src:'甲船',dst:'乙船',P:[{n:'海水',v:1700,c:'sea2'},{n:'空氣',v:340,c:'snd'}],def:{giv:'d',dd:680}},
+  navy:{n:'軍艦：海水與空氣',src:'敵艦爆炸',dst:'我方軍艦',P:[{n:'海水',v:1500,c:'sea2'},{n:'空氣',v:300,c:'snd'}],def:{giv:'t',dt:3}},
+  ground:{n:'爆炸：地面與空氣',src:'A 地爆炸',dst:'小王',P:[{n:'地面振動',v:3500,c:'cliff'},{n:'空氣',v:350,c:'snd'}],def:{giv:'t',dt:8}},
+  navy2:{n:'軍艦：海水 1360、空氣 340',src:'敵艦爆炸',dst:'我方軍艦',P:[{n:'海水',v:1360,c:'sea2'},{n:'空氣',v:340,c:'snd'}],def:{giv:'t',dt:12}},
+  plant:{n:'煉油廠：光、地震、聲',src:'煉油廠',dst:'我們',P:[{n:'光',v:3e8,c:'#e0a800'},{n:'地面',v:2000,c:'cliff'},{n:'空氣',v:340,c:'snd'}],def:{giv:'d',dd:3400}}};
+const pv=p=>p.v==='air'?vAir(SP.T):p.v;
+const pcol=c=>c==='snd'?C.snd:c==='sea2'?'#2f8fbf':c==='cliff'?C.cliff:c;
+function spModel(){const m=SP.mode;
+  if(m==='race'){const v=vAir(SP.T);const L=[{n:'空氣 0 °C',v:331},{n:`空氣 ${SP.T} °C（大聲、高音）`,v},{n:`空氣 ${SP.T} °C（小聲、低音）`,v},{n:'水',v:1463},{n:'木材',v:3352},{n:'鋼鐵（約）',v:5000}];
+    const tmax=SP.D/Math.min(...L.map(l=>l.v))*1.05;return {L,tmax};}
+  if(m==='delay'){const P=PAIRS[SP.pair];const vs=P.P.map(pv);const fast=Math.max(...vs),slow=Math.min(...vs);
+    let D,dt;if(SP.giv==='t'){dt=SP.dt;D=dt/(1/slow-1/fast);}else{D=SP.dd;dt=D/slow-D/fast;}const ts=vs.map(v=>D/v);return {P,vs,D,dt,ts,tmax:D/slow*1.08};}
+  if(m==='timer'){const v=vAir(SP.T);const ts=SP.cue==='sound'?100/v:0;const tf=100/SP.rv;return {v,ts,tf,rec:tf-ts,tmax:tf+.6};}
+  const va=vAir(SP.T),vw=1500;const v1=SP.dir==='aw'?va:vw,v2=SP.dir==='aw'?vw:va;return {v1,v2,l1:v1/SP.f,l2:v2/SP.f,tmax:1e9};}
+function spUI(){const m=SP.mode;segSet($('spMode'),m);document.querySelectorAll('.spc').forEach(e=>e.hidden=e.dataset.m!==m);
+  $('spPlay').hidden=$('spRst').hidden=m==='cross';
+  const P=PAIRS[SP.pair];$('spTw').hidden=m==='delay'&&!P.P.some(p=>p.v==='air');
+  $('spT').value=SP.T;$('spTo').textContent=SP.T+' °C（'+nf(vAir(SP.T),1)+' m/s）';$('spD').value=SP.D;$('spDo').textContent=SP.D+' m';
+  $('spRun').value=SP.rv;$('spRuno').textContent=SP.rv+' m/s';segSet($('spCue'),SP.cue);segSet($('spPair'),SP.pair);segSet($('spGiv'),SP.giv);
+  $('spDtw').hidden=SP.giv!=='t';$('spDdw').hidden=SP.giv!=='d';$('spDt').value=SP.dt;$('spDto').textContent=f1(SP.dt)+' s';$('spDd').value=SP.dd;$('spDdo').textContent=SP.dd+' m';
+  segSet($('spDir'),SP.dir);$('spF').value=SP.f;$('spFo').textContent=SP.f+' Hz';playTxt($('spPlay'),SP.run);
+  $('spHint').textContent={race:'按播放，看同一個聲音在不同介質中跑完同樣的距離要多久。',delay:'光幾乎瞬間到達，聲音比較慢；先後到達的時間差可以算出距離。',timer:'計時員站在終點，聽到槍聲才按碼錶——槍聲要花一點時間才傳到終點。',cross:'聲音從一種介質進入另一種介質：頻率不變，速率和波長改變。'}[m];
+  $('spHowT').textContent={race:'各種介質賽跑：怎麼看',delay:'先看到、後聽到：怎麼看',timer:'百米計時：怎麼看',cross:'傳進另一種介質：怎麼看'}[m];
+  $('spHow').innerHTML=({race:['每一道是一種介質，同時出發；聲速：固體＞液體＞氣體。','空氣中溫度越高，聲速越快：v ＝ 331 ＋ 0.6T。','中間兩道是同溫的空氣，一個大聲高音、一個小聲低音：同時到達——聲速與響度、音調、說話快慢無關。'],
+    delay:['同一個地點同時發出的光（或振動）和聲音，走不同的路、速率不同，先後到達。','光速 3×10⁸ m/s，幾乎是一瞬間：看到閃光到聽到聲音的時間 ≈ 聲音走的時間。','兩種聲速都要算時：距離 ÷ 慢的 − 距離 ÷ 快的 ＝ 時間差。'],
+    timer:['發令槍一響，選手就起跑；聲音走 100 m 要約 0.29 秒才到終點。','計時員聽到槍聲才按碼錶，比選手起跑晚，所以記錄的成績太快，要加回 100 ÷ v 秒。','看槍煙（光）就按，誤差幾乎是 0。'],
+    cross:['左右是兩種介質，波峰（密部）一個接一個通過界面。','每秒通過界面的波數一樣：頻率由發聲體決定，不會改變。','進入水中速率變快，同樣的頻率，波長變長：λ ＝ v ÷ f。']})[m].map(s=>`<li>${s}</li>`).join('');}
+{const box=$('spPair');Object.entries(PAIRS).forEach(([k,p])=>{const b=document.createElement('button');b.dataset.v=k;b.textContent=p.n;box.appendChild(b);});}
+function spRestart(run=true){SP.t=0;SP.run=run;spUI();kick();}
+segOn($('spMode'),v=>{SP.mode=v;hideStory();spUI();SIZE.speed();spRestart(v!=='cross');});
+$('spPlay').addEventListener('click',()=>{const M=spModel();if(!SP.run&&SP.t>=M.tmax-1e-9)SP.t=0;SP.run=!SP.run;spUI();kick();});
+$('spRst').addEventListener('click',()=>spRestart());
+$('spT').addEventListener('input',()=>{SP.T=+$('spT').value;spUI();kick();});
+$('spD').addEventListener('input',()=>{SP.D=+$('spD').value;spRestart(false);});
+$('spRun').addEventListener('input',()=>{SP.rv=+$('spRun').value;spRestart(false);});
+segOn($('spCue'),v=>{SP.cue=v;spRestart();});
+segOn($('spPair'),v=>{SP.pair=v;Object.assign(SP,PAIRS[v].def);spRestart();});
+segOn($('spGiv'),v=>{if(SP.mode!=='delay')return;const M=spModel();SP.giv=v;if(v==='d')SP.dd=Math.round(M.D/10)*10;else SP.dt=+M.dt.toFixed(1);spRestart(false);});
+$('spDt').addEventListener('input',()=>{SP.dt=+$('spDt').value;spRestart(false);});
+$('spDd').addEventListener('input',()=>{SP.dd=+$('spDd').value;spRestart(false);});
+segOn($('spDir'),v=>{SP.dir=v;spUI();kick();});
+$('spF').addEventListener('input',()=>{SP.f=+$('spF').value;spUI();kick();});
+
+function wavIcon(g,x,y,col){g.save();g.strokeStyle=col;g.lineWidth=2.5;for(let k=0;k<3;k++){g.beginPath();g.arc(x-14,y,6+k*5,-.7,.7);g.stroke();}g.restore();}
+function drawSpRace(g,W,H,M){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const nar=W<560,L0=nar?12:150,R0=W-(nar?70:110),n=M.L.length,top=34,lh=(H-top-20)/n;const X=d=>L0+d/SP.D*(R0-L0);
+  line(g,L0,top-6,L0,H-14,C.ink,2);line(g,R0,top-6,R0,H-14,C.ink,2,[6,4]);text(g,'出發',L0,top-12,{size:11,align:'center',col:C.muted});text(g,SP.D+' m',R0,top-12,{size:11,align:'center',col:C.muted});
+  M.L.forEach((l,i)=>{const y=top+lh*(i+.5);g.fillStyle=i%2?C.grid:C.panel;g.fillRect(L0,y-lh/2,R0-L0,lh);if(nar)text(g,l.n,L0+4,y-lh/2+12,{size:10,bold:true});else text(g,l.n,L0-8,y+4,{size:12,bold:true,align:'right'});
+    const ta=SP.D/l.v,d=Math.min(l.v*SP.t,SP.D);const col=i===3?'#2f8fbf':i===4?C.cliff:i===5?C.purple:C.snd;g.fillStyle=col;g.globalAlpha=.35;g.fillRect(L0,y-lh*.18,X(d)-L0,lh*.36);g.globalAlpha=1;wavIcon(g,X(d),y,col);
+    text(g,SP.t>=ta?fmtT(ta):nf(l.v,0)+' m/s',R0+8,y+4,{size:12,bold:SP.t>=ta,col:SP.t>=ta?C.echo:C.muted});});
+  text(g,'t ＝ '+fmtT(Math.min(SP.t,M.tmax)),W-10,16,{size:13,bold:true,align:'right',col:C.accent});}
+function blast(g,x,y,s=1){g.save();g.fillStyle='#ffb020';g.beginPath();for(let i=0;i<16;i++){const r=(i%2?10:22)*s,a=i/16*TAU;g.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r);}g.closePath();g.fill();g.restore();}
+function drawSpDelay(g,W,H,M){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const nar=W<560,P=M.P,L0=nar?56:120,R0=W-(nar?56:120),top=40,n=P.P.length,lh=Math.min(70,(H-top-50)/n);const X=d=>L0+d/M.D*(R0-L0);
+  const ox=nar?28:56;text(g,P.src,L0-ox,top-12,{size:nar?11:13,bold:true,align:'center'});text(g,P.dst,R0+ox,top-12,{size:nar?11:13,bold:true,align:'center'});
+  if(SP.t<M.tmax*.08||P.src.includes('爆炸')||P.src==='煙火'||P.src==='煉油廠'){if(SP.t<M.tmax*.12)blast(g,L0-ox,top+lh*n/2,1.2-SP.t/M.tmax*3);}
+  if(P.src.includes('船')){ship(g,L0-ox,top+lh*n/2+10,1);}if(P.dst.includes('船')||P.dst.includes('艦'))ship(g,R0+ox,top+lh*n/2+10,-1);else person(g,R0+ox,top+lh*n/2+30,-1);
+  P.P.forEach((p,i)=>{const y=top+lh*(i+.5),v=M.vs[i],col=pcol(p.c);g.fillStyle=i%2?C.grid:C.sky;g.fillRect(L0,y-lh/2,R0-L0,lh);text(g,p.n+'　'+(v>1e7?'3×10⁸ m/s':nf(v,0)+' m/s'),L0+6,y-lh/2+14,{size:11,bold:true,col});
+    const d=Math.min(v*SP.t,M.D);g.fillStyle=col;g.globalAlpha=.35;g.fillRect(L0,y-4,X(d)-L0,8);g.globalAlpha=1;dot(g,X(d),y,col,6);
+    const ta=M.ts[i];if(SP.t>=ta)text(g,'到達 '+fmtT(ta),R0-6,y+lh/2-6,{size:12,bold:true,align:'right',col:C.echo});});
+  dimLine(g,L0,R0,top+lh*n+18,'距離 '+fmtM(M.D),C.ink,12);
+  const yt=H-20,Xt=t=>L0+t/M.tmax*(R0-L0);line(g,L0,yt,R0,yt,C.line,1.5);text(g,'時間',L0-8,yt+4,{size:11,col:C.muted,align:'right'});
+  M.ts.forEach((ta,i)=>{if(SP.t>=ta){line(g,Xt(ta),yt-8,Xt(ta),yt+8,pcol(P.P[i].c),3);}});
+  const t1=Math.min(...M.ts),t2=Math.max(...M.ts);if(SP.t>=t2){line(g,Xt(t1),yt-14,Xt(t2),yt-14,C.echo,2);text(g,'相差 '+fmtT(M.dt),(Xt(t1)+Xt(t2))/2,yt-18,{size:12,bold:true,col:C.echo,align:'center',bg:C.panel});}
+  line(g,Xt(Math.min(SP.t,M.tmax)),yt-10,Xt(Math.min(SP.t,M.tmax)),yt+10,C.accent,2);}
+function runner(g,x,y,t,run){g.save();g.strokeStyle=C.green;g.fillStyle=C.green;g.lineWidth=3;g.lineCap='round';const p=run?Math.sin(t*14):0;
+  g.beginPath();g.arc(x+3,y-40,6,0,TAU);g.fill();line(g,x+2,y-34,x-2,y-16,C.green,3);line(g,x-2,y-16,x-2+10*p,y,C.green,3);line(g,x-2,y-16,x-2-10*p,y,C.green,3);line(g,x+1,y-28,x+1+9*p,y-20,C.green,3);line(g,x+1,y-28,x+1-9*p,y-22,C.green,3);g.restore();}
+function drawSpTimer(g,W,H,M){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const L0=70,R0=W-90,G=H*.62,X=d=>L0+d/100*(R0-L0),t=SP.t;
+  g.fillStyle='#c46a4a';g.fillRect(L0-20,G,R0-L0+40,22);for(let d=0;d<=100;d+=10){line(g,X(d),G,X(d),G+22,'rgba(255,255,255,.5)',1);text(g,d+' m',X(d),G+36,{size:10,align:'center',col:C.muted});}
+  line(g,X(100),G-70,X(100),G+22,C.ink,2);
+  person(g,L0-36,G,1);if(t<.25){g.fillStyle='#bbb';g.beginPath();g.arc(L0-22,G-52,8+t*40,0,TAU);g.fill();text(g,'砰！',L0-20,G-70,{size:14,bold:true,col:C.accent});}
+  person(g,R0+40,G,-1);const xr=Math.min(SP.rv*t,100);runner(g,X(xr),G,t,xr<100);
+  const ds=Math.min(M.v*t,100);if(ds<100){dot(g,X(ds),G-30,C.snd,6);text(g,'槍聲',X(ds),G-42,{size:11,col:C.snd,bold:true,align:'center'});}
+  // 碼錶
+  const started=t>=M.ts,sw=started?Math.min(t,M.tf)-M.ts:0;const bx=W/2-80,byy=14;g.fillStyle=C.ink;g.fillRect(bx,byy,160,40);text(g,(sw).toFixed(2)+' s',bx+80,byy+28,{size:20,bold:true,col:started?'#7cf29a':'#888',align:'center'});
+  text(g,started?(t>=M.tf?'計時員按停':'計時員的碼錶跑動中'):'計時員還沒聽到槍聲…',bx+80,byy+58,{size:12,align:'center',col:started?C.green:C.echo,bold:true});
+  text(g,'選手真正的時間：'+Math.min(t,M.tf).toFixed(2)+' s',W-10,H-10,{size:12,bold:true,align:'right'});
+  if(SP.cue==='sound'&&t>=M.ts){text(g,'選手已經跑了 '+fmtM(SP.rv*M.ts),X(SP.rv*M.ts),G-74,{size:11,col:C.green,bold:true,align:'center',bg:C.panel});}}
+function drawSpCross(g,W,H,M){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const xm=W/2,top=H*.14,bot=H*.66;
+  const s=Math.min((xm-20)/(M.l1*3.2),(W-xm-40)/(M.l2*1.15));// 左邊放約 3 個波長
+  const c1=SP.dir==='aw'?C.sky:C.sea,c2=SP.dir==='aw'?C.sea:C.sky;g.fillStyle=c1;g.fillRect(0,top,xm,bot-top);g.fillStyle=c2;g.fillRect(xm,top,W-xm,bot-top);
+  const vis=60/(M.v1*s);// 左側波前動畫速率 60 px/s
+  const ph=x=>{const tt=SP.t*vis;return x<xm?SP.f*(tt-(x-0)/(M.v1*s)*1):SP.f*(tt-xm/(M.v1*s)-(x-xm)/(M.v2*s));};
+  // 分子
+  for(let r=0;;r++){const y=top+8+r*13;if(y>bot-6)break;for(let x=4;x<W;x+=11){const p=ph(x);const dx=-4*Math.sin(TAU*p);g.fillStyle=x<xm?(SP.dir==='aw'?C.snd:'#2f8fbf'):(SP.dir==='aw'?'#2f8fbf':C.snd);g.globalAlpha=.7;g.beginPath();g.arc(x+dx,y,2,0,TAU);g.fill();}}g.globalAlpha=1;
+  line(g,xm,top-6,xm,bot+6,C.ink,2);text(g,SP.dir==='aw'?'空氣':'水',12,top-8,{size:14,bold:true});text(g,SP.dir==='aw'?'水':'空氣',xm+12,top-8,{size:14,bold:true});
+  // 波長標示：找左右各一段密部
+  const findCrest=(x0,x1)=>{let best=null;for(let x=x0;x<x1;x++){const p=ph(x);const fr=((p%1)+1)%1;if(fr<.02||fr>.98){best=x;break;}}return best;};
+  const yl=bot+22;const ca=findCrest(30,xm-s*M.l1-10);if(ca!==null)dimLine(g,ca,ca+s*M.l1,yl,'λ ＝ '+nf(M.l1,2)+' m',C.ink,12);
+  if(xm+6+s*M.l2<W-2)dimLine(g,xm+6,xm+6+s*M.l2,yl,'λ ＝ '+nf(M.l2,2)+' m',C.ink,12);else text(g,'λ ＝ '+nf(M.l2,2)+' m',xm+12,yl+4,{size:12,bold:true});
+  // 波形曲線
+  const gy=H*.9,ga=H*.05;g.strokeStyle=C.accent;g.lineWidth=2;g.beginPath();for(let x=0;x<=W;x+=2){const y=gy-ga*Math.cos(TAU*ph(x));x?g.lineTo(x,y):g.moveTo(x,y);}g.stroke();text(g,'疏密',4,gy-ga-4,{size:10,col:C.muted});}
+function spResults(M){let big='',f='',ck=[];const m=SP.mode;
+  if(m==='race'){const fast=M.L[5],air=M.L[1];big=`跑 ${SP.D} m：空氣（${SP.T} °C）${fmtT(SP.D/air.v)}，水 ${fmtT(SP.D/1463)}，木材 ${fmtT(SP.D/3352)}`;
+    f=`空氣中的聲速 v ＝ 331 ＋ 0.6T ＝ 331 ＋ 0.6×${SP.T} ＝ ${nf(air.v,1)} m/s<br>時間 ＝ 距離 ÷ 聲速`;
+    ck=[['info','聲速：固體＞液體＞氣體（介質的種類）。'],['info','溫度越高，空氣中的聲速越快（介質的狀態）。'],['ok','大聲與小聲、高音與低音同時到達：聲速與響度、音調、說話快慢無關。']];}
+  else if(m==='delay'){const P=M.P,i1=M.vs.indexOf(Math.max(...M.vs)),i2=M.vs.indexOf(Math.min(...M.vs));const v1=M.vs[i1],v2=M.vs[i2];
+    big=`相距 ${fmtM(M.D)}：${P.P[i1].n}先到，${P.P[i2].n}晚 ${fmtT(M.dt)}`;
+    f=v1>1e7?`光幾乎不花時間 → 距離 ＝ 聲速 × 時間差 ＝ ${nf(v2,1)} × ${nf(M.dt,2)} ＝ ${fmtM(M.D)}`:`D ÷ ${nf(v2,1)} − D ÷ ${nf(v1,1)} ＝ ${nf(M.dt,3)} s<br>D ＝ ${fmtM(M.D)}`;
+    if(P.P.length===3)f+=`<br>先後順序：${P.P.map((p,i)=>[p.n,M.ts[i]]).sort((a,b)=>a[1]-b[1]).map(a=>a[0]).join(' → ')}`;
+    ck=[['info','同時發出，速率快的先到。光速 3×10⁸ m/s，比聲速快約 100 萬倍。'],['info','打雷時先看到閃電、後聽到雷聲，也是同樣的道理：秒數 × 340 ≈ 距離。']];}
+  else if(m==='timer'){big=SP.cue==='sound'?`記錄 ${M.rec.toFixed(2)} s，比實際 ${M.tf.toFixed(2)} s 少了 ${M.ts.toFixed(2)} s`:`看到槍煙就按：記錄 ${M.tf.toFixed(2)} s，幾乎沒有誤差`;
+    f=`聲速 v ＝ 331 ＋ 0.6×${SP.T} ＝ ${nf(M.v,1)} m/s<br>槍聲走 100 m：100 ÷ ${nf(M.v,1)} ＝ ${(100/M.v).toFixed(2)} s`+(SP.cue==='sound'?`<br>成績要「加回」${(100/M.v).toFixed(2)} s`:'');
+    ck=[['info','計時員晚按碼錶 → 記錄的時間太短 → 成績要加回聲音走 100 m 的時間。'],['info','光走 100 m 只要 3×10⁻⁷ s，可以忽略。']];}
+  else{big=`頻率不變 ${SP.f} Hz；波長 ${nf(M.l1,2)} m → ${nf(M.l2,2)} m`;
+    f=`λ ＝ v ÷ f<br>${SP.dir==='aw'?'空氣':'水'}：${nf(M.v1,1)} ÷ ${SP.f} ＝ ${nf(M.l1,3)} m<br>${SP.dir==='aw'?'水':'空氣'}：${nf(M.v2,1)} ÷ ${SP.f} ＝ ${nf(M.l2,3)} m`;
+    ck=[['info','頻率、週期由發聲體決定，進入別的介質不變；兩支音叉 300 Hz 與 200 Hz 傳入水中，頻率比還是 3：2。'],['info',SP.dir==='aw'?'進入水中聲速變快 → 波長變長。':'進入空氣中聲速變慢 → 波長變短。'],['info','傳播過程中能量散失 → 振幅變小。']];}
+  $('spBig').textContent=big;$('spF2').innerHTML=f;checks($('spC'),ck);}
+SIZE.speed=()=>{({W:WS,H:HS}=fit($('cvSp'),SP.mode==='race'?.42:.4,260,420));};
+UI.speed=()=>{spUI();};
+TICK.speed=dt=>{if(SP.mode==='cross')return true;if(!SP.run)return false;const M=spModel();const rate=SP.mode==='timer'?.8:M.tmax/6;SP.t+=dt*rate;if(SP.t>=M.tmax){SP.t=M.tmax;SP.run=false;playTxt($('spPlay'),false);}return SP.run;};
+let spLast='';DRAW.speed=()=>{const M=spModel(),g=$('cvSp').getContext('2d');const m=SP.mode;if(m==='race')drawSpRace(g,WS,HS,M);else if(m==='delay')drawSpDelay(g,WS,HS,M);else if(m==='timer')drawSpTimer(g,WS,HS,M);else drawSpCross(g,WS,HS,M);
+  const key=JSON.stringify([m,SP.T,SP.D,SP.pair,SP.giv,SP.dt,SP.dd,SP.rv,SP.cue,SP.dir,SP.f]);if(key!==spLast){spLast=key;spResults(M);}};
+
+// =====================================================================
+// 3 示波器與三要素
+// =====================================================================
+const SC={n:2,sel:0,div:1,tr:[{src:'fork',f:400,a:3},{src:'fork',f:400,a:1.5},{src:'fork',f:200,a:2},{src:'fork',f:400,a:1}],dbA:80,dbB:40};
+const TRN=['甲','乙','丙','丁'],TRC=['#5ee08a','#ffd166','#7cc6ff','#ff8fab'];
+const SRCN={fork:'音叉',flute:'長笛',clar:'單簧管',violin:'小提琴',piano:'鋼琴',voice:'人聲',noise:'噪音'};
+const WMAX={};function wv(src,p){if(src==='noise'){let s=0;for(let k=1;k<9;k++)s+=Math.sin(p*TAU*(k*1.37+.3)+k*k)*(1/k);return s*.9*(.6+.4*Math.sin(p*3.1));}
+  const h=HARM[src]||[1];if(!WMAX[src]){let m=0;for(let i=0;i<400;i++){const q=i/400;let s=0;h.forEach((a,k)=>s+=a*Math.sin(TAU*(k+1)*q));m=Math.max(m,Math.abs(s));}WMAX[src]=m;}
+  let s=0;h.forEach((a,k)=>s+=a*Math.sin(TAU*(k+1)*p));return s/WMAX[src];}
+let WSC=600,HSC=300,WDB=300,HDB=80;
+function scUI(){segSet($('scN'),String(SC.n));const sel=$('scSel');sel.innerHTML='';for(let i=0;i<SC.n;i++){const b=document.createElement('button');b.dataset.v=i;b.textContent=TRN[i];sel.appendChild(b);}
+  SC.sel=Math.min(SC.sel,SC.n-1);segSet(sel,String(SC.sel));const T=SC.tr[SC.sel];segSet($('scSrc'),T.src);$('scF').value=T.f;$('scFo').textContent=T.src==='noise'?'（沒有固定頻率）':T.f+' Hz';$('scA').value=T.a;$('scAo').textContent=T.a+' 格';segSet($('scDiv'),String(SC.div));
+  $('scPlayAll').hidden=SC.n===1;$('dbA').value=SC.dbA;$('dbB').value=SC.dbB;$('dbAo').textContent=SC.dbA+' dB';$('dbBo').textContent=SC.dbB+' dB';}
+segOn($('scN'),v=>{SC.n=+v;hideStory();scUI();SIZE.scope();kick();});
+segOn($('scSel'),v=>{SC.sel=+v;scUI();kick();});
+segOn($('scSrc'),v=>{SC.tr[SC.sel].src=v;scUI();kick();});
+segOn($('scDiv'),v=>{SC.div=+v;scUI();kick();});
+$('scF').addEventListener('input',()=>{SC.tr[SC.sel].f=+$('scF').value;scUI();kick();});
+$('scA').addEventListener('input',()=>{SC.tr[SC.sel].a=+$('scA').value;scUI();kick();});
+$('dbA').addEventListener('input',()=>{SC.dbA=+$('dbA').value;scUI();kick();});
+$('dbB').addEventListener('input',()=>{SC.dbB=+$('dbB').value;scUI();kick();});
+const playTr=(T,at=0)=>tone(T.f,{src:T.src,gain:.05*T.a,dur:1,at,decay:T.src==='piano'});
+$('scPlay').addEventListener('click',()=>playTr(SC.tr[SC.sel]));
+$('scPlayAll').addEventListener('click',()=>{for(let i=0;i<SC.n;i++)playTr(SC.tr[i],i*1.2);});
+function drawScope(g,W,H){g.fillStyle='#0e1a14';g.fillRect(0,0,W,H);const n=SC.n,pad=8,ph=(H-pad*(n+1))/n,L=40,R=W-14,ms=SC.div*10;
+  for(let i=0;i<n;i++){const T=SC.tr[i],y0=pad+i*(ph+pad),ym=y0+ph/2,dv=ph/8,dx=(R-L)/10;
+    g.strokeStyle='rgba(120,200,150,.18)';g.lineWidth=1;for(let k=0;k<=10;k++)line(g,L+k*dx,y0,L+k*dx,y0+ph,'rgba(120,200,150,.18)',1);for(let k=0;k<=8;k++)line(g,L,y0+k*dv,R,y0+k*dv,k===4?'rgba(120,200,150,.4)':'rgba(120,200,150,.18)',1);
+    text(g,TRN[i],L-22,ym+6,{size:16,bold:true,col:TRC[i]});
+    g.strokeStyle=TRC[i];g.lineWidth=i===SC.sel&&n>1?2.6:2;g.shadowColor=TRC[i];g.shadowBlur=6;g.beginPath();
+    for(let x=L;x<=R;x+=1){const tms=(x-L)/(R-L)*ms;const p=T.f*tms/1000;const y=ym-T.a*dv*wv(T.src,p);x===L?g.moveTo(x,y):g.lineTo(x,y);}g.stroke();g.shadowBlur=0;
+    text(g,`${SRCN[T.src]}　${T.src==='noise'?'不規則':T.f+' Hz'}　振幅 ${T.a} 格`,R-6,y0+14,{size:11,col:TRC[i],align:'right'});
+    if(T.src!=='noise'&&(i===SC.sel||n===1)){const Tms=1000/T.f;const px=Tms/ms*(R-L);if(px>18&&px<R-L){const yb=y0+ph-8;line(g,L,yb,L+px,yb,'#fff',1.5);line(g,L,yb-5,L,yb+5,'#fff',1.5);line(g,L+px,yb-5,L+px,yb+5,'#fff',1.5);text(g,'1 個週期 '+nf(Tms,2)+' ms',L+px+6,yb+4,{size:11,col:'#fff'});}}}
+  text(g,'橫軸：每格 '+SC.div+' ms（全部 '+ms+' ms）',W-12,H-2,{size:10,col:'rgba(220,255,230,.7)',align:'right'});}
+function drawDb(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const L=10,R=W-10,y=H*.55,X=d=>L+d/140*(R-L);line(g,L,y,R,y,C.ink,2);
+  for(let d=0;d<=140;d+=20){line(g,X(d),y-5,X(d),y+5,C.ink,1.5);text(g,String(d),X(d),y+18,{size:10,align:'center',col:C.muted});}
+  [[SC.dbA,'甲',C.echo],[SC.dbB,'乙',C.snd]].forEach(([d,n,c],i)=>{dot(g,X(d),y,c,7);text(g,n,X(d),y-12-(i*0),{size:12,bold:true,col:c,align:'center'});});}
+function scResults(){const tr=SC.tr.slice(0,SC.n);let big='',f='',ck=[];const v=340;
+  if(SC.n===1){const T=tr[0];big=T.src==='noise'?'噪音：波形沒有規律，也沒有固定的頻率':`${SRCN[T.src]} ${T.f} Hz：每秒振動 ${T.f} 次`;
+    f=T.src==='noise'?'樂音的波形有規律；噪音沒有規律，聽起來不舒服':`週期 T ＝ 1 ÷ f ＝ 1 ÷ ${T.f} ＝ ${nf(1000/T.f,2)} ms<br>空氣中（340 m/s）波長 λ ＝ v ÷ f ＝ ${nf(v/T.f,3)} m`;
+    ck=[['info','響度：由振幅決定，振幅越大越大聲（單位分貝 dB）。'],['info','音調：由頻率決定，頻率越高音調越高（單位 Hz）。'],['info','音色：由波形決定，不同樂器、不同的人波形不同；音叉是最單純的正弦波，常用來調音。']];}
+  else{const pairs=[];for(let i=0;i<tr.length;i++)for(let j=i+1;j<tr.length;j++)pairs.push([i,j]);
+    const desc=([i,j])=>{const A=tr[i],B=tr[j];const sa=A.a===B.a,sf=A.f===B.f||A.src==='noise'&&B.src==='noise',ss=A.src===B.src;return {i,j,sa,sf,ss};};const D=pairs.map(desc);
+    if(SC.n===2){const d=D[0];const diff=[!d.sa&&'響度',!d.sf&&'音調',!d.ss&&'音色'].filter(Boolean);big=diff.length?`甲、乙的${diff.join('、')}不同`:'甲、乙完全一樣';
+      ck=[[d.sa?'ok':'no',`響度（振幅）：${d.sa?'相同':'不同——振幅'+(tr[0].a>tr[1].a?'甲':'乙')+'較大，較大聲'}`],[d.sf?'ok':'no',`音調（頻率）：${d.sf?'相同':'不同——'+(tr[0].f>tr[1].f?'甲':'乙')+'的波較密，音調較高'}`],[d.ss?'ok':'no',`音色（波形）：${d.ss?'相同':'不同——'+SRCN[tr[0].src]+'和'+SRCN[tr[1].src]+'的波形不一樣'}`]];}
+    else{const nm=x=>TRN[x];const sameA=D.filter(d=>d.sa&&!d.sf).map(d=>nm(d.i)+nm(d.j)),sameF=D.filter(d=>d.sf&&!d.sa).map(d=>nm(d.i)+nm(d.j));
+      const hi=tr.reduce((b,T,i)=>T.f>tr[b].f?i:b,0),loud=tr.reduce((b,T,i)=>T.a>tr[b].a?i:b,0);
+      big=`音調最高：${nm(hi)}；響度最大：${nm(loud)}`;ck=[['info','響度相同、音調不同：'+(sameA.join('、')||'沒有')],['info','音調相同、響度不同：'+(sameF.join('、')||'沒有')],['info',`振幅最大的 ${nm(loud)} 能量最大，可以傳得最遠。`]];}
+    f=tr.map((T,i)=>`${TRN[i]}：${SRCN[T.src]}，${T.src==='noise'?'不規則':T.f+' Hz（T＝'+nf(1000/T.f,2)+' ms）'}，振幅 ${T.a} 格`).join('<br>');}
+  $('scBig').textContent=big;$('scF2').innerHTML=f;checks($('scC'),ck);
+  const d=SC.dbA-SC.dbB,r=Math.pow(10,Math.abs(d)/10);$('dbTxt').innerHTML=d===0?'一樣強':`${d>0?'甲':'乙'}比${d>0?'乙':'甲'}多 ${Math.abs(d)} dB → 強度是 10<sup>${Math.abs(d)/10}</sup> ＝ ${Math.round(r).toLocaleString()} 倍`;}
+SIZE.scope=()=>{({W:WSC,H:HSC}=fit($('cvSc'),SC.n===4?.62:SC.n===2?.42:.3,SC.n===4?420:220,SC.n===4?620:400));({W:WDB,H:HDB}=fit($('cvDb'),.16,60,80));};
+UI.scope=()=>{scUI();};
+DRAW.scope=()=>{drawScope($('cvSc').getContext('2d'),WSC,HSC);drawDb($('cvDb').getContext('2d'),WDB,HDB);scResults();};
+
+// =====================================================================
+// 4 樂器與音調
+// =====================================================================
+const STRPRE={uke:[{n:'1 號（最細）',thk:.7},{n:'2 號（次粗）',thk:1.3},{n:'3 號（最粗）',thk:1.6},{n:'4 號（次細）',thk:1}],
+  sham:[{n:'粗弦',thk:1.6},{n:'中弦',thk:1.2},{n:'細弦',thk:.8}],free:[{n:'這條弦',thk:1}]};
+const BOTPRE={glass:{n:'玻璃杯',w:[.2,.4,.6,.8],L:.12,shape:'glass'},tube:{n:'試管',w:[.15,.35,.55,.75],L:.15,shape:'tube'},cyl:{n:'量筒',w:[.2,.5,.8],L:.25,shape:'cyl'}};
+const IN={mode:'string',pre:'uke',sel:0,str:[],pow:.7,t:0,pl:{},act:'blow',bpre:'glass',bot:[],tubeV:'len',tubeA:'hit',res:440,box:true,hitR:-99};
+function inLoadStr(p){IN.pre=p;IN.str=STRPRE[p].map(s=>({n:s.n,thk:s.thk,ten:1,len:1}));IN.sel=0;IN.pl={};}
+function inLoadBot(p){IN.bpre=p;IN.bot=BOTPRE[p].w.slice();IN.pl={};}
+inLoadStr('uke');inLoadBot('glass');
+let WI=600,HI=300;
+const strF=s=>300/s.thk*Math.sqrt(s.ten)/s.len;
+const SOL=['Do','Do♯','Re','Re♯','Mi','Fa','Fa♯','Sol','Sol♯','La','La♯','Si'];
+const noteName=f=>{const m=Math.round(12*Math.log2(f/261.63));const o=Math.floor(m/12);const k=((m%12)+12)%12;return SOL[k]+(o===0?'':o>0?'（高'+o+'個八度）':'（低'+(-o)+'個八度）');};
+function botF(i){const P=BOTPRE[IN.bpre],w=IN.bot[i];return IN.act==='blow'?340/(4*P.L*(1-w)):1500/(1+1.4*w);}
+const TUBL=[1,.85,.7,.55],TUBW=[1,1.5,2,2.5];
+function tubeF(i){const L=IN.tubeV==='len'?TUBL[i]:1,w=IN.tubeV==='wall'?TUBW[i]:1;return IN.tubeA==='hit'?600*w/(L*L):340/(4*.3*L);}
+function inUI(){const m=IN.mode;segSet($('inMode'),m);document.querySelectorAll('.inc').forEach(e=>e.hidden=e.dataset.m!==m);
+  segSet($('inStrPre'),IN.pre);const sel=$('inStrSel');sel.innerHTML='';IN.str.forEach((s,i)=>{const b=document.createElement('button');b.dataset.v=i;b.textContent=s.n.split('（')[0];sel.appendChild(b);});segSet(sel,String(IN.sel));
+  const S=IN.str[IN.sel];$('inTen').value=S.ten;$('inTeno').textContent=S.ten<.9?'鬆':S.ten>1.1?'緊':'標準';$('inThk').value=S.thk;$('inThko').textContent=S.thk<.9?'細':S.thk>1.3?'粗':'中';
+  $('inLen').value=S.len;$('inLeno').textContent=Math.round(S.len*100)+'%';$('inPow').value=IN.pow;$('inPowo').textContent=IN.pow<.5?'輕':IN.pow>.8?'重':'中';
+  $('inThk').disabled=IN.pre!=='free'&&false;
+  segSet($('inAct'),IN.act);segSet($('inBotPre'),IN.bpre);segSet($('inTubeV'),IN.tubeV);segSet($('inTubeA'),IN.tubeA);segSet($('inRes'),String(IN.res));$('inBox').checked=IN.box;
+  $('inHint').textContent={string:'點一條弦就會撥動它（也會發出聲音）；用滑桿調整選取那條弦的鬆緊、粗細、按壓位置。',bottle:'點容器就會吹（或敲）它並發出聲音；拖曳水面的橘點改變水量。',tube:'點管子就會敲（或吹）它並發出聲音。',reso:'按「敲左邊音叉」，看右邊的音叉會不會跟著振動。'}[m];
+  $('inHowT').textContent={string:'弦樂器：怎麼看',bottle:'瓶子與試管：怎麼看',tube:'敲管子、吹管子：怎麼看',reso:'共鳴：怎麼看'}[m];
+  $('inHow').innerHTML=({string:['弦振動得越快，頻率越高、音調越高。','弦越緊、越細、振動部分越短 → 音調越高（吉他按弦、調音就是在改這些）。','撥得越用力，振幅越大 → 響度越大，但音調不變；撥得快慢（節奏）也不改變音調。'],
+    bottle:['吹氣時振動的是「空氣柱」：水越多，空氣柱越短，音調越高。','敲擊時振動的是「杯子（含水）」：水越多，振動越慢，音調越低。','兩種方法的高低順序剛好相反——先想清楚是誰在振動。'],
+    tube:['敲擊時振動的是管子本身：同材質，越短、管壁越厚 → 音調越高。','對管口吹氣時振動的是管內空氣柱：只和空氣柱長短有關，越短越高；管壁厚薄不影響。','下端封閉的管子，空氣柱長度約是波長的 ¼：λ ＝ 4L，f ＝ v ÷ 4L。'],
+    reso:['兩支頻率相同的音叉，敲一支，另一支也會跟著振動發聲：共振（共鳴）。','頻率不同就不會共振——即使大小、材質一樣。','共鳴箱：箱內空氣跟著振動，使聲音變大；小提琴、吉他的琴身也有這個作用。']})[m].map(s=>`<li>${s}</li>`).join('');}
+segOn($('inMode'),v=>{IN.mode=v;hideStory();inUI();SIZE.inst();kick();});
+segOn($('inStrPre'),v=>{inLoadStr(v);inUI();kick();});
+segOn($('inStrSel'),v=>{IN.sel=+v;inUI();kick();});
+[['inTen','ten'],['inThk','thk'],['inLen','len']].forEach(([id,k])=>$(id).addEventListener('input',()=>{IN.str[IN.sel][k]=+$(id).value;inUI();kick();}));
+$('inPow').addEventListener('input',()=>{IN.pow=+$('inPow').value;inUI();});
+segOn($('inAct'),v=>{IN.act=v;IN.pl={};inUI();kick();});
+segOn($('inBotPre'),v=>{inLoadBot(v);inUI();kick();});
+segOn($('inTubeV'),v=>{IN.tubeV=v;IN.pl={};inUI();kick();});
+segOn($('inTubeA'),v=>{IN.tubeA=v;IN.pl={};inUI();kick();});
+segOn($('inRes'),v=>{IN.res=+v;IN.hitR=-99;inUI();kick();});
+$('inBox').addEventListener('change',()=>{IN.box=$('inBox').checked;kick();});
+$('inHitR').addEventListener('click',()=>{IN.hitR=IN.t;const g=IN.box?.2:.07;tone(440,{gain:g,dur:3.5,decay:true});if(IN.res===440)tone(440,{gain:g*.6,dur:3.5,decay:true,at:.3});kick();});
+function pluck(i){IN.pl[i]=IN.t;let f;if(IN.mode==='string'){f=strF(IN.str[i]);tone(f,{src:'piano',gain:.18*IN.pow,dur:1.6,decay:true});}
+  else if(IN.mode==='bottle'){f=botF(i);tone(f,{src:IN.act==='blow'?'flute':'fork',gain:.1,dur:IN.act==='blow'?.9:1.2,decay:IN.act!=='blow'});}
+  else{f=tubeF(i);tone(f,{src:IN.tubeA==='blow'?'flute':'piano',gain:.1,dur:1.1,decay:IN.tubeA!=='blow'});}kick();}
+// 版面
+function strGeo(W,H){const n=IN.str.length,L=110,R=W-50,top=H*.16,gap=Math.min(56,(H*.68)/n);return {n,L,R,y:i=>top+gap*(i+.5),gap};}
+function botGeo(W,H){const n=IN.bot.length,w=Math.min(110,(W-80)/n-30),Hc=H*.55,base=H*.86;return {n,w,Hc,base,x:i=>40+(W-80)*(i+.5)/n};}
+function tubeGeo(W,H){const n=4,top=H*.14,Lmax=H*.6,w=34;return {n,top,Lmax,w,x:i=>W*(i+1)/(n+1)};}
+function rankOf(fs){const o=fs.map((f,i)=>[f,i]).sort((a,b)=>b[0]-a[0]);const r=[];o.forEach(([f,i],k)=>r[i]=k+1);return r;}
+function drawInStr(g,W,H){const G=strGeo(W,H),t=IN.t;g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  g.fillStyle='#c79a63';g.fillRect(G.L-14,G.y(0)-G.gap*.5,G.R-G.L+28,G.gap*G.n);g.fillStyle='#8a5a2b';g.fillRect(G.L-14,G.y(0)-G.gap*.5,10,G.gap*G.n);g.fillRect(G.R+4,G.y(0)-G.gap*.5,10,G.gap*G.n);
+  text(g,'弦枕',G.L-9,G.y(0)-G.gap*.5-6,{size:10,align:'center',col:C.muted});text(g,'琴橋',G.R+9,G.y(0)-G.gap*.5-6,{size:10,align:'center',col:C.muted});
+  const fs=IN.str.map(strF),rk=rankOf(fs);
+  IN.str.forEach((s,i)=>{const y=G.y(i),xf=G.R-(G.R-G.L)*s.len,f=fs[i];const tp=IN.pl[i];const el=tp===undefined?99:t-tp;const A=el<6?Math.min(G.gap*.32,14)*IN.pow*Math.exp(-el/1.4):0;const fv=f/90;
+    if(s.len<.995){line(g,G.L,y,xf,y,'#555',1.2+s.thk*2);}
+    g.strokeStyle=i===IN.sel?C.accent:C.ink;g.lineWidth=1.2+s.thk*2;g.beginPath();for(let x=xf;x<=G.R;x+=3){const u=(x-xf)/(G.R-xf);const yy=y+A*Math.sin(Math.PI*u)*Math.cos(TAU*fv*el);x===xf?g.moveTo(x,yy):g.lineTo(x,yy);}g.stroke();
+    if(s.len<.995){g.fillStyle='#e8b98f';g.beginPath();g.ellipse(xf,y-8,9,13,0,0,TAU);g.fill();}
+    text(g,s.n,G.L-20,y+4,{size:12,bold:true,align:'right',col:i===IN.sel?C.accent:C.ink});
+    text(g,`${Math.round(f)} Hz　${noteName(f)}`,G.R-8,y-8,{size:11,align:'right',col:C.muted});
+    if(G.n>1)text(g,'第'+rk[i]+'高',G.R+22,y+4,{size:11,bold:true,col:rk[i]===1?C.echo:C.muted});});}
+function glassShape(g,x,base,w,Hc,shape){g.beginPath();if(shape==='glass'){g.moveTo(x-w/2,base-Hc);g.lineTo(x-w*.38,base);g.lineTo(x+w*.38,base);g.lineTo(x+w/2,base-Hc);}
+  else if(shape==='tube'){g.moveTo(x-w*.22,base-Hc);g.lineTo(x-w*.22,base-w*.22);g.arc(x,base-w*.22,w*.22,Math.PI,0,true);g.lineTo(x+w*.22,base-Hc);}
+  else{g.moveTo(x-w*.3,base-Hc);g.lineTo(x-w*.3,base);g.lineTo(x+w*.3,base);g.lineTo(x+w*.3,base-Hc);}}
+function drawInBot(g,W,H){const G=botGeo(W,H),P=BOTPRE[IN.bpre],t=IN.t;g.fillStyle=C.panel;g.fillRect(0,0,W,H);line(g,0,G.base,W,G.base,C.muted,2);
+  const fs=IN.bot.map((w,i)=>botF(i)),rk=rankOf(fs);
+  IN.bot.forEach((w,i)=>{const x=G.x(i),el=IN.pl[i]===undefined?99:t-IN.pl[i],act=el<1.4;const shake=act&&IN.act==='hit'?Math.sin(el*80)*3*Math.exp(-el*2):0;const yw=G.base-G.Hc*w;
+    g.save();g.translate(shake,0);glassShape(g,x,G.base,G.w,G.Hc,P.shape);g.save();g.clip();g.fillStyle=C.sea;g.fillRect(x-G.w,yw,G.w*2,G.base-yw);
+    if(act&&IN.act==='blow'){g.globalAlpha=.6*Math.exp(-el);for(let k=0;k<6;k++){const yy=G.base-G.Hc+((el*120+k*(G.Hc*(1-w))/6)%(G.Hc*(1-w)));line(g,x-G.w,yy,x+G.w,yy,C.echo,2);}g.globalAlpha=1;}
+    if(act&&IN.act==='hit'){g.strokeStyle=C.snd;g.lineWidth=1.5;for(let k=1;k<=2;k++){g.beginPath();g.ellipse(x,yw,(k*8+el*30)%(G.w*.4),3,0,0,TAU);g.stroke();}}
+    g.restore();g.strokeStyle=act&&IN.act==='hit'?C.echo:C.ink;g.lineWidth=act&&IN.act==='hit'?3.5:2.5;glassShape(g,x,G.base,G.w,G.Hc,P.shape);g.stroke();g.restore();
+    handle(g,x,yw,8);text(g,'第'+rk[i]+'高',x,G.base-G.Hc-12,{size:12,bold:true,align:'center',col:rk[i]===1?C.echo:C.muted});
+    text(g,Math.round(fs[i])+' Hz',x,G.base+18,{size:11,align:'center',col:C.muted});
+    if(act)text(g,IN.act==='blow'?'空氣柱振動':'杯子＋水振動',x,G.base-G.Hc-30,{size:11,align:'center',col:C.echo,bold:true});
+    if(act&&IN.act==='blow'){g.save();g.strokeStyle=C.snd;g.lineWidth=2;g.beginPath();g.moveTo(x-G.w*.9,G.base-G.Hc-4);g.lineTo(x-G.w*.25,G.base-G.Hc+2);g.stroke();g.restore();}});
+  text(g,IN.act==='blow'?'對瓶口吹氣：振動的是空氣柱':'用木棒敲：振動的是容器和水',W/2,22,{size:14,bold:true,align:'center'});}
+function drawInTube(g,W,H){const G=tubeGeo(W,H),t=IN.t;g.fillStyle=C.panel;g.fillRect(0,0,W,H);line(g,W*.1,G.top-20,W*.9,G.top-20,C.ink,4);
+  const fs=[0,1,2,3].map(tubeF),rk=rankOf(fs);
+  for(let i=0;i<4;i++){const x=G.x(i),L=(IN.tubeV==='len'?TUBL[i]:1)*G.Lmax,wt=(IN.tubeV==='wall'?TUBW[i]:1)*3,el=IN.pl[i]===undefined?99:t-IN.pl[i],act=el<1.4;
+    const sh=act&&IN.tubeA==='hit'?Math.sin(el*70)*3*Math.exp(-el*2):0;line(g,x,G.top-20,x,G.top,C.muted,1.5);
+    g.save();g.translate(sh,0);g.fillStyle=C.sky;g.fillRect(x-G.w/2,G.top,G.w,L);g.fillStyle='#8f9aa3';g.fillRect(x-G.w/2,G.top,wt,L);g.fillRect(x+G.w/2-wt,G.top,wt,L);
+    if(IN.tubeA==='blow')g.fillRect(x-G.w/2,G.top+L-4,G.w,4);
+    if(act&&IN.tubeA==='blow'){g.globalAlpha=.6*Math.exp(-el);for(let k=0;k<5;k++){const yy=G.top+((el*100+k*L/5)%L);line(g,x-G.w/2+wt,yy,x+G.w/2-wt,yy,C.echo,2);}g.globalAlpha=1;}
+    g.strokeStyle=act&&IN.tubeA==='hit'?C.echo:C.ink;g.lineWidth=1.5;g.strokeRect(x-G.w/2,G.top,G.w,L);g.restore();
+    text(g,TRN[i],x,G.top+L+18,{size:14,bold:true,align:'center'});text(g,Math.round(fs[i])+' Hz',x,G.top+L+34,{size:11,align:'center',col:C.muted});
+    text(g,'第'+rk[i]+'高',x,G.top-26,{size:12,bold:true,align:'center',col:rk[i]===1?C.echo:C.muted});}
+  text(g,IN.tubeA==='hit'?'用槌子敲：振動的是管子本身':'對管口吹（下端封閉）：振動的是管內空氣柱',W/2,H-10,{size:13,bold:true,align:'center'});}
+function drawInReso(g,W,H){const t=IN.t,el=t-IN.hitR,base=H*.78;g.fillStyle=C.panel;g.fillRect(0,0,W,H);line(g,0,base,W,base,C.muted,2);
+  const aL=el>=0?Math.exp(-el/4):0,same=IN.res===440,aR=el>=0&&same?(1-Math.exp(-el/.8))*aL*.75:0,xl=W*.25,xr=W*.72,bw=Math.min(150,W*.2),bh=H*.18;
+  [[xl,aL,440],[xr,aR,IN.res]].forEach(([x,a,f],i)=>{if(IN.box){g.fillStyle='#c79a63';g.fillRect(x-bw/2,base-bh,bw,bh);g.fillStyle='#5b3a22';g.beginPath();g.ellipse(x+(i?-1:1)*bw*.5,base-bh/2,6,bh*.3,0,0,TAU);g.fill();}
+    const yb=IN.box?base-bh:base;const sz=i&&f===360?1.15:i&&f===500?.88:1;const dx=4*a*Math.sin(TAU*6*t);
+    g.save();g.translate(x,yb);g.scale(1,-1);fork(g,0,0,H*.42*sz,dx);g.restore();
+    text(g,f+' Hz',x,yb-H*.42*sz-14,{size:13,bold:true,align:'center',col:i&&a>.05?C.echo:C.ink});
+    if(a>.05){g.save();g.strokeStyle=i?C.echo:C.snd;for(let k=0;k<3;k++){const ph=(t*1.2+k/3)%1;g.globalAlpha=a*(1-ph)*(IN.box?1:.5);g.lineWidth=IN.box?3:2;g.beginPath();g.arc(x,yb-H*.25,30+ph*W*.2,-.8,.8);g.stroke();g.beginPath();g.arc(x,yb-H*.25,30+ph*W*.2,Math.PI-.8,Math.PI+.8);g.stroke();}g.restore();}});
+  if(el>=0&&el<8)text(g,same?(aR>.1?'右邊音叉也響了！（共振）':''):'右邊音叉頻率不同，不會跟著振動',W/2,30,{size:14,bold:true,align:'center',col:same?C.echo:C.muted});
+  text(g,'左邊（被敲）',xl,base+20,{size:12,align:'center'});text(g,'右邊（沒有敲）',xr,base+20,{size:12,align:'center'});}
+dragger($('cvIn'),()=>{if(IN.mode==='bottle'){const G=botGeo(WI,HI);return IN.bot.map((w,i)=>({x:G.x(i),y:G.base-G.Hc*w,r:20,move:(x,y)=>{IN.bot[i]=clamp((G.base-y)/G.Hc,.05,.9);}}));}return [];},()=>kick());
+$('cvIn').addEventListener('click',ev=>{const r=$('cvIn').getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;
+  if(IN.mode==='string'){const G=strGeo(WI,HI);for(let i=0;i<G.n;i++)if(Math.abs(y-G.y(i))<G.gap/2&&x>G.L-20&&x<G.R+30){IN.sel=i;inUI();pluck(i);return;}}
+  else if(IN.mode==='bottle'){const G=botGeo(WI,HI);for(let i=0;i<G.n;i++){const yw=G.base-G.Hc*IN.bot[i];if(Math.abs(x-G.x(i))<G.w/2&&y>G.base-G.Hc-20&&y<G.base&&Math.hypot(x-G.x(i),y-yw)>16){pluck(i);return;}}}
+  else if(IN.mode==='tube'){const G=tubeGeo(WI,HI);for(let i=0;i<4;i++)if(Math.abs(x-G.x(i))<G.w&&y>G.top&&y<G.top+G.Lmax+40){pluck(i);return;}}});
+$('cvIn').style.touchAction='none';
+function inResults(){let big='',f='',ck=[];const m=IN.mode;
+  if(m==='string'){const fs=IN.str.map(strF),S=IN.str[IN.sel];big=IN.str.length>1?'由高到低：'+fs.map((f,i)=>[f,i]).sort((a,b)=>b[0]-a[0]).map(([f,i])=>IN.str[i].n.split('（')[0]).join(' → '):`${Math.round(fs[0])} Hz（${noteName(fs[0])}）`;
+    f=`選取的弦：${Math.round(strF(S))} Hz<br>越緊、越細、振動部分越短 → 頻率越高`;
+    ck=[['info','撥得用力：振幅變大 → 響度變大，頻率（音調）不變。'],['info','調音時聲音太低 → 把弦調緊（或換細一點的弦）。'],['info','左手按弦的位置改變振動部分的長度，用來改變音調。']];}
+  else if(m==='bottle'){const fs=IN.bot.map((w,i)=>botF(i));const o=fs.map((f,i)=>[f,i]).sort((a,b)=>b[0]-a[0]).map(a=>a[1]+1);big=(IN.act==='blow'?'吹氣':'敲擊')+'：由高到低是第 '+o.join('、')+' 個';
+    f=IN.act==='blow'?'振動的是空氣柱：空氣柱越短（水越多）→ 音調越高':'振動的是容器和水：水越多越重 → 振動越慢 → 音調越低';
+    ck=[['info','吹氣和敲擊，高低順序剛好相反。'],['info','下端封閉的空氣柱：波長約是空氣柱長度的 4 倍。']];}
+  else if(m==='tube'){const fs=[0,1,2,3].map(tubeF);const o=fs.map((f,i)=>[f,i]).sort((a,b)=>b[0]-a[0]).map(a=>TRN[a[1]]);big=(IN.tubeA==='hit'?'敲擊':'吹氣')+'：由高到低 '+o.join(' → ');
+    f=IN.tubeA==='hit'?(IN.tubeV==='len'?'同材質同粗細：越短越高':'同長度：管壁越厚越硬 → 振動越快 → 音調越高'):(IN.tubeV==='len'?'空氣柱 λ ＝ 4L：越短波長越短、頻率越高':'空氣柱長度一樣 → 音調一樣（管壁厚薄不影響吹氣的音調）');
+    ck=[['info','先問：是誰在振動？敲 → 管子；吹 → 空氣柱。']];}
+  else{big=IN.res===440?'頻率相同 → 右邊音叉跟著振動（共振）':'頻率不同 → 不會共振';f='共振（共鳴）：發聲體的聲音傳到頻率相同的物體，使它也跟著振動發聲';
+    ck=[[IN.box?'ok':'info',IN.box?'有共鳴箱：箱內空氣一起振動，聲音比較大。':'沒有共鳴箱：音叉本身推動的空氣少，聲音小。'],['info','要證明「頻率相同才會共振」，要把其中一支換成不同頻率的音叉做對照。']];}
+  $('inBig').textContent=big;$('inF2').innerHTML=f;checks($('inC'),ck);}
+SIZE.inst=()=>{({W:WI,H:HI}=fit($('cvIn'),.44,280,430));};
+UI.inst=()=>{inUI();};
+TICK.inst=dt=>{IN.t+=dt;return true;};
+let inLast='';DRAW.inst=()=>{const g=$('cvIn').getContext('2d'),m=IN.mode;if(m==='string')drawInStr(g,WI,HI);else if(m==='bottle')drawInBot(g,WI,HI);else if(m==='tube')drawInTube(g,WI,HI);else drawInReso(g,WI,HI);
+  const key=JSON.stringify([m,IN.str,IN.sel,IN.act,IN.bot.map(w=>Math.round(w*50)),IN.tubeV,IN.tubeA,IN.res,IN.box]);if(key!==inLast){inLast=key;inResults();}};
+
+// =====================================================================
+// 6 可聽範圍與分貝
+// =====================================================================
+const ANI=[{k:'human',n:'人',a:20,b:20000,th:0,c:'#1c68ad'},{k:'dog',n:'狗',a:15,b:50000,th:0,c:'#1f8a5b'},{k:'cat',n:'貓',a:60,b:65000,th:0,c:'#6a7f3a'},{k:'dolphin',n:'海豚',a:2000,b:100000,th:0,c:'#d23b2f'},{k:'bat',n:'蝙蝠',a:1000,b:120000,th:0,c:'#c2410c'},
+  {k:'elephant',n:'大象',a:16,b:12000,th:0,c:'#7a5c3e'},{k:'rabbit',n:'兔子',a:360,b:42000,th:0,c:'#a0458e'},{k:'fishA',n:'吳郭魚、石斑魚（普通型）',a:200,b:1000,th:90,c:'#2f8fbf'},{k:'fishB',n:'鯉魚、鯰魚（特化型）',a:200,b:8000,th:60,c:'#0f6e78'}];
+const RG={mode:'bars',on:{human:1,dog:1,cat:1,dolphin:1,bat:1},fv:0,L:70,af:2,al:40,d1:80,d2:40};
+const FLO=Math.log10(5),FHI=Math.log10(200000);const fOf=v=>Math.pow(10,FLO+(FHI-FLO)*v/1000),vOf=f=>(Math.log10(f)-FLO)/(FHI-FLO)*1000;RG.fv=vOf(1000);
+const AF=[125,250,500,1000,2000,4000,8000],AUL=[10,10,15,20,25,45,70],AUR=[20,25,40,45,50,60,80];
+const DBS=[[0,'人耳剛好聽得到'],[10,'呼吸聲'],[20,'樹葉沙沙聲'],[30,'輕聲細語'],[40,'安靜的圖書館'],[60,'一般交談'],[70,'吸塵器、吵雜的教室'],[80,'交通繁忙的街道'],[90,'卡車、工廠機器'],[100,'工地施工'],[110,'鞭炮'],[120,'飛機起飛（近處）'],[130,'耳朵感到疼痛'],[140,'近距離槍聲']];
+let WR=600,HR=300;
+const fmtHz=f=>f>=1000?nf(f/1000,f>=10000?0:1)+' kHz':Math.round(f)+' Hz';
+function rgUI(){const m=RG.mode;segSet($('rgMode'),m);document.querySelectorAll('#b-range .rgc').forEach(e=>e.hidden=!e.dataset.m.split(' ').includes(m));
+  const box=$('rgAni');box.innerHTML='';ANI.forEach(a=>{const b=document.createElement('button');b.className='chip';b.textContent=a.n;b.setAttribute('aria-pressed',String(!!RG.on[a.k]));b.addEventListener('click',()=>{RG.on[a.k]=!RG.on[a.k];rgUI();kick();});box.appendChild(b);});
+  const f=fOf(RG.fv);$('rgF').value=RG.fv;$('rgFo').textContent=fmtHz(f);$('rgL').value=RG.L;$('rgLo').textContent=RG.L+' dB';
+  $('rgAf').value=RG.af;$('rgAfo').textContent=AF[RG.af]+' Hz';$('rgAl').value=RG.al;$('rgAlo').textContent=RG.al+' dB';
+  $('rgD1').value=RG.d1;$('rgD1o').textContent=RG.d1+' dB';$('rgD2').value=RG.d2;$('rgD2o').textContent=RG.d2+' dB';$('rgSnd').hidden=m==='db';
+  $('rgHint').textContent={bars:'拖曳橘色的頻率指標（或滑桿），看哪些動物聽得到。按 🔊 可以真的播放這個頻率（超過 20 kHz 人耳聽不到）。',area:'聲音要「頻率在範圍內」而且「夠大聲」才聽得到：拖曳橘點同時改變頻率和響度。',audio:'聽力檢查：每個頻率找出剛好聽得到的最小音量。拖曳橘點（測試音），看左耳、右耳聽不聽得到。',db:'分貝尺：拖曳兩個聲音比較強度；每多 10 分貝，強度變 10 倍。'}[m];
+  $('rgHowT').textContent={bars:'誰聽得到：怎麼看',area:'頻率＋響度：怎麼看',audio:'聽力檢查：怎麼看',db:'分貝尺與噪音：怎麼看'}[m];
+  $('rgHow').innerHTML=({bars:['人耳可聽頻率約 20～20000 Hz；低於 20 Hz 是次聲波，高於 20000 Hz 是超聲波（超音波）。','不同動物聽得到的範圍不同：狗笛、犬笛的頻率高於 20000 Hz，人聽不到、狗聽得到。','蝙蝠、海豚用超聲波找食物、辨方向（回聲定位）；大象、鯨魚可以用次聲波溝通。','超聲波和一般聲音在同一介質中速率一樣，只是頻率高、波長短。'],
+    area:['每個方框是一種動物聽得到的範圍：左右是頻率範圍，下緣是最小要多大聲。','點要落在方框裡面才聽得到：頻率不對，再大聲也聽不到；頻率對了，太小聲也聽不到。','大業 113 魚類閱讀題：普通型 200～1000 Hz 且 90 dB 以上；特化型 200～8000 Hz、60 dB 就聽得到。'],
+    audio:['橫軸是頻率，縱軸是音量（分貝），往下越大聲。','× 和 ○ 是左耳、右耳在各頻率「剛好聽得到」的最小音量，連成聽力曲線。','測試音在曲線上方（比曲線小聲）→ 聽不到；在曲線上或下方（夠大聲）→ 聽得到。','曲線越往下，表示要越大聲才聽得到 → 聽力越差。'],
+    db:['分貝（dB）表示聲音的強弱（響度）：0 dB 是人耳剛好聽得到。','每增加 10 dB，聲音的強度變 10 倍；增加 20 dB 變 100 倍；增加 40 dB 變 10000 倍。','長時間處在 70 dB 會煩躁、影響學習；85 dB 以上可能損害聽力。','防制噪音：隔音牆、種樹、雙層窗、吸音材料、遠離噪音源。']})[m].map(s=>`<li>${s}</li>`).join('');}
+segOn($('rgMode'),v=>{RG.mode=v;hideStory();rgUI();SIZE.range();kick();});
+$('rgF').addEventListener('input',()=>{RG.fv=+$('rgF').value;rgUI();kick();});
+$('rgL').addEventListener('input',()=>{RG.L=+$('rgL').value;rgUI();kick();});
+[['rgAf','af'],['rgAl','al'],['rgD1','d1'],['rgD2','d2']].forEach(([id,k])=>$(id).addEventListener('input',()=>{RG[k]=+$(id).value;rgUI();kick();}));
+$('rgSnd').addEventListener('click',()=>{const f=RG.mode==='audio'?AF[RG.af]:fOf(RG.fv);if(f>=20&&f<=22000)tone(f,{gain:RG.mode==='area'?.02+.12*RG.L/140:.08,dur:1.2});});
+function rgGeo(W,H){const L=RG.mode==='bars'?(W<560?96:168):54,R=W-24,top=RG.mode==='bars'?40:22,bot=H-34;return {L,R,top,bot,X:f=>L+(Math.log10(f)-FLO)/(FHI-FLO)*(R-L),fx:x=>Math.pow(10,FLO+(x-L)/(R-L)*(FHI-FLO)),Y:d=>bot-d/140*(bot-top),dy:y=>(bot-y)/(bot-top)*140};}
+function fAxis(g,G){line(g,G.L,G.bot,G.R,G.bot,C.ink,1.5);[10,100,1000,10000,100000].forEach(f=>{const x=G.X(f);line(g,x,G.top,x,G.bot,C.grid,1);text(g,fmtHz(f),x,G.bot+16,{size:11,align:'center',col:C.muted});});
+  text(g,'頻率（Hz）',G.R,G.bot+30,{size:11,align:'right',col:C.muted});
+  g.fillStyle=C.purple;g.globalAlpha=.08;g.fillRect(G.L,G.top,G.X(20)-G.L,G.bot-G.top);g.fillStyle=C.echo;g.fillRect(G.X(20000),G.top,G.R-G.X(20000),G.bot-G.top);g.globalAlpha=1;
+  text(g,'次聲波',(G.L+G.X(20))/2,G.top-6,{size:11,bold:true,align:'center',col:C.purple});text(g,'人耳可聽',(G.X(20)+G.X(20000))/2,G.top-6,{size:11,bold:true,align:'center',col:C.snd});text(g,'超聲波',(G.X(20000)+G.R)/2,G.top-6,{size:11,bold:true,align:'center',col:C.echo});}
+function drawRgBars(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const G=rgGeo(W,H),f=fOf(RG.fv);fAxis(g,G);const list=ANI.filter(a=>RG.on[a.k]);const rh=Math.min(40,(G.bot-G.top-8)/Math.max(1,list.length));
+  list.forEach((a,i)=>{const y=G.top+8+rh*(i+.5),ok=f>=a.a&&f<=a.b;g.fillStyle=a.c;g.globalAlpha=ok?.85:.45;g.fillRect(G.X(a.a),y-rh*.28,G.X(a.b)-G.X(a.a),rh*.56);g.globalAlpha=1;
+    text(g,a.n,G.L-10,y-1,{size:12,bold:true,align:'right'});text(g,fmtHz(a.a)+'～'+fmtHz(a.b),G.L-10,y+13,{size:10,align:'right',col:C.muted});
+    text(g,ok?'✓':'✕',G.R-2,y+5,{size:15,bold:true,col:ok?C.green:'#c0453b',align:'right'});});
+  const x=G.X(f);line(g,x,G.top,x,G.bot,C.accent,2.5);handle(g,x,G.bot,9);text(g,fmtHz(f),x,G.bot-8,{size:12,bold:true,col:C.accent,align:x>W*.8?'right':'left',bg:C.panel});}
+function drawRgArea(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const G=rgGeo(W,H);fAxis(g,G);
+  for(let d=0;d<=140;d+=20){const y=G.Y(d);line(g,G.L,y,G.R,y,C.grid,1);text(g,d+' dB',G.L-6,y+4,{size:10,align:'right',col:C.muted});}
+  const f=fOf(RG.fv),px=G.X(f),py=G.Y(RG.L);
+  ANI.filter(a=>RG.on[a.k]).forEach((a,i)=>{const x0=G.X(a.a),x1=G.X(a.b),y0=G.Y(140),y1=G.Y(a.th);const ok=f>=a.a&&f<=a.b&&RG.L>=a.th;g.fillStyle=a.c;g.globalAlpha=ok?.22:.1;g.fillRect(x0,y0,x1-x0,y1-y0);g.globalAlpha=1;g.strokeStyle=a.c;g.lineWidth=ok?2.5:1.5;g.strokeRect(x0,y0,x1-x0,y1-y0);
+    text(g,a.n+(ok?' ✓':''),x0+4,y1-6-(i%3)*14,{size:11,bold:true,col:a.c,bg:C.panel});});
+  handle(g,px,py,9);text(g,fmtHz(f)+'、'+RG.L+' dB',px+12,py-10,{size:12,bold:true,col:C.accent,bg:C.panel});}
+function audioThr(arr,i){return arr[i];}
+function drawRgAudio(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const L=70,R=W-30,top=34,bot=H-30,X=i=>L+i/6*(R-L),Y=d=>top+(d+10)/130*(bot-top);
+  for(let d=-10;d<=120;d+=10){const y=Y(d);line(g,L,y,R,y,C.grid,1);text(g,String(d),L-8,y+4,{size:10,align:'right',col:C.muted});}text(g,'音量（dB）↓ 越大聲',8,H-8,{size:11,col:C.muted});
+  AF.forEach((f,i)=>{line(g,X(i),top,X(i),bot,C.grid,1);text(g,f>=1000?f/1000+'k':String(f),X(i),top-6,{size:11,align:'center',col:C.muted});});text(g,'頻率（Hz）',R,top-20,{size:11,align:'right',col:C.muted});
+  const curve=(arr,col,mk)=>{g.strokeStyle=col;g.lineWidth=2;g.beginPath();arr.forEach((d,i)=>i?g.lineTo(X(i),Y(d)):g.moveTo(X(i),Y(d)));g.stroke();arr.forEach((d,i)=>{const x=X(i),y=Y(d);if(mk==='x'){line(g,x-6,y-6,x+6,y+6,col,2.5);line(g,x-6,y+6,x+6,y-6,col,2.5);}else{g.strokeStyle=col;g.lineWidth=2.5;g.beginPath();g.arc(x,y,6,0,TAU);g.stroke();}});};
+  curve(AUL,C.snd,'x');curve(AUR,C.red,'o');text(g,'× 左耳',R-120,bot-10,{size:12,bold:true,col:C.snd});text(g,'○ 右耳',R-60,bot-10,{size:12,bold:true,col:C.red});
+  const px=X(RG.af),py=Y(RG.al);handle(g,px,py,9);const hl=RG.al>=AUL[RG.af],hr=RG.al>=AUR[RG.af];text(g,`左耳${hl?'聽得到':'聽不到'}、右耳${hr?'聽得到':'聽不到'}`,px+(px>W*.7?-12:12),py-12,{size:12,bold:true,col:C.accent,align:px>W*.7?'right':'left',bg:C.panel});}
+function drawRgDb(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const top=20,bot=H-20,x0=Math.min(W*.3,200),Y=d=>bot-d/140*(bot-top);
+  const grad=g.createLinearGradient(0,bot,0,top);grad.addColorStop(0,'#5fbf7a');grad.addColorStop(.5,'#f2c14e');grad.addColorStop(.62,'#f08a4b');grad.addColorStop(1,'#c0453b');g.fillStyle=grad;g.fillRect(x0-14,top,28,bot-top);
+  DBS.forEach(([d,s])=>{const y=Y(d);line(g,x0+14,y,x0+24,y,C.ink,1.5);text(g,d+' dB　'+s,x0+30,y+4,{size:12});});
+  [[70,'70 dB：煩躁、影響學習'],[85,'85 dB 以上：可能損害聽力']].forEach(([d,s])=>{const y=Y(d);line(g,x0-14,y,W-14,y,'#c0453b',1.5,[6,4]);text(g,s,W-16,y-4,{size:11,bold:true,col:'#c0453b',align:'right'});});
+  [[RG.d1,'甲',C.echo],[RG.d2,'乙',C.snd]].forEach(([d,n,c],i)=>{const y=Y(d);const xx=x0-30-i*34;line(g,xx+8,y,x0-14,y,c,2);handle(g,xx,y,9);text(g,n,xx-14,y+5,{size:14,bold:true,col:c,align:'right'});});}
+dragger($('cvRg'),()=>{const m=RG.mode,G=rgGeo(WR,HR);
+  if(m==='bars'){const f=fOf(RG.fv);return [{x:G.X(f),y:G.bot,r:30,hit:(x,y)=>Math.abs(x-G.X(fOf(RG.fv)))<16?0:99,move:x=>{RG.fv=clamp(vOf(clamp(G.fx(x),5,200000)),0,1000);rgUI();}}];}
+  if(m==='area'){return [{x:G.X(fOf(RG.fv)),y:G.Y(RG.L),r:30,move:(x,y)=>{RG.fv=clamp(vOf(clamp(G.fx(x),5,200000)),0,1000);RG.L=clamp(Math.round(G.dy(y)),0,140);rgUI();}}];}
+  if(m==='audio'){const L=70,R=WR-30,top=34,bot=HR-30;return [{x:L+RG.af/6*(R-L),y:top+(RG.al+10)/130*(bot-top),r:30,move:(x,y)=>{RG.af=clamp(Math.round((x-L)/(R-L)*6),0,6);RG.al=clamp(Math.round(((y-top)/(bot-top)*130-10)/5)*5,-10,120);rgUI();}}];}
+  const top=20,bot=HR-20,x0=Math.min(WR*.3,200),Y=d=>bot-d/140*(bot-top),dy=y=>(bot-y)/(bot-top)*140;
+  return [{x:x0-30,y:Y(RG.d1),r:24,move:(x,y)=>{RG.d1=clamp(Math.round(dy(y)),0,140);rgUI();}},{x:x0-64,y:Y(RG.d2),r:24,move:(x,y)=>{RG.d2=clamp(Math.round(dy(y)),0,140);rgUI();}}];},()=>kick());
+$('cvRg').style.touchAction='none';
+function rgResults(){let big='',f='',ck=[];const m=RG.mode;
+  if(m==='bars'||m==='area'){const fr=fOf(RG.fv);const who=ANI.filter(a=>RG.on[a.k]&&fr>=a.a&&fr<=a.b&&(m==='bars'||RG.L>=a.th)).map(a=>a.n);
+    big=`${fmtHz(fr)}${m==='area'?'、'+RG.L+' dB':''}：${who.length?who.join('、')+' 聽得到':'選取的動物都聽不到'}`;
+    f=`${fr<20?'次聲波（低於 20 Hz）':fr>20000?'超聲波（高於 20000 Hz）':'人耳可聽範圍內'}<br>空氣中波長 λ ＝ 340 ÷ ${Math.round(fr)} ＝ ${fmtM(340/fr)}；水中 ${fmtM(1500/fr)}`;
+    ck=[['info','超聲波的應用：聲納測距、魚群探測、醫學超音波檢查胎兒、震碎結石、超聲波清洗、倒車雷達。'],['info','耳溫槍用的是紅外線，不是超聲波；自動門感應器多半也是紅外線。'],['info','次聲波人聽不到，但可能使人頭暈不舒服；大象、長頸鹿、藍鯨可用次聲波溝通。']];}
+  else if(m==='audio'){const hl=RG.al>=AUL[RG.af],hr=RG.al>=AUR[RG.af];big=`${AF[RG.af]} Hz、${RG.al} dB：左耳${hl?'聽得到':'聽不到'}，右耳${hr?'聽得到':'聽不到'}`;
+    f=`這個頻率：左耳至少 ${AUL[RG.af]} dB、右耳至少 ${AUR[RG.af]} dB 才聽得到`;ck=[['info','同一個頻率，音量比曲線上的值大（在曲線下方）才聽得到。'],['info','這位受測者右耳的曲線比較低（要更大聲），右耳聽力較差；兩耳在高頻都變差。']];}
+  else{const d=RG.d1-RG.d2,r=Math.pow(10,Math.abs(d)/10);big=d===0?'兩個聲音一樣強':`${d>0?'甲':'乙'}比${d>0?'乙':'甲'}多 ${Math.abs(d)} dB，強度是 ${r<100?nf(r,2):Math.round(r).toLocaleString()} 倍`;
+    f=`強度比 ＝ 10<sup>(分貝差 ÷ 10)</sup> ＝ 10<sup>${nf(Math.abs(d)/10,1)}</sup>`;ck=[['info','80 dB 是 40 dB 的 10⁴ ＝ 10000 倍（向上 113 #5）。'],['info','分貝數越大 → 振幅越大、能量越大，傳得越遠。'],[Math.max(RG.d1,RG.d2)>=85?'no':'ok',Math.max(RG.d1,RG.d2)>=85?'85 dB 以上，長時間會損害聽力。':'85 dB 以下。']];}
+  $('rgBig').textContent=big;$('rgF2').innerHTML=f;checks($('rgC'),ck);}
+SIZE.range=()=>{({W:WR,H:HR}=fit($('cvRg'),RG.mode==='bars'?.42:RG.mode==='db'?.55:.48,280,480));};
+UI.range=()=>{rgUI();};
+DRAW.range=()=>{const g=$('cvRg').getContext('2d'),m=RG.mode;if(m==='bars')drawRgBars(g,WR,HR);else if(m==='area')drawRgArea(g,WR,HR);else if(m==='audio')drawRgAudio(g,WR,HR);else drawRgDb(g,WR,HR);rgResults();};
 // ================= 題目情境 =================
 function go(mode,patch={},top={}){E.mode=mode;for(const k in patch)Object.assign(E[k],patch[k]);Object.assign(E,top);
   if(patch.M&&patch.M.ts)E.M.ts=patch.M.ts.slice();UI.echo();SIZE.echo();restart();}
 const AIR15={med:'air',T:15};
-const QS=[{g:'翰林講義 3-4 聲波的傳播與應用',items:[
+const QE=[{g:'翰林講義 3-4 聲波的傳播與應用',items:[
   {n:'類題1　兩支水管聽時鐘滴答聲',pg:'p.107',set:()=>go('law',{F:{ang:40,mat:'iron'}}),t:'p.107 類題1　答案 (1)(B) 乙　(2)(B) 變小',
    p:'聲音反射也遵守反射定律：入射角＝反射角。放時鐘的水管和法線夾 40°，聽的水管也要在另一側 40°（乙）才最清楚。\n把鐵板換成棉布（點上方「棉布」）：棉布柔軟多孔、會吸收聲音，反射回來的聲音變小。'},
   {n:'隨堂2　大禮堂減少回音，哪個沒效？',pg:'p.107',set:()=>go('wall',{A:{giv:'d',d:30,mat:'hard'}},AIR15),t:'p.107 隨堂2　答案 (A) 加大禮堂的空間',
@@ -751,14 +1449,149 @@ const QS=[{g:'翰林講義 3-4 聲波的傳播與應用',items:[
    p:'回聲時間 8、15、8、1、7 秒：時間越長越深。第 2 站最深；第 4 站只有 1 秒，是海底高起的地方。\n先看下方的回聲時間圖猜形狀，再取消「先遮住海底」對答案。'},
   {n:'海豚要離池壁多遠才不會撞上',pg:'向上 114-1-2 #38',set:()=>go('move',{C:{veh:'dolphin',dir:'to',giv:'d',D:2.08,u:20,re:.1}},{med:'cus',vc:1020}),t:'向上 114-1-2 #38　答案 (A) 2.08 m',
    p:'超聲波在水中 1020 m/s，海豚以 20 m/s 游向池壁。\n回聲時間 t ＝ 2D ÷ (1020 ＋ 20)，收到回聲時海豚已前進 20t；再過 0.1 s 反應時間又前進 2 m。\n不撞上：D − 20t − 2 ≥ 0 → D × (1 − 40/1040) ≥ 2 → D ≥ 2.08 m\n動畫中反應時間設 0.1 s：海豚停下時剛好碰到池壁。'}]}];
+
+// ---------- 其他實驗台的題目 ----------
+function gMk(mode,p={}){MK.mode=mode;Object.assign(MK,p);if(p.hitT===undefined&&mode==='fork'){MK.hitT=MK.t;MK.holdT=null;}if(mode==='med')MK.goT=MK.t;UI.make();SIZE.make();kick();}
+function gSp(mode,p={}){SP.mode=mode;Object.assign(SP,p);SP.t=0;SP.run=mode!=='cross';UI.speed();SIZE.speed();kick();}
+function gSc(n,trs){SC.n=n;trs.forEach((t,i)=>SC.tr[i]=Object.assign({src:'fork',f:400,a:2},t));SC.sel=0;UI.scope();SIZE.scope();kick();}
+function gIn(mode,fn){IN.mode=mode;fn&&fn();IN.pl={};UI.inst();SIZE.inst();kick();}
+function gRg(mode,p={}){RG.mode=mode;if(p.on){RG.on={};p.on.forEach(k=>RG.on[k]=1);}if(p.f)RG.fv=vOf(p.f);['L','af','al','d1','d2'].forEach(k=>{if(p[k]!==undefined)RG[k]=p[k];});UI.range();SIZE.range();kick();}
+const Q32={g:'翰林講義 3-2 聲音的產生、傳播與聲速',items:[
+  {n:'隨堂1　用力擺動手臂卻沒有聲音',pg:'p.88',b:'range',set:()=>gRg('bars',{on:['human'],f:5}),t:'p.88 隨堂1　答案 (C) 振動頻率太小',
+   p:'手臂每秒只擺動一兩次，頻率遠低於 20 Hz（次聲波範圍），人耳聽不到。'},
+  {n:'隨堂3　柯南撞到大鑼，怎麼立刻停止聲音',pg:'p.88',b:'make',set:()=>{gMk('fork');setTimeout(()=>{MK.holdT=MK.t;kick();},1500);},t:'p.88 隨堂3　答案 (D) 以手按住大鑼',
+   p:'聲音由物體振動產生。用手按住，鑼停止振動，聲音就停止——就像握住音叉。'},
+  {n:'類題1　甲乙音叉的疏密波',pg:'p.90',b:'make',set:()=>gMk('fork',{f:700}),t:'p.90 類題1　答案 (1)(A) 縱波　(2)(A) 甲',
+   p:'空氣分子的振動方向和傳播方向平行：縱波。\n疏密排得越密，表示每秒振動次數越多：頻率越高。拖「音叉頻率」比較 200 Hz 和 800 Hz 的疏密間距。'},
+  {n:'隨堂2　雙層玻璃中間怎麼處理最隔音',pg:'p.90',b:'make',set:()=>gMk('jar',{air:0,pump:0,bell:true}),t:'p.90 隨堂2　答案 (D) 抽成真空',
+   p:'真空沒有介質，聲音無法傳播，隔音效果最好。液體、保麗龍、鐵片都還能傳聲。'},
+  {n:'隨堂3　電鈴放在抽氣的玻璃罩內',pg:'p.90',b:'make',set:()=>gMk('jar',{air:1,pump:-1,bell:true}),t:'p.90 隨堂3　答案 (C) 聲音要靠空氣傳播',
+   p:'抽氣時鈴聲漸小，充氣後恢復：聲音的傳播需要介質。電鈴聲是鈴的振動產生（不是空氣），鈴錘一直在振動。'},
+  {n:'隨堂1　聲音在空氣、水、木頭中的快慢',pg:'p.92',b:'speed',set:()=>gSp('race',{D:1000,T:15}),t:'p.92 隨堂1　答案 (B) 木頭＞水＞空氣',
+   p:'聲速：固體＞液體＞氣體。課本：空氣 340、水 1463、木材 3352 m/s。'},
+  {n:'隨堂2　隔河對唱情歌，河寬 68 m',pg:'p.92',b:'speed',set:()=>gSp('race',{D:68,T:15}),t:'p.92 隨堂2　答案 (C) 0.2 秒',
+   p:'15 °C 聲速 340 m/s：68 ÷ 340 ＝ 0.2 s。看第二道（空氣 15 °C）的到達時間。'},
+  {n:'隨堂3　歌聲、鈴鼓、吉他誰先到',pg:'p.92',b:'speed',set:()=>gSp('race',{D:300,T:15}),t:'p.92 隨堂3　答案 (D) 一起到',
+   p:'同一種介質、同一個溫度，聲速相同；和音調、響度、音色都無關。中間兩道（大聲高音、小聲低音）同時到達。'},
+  {n:'第8題　密閉玻璃罩內的鬧鐘',pg:'p.93',b:'make',set:()=>gMk('jar',{air:1,pump:0,bell:true}),t:'p.93 第8題　答案 (C) 玻璃也可以傳遞聲音',
+   p:'空氣出不來，聲音卻傳到外面：罩內空氣把振動傳給玻璃，玻璃（固體）再傳給外面的空氣。'},
+  {n:'第9題　太空船相撞聽得見嗎',pg:'p.93',b:'make',set:()=>gMk('med',{med:'vac'}),t:'p.93 第9題　答案 (A) 幾乎聽不見，因為聲音需要介質',
+   p:'太空幾乎是真空，沒有分子可以振動傳聲。看得到閃光，因為光（電磁波）可以在真空中傳播。'},
+  {n:'第11題　看到煙火 2 秒後聽到爆炸聲',pg:'p.94',b:'speed',set:()=>gSp('delay',{pair:'fire',giv:'t',dt:2,T:15}),t:'p.94 第11題　答案 (B) 680 公尺',
+   p:'光幾乎瞬間到達，2 秒都是聲音在走：340 × 2 ＝ 680 m。'},
+  {n:'第13題　百米計時員聽到槍聲才按錶',pg:'p.94',b:'speed',set:()=>gSp('timer',{T:25,cue:'sound',rv:8.5}),t:'p.94 第13題　答案 (A) 加上 0.29 秒',
+   p:'25 °C 聲速 346 m/s，槍聲走 100 m 要 100 ÷ 346 ≈ 0.29 s。計時員晚按 0.29 s，記錄太短，要加回去。'},
+  {n:'第14題　甲船的訊號經空氣和海水傳到乙船',pg:'p.94',b:'speed',set:()=>gSp('delay',{pair:'ship',giv:'d',dd:680}),t:'p.94 第14題　答案 (C) 1.6 秒',
+   p:'空氣：680 ÷ 340 ＝ 2 s；海水：680 ÷ 1700 ＝ 0.4 s；相差 1.6 s。'},
+  {n:'第15題　聲音由空氣傳入水中',pg:'p.94',b:'speed',set:()=>gSp('cross',{dir:'aw',f:340,T:15}),t:'p.94 第15題　答案：頻率保持不變',
+   p:'頻率由發聲體決定，進入水中不變；水中聲速較快，波長變長；傳播中能量散失，振幅變小。'},
+  {n:'第1～3題　鈴鐺 100 Hz、25 °C',pg:'p.95',b:'speed',set:()=>gSp('cross',{dir:'aw',f:100,T:25}),t:'p.95 第1～3題　答案 (B) 0.01 秒、(A) 346、(C) 3.46 公尺',
+   p:'週期 T ＝ 1 ÷ 100 ＝ 0.01 s。\n聲速 v ＝ 331 ＋ 0.6 × 25 ＝ 346 m/s。\n波長 λ ＝ v ÷ f ＝ 346 ÷ 100 ＝ 3.46 m。'},
+  {n:'第4～6題　電鈴實驗的甲乙丙步驟',pg:'p.95',b:'make',set:()=>gMk('jar',{air:1,pump:-1,dist:1.4,bell:true}),t:'p.95 第4～6題　答案 (D)、(A)、(D)',
+   p:'第4題：抽氣前後比較（乙）→ 聲音傳播要靠介質。\n第5題：近處與遠處比較（甲）→ 聲音的能量隨距離分散而減弱。\n第6題：空氣抽光後鈴錘仍振動卻聽不到（丙）→ 物體振動不一定能讓人聽到聲音。\n拖「人離鐘罩」做甲，按「抽氣」做乙、丙。'},
+  {n:'第6題　軍艦爆炸聲相差 12 秒',pg:'p.114',b:'speed',set:()=>gSp('delay',{pair:'navy2',giv:'t',dt:12}),t:'p.114 第6題　答案 (D) 5440 公尺',
+   p:'D ÷ 340 − D ÷ 1360 ＝ 12 → D × (4 − 1) ÷ 1360 ＝ 12 → D ＝ 5440 m。'}]};
+const Q33={g:'翰林講義 3-3 聲音三要素',items:[
+  {n:'隨堂2　重擊或輕敲銅鑼',pg:'p.100',b:'scope',set:()=>gSc(2,[{src:'piano',f:300,a:3.5},{src:'piano',f:300,a:1.5}]),t:'p.100 隨堂2　答案 (D) 響度',
+   p:'用力只改變振幅（響度）；頻率（音調）和波形（音色）不變。按「依序播放」聽聽看。'},
+  {n:'隨堂4　彈弦樂器怎樣音調較高',pg:'p.100',b:'inst',set:()=>gIn('string',()=>{inLoadStr('free');IN.str[0].len=.55;}),t:'p.100 隨堂4　答案 (D) 撥動最短的弦',
+   p:'弦越短、越細、越緊，音調越高。彈得快只改變節奏，彈得用力只改變響度。'},
+  {n:'隨堂5、6　驗聲音、名琴的聲音',pg:'p.100',b:'scope',set:()=>gSc(2,[{src:'violin',f:440,a:2},{src:'clar',f:440,a:2}]),t:'p.100 隨堂5、6　答案：音色（波形）',
+   p:'聲紋辨識、模仿秀、名琴的聲音優美，都和波形（音色）有關。甲乙兩個聲音音調、響度相同，波形不同。'},
+  {n:'隨堂7　音叉發出的波形',pg:'p.100',b:'scope',set:()=>gSc(1,[{src:'fork',f:440,a:2}]),t:'p.100 隨堂7　答案：最單純的正弦波',
+   p:'音叉只發出單一頻率，波形最單純，所以常用來調音。換成其他發聲體比較看看。'},
+  {n:'第1題　四種波形，哪個響度最小',pg:'p.102',b:'scope',set:()=>gSc(4,[{f:300,a:3},{f:300,a:1},{f:500,a:2},{f:200,a:2.5}]),t:'p.102 第1題　答案：振幅最小的（這裡是乙）',
+   p:'響度由振幅決定：上下高度最小的，響度最小。'},
+  {n:'第8題　甲乙音叉的 y-t 圖',pg:'p.102',b:'scope',set:()=>gSc(2,[{f:250,a:1.5},{f:500,a:3}]),t:'p.102 第8題　答案 (D) 甲的響度比乙小、音調比乙低',
+   p:'甲振幅小 → 響度小；甲的波比較疏（週期長）→ 頻率低 → 音調低。'},
+  {n:'第10題　敲四根長短不同的鐵管',pg:'p.103',b:'inst',set:()=>gIn('tube',()=>{IN.tubeV='len';IN.tubeA='hit';}),t:'p.103 第10題　答案：最短的丁音調最高',
+   p:'敲擊時振動的是管子：材質粗細相同，越短振動越快、音調越高。注意「每秒敲幾次」只是節奏，不改變音調。'},
+  {n:'第12題　吹四支下端封閉的空心管',pg:'p.103',b:'inst',set:()=>gIn('tube',()=>{IN.tubeV='len';IN.tubeA='blow';}),t:'p.103 第12題：管口到封閉端＝¼ 波長',
+   p:'L ＝ λ ÷ 4 → λ ＝ 4L；同一介質聲速相同，f ＝ v ÷ 4L：管子越短，頻率越高、音調越高。'},
+  {n:'第13題　吉他同一條弦的振動長度',pg:'p.103',b:'inst',set:()=>gIn('string',()=>{inLoadStr('free');}),t:'p.103 第13題　答案 (A) 振動長度越長，音調越低',
+   p:'拖「按壓位置」改變振動長度：越長越低。振幅（擺動幅度）只影響響度。不同弦、長度相同時，粗弦音調較低。'},
+  {n:'第1題　四個酒杯吹出 Fa、Sol、Si、Re',pg:'p.104',b:'inst',set:()=>gIn('bottle',()=>{inLoadBot('glass');IN.act='blow';}),t:'p.104 第1題　吹氣：水越多，音調越高',
+   p:'吹氣時振動的是空氣柱：水越多，空氣柱越短，音調越高。所以 Fa（最低）要吹水最少的杯子，Re（最高）吹水最多的。\n切換「用木棒敲」：順序剛好相反。'},
+  {n:'第2題　證明共振要頻率相同',pg:'p.104',b:'inst',set:()=>gIn('reso',()=>{IN.res=500;IN.hitR=-99;}),t:'p.104 第2題　答案 (B) 換成 500 Hz 的音叉做對照',
+   p:'只改變「頻率」這個變因：一支換成不同頻率，敲擊後另一支不振動，才能說服對方「頻率相同才會共振」。'},
+  {n:'第3題　小提琴為什麼要有木盒',pg:'p.104',b:'inst',set:()=>gIn('reso',()=>{IN.res=440;IN.box=true;}),t:'p.104 第3題　答案 (C) 使聲音加大',
+   p:'琴身（共鳴箱）裡的空氣跟著振動，使聲音變大。勾掉「裝在共鳴箱上」比較。'},
+  {n:'第5題　小提琴手左手移動按弦位置',pg:'p.104',b:'inst',set:()=>gIn('string',()=>{inLoadStr('free');IN.str[0].len=.7;}),t:'p.104 第5題　答案 (B) 聲音的音調',
+   p:'按弦位置改變振動部分的長度 → 改變頻率 → 改變音調。'},
+  {n:'第1題　哪些波形來自同一支音叉',pg:'p.105',b:'scope',set:()=>gSc(4,[{f:400,a:3},{f:400,a:1},{f:300,a:2},{f:400,a:2}]),t:'p.105 第1題　同一音叉：頻率一定相同',
+   p:'同一支音叉，不論怎麼敲，頻率（每秒振動次數）都一樣，只有振幅可能不同。找週期相同的波形。'},
+  {n:'第5題　聽力檢查紀錄',pg:'p.105',b:'range',set:()=>gRg('audio',{af:3,al:30}),t:'p.105 第5題　怎麼讀聽力檢查圖',
+   p:'每個頻率，曲線上的點是「剛好聽得到」的最小音量；比它大聲才聽得到。拖曳測試音練習判斷左耳、右耳。'},
+  {n:'第7題　小提琴聲傳到室外，波長多 1.5 cm',pg:'p.115',b:'speed',set:()=>gSp('cross',{dir:'aw',f:200,T:25}),t:'p.115 第7題　答案 (B) 25 °C',
+   p:'室內 20 °C：v ＝ 343 m/s。頻率不變 200 Hz，波長多 0.015 m → 聲速多 200 × 0.015 ＝ 3 m/s → 346 m/s → T ＝ 25 °C。'}]};
+const QRG=[
+  {n:'隨堂1　每分鐘振動 600 次',pg:'p.108',b:'range',set:()=>gRg('bars',{on:['human','dog','elephant'],f:10}),t:'p.108 隨堂1　答案 (D) 根本聽不到',
+   p:'600 次 ÷ 60 秒 ＝ 10 Hz，低於 20 Hz，人耳聽不到（次聲波）。'},
+  {n:'隨堂2　蝙蝠的聲音人耳聽不到',pg:'p.108',b:'range',set:()=>gRg('bars',{on:['human','bat'],f:50000}),t:'p.108 隨堂2　答案 (B) 頻率太高',
+   p:'蝙蝠用超聲波（高於 20000 Hz）做回聲定位，超出人耳的範圍。'},
+  {n:'第9題　狗訓練場的笛子',pg:'p.111',b:'range',set:()=>gRg('bars',{on:['human','dog'],f:45000}),t:'p.111 第9題　答案 (C) 45000 Hz',
+   p:'人 20～20000 Hz、狗 15～50000 Hz：要「人聽不到、狗聽得到」，頻率在 20000～50000 Hz 之間。'},
+  {n:'第7題　大象和兔子聽得到嗎',pg:'p.113',b:'range',set:()=>gRg('bars',{on:['elephant','rabbit','human'],f:34}),t:'p.113 第7題　答案 (C) 大象聽得到、兔子聽不到',
+   p:'f ＝ v ÷ λ ＝ 34000 ÷ 1000 ＝ 34 Hz。大象 16～12000 Hz 聽得到；兔子 360～42000 Hz 聽不到。'},
+  {n:'第15題　只有海豚聽得到的哨子',pg:'p.116',b:'range',set:()=>gRg('bars',{on:['human','dog','cat','dolphin'],f:80000}),t:'p.116 第15題　頻率要在 65000～100000 Hz',
+   p:'人（20000）、狗（50000）、貓（65000）都聽不到，海豚（到 100000）聽得到：頻率要高於 65000 Hz、低於 100000 Hz。'}];
+const QT={g:'上課講義〈樂音三要素〉〈聲音的產生與傳播〉',items:[
+  {n:'練習1　A、B、C、D 四種聲波',pg:'10/07',b:'scope',set:()=>gSc(4,[{f:400,a:3},{f:800,a:2},{f:200,a:2},{f:400,a:1}]),t:'樂音三要素 練習1（甲＝A、乙＝B、丙＝C、丁＝D）',
+   p:'(1) 發音最高：B（波最密）。\n(2) 響度相同、音調不同：B、C。\n(3) 音調相同、響度不同：A、D。\n(5) 傳得最遠：振幅最大的 A。'},
+  {n:'70 分貝是 40 分貝的幾倍',pg:'10/07',b:'range',set:()=>gRg('db',{d1:70,d2:40}),t:'答案：1000 倍',p:'差 30 dB → 10³ ＝ 1000 倍。每 10 dB 強度 ×10。'},
+  {n:'練習2　每秒打鼓 2 下聽得到嗎',pg:'10/07',b:'scope',set:()=>gSc(1,[{src:'piano',f:150,a:3}]),t:'答案：聽得到',
+   p:'每秒打 2 下只是「節奏」；鼓面被打之後自己快速振動，頻率在可聽範圍內，所以聽得到。'},
+  {n:'用口吹杯子、用木槌敲杯子',pg:'10/07',b:'inst',set:()=>gIn('bottle',()=>{inLoadBot('glass');IN.act='blow';}),t:'吹：空氣柱振動；敲：杯子和水振動',
+   p:'吹：水最多（空氣柱最短）的杯子音調最高。\n敲：水最少的杯子音調最高。'},
+  {n:'聽不到嫦娥的哭泣聲',pg:'產生與傳播',b:'make',set:()=>gMk('med',{med:'vac'}),t:'月球沒有空氣',p:'月球上沒有空氣，聲音傳不出來，更傳不過太空。'},
+  {n:'三支音叉 150、200、250 Hz 誰的聲速快',pg:'產生與傳播',b:'speed',set:()=>gSp('race',{D:300,T:15}),t:'答案 (D) 都一樣',p:'聲速由介質和溫度決定，和頻率無關。'},
+  {n:'沙漠 35 °C 的聲速',pg:'產生與傳播',b:'speed',set:()=>gSp('race',{D:1000,T:35}),t:'答案 (C) 352 m/s',p:'331 ＋ 0.6 × 35 ＝ 352 m/s。'},
+  {n:'冷氣教室的歌聲傳到室外',pg:'產生與傳播',b:'speed',set:()=>gSp('race',{D:500,T:35}),t:'答案 (A) 變快',p:'室外較熱，溫度越高聲速越快。'},
+  {n:'看到煙火 6 秒後才聽到',pg:'產生與傳播',b:'speed',set:()=>gSp('delay',{pair:'fire',giv:'t',dt:6,T:15}),t:'答案 (C) 約 2 公里',p:'340 × 6 ＝ 2040 m ≈ 2 km。'},
+  {n:'例2　甲乙船 空氣 340、海水 1700',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'ship',giv:'d',dd:680}),t:'答案 (C) 1.6 秒',p:'680 ÷ 340 − 680 ÷ 1700 ＝ 2 − 0.4 ＝ 1.6 s。'},
+  {n:'煉油廠爆炸：強光、地震、爆炸聲',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'plant',giv:'d',dd:3400}),t:'答案 (D) 強光 → 地震 → 爆炸聲',p:'光 3×10⁸ m/s ＞ 地面 2000 m/s ＞ 空氣 340 m/s。'},
+  {n:'例3　地面振動 8 秒後聽到爆炸聲',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'ground',giv:'t',dt:8}),t:'答案：約 3111 m',p:'D ÷ 350 − D ÷ 3500 ＝ 8 → D × 9 ÷ 3500 ＝ 8 → D ≈ 3111 m。'},
+  {n:'軍艦：海水 1500、空氣 300，相隔 3 秒',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'navy',giv:'t',dt:3}),t:'答案：1125 m',p:'D ÷ 300 − D ÷ 1500 ＝ 3 → D × 4 ÷ 1500 ＝ 3 → D ＝ 1125 m。'}]};
+const QX=[
+  {n:'人耳可聽頻率範圍',pg:'向上 113-1-2 #1',b:'range',set:()=>gRg('bars',{on:['human'],f:20000}),t:'向上 113-1-2 #1　20～20000 Hz',p:'低於 20 Hz 是次聲波，高於 20000 Hz 是超聲波，人耳都聽不到。'},
+  {n:'聲紋辨識利用什麼',pg:'向上 113-1-2 #2、大業 113-1-2 #5',b:'scope',set:()=>gSc(2,[{src:'voice',f:220,a:2},{src:'clar',f:220,a:2}]),t:'答案：音色（波形）',p:'每個人的聲帶、口腔不同，聲音波形不同。'},
+  {n:'80 分貝是 40 分貝的幾倍',pg:'向上 113-1-2 #5',b:'range',set:()=>gRg('db',{d1:80,d2:40}),t:'向上 113-1-2 #5　答案 (D) 10000',p:'差 40 dB → 10⁴ ＝ 10000 倍。'},
+  {n:'300 Hz、200 Hz 傳入水中的頻率比',pg:'向上 113-1-2 #8',b:'speed',set:()=>gSp('cross',{dir:'aw',f:300,T:15}),t:'向上 113-1-2 #8　答案 (A) 3：2',p:'頻率不因介質改變：仍是 300：200 ＝ 3：2。拖頻率到 200 Hz 比較。'},
+  {n:'百米計時員聽槍聲才按錶',pg:'向上 113-1-2 #14、114-1-2 #4',b:'speed',set:()=>gSp('timer',{T:25,cue:'sound'}),t:'向上 114-1-2 #4　答案 (A) 加回 0.29 秒',p:'100 ÷ 346 ≈ 0.29 s。'},
+  {n:'量筒裝水：吹氣與敲擊',pg:'向上 113-1-2 #30',b:'inst',set:()=>gIn('bottle',()=>{inLoadBot('cyl');IN.act='blow';}),t:'向上 113-1-2 #30　答案：(乙)(丙)',
+   p:'吹：水越多，空氣柱越短，音調越高（乙對）。\n敲：水越多，振動越慢，音調越低（丙對）。'},
+  {n:'聲速的敘述何者錯誤',pg:'向上 113-1-2 #41',b:'speed',set:()=>gSp('race',{D:300,T:15}),t:'向上 113-1-2 #41　答案 (C)',p:'重敲、輕敲只改變響度，聲速一樣。'},
+  {n:'哪一種介質聲速最快',pg:'向上 114-1-2 #1',b:'speed',set:()=>gSp('race',{D:1000,T:20}),t:'向上 114-1-2 #1　答案 (B) 鋼鐵',p:'固體＞液體＞氣體；10 °C 的鋼鐵仍比 60 °C 的空氣快得多。'},
+  {n:'兩種樂器的示波器波形',pg:'向上 114-1-2 #5',b:'scope',set:()=>gSc(2,[{src:'flute',f:300,a:2},{src:'violin',f:300,a:2}]),t:'向上 114-1-2 #5　答案 (B) 音色',p:'振幅、週期相同，形狀不同：音色不同。'},
+  {n:'犬笛的頻率',pg:'向上 114-1-2 #6、大業 114-1-2 #15',b:'range',set:()=>gRg('bars',{on:['human','dog'],f:25000}),t:'向上 #6 答案 (C) 25000 Hz；大業 #15 答案 (C)',p:'人聽不到、狗聽得到：20000～50000 Hz。狗笛 23～54 kHz 超出人類可聽範圍。'},
+  {n:'粗細不同的三條弦',pg:'向上 114-1-2 #7',b:'inst',set:()=>gIn('string',()=>inLoadStr('sham')),t:'向上 114-1-2 #7　弦越細，頻率越高',p:'鬆緊、長度相同時，細弦頻率高、粗弦頻率低。對照圖中三條弦的粗細排順序。'},
+  {n:'讀週期判斷唱名（練習）',pg:'向上 114-1-2 #9',b:'scope',set:()=>{gSc(1,[{f:385,a:2}]);SC.div=1;UI.scope();},t:'讀示波器：先讀週期，再算頻率',
+   p:'數一個週期佔幾格 × 每格時間 ＝ 週期 T；頻率 f ＝ 1 ÷ T。\n這裡 T ≈ 2.6 ms → f ≈ 385 Hz → 對照表是 Sol。考卷的圖要自己讀格數。'},
+  {n:'音叉聲由水中傳入空氣',pg:'向上 114-1-2 #11',b:'speed',set:()=>gSp('cross',{dir:'wa',f:400,T:15}),t:'向上 114-1-2 #11　頻率不變，波長變短',p:'進入空氣，聲速變慢，頻率不變 → 波長變短。'},
+  {n:'聽力檢查紀錄',pg:'向上 114-1-2 #34',b:'range',set:()=>gRg('audio',{af:2,al:40}),t:'向上 114-1-2 #34　怎麼讀聽力檢查圖',p:'測試音要比曲線上的音量大才聽得到。拖曳測試音練習。'},
+  {n:'魚類的聽覺（頻率＋響度）',pg:'大業 113-1-2 #13～14',b:'range',set:()=>gRg('area',{on:['fishA','fishB'],f:500,L:95}),t:'大業 113-1-2 #13 答案 (C)、#14 答案 (D)',
+   p:'#13：石斑魚（普通型）要 200～1000 Hz 且 90 dB 以上：500 Hz、95 dB 會干擾牠們。\n#14：兩型的最低頻率都是 200 Hz → 最長波長相同。吳郭魚 90 dB 和鯰魚 60 dB 相差 30 dB，是 1000 倍不是 30 倍。'},
+  {n:'波以耳真空鈴實驗',pg:'大業 113-1-2 #15、114-1-2 #9',b:'make',set:()=>gMk('jar',{air:1,pump:-1,bell:true}),t:'波以耳：聲音的傳播需要介質',p:'抽氣時鈴聲越來越小，充氣後恢復。'},
+  {n:'聲速與響度、音調、播放速度無關',pg:'大業 113-1-2 #27',b:'speed',set:()=>gSp('race',{D:300,T:15}),t:'聲速只和介質、溫度有關',p:'中間兩道同時到達。'},
+  {n:'管壁厚薄不同的管子',pg:'大業 113-1-2 #28',b:'inst',set:()=>gIn('tube',()=>{IN.tubeV='wall';IN.tubeA='hit';}),t:'敲擊：管壁越厚，音調越高',p:'敲擊時振動的是管子本身：管壁越厚越硬，振動越快。若是對管口吹氣，管壁厚薄就不影響音調。'},
+  {n:'看到火光 6 秒後聽到爆炸（25 °C）',pg:'大業 114-1-2 #4',b:'speed',set:()=>gSp('delay',{pair:'fire',giv:'t',dt:6,T:25}),t:'大業 114-1-2 #4　答案 (A) 2.076 公里',p:'v ＝ 331 ＋ 0.6 × 25 ＝ 346 m/s；346 × 6 ＝ 2076 m。'},
+  {n:'試管不等水位吹氣',pg:'大業 114-1-2 #7',b:'inst',set:()=>gIn('bottle',()=>{inLoadBot('tube');IN.act='blow';}),t:'吹氣：水最少（空氣柱最長）音調最低',p:'振動的是空氣柱，越長越低。'},
+  {n:'力度記號 mf 與 ff',pg:'大業 114-1-2 #12',b:'scope',set:()=>gSc(2,[{src:'piano',f:300,a:1.5},{src:'piano',f:300,a:3.5}]),t:'大業 114-1-2 #12　答案 (D) B 段振幅較大',p:'力度記號表示響度：ff 比 mf 大聲 → 振幅較大。'},
+  {n:'沒有大氣的行星上爆炸',pg:'大業 114-1-2 #13',b:'make',set:()=>gMk('med',{med:'vac'}),t:'聽不到爆炸聲，但看得到光、地面感受得到振動',p:'沒有空氣傳聲；光不需要介質；地面（固體）可以傳遞振動。'},
+  {n:'烏克麗麗調音與高低順序',pg:'大業 114-1-2 #27～28',b:'inst',set:()=>gIn('string',()=>inLoadStr('uke')),t:'大業 114-1-2 #27 答案 (C) 調緊；#28 答案 (B) 1→4→2→3',
+   p:'聲音太低 → 把弦調緊。\n不按弦時長度相同，越細越高：1（最細）→ 4（次細）→ 2（次粗）→ 3（最粗）。點每條弦聽聽看。'}];
+// 合併成題目列表
+QE[0].items.forEach(it=>it.b='echo');QE[1].items.forEach(it=>it.b='echo');QE[2].items.forEach(it=>it.b='echo');
+const QS=[Q32,Q33,{g:'翰林講義 3-4 聲波的傳播與應用（回聲、超聲波）',items:QE[0].items.concat(QRG)},
+  {g:QT.g,items:QT.items},{g:'上課講義〈聲音反射－回聲〉',items:QE[1].items},{g:'考古題（大業、向上 八年級）',items:QE[2].items.concat(QX)}];
 {const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
   gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
-    b.addEventListener('click',()=>{setBench('echo');it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});
+    b.addEventListener('click',()=>{setBench(it.b||'echo');it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});
   d.appendChild(c);box.appendChild(d);});}
 
 // ================= 開始 =================
 let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();kick();}).observe(document.querySelector('.wrap'));
-setBench((location.hash||'#echo').slice(1),true);
+setBench((location.hash||'#make').slice(1),true);
 window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
 </script>
 </body>
