@@ -173,9 +173,10 @@
       <div class="cbox"><canvas id="cv4" aria-label="全身鏡側視圖，可拖曳人與鏡子上下緣"></canvas></div>
       <div class="toolbar">
         <label class="slider"><span class="tlabel">身高</span><input type="range" id="h4" min="140" max="190" step="1" value="170"><output id="h4o"></output></label>
+        <label class="slider"><span class="tlabel">眼睛到頭頂</span><input type="range" id="eo4" min="5" max="40" step="1" value="25"><output id="eo4o"></output></label>
         <label class="slider"><span class="tlabel">離鏡子</span><input type="range" id="d4" min="40" max="300" step="1" value="120"><output id="d4o"></output></label>
       </div>
-      <p class="hint">側面看：拖曳人前後走，拖曳鏡子上緣、下緣的橘點改變鏡子大小。眼睛在頭頂下方 10 cm。綠色是鏡中看得到的部分。</p>
+      <p class="hint">側面看：拖曳人前後走，拖曳鏡子上緣、下緣的橘點改變鏡子大小。頭畫得特別大，方便看清楚眼睛和頭頂是兩個不同的點；「眼睛到頭頂」可以調。綠色是鏡中看得到的部分。</p>
     </div>
     <div class="grid2">
       <section class="panel box">
@@ -432,31 +433,40 @@ $('back3').addEventListener('click',()=>set3({walk:false,px:.3,py:.5,wt:0,x0:.3}
 // =====================================================================
 // 4 全身鏡（側視）
 // =====================================================================
-const R4={h:170,d:120,b:100,t:150,walk:false,dir:1};
+const R4={h:170,d:120,b:100,t:150,eo:25,walk:false,dir:1};
 const cv4=$('cv4'),g4=cv4.getContext('2d');let W4=800,H4=420;
 SIZE.full=()=>{const r=fit(cv4,.5,320,520);W4=r.W;H4=r.H;R4.d=clamp(R4.d,40,dmax4());ui4();};
-const eye4=()=>R4.h-10;
+const eye4=()=>R4.h-R4.eo,HR4=24;// 誇張的大頭：半徑 24 cm
 function geo4(){const gy=H4*.93,s=(H4*.84)/200,xm=W4*.58;return{gy,s,xm,Y:cm=>gy-cm*s};}
-function dmax4(){const{s,xm}=geo4();return Math.floor(Math.min(300,(W4-30-xm)/s,(xm-30)/s));}
-function stick(g,x,Y,h,s,dir,ghost,col){const e=h-10,hr=11*s,hc=Y(h-11);g.save();g.strokeStyle=col;g.lineWidth=3;if(ghost){g.globalAlpha=.6;g.setLineDash([6,4]);}
-  g.beginPath();g.arc(x,hc,hr,0,TAU);g.stroke();
-  g.beginPath();g.moveTo(x,Y(h-22));g.lineTo(x,Y(h*.48));g.lineTo(x-10*s,Y(0));g.moveTo(x,Y(h*.48));g.lineTo(x+10*s,Y(0));
-  g.moveTo(x,Y(h-30));g.lineTo(x+dir*14*s,Y(h*.55));g.moveTo(x,Y(h-30));g.lineTo(x-dir*8*s,Y(h*.56));g.stroke();g.setLineDash([]);
-  g.fillStyle=col;g.beginPath();g.arc(x+dir*hr*.55,Y(e),Math.max(2.5,2*s),0,TAU);g.fill();g.restore();}
+function dmax4(){const{s,xm}=geo4();return Math.floor(Math.min(300,(W4-10-xm)/s-HR4-6,(xm-60)/s-HR4-10));}
+function stick(g,x,Y,h,s,dir,ghost,col){const e=h-R4.eo,hr=HR4*s,hc=Y(h-HR4),nk=h-2*HR4;g.save();g.strokeStyle=col;g.lineWidth=3;if(ghost){g.globalAlpha=.6;g.setLineDash([6,4]);}
+  g.fillStyle=C.panel;g.beginPath();g.arc(x,hc,hr,0,TAU);g.fill();g.stroke();
+  g.beginPath();g.moveTo(x,Y(nk));g.lineTo(x,Y(h*.42));g.lineTo(x-10*s,Y(0));g.moveTo(x,Y(h*.42));g.lineTo(x+10*s,Y(0));
+  g.moveTo(x,Y(nk-8));g.lineTo(x+dir*16*s,Y(h*.48));g.moveTo(x,Y(nk-8));g.lineTo(x-dir*9*s,Y(h*.49));g.stroke();g.setLineDash([]);
+  // 眼睛：杏仁形＋瞳孔，朝向鏡子
+  const ex=x+dir*hr*.55,ey=Y(e),ew=Math.max(6,5.5*s),eh=Math.max(3.5,3.2*s);g.lineWidth=2;
+  g.beginPath();g.moveTo(ex-ew,ey);g.quadraticCurveTo(ex,ey-eh*1.6,ex+ew,ey);g.quadraticCurveTo(ex,ey+eh*1.6,ex-ew,ey);g.closePath();g.fillStyle=C.panel;g.fill();g.stroke();
+  g.fillStyle=col;g.beginPath();g.arc(ex+dir*ew*.3,ey,Math.max(2.4,1.9*s),0,TAU);g.fill();
+  // 嘴巴
+  g.beginPath();g.arc(x+dir*hr*.42,Y(h-HR4*1.55),Math.max(3,3*s),dir>0?.1*Math.PI:.4*Math.PI,dir>0?.6*Math.PI:.9*Math.PI);g.stroke();
+  g.restore();}
 DRAW.full=()=>{const g=g4,W=W4,H=H4,{gy,s,xm,Y}=geo4();g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
   const h=R4.h,e=eye4(),px=xm-R4.d*s,ix=xm+R4.d*s;
   g.fillStyle=C.grid;g.globalAlpha=.6;g.fillRect(xm,0,W-xm,gy);g.globalAlpha=1;
   line(g,0,gy,W,gy,C.muted,2);text(g,'地面',8,gy-6,{col:C.muted,size:12});
   line(g,xm,Y(205),xm,gy,C.line,2);mirrorSeg(g,xm,Y(R4.t),xm,Y(R4.b),[1,0]);handle(g,xm,Y(R4.t),8);handle(g,xm,Y(R4.b),8);
-  text(g,'上緣 '+Math.round(R4.t)+' cm',xm-12,Y(R4.t)-8,{col:C.accent,size:12,bold:true,align:'right',bg:C.panel});
-  text(g,'下緣 '+Math.round(R4.b)+' cm',xm-12,Y(R4.b)+18,{col:C.accent,size:12,bold:true,align:'right',bg:C.panel});
+  if(R4.d*s-HR4*s>100){text(g,'上緣 '+Math.round(R4.t)+' cm',xm-12,Y(R4.t)-8,{col:C.accent,size:12,bold:true,align:'right',bg:C.panel});
+  text(g,'下緣 '+Math.round(R4.b)+' cm',xm-12,Y(R4.b)+18,{col:C.accent,size:12,bold:true,align:'right',bg:C.panel});}
   // 看得到的範圍（畫在像上）
   const lo=clamp(2*R4.b-e,0,h),hi=clamp(2*R4.t-e,0,h);
-  if(hi>lo){g.fillStyle=C.green;g.globalAlpha=.22;g.fillRect(ix-22*s,Y(hi),44*s,(hi-lo)*s);g.globalAlpha=1;}
+  if(hi>lo){g.fillStyle=C.green;g.globalAlpha=.22;g.fillRect(ix-(HR4+4)*s,Y(hi),(2*HR4+8)*s,(hi-lo)*s);g.globalAlpha=1;}
   stick(g,ix,Y,h,s,-1,true,C.muted);stick(g,px,Y,h,s,1,false,C.ink);
-  text(g,'你',px-22*s,Y(h)-6,{col:C.ink,size:13,bold:true,align:'center'});text(g,'鏡中的像',ix,Y(h)-8,{col:C.muted,size:13,bold:true,align:'center',bg:C.panel});
+  text(g,'你',px,Y(h)-8,{col:C.ink,size:13,bold:true,align:'center'});text(g,'鏡中的像',ix,Y(h)-8,{col:C.muted,size:13,bold:true,align:'center',bg:C.panel});
   // 頭頂、腳底的光線
-  const E=[px+11*s*.55,Y(e)];
+  const E=[px+HR4*s*.55,Y(e)];
+  // 眼睛到頭頂的距離
+  {const bx=px-(HR4+8)*s;line(g,bx,Y(h),bx,Y(e),C.accent,1.5);line(g,bx-4,Y(h),bx+4,Y(h),C.accent,1.5);line(g,bx-4,Y(e),bx+4,Y(e),C.accent,1.5);line(g,bx,Y(e),E[0],Y(e),C.accent,1,[2,3]);
+   text(g,R4.eo+' cm',bx-6,(Y(h)+Y(e))/2+4,{col:C.accent,size:12,bold:true,align:'right',bg:C.panel});}
   for(const[cm,name]of[[h,'頭頂'],[0,'腳底']]){const mc=(cm+e)/2,ok=mc>=R4.b-1e-6&&mc<=R4.t+1e-6,src=[px,Y(cm)],M=[xm,Y(mc)];
     if(ok){ray(g,src[0],src[1],M[0],M[1],C.ray,2.2);ray(g,M[0],M[1],E[0],E[1],C.ray,2.2);line(g,M[0],M[1],ix,Y(cm),C.ray,1.4,[6,5]);g.fillStyle=C.ray;g.beginPath();g.arc(M[0],M[1],4,0,TAU);g.fill();}
     else{line(g,src[0],src[1],M[0],M[1],C.muted,1.4,[3,4]);line(g,M[0],M[1],E[0],E[1],C.muted,1.4,[3,4]);text(g,'✕',M[0]+6,M[1]+5,{col:'#c0453b',size:15,bold:true});}
@@ -472,7 +482,7 @@ function ui4(){const h=R4.h,e=eye4(),lo=clamp(2*R4.b-e,0,h),hi=clamp(2*R4.t-e,0,
     [R4.t>=(h+e)/2?'ok':'no',`上緣至少要到頭頂與眼睛的中點：${(h+e)/2} cm（現在 ${Math.round(R4.t)} cm）${R4.t<(h+e)/2?'——看不到頭頂':''}`]];
   $('r4c').innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');
   $('r4b').textContent=`身高 ${h} cm、眼高 ${e} cm。前後走動時，反射點的高度都不變，所以看得到的範圍與距離無關。`;
-  $('h4o').textContent=h+' cm';$('d4o').textContent=R4.d+' cm';$('h4').value=h;$('d4').max=dmax4();$('d4').value=R4.d;$('walk4').textContent=R4.walk?'❚❚ 停下':'▶ 前後走動';}
+  $('h4o').textContent=h+' cm';$('eo4o').textContent=R4.eo+' cm';$('eo4').value=R4.eo;$('d4o').textContent=R4.d+' cm';$('h4').value=h;$('d4').max=dmax4();$('d4').value=R4.d;$('walk4').textContent=R4.walk?'❚❚ 停下':'▶ 前後走動';}
 TICK.full=dt=>{if(!R4.walk)return false;R4.d+=R4.dir*60*dt;const mx=dmax4();if(R4.d>mx){R4.d=mx;R4.dir=-1;}if(R4.d<40){R4.d=40;R4.dir=1;}R4.d=Math.round(R4.d*10)/10;ui4();$('d4o').textContent=Math.round(R4.d)+' cm';return true;};
 function set4(o){Object.assign(R4,o);R4.d=Math.round(clamp(R4.d,40,dmax4()));ui4();kick();}
 dragger(cv4,()=>{const{s,xm,Y}=geo4();return[
@@ -480,9 +490,10 @@ dragger(cv4,()=>{const{s,xm,Y}=geo4();return[
   {x:xm,y:Y(R4.t),r:22,move:(x,y)=>{R4.t=Math.round(clamp((geo4().gy-y)/s,R4.b+5,200));ui4();}},
   {x:xm,y:Y(R4.b),r:22,move:(x,y)=>{R4.b=Math.round(clamp((geo4().gy-y)/s,0,R4.t-5));ui4();}}];},kick);
 $('h4').addEventListener('input',e=>set4({h:+e.target.value}));
+$('eo4').addEventListener('input',e=>set4({eo:+e.target.value}));
 $('d4').addEventListener('input',e=>set4({d:+e.target.value,walk:false}));
 $('walk4').addEventListener('click',()=>set4({walk:!R4.walk}));
-$('q18chip').addEventListener('click',()=>set4({h:170,b:80,t:165}));
+$('q18chip').addEventListener('click',()=>set4({h:170,eo:10,b:80,t:165}));
 $('tall4').addEventListener('click',()=>set4({b:0,t:200}));
 
 // =====================================================================
@@ -567,8 +578,8 @@ document.querySelectorAll('#pre5 .chip').forEach(b=>b.addEventListener('click',(
 const QS=[{g:'2-3 光的反射',items:[
   {n:'第 17 題　光線與鏡面夾 30°',pg:'p.16',b:'law',set:()=>set1({a:-60,mir:true,rev:false}),t:'第 17 題　答案 (C)',
    p:'入射角是和「法線」的夾角：90° − 30° ＝ 60°，反射角＝入射角＝60°。\n畫面中灰色虛線標的「與鏡面 30°」就是題目給的角度——這是最常見的陷阱！'},
-  {n:'第 18 題　全身鏡的長度與下緣',pg:'p.16',b:'full',set:()=>set4({h:170,b:80,t:165,d:120,walk:false}),t:'第 18 題　答案 (A)',
-   p:'頭頂的光在「頭頂與眼睛的中點」165 cm 處反射，腳底的光在「眼睛與腳底的中點」80 cm 處反射。\n鏡長＝165 − 80 ＝ 85 cm＝身高的一半；下緣只要不高於眼高的一半＝80 cm。\n按「前後走動」：答案與人離鏡子多遠無關。'},
+  {n:'第 18 題　全身鏡的長度與下緣',pg:'p.16',b:'full',set:()=>set4({h:170,eo:10,b:80,t:165,d:120,walk:false}),t:'第 18 題　答案 (A)',
+   p:'題目：身高 170 cm、眼睛在頭頂下方 10 cm（眼高 160 cm）。\n頭頂的光在「頭頂與眼睛的中點」165 cm 處反射，腳底的光在「眼睛與腳底的中點」80 cm 處反射。\n鏡長＝165 − 80 ＝ 85 cm＝身高的一半；下緣只要不高於眼高的一半＝80 cm。\n按「前後走動」：答案與人離鏡子多遠無關。'},
   {n:'第 19 題　平面鏡轉 15°',pg:'p.16',b:'lever',set:()=>set5({mode:'lever',th:15}),t:'第 19 題　答案 (C)',
    p:'光槓桿：鏡面轉 θ，法線也轉 θ，入射角與反射角各改變 θ，所以反射線轉 2θ ＝ 30°。'},
   {n:'第 20 題　走向鏡子時像的相對速率',pg:'p.16',b:'image',set:()=>{set3({px:.22,py:.5,wt:0,x0:.22,walk:true});},t:'第 20 題　答案 (D)',
