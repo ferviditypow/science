@@ -289,7 +289,9 @@
   <section class="bench" id="b-young" hidden>
     <div class="panel">
       <div class="toolbar">
-        <div class="pick"><span class="tlabel">畫面</span><span class="seg" id="view4"><button data-v="2d">示意圖</button><button data-v="3d">3D 實驗裝置</button></span></div>
+        <div class="pick"><span class="tlabel">畫面</span><span class="seg" id="view4"><button data-v="2d">示意圖</button><button data-v="3d">3D 實驗裝置</button><button data-v="cmp">直橫比較</button></span></div>
+        <button class="btn" id="cam4" hidden>📷 斜上方</button>
+        <button class="btn" id="quizBtn4">📝 考題練習</button>
         <div class="pick"><span class="tlabel">光源</span><span class="seg" id="src4"><button data-v="650">紅</button><button data-v="532">綠</button><button data-v="450">藍</button><button data-v="white">白光</button></span></div>
         <div class="pick"><span class="tlabel">狹縫</span><span class="seg" id="type4"><button data-v="double">雙狹縫</button><button data-v="single">單狹縫</button></span></div>
         <div class="pick"><span class="tlabel">方向</span><span class="seg" id="ori4"><button data-v="v">直的</button><button data-v="h">橫的</button></span></div>
@@ -303,7 +305,7 @@
         <div class="pick"><span class="tlabel">光點</span><span class="seg" id="beam4"><button data-v="dot">雷射光點</button><button data-v="line">長條</button></span></div>
         <button class="btn" id="anim4">▶ 縫寬慢慢變化</button>
       </div>
-      <div class="cbox" style="position:relative"><canvas id="cv4" aria-label="雙狹縫干涉：側視示意圖與屏幕"></canvas><canvas id="cv4b" hidden aria-label="3D 雙狹縫實驗裝置"></canvas>
+      <div class="cbox" style="position:relative"><canvas id="cv4" aria-label="雙狹縫干涉：側視示意圖與屏幕"></canvas><canvas id="cv4b" hidden aria-label="3D 雙狹縫實驗裝置"></canvas><canvas id="cv4c" hidden aria-label="狹縫直的與橫的比較（3D）"></canvas>
         <div id="y3tip" hidden style="position:absolute;left:18px;top:14px;font-size:.8rem;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px">拖曳旋轉、滾輪或雙指縮放。狹縫間距與距離不按比例</div></div>
       <div class="toolbar">
         <label class="slider" id="lam4w"><span class="tlabel">波長 λ</span><input type="range" id="lam4" min="400" max="700" step="5" value="650"><output id="lam4o"></output></label>
@@ -314,6 +316,15 @@
       </div>
       <p class="hint">左邊是側視示意圖（狹縫間距放大畫），屏幕右邊的曲線是光強度；右邊是正面看屏幕的樣子（刻度 mm）。拖曳屏幕上的橘點 P 看兩道光的路程差，拖曳屏幕下方的橘點改變屏距。</p>
     </div>
+    <section class="panel box" id="quiz4" hidden>
+      <h3 id="qz4t">考題練習：雷射通過這個狹縫，屏幕上會看到哪一個？</h3>
+      <div style="display:flex;flex-wrap:wrap;gap:14px;align-items:flex-start;margin-top:6px">
+        <div style="text-align:center"><canvas id="qz4s" style="width:130px;height:130px;border-radius:8px" aria-label="題目的狹縫"></canvas><div class="note" id="qz4sl">從雷射這一側看狹縫</div></div>
+        <div id="qz4o" style="display:grid;grid-template-columns:repeat(2,minmax(150px,1fr));gap:10px;flex:1;min-width:300px"></div>
+      </div>
+      <p class="big" id="qz4f" style="margin-top:8px"></p>
+      <div class="toolbar" style="padding:4px 0"><button class="btn primary" id="qz4a" hidden>看 3D 答案</button><button class="btn" id="qz4n">下一題 ↻</button><button class="btn" id="qz4x">關閉練習</button><span class="note" id="qz4sc"></span></div>
+    </section>
     <div class="grid2">
       <section class="panel box">
         <p class="big" id="r4big"></p>
@@ -852,7 +863,7 @@ function scrCol(base,v,k=8){const x=k*v,val=(1-Math.exp(-x))/(1-Math.exp(-k)),w=
 const toneStr=(c,k)=>{const t=tone4(c,k);return`rgb(${t.map(v=>Math.round(255*clamp(v,0,1))).join(',')})`;};
 function env4(y,lamnm){const lm=lamnm*1e-6/S4.n,be=Math.PI*S4.a*y/(lm*S4.r*1000);return Math.abs(be)<1e-6?1:(Math.sin(be)/be)**2;}
 const cv4=$('cv4'),g4=cv4.getContext('2d');let W4=800,H4=420;const YMM=30;
-SIZE.young=()=>{if(Y3.ren)resize3Y();const w=cv4.clientWidth||cv4.parentElement.clientWidth-20;const r=fit(cv4,w<700?1.05:.5,300,w<700?640:520);W4=r.W;H4=r.H;};
+SIZE.young=()=>{if(Y3.ren)resize3Y();if(typeof YC!=='undefined'&&YC.ren)resizeCmp();const w=cv4.clientWidth||cv4.parentElement.clientWidth-20;const r=fit(cv4,w<700?1.05:.5,300,w<700?640:520);W4=r.W;H4=r.H;};
 function lay4(){if(W4>=700)return{sd:{x:0,y:0,w:W4*.6,h:H4},fr:{x:W4*.62,y:0,w:W4*.38,h:H4}};return{sd:{x:0,y:0,w:W4,h:H4*.55},fr:{x:0,y:H4*.57,w:W4,h:H4*.43}};}
 const white4=()=>S4.src==='white';
 function I4(y,lamnm,ph=0){const lm=lamnm*1e-6/S4.n,rm=S4.r*1000,be=Math.PI*S4.a*y/(lm*rm),env=Math.abs(be)<1e-6?1:(Math.sin(be)/be)**2;
@@ -862,7 +873,7 @@ function I4(y,lamnm,ph=0){const lm=lamnm*1e-6/S4.n,rm=S4.r*1000,be=Math.PI*S4.a*
 function col4(y){if(!white4()){const v=I4(y,S4.lam,S4.lamp?S4.jit:0);return nmRGBa(S4.lam).map(c=>c*v);}
   const s=[0,0,0];WL.forEach((l,i)=>{const v=I4(y,l,S4.lamp?S4.jit:0);for(let j=0;j<3;j++)s[j]+=WRGB[i][j]*v;});return s.map((v,j)=>v/WSUM[j]);}
 function geo4(){const{sd}=lay4(),slitX=sd.x+Math.max(60,sd.w*.2),scrX=slitX+(sd.w*.62)*(S4.r/3),cy=sd.y+sd.h/2,sy=(sd.h*.42)/YMM,ds=clamp(10+S4.d*55,12,60);return{sd,slitX,scrX,cy,sy,ds};}
-DRAW.young=()=>{if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g4,{sd,fr}=lay4(),G=geo4();g.clearRect(0,0,W4,H4);g.fillStyle=C.panel;g.fillRect(0,0,W4,H4);
+DRAW.young=()=>{if(S4.view==='cmp'){if(S4.lamp)updCmp();drawCmp();return;}if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g4,{sd,fr}=lay4(),G=geo4();g.clearRect(0,0,W4,H4);g.fillStyle=C.panel;g.fillRect(0,0,W4,H4);
   g.fillStyle='#0d1117';g.fillRect(sd.x,sd.y,sd.w,sd.h);g.fillRect(fr.x,fr.y,fr.w,fr.h);
   const lc=white4()?'#ffffff':nmCol(S4.lam);
   // 雷射
@@ -911,7 +922,7 @@ DRAW.young=()=>{if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g
     else{const y=fy0+fs/2-p;g.beginPath();g.moveTo(fx0+fs-10,y);g.lineTo(fx0+fs-2,y-6);g.lineTo(fx0+fs-2,y+6);g.fill();}}
   if(S4.lamp)text(g,'兩盞獨立燈泡：條紋一直亂跳 → 眼睛看到的是平均（均勻）',sd.x+sd.w/2,sd.y+34,{col:'#ffd27a',size:12,bold:true,align:'center',bg:'rgba(0,0,0,.5)'});
 };
-TICK.young=dt=>{if(S4.lamp)S4.jit=Math.random()*TAU;if(S4.anim){S4.at+=dt;S4.a=Math.round((.11-.085*Math.cos(S4.at*.7))*1000)/1000;ui4();if(S4.view==='3d')upd3Y();}return S4.lamp||S4.anim||(S4.view==='3d'&&!!Y3.ren);};
+TICK.young=dt=>{if(S4.lamp)S4.jit=Math.random()*TAU;if(S4.anim){S4.at+=dt;S4.a=Math.round((.11-.085*Math.cos(S4.at*.7))*1000)/1000;ui4();if(S4.view==='3d')upd3Y();if(S4.view==='cmp')updCmp();}return S4.lamp||S4.anim||(S4.view==='3d'&&!!Y3.ren)||(S4.view==='cmp'&&!!YC.ren);};
 function dy4(lam){return S4.r*lam/(S4.n*S4.d)*1e-3;}
 function ui4(){segSet($('src4'),S4.src);segSet($('type4'),S4.type);segSet($('ori4'),S4.ori);segSet($('n4'),String(S4.n));$('cov4').checked=S4.cov;$('lamp4').checked=S4.lamp;
   $('lam4w').hidden=white4();$('lam4').value=S4.lam;$('lam4o').textContent=S4.lam+' nm';$('d4o').textContent=f2(S4.d)+' mm';$('d4').value=S4.d;$('r4o').textContent=f1(S4.r)+' m';$('r4').value=S4.r;$('a4o').textContent=(Math.round(S4.a*1000)/1000).toFixed(3)+' mm';$('a4').value=S4.a;
@@ -937,7 +948,7 @@ function ui4(){segSet($('src4'),S4.src);segSet($('type4'),S4.type);segSet($('ori
   checks($('r4c'),L);drawPhasor4();segSet($('view4'),S4.view);$('pha4').checked=S4.pha;$('zm4').checked=S4.zoom;segSet($('beam4'),S4.beam);$('ex4').value=S4.exp;$('ex4o').textContent=S4.exp;$('anim4').textContent=S4.anim?'❚❚ 停止縫寬變化':'▶ 縫寬慢慢變化';
   $('tab4').innerHTML=S4.rec.map(r=>`<tr><td>${r.l}</td><td>${r.m}</td><td>${f2(r.d)}</td><td>${f1(r.r)}</td><td>${r.dy}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted);font-family:var(--f-body)">還沒有記錄</td></tr>';}
 UI.young=ui4;
-function set4(o){Object.assign(S4,o);S4.Py=clamp(S4.Py,-YMM,YMM);ui4();if(S4.view==='3d')upd3Y();kick();}
+function set4(o){Object.assign(S4,o);S4.Py=clamp(S4.Py,-YMM,YMM);ui4();if(S4.view==='3d')upd3Y();if(S4.view==='cmp')updCmp();kick();}
 segOn($('src4'),v=>set4(v==='white'?{src:'white'}:{src:v,lam:+v}));
 segOn($('type4'),v=>set4(v==='single'?{type:v,a:.12}:{type:v,a:.05}));segOn($('ori4'),v=>set4({ori:v}));segOn($('n4'),v=>set4({n:+v}));
 $('cov4').addEventListener('change',e=>set4({cov:e.target.checked}));$('lamp4').addEventListener('change',e=>set4({lamp:e.target.checked}));
@@ -973,28 +984,31 @@ async function init3Y(){if(Y3.ren||Y3.loading)return;Y3.loading=true;const THREE
 function resize3Y(){if(!Y3.ren)return;const cv=$('cv4b');cv.style.width='100%';const w=Math.max(200,cv.parentElement.clientWidth-20),h=clamp(Math.round(w*.56),300,560);Y3.ren.setSize(w,h,false);cv.style.height=h+'px';Y3.cam.aspect=w/h;Y3.cam.updateProjectionMatrix();}
 const MM3=.1;// 1 mm＝0.1 單位
 function prof4(){const out=[];for(let i=0;i<=600;i++){out.push(col4(-30+i*.1));}return out;}
-function upd3Y(){const R=Y3;if(!R.ren)return;const THREE=R.THREE,zs=1.2+S4.r*2.3,P=prof4(),at=mm=>P[clamp(Math.round((mm+30)*10),0,600)],white=white4(),lc=white?'#ffffff':nmCol(S4.lam);
+function updApp(R,ori,parent){const THREE=R.THREE,zs=1.2+S4.r*2.3,P=R.P||prof4(),at=mm=>P[clamp(Math.round((mm+30)*10),0,600)],white=white4(),lc=white?'#ffffff':nmCol(S4.lam);
   R.screen.position.set(0,0,zs);R.frame.position.set(0,0,zs+.05);R.beamM.color.set(lc);
   // 屏幕貼圖
   {const c=R.scrC,g=c.getContext('2d'),W=c.width,H=c.height;g.fillStyle='#000';g.fillRect(0,0,W,H);
-    for(let i=0;i<W;i++){const mm=(i/W-.5)*60,col=at(S4.ori==='v'?mm:0);if(S4.ori==='v'){for(let k=0;k<60;k++){const v=(k+.5)/60,pr=Math.exp(-(((v-.5)/(S4.beam==='dot'?.09:.35))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(i,H*k/60,1.2,H/60+1);}}}
-    if(S4.ori==='h')for(let j=0;j<H;j++){const mm=(.5-j/H)*40,col=at(mm);for(let k=0;k<60;k++){const u=(k+.5)/60,pr=Math.exp(-(((u-.5)/(S4.beam==='dot'?.09:.3))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(W*k/60,j,W/60+1,1.2);}}
+    for(let i=0;i<W;i++){const mm=(i/W-.5)*60,col=at(ori==='v'?mm:0);if(ori==='v'){for(let k=0;k<60;k++){const v=(k+.5)/60,pr=Math.exp(-(((v-.5)/(S4.beam==='dot'?.09:.35))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(i,H*k/60,1.2,H/60+1);}}}
+    if(ori==='h')for(let j=0;j<H;j++){const mm=(.5-j/H)*40,col=at(mm);for(let k=0;k<60;k++){const u=(k+.5)/60,pr=Math.exp(-(((u-.5)/(S4.beam==='dot'?.09:.3))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(W*k/60,j,W/60+1,1.2);}}
     g.fillStyle='rgba(200,210,220,.7)';g.font='16px '+FONT;for(let mm=-30;mm<=30;mm+=5){const x=W/2+mm/60*W;g.fillRect(x,H-(mm%10?8:16),1.5,mm%10?8:16);if(mm%10===0)g.fillText(String(mm),x-8,H-20);}
     R.scrT.needsUpdate=true;}
   // 扇形光帶
-  {const c=R.fanC,g=c.getContext('2d'),W=c.width,H=c.height,img=g.createImageData(W,H),d=img.data,span=S4.ori==='v'?3:2;
+  {const c=R.fanC,g=c.getContext('2d'),W=c.width,H=c.height,img=g.createImageData(W,H),d=img.data,span=ori==='v'?3:2;
     for(let r=0;r<H;r++){const sfr=(r+.5)/H;for(let q=0;q<W;q++){const X=(q/W-.5)*6,Xs=X/sfr,o=(r*W+q)*4;if(Math.abs(Xs)>span){d[o+3]=0;continue;}const col=tone4(at(Xs/MM3)),a=.55*(.4+.6*sfr);
       d[o]=255*col[0];d[o+1]=255*col[1];d[o+2]=255*col[2];d[o+3]=255*a;}}
     g.putImageData(img,0,0);R.fanT.needsUpdate=true;
-    if(R.fan){R.scene.remove(R.fan);R.fan.geometry.dispose();}const geo=new THREE.PlaneGeometry(6,zs);geo.rotateX(-Math.PI/2);geo.translate(0,0,zs/2);if(S4.ori==='h')geo.rotateZ(Math.PI/2);
-    R.fan=new THREE.Mesh(geo,R.fanM);R.scene.add(R.fan);}
+    if(R.fan){parent.remove(R.fan);R.fan.geometry.dispose();}const geo=new THREE.PlaneGeometry(6,zs);geo.rotateX(-Math.PI/2);geo.translate(0,0,zs/2);if(ori==='h')geo.rotateZ(Math.PI/2);
+    R.fan=new THREE.Mesh(geo,R.fanM);parent.add(R.fan);}
   // 狹縫板
   {R.plate.children.slice().forEach(ch=>{R.plate.remove(ch);ch.geometry.dispose();});const pm=new THREE.MeshStandardMaterial({color:0x8a939e,roughness:.7}),gw=.07,dv=clamp(.25+S4.d*1.3,.3,1.6),
       cuts=S4.type==='single'?[[-gw*1.4,gw*1.4]]:[[-dv/2-gw/2,-dv/2+gw/2],[dv/2-gw/2,dv/2+gw/2]];let x0=-3;
     cuts.forEach(([a,b])=>{const w=a-x0;if(w>0){const m=new THREE.Mesh(new THREE.BoxGeometry(w,4,.08),pm);m.position.set(x0+w/2,0,0);R.plate.add(m);}x0=b;});
     {const w=3-x0,m=new THREE.Mesh(new THREE.BoxGeometry(w,4,.08),pm);m.position.set(x0+w/2,0,0);R.plate.add(m);}
     if(S4.cov&&S4.type==='double'){const m=new THREE.Mesh(new THREE.BoxGeometry(.3,4.02,.12),new THREE.MeshStandardMaterial({color:0x2a2f36}));m.position.set(dv/2,0,-.06);R.plate.add(m);}
-    R.plate.rotation.z=S4.ori==='h'?Math.PI/2:0;}
+    if(R.glow){const gm=new THREE.MeshBasicMaterial({color:0xfff2c0});cuts.forEach(([a,b])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(Math.max(.05,b-a),3.2,.1),gm);m.position.set((a+b)/2,0,0);R.plate.add(m);});}
+    R.plate.rotation.z=ori==='h'?Math.PI/2:0;}
+}
+function upd3Y(){const R=Y3;if(!R.ren)return;const THREE=R.THREE,zs=1.2+S4.r*2.3;updApp(R,S4.ori,R.scene);
   // P 標記與標籤
   const p=S4.Py*MM3;R.pm.position.set(S4.ori==='v'?-p:0,S4.ori==='h'?p:0,zs-.04);
   R.lbl.laser.position.set(0,.9,-5);R.lbl.slit.position.set(0,2.4,0);R.lbl.scr.position.set(0,2.5,zs);R.lbl.r.position.set(0,-2.1,zs/2);
@@ -1013,7 +1027,66 @@ function drawPhasor4(){const box=$('ph4box');box.hidden=!S4.pha;if(!S4.pha)retur
   const e=pts[pts.length-1];arrow(g,ox,oy,ox+e[0],oy+e[1],'#ffd27a',3);
   const A=Math.hypot(e[0],e[1])/(sc*2);text(g,`合成振幅 ${f2(A)}　強度 ${f2(A*A)}（中央＝1）`,10,H-10,{col:'#ffd27a',size:12,bold:true});
   $('ph4cap').textContent=nsl===2?`相量圖：把每條縫分成 ${N} 小段，每段發出的光畫成一支小箭頭（藍＝上縫、綠＝下縫），首尾相接；黃箭頭＝P 點的合成振幅。`:`相量圖：把狹縫分成 ${N} 小段，每段發出的光是一支小箭頭，到 P 點的路程越來越長、箭頭逐漸轉向；首尾相接後的黃箭頭＝合成振幅。在暗紋處，箭頭剛好繞成一個圓，合成為 0。`;}
-segOn($('view4'),v=>{S4.view=v;$('cv4').hidden=v==='3d';$('cv4b').hidden=v!=='3d';$('y3tip').hidden=v!=='3d';segSet($('view4'),v);if(v==='3d')init3Y().then(()=>{resize3Y();upd3Y();kick();});else{SIZE.young();ui4();}kick();});
+// ----- 直橫比較（兩套裝置並排，斜上方看）-----
+const YC={ren:null,loading:false};const CAMC=[0,12.6,-7.4],TGC=[0,-.8,3.4];
+async function initCmp(){if(YC.ren||YC.loading)return;YC.loading=true;const THREE=await import('three');const{OrbitControls}=await import('../vendor/three/OrbitControls.js');YC.THREE=THREE;
+  const cv=$('cv4c'),ren=new THREE.WebGLRenderer({canvas:cv,antialias:true});ren.setPixelRatio(DPR());cv.addEventListener('webglcontextlost',e=>{e.preventDefault();YC.lost=true;});cv.addEventListener('webglcontextrestored',()=>{YC.lost=false;updCmp();kick();});
+  const scene=new THREE.Scene();scene.background=new THREE.Color(0x0b0f14);const cam=new THREE.PerspectiveCamera(42,1,.1,200);cam.position.set(...CAMC);
+  const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.08;ctl.target.set(...TGC);ctl.minDistance=4;ctl.maxDistance=45;ctl.addEventListener('change',kick);
+  scene.add(new THREE.HemisphereLight(0xcfe0ff,0x202830,.8));const dl=new THREE.DirectionalLight(0xffffff,1);dl.position.set(-6,10,-4);scene.add(dl);
+  const floor=new THREE.GridHelper(40,40,0x2a3541,0x1a222c);floor.position.y=-2.4;scene.add(floor);
+  const mkSet=(ori,x0)=>{const grp=new THREE.Group();grp.position.x=x0;grp.scale.setScalar(.85);scene.add(grp);
+    const laser=new THREE.Mesh(new THREE.BoxGeometry(.7,.7,1.8),new THREE.MeshStandardMaterial({color:0x59626d}));laser.position.set(0,0,-5);grp.add(laser);
+    const beamM=new THREE.MeshBasicMaterial({color:0xff3b2f}),beam=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,4.1,10),beamM);beam.rotation.x=Math.PI/2;beam.position.set(0,0,-2.05);grp.add(beam);
+    const scrC=document.createElement('canvas');scrC.width=600;scrC.height=400;const scrT=new THREE.CanvasTexture(scrC);scrT.colorSpace=THREE.SRGBColorSpace;
+    const screen=new THREE.Mesh(new THREE.PlaneGeometry(6,4),new THREE.MeshBasicMaterial({map:scrT,side:THREE.DoubleSide}));screen.rotation.y=Math.PI;grp.add(screen);
+    const frame=new THREE.Mesh(new THREE.BoxGeometry(6.2,4.2,.06),new THREE.MeshStandardMaterial({color:0x3a4048}));grp.add(frame);
+    const fanC=document.createElement('canvas');fanC.width=256;fanC.height=256;const fanT=new THREE.CanvasTexture(fanC);fanT.colorSpace=THREE.SRGBColorSpace;
+    const fanM=new THREE.MeshBasicMaterial({map:fanT,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide});
+    const plate=new THREE.Group();grp.add(plate);
+    // 放大框：狹縫的樣子
+    const ic=document.createElement('canvas');ic.width=ic.height=128;const icT=new THREE.CanvasTexture(ic);icT.colorSpace=THREE.SRGBColorSpace;const icon=new THREE.Sprite(new THREE.SpriteMaterial({map:icT,depthTest:false}));icon.scale.set(1.5,1.5,1);icon.position.set(-3.9,1.6,0);icon.renderOrder=6;grp.add(icon);
+    const lbl=sprite3(THREE,ori==='v'?'直的狹縫':'橫的狹縫',.55,'#ffd27a');lbl.position.set(0,2.7,-.4);grp.add(lbl);
+    const arr=new THREE.Group();grp.add(arr);
+    return{ori,grp,THREE,beamM,scrC,scrT,screen,frame,fanC,fanT,fanM,fan:null,plate,glow:true,ic,icT,arr,lbl2:null};};
+  YC.sets=[mkSet('v',3.4),mkSet('h',-3.4)];
+  Object.assign(YC,{ren,scene,cam,ctl});YC.loading=false;resizeCmp();updCmp();kick();}
+function resizeCmp(){if(!YC.ren)return;const cv=$('cv4c');cv.style.width='100%';const w=Math.max(200,cv.parentElement.clientWidth-20),h=clamp(Math.round(w*.58),300,600);YC.ren.setSize(w,h,false);cv.style.height=h+'px';YC.cam.aspect=w/h;YC.cam.updateProjectionMatrix();}
+function slitIcon(c,ori,type,cov){const g=c.getContext('2d'),W=c.width,H=c.height;g.clearRect(0,0,W,H);g.fillStyle='#3d444d';g.fillRect(0,0,W,H);g.strokeStyle='#ffd27a';g.lineWidth=W/24;g.strokeRect(W/48,H/48,W-W/24,H-H/24);
+  g.fillStyle='#fff6d6';const n=type==='single'?1:2,L=H*.66,w=Math.max(3,W*.045),gap=W*.22;for(let k=0;k<n;k++){const o=n===1?0:(k?gap/2:-gap/2);if(ori==='v')g.fillRect(W/2+o-w/2,(H-L)/2,w,L);else g.fillRect((W-L)/2,H/2+o-w/2,L,w);}}
+function updCmp(){const R=YC;if(!R.ren)return;const THREE=R.THREE,zs=1.2+S4.r*2.3,P=prof4();
+  R.sets.forEach(st=>{st.P=P;updApp(st,st.ori,st.grp);st.screen.position.set(0,0,zs);st.frame.position.set(0,0,zs+.05);slitIcon(st.ic,st.ori,S4.type,S4.cov);st.icT.needsUpdate=true;
+    // 條紋排開方向的雙箭頭
+    st.arr.children.slice().forEach(c=>st.arr.remove(c));const col=0xffd27a,dir=st.ori==='v'?new THREE.Vector3(-1,0,0):new THREE.Vector3(0,1,0),o=new THREE.Vector3(0,0,zs-.25),L=2.4;
+    st.arr.add(new THREE.ArrowHelper(dir,o,L,col,.4,.28));st.arr.add(new THREE.ArrowHelper(dir.clone().negate(),o,L,col,.4,.28));
+    if(st.lbl2){st.grp.remove(st.lbl2);}st.lbl2=sprite3(THREE,st.ori==='v'?'條紋左右排開 ↔':'條紋上下排開 ↕',.6,'#ffd27a');st.lbl2.position.set(0,3.05,zs);st.grp.add(st.lbl2);});}
+function drawCmp(){if(!YC.ren||YC.lost)return;YC.ctl.update();YC.ren.render(YC.scene,YC.cam);}
+function setView4(v){S4.view=v;$('cv4').hidden=v!=='2d';$('cv4b').hidden=v!=='3d';$('cv4c').hidden=v!=='cmp';$('y3tip').hidden=v==='2d';$('cam4').hidden=v==='2d';segSet($('view4'),v);
+  if(v==='3d')init3Y().then(()=>{resize3Y();upd3Y();kick();});else if(v==='cmp')initCmp().then(()=>{resizeCmp();updCmp();kick();});else{SIZE.young();ui4();}kick();}
+$('cam4').addEventListener('click',()=>{const R=S4.view==='cmp'?YC:Y3;if(!R.ren)return;if(S4.view==='cmp'){R.cam.position.set(...CAMC);R.ctl.target.set(...TGC);}else{R.cam.position.set(-7,7,-7.5);R.ctl.target.set(0,0,2.6);}R.ctl.update();kick();});
+// ----- 考題練習 -----
+const QZ={ans:null,opts:[],done:false,ok:0,n:0};
+function patI(type,ori,u){const lam=650e-6,rm=1500,a=type==='single'?.12:.05,d=.25,be=Math.PI*a*u/(lam*rm),env=Math.abs(be)<1e-6?1:(Math.sin(be)/be)**2;return type==='single'?env:env*Math.cos(Math.PI*d*u/(lam*rm))**2;}
+function drawPat(c,type,ori){const d0=DPR(),W=c.clientWidth||160,H=c.clientHeight||110;c.width=Math.round(W*d0);c.height=Math.round(H*d0);const g=c.getContext('2d'),w=c.width,h=c.height,img=g.createImageData(w,h),D=img.data,mmpp=ori==='v'?64/w:46/h,base=[1,.12,.08],sg=3.2;
+  for(let y=0;y<h;y++)for(let x=0;x<w;x++){const ux=(x-w/2)*mmpp,uy=(h/2-y)*mmpp,along=ori==='v'?ux:uy,across=ori==='v'?uy:ux,v=patI(type,ori,along)*Math.exp(-((across/sg)**2)),t=tone4(base.map(q=>q*v),16),o=(y*w+x)*4;
+    D[o]=5+250*t[0];D[o+1]=7+248*t[1];D[o+2]=10+245*t[2];D[o+3]=255;}
+  g.putImageData(img,0,0);}
+function newQuiz(){const types=['single','double'],oris=['v','h'],T=types[Math.floor(rnd()*2)],O=oris[Math.floor(rnd()*2)];QZ.ans={type:T,ori:O};QZ.done=false;
+  const all=[];types.forEach(t=>oris.forEach(o=>all.push({type:t,ori:o})));for(let i=all.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));[all[i],all[j]]=[all[j],all[i]];}QZ.opts=all;
+  const c=$('qz4s');c.width=c.height=Math.round(130*DPR());slitIcon(c,O,T,false);$('qz4sl').textContent=(T==='single'?'單狹縫':'雙狹縫')+'（'+(O==='v'?'直的':'橫的')+'）';
+  const box=$('qz4o');box.innerHTML='';all.forEach((op,k)=>{const b=document.createElement('button');b.className='qchip';b.style.cssText='padding:6px;border-radius:10px;display:flex;flex-direction:column;align-items:center;gap:4px';
+    b.innerHTML=`<canvas style="width:100%;height:120px;border-radius:6px"></canvas><span>(${'ABCD'[k]})</span>`;box.appendChild(b);requestAnimationFrame(()=>drawPat(b.querySelector('canvas'),op.type,op.ori));
+    b.addEventListener('click',()=>{if(QZ.done)return;QZ.done=true;QZ.n++;const ok=op.type===T&&op.ori===O;if(ok)QZ.ok++;
+      box.querySelectorAll('button').forEach((bb,kk)=>{const o2=all[kk];if(o2.type===T&&o2.ori===O)bb.style.borderColor='var(--green)',bb.style.borderWidth='3px';else if(bb===b)bb.style.borderColor='#c0453b',bb.style.borderWidth='3px';});
+      $('qz4f').innerHTML=ok?'✓ 答對了！':`✕ 再想想：正確答案是 (${'ABCD'[all.findIndex(o2=>o2.type===T&&o2.ori===O)]})`;
+      $('qz4f').innerHTML+=`<br><small style="font-size:.95rem;font-weight:500;font-family:var(--f-body)">${O==='v'?'直的狹縫 → 光向左右繞射，亮紋沿<b>水平方向</b>排開':'橫的狹縫 → 光向上下繞射，亮紋沿<b>鉛直方向</b>排開'}；${T==='single'?'單狹縫：中央亮紋特別寬、特別亮，兩側很快變暗':'雙狹縫：亮紋幾乎等寬、等間隔'}。</small>`;
+      $('qz4a').hidden=false;$('qz4sc').textContent=`答對 ${QZ.ok}／${QZ.n} 題`;});});
+  $('qz4f').textContent='';$('qz4a').hidden=true;}
+$('quizBtn4').addEventListener('click',()=>{$('quiz4').hidden=false;newQuiz();$('quiz4').scrollIntoView({behavior:'smooth',block:'start'});});
+$('qz4n').addEventListener('click',newQuiz);$('qz4x').addEventListener('click',()=>{$('quiz4').hidden=true;});
+$('qz4a').addEventListener('click',()=>{const A=QZ.ans;set4({type:A.type,ori:A.ori,a:A.type==='single'?.12:.05,d:.25,r:1.5,src:'650',lam:650,cov:false,lamp:false,n:1});setView4('cmp');document.querySelector('#b-young .cbox').scrollIntoView({behavior:'smooth',block:'center'});});
+
+segOn($('view4'),v=>setView4(v));
 $('pha4').addEventListener('change',e=>{S4.pha=e.target.checked;drawPhasor4();});
 $('zm4').addEventListener('change',e=>set4({zoom:e.target.checked}));
 segOn($('beam4'),v=>set4({beam:v}));
