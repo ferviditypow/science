@@ -56,7 +56,7 @@
     <span class="seg" id="benchSeg">
       <button data-v="snell" aria-pressed="true"><span class="n">1</span>折射定律與全反射</button>
       <button data-v="huygens" aria-pressed="false"><span class="n">2</span>波前為什麼轉彎</button>
-      <button data-v="depth" aria-pressed="false"><span class="n">3</span>浮起的硬幣</button>
+      <button data-v="depth" aria-pressed="false"><span class="n">3</span>視深：硬幣、魚和鳥</button>
       <button data-v="fiber" aria-pressed="false"><span class="n">4</span>光纖</button>
       <button data-v="prism" aria-pressed="false"><span class="n">5</span>色散與玻璃板</button>
       <button data-v="guard" aria-pressed="false"><span class="n">6</span>救生員問題</button>
@@ -136,13 +136,13 @@
   <section class="bench" id="b-depth" hidden>
     <div class="panel">
       <div class="toolbar">
-        <span class="seg" id="obj3"><button data-v="coin" aria-pressed="true">碗底的硬幣</button><button data-v="stick">水中的筷子</button></span>
+        <span class="seg" id="obj3"><button data-v="coin" aria-pressed="true">碗底的硬幣</button><button data-v="stick">水中的筷子</button><button data-v="birdsee">鳥看魚</button><button data-v="fishsee">魚看鳥</button></span>
         <button class="btn primary" id="pour3">💧 倒水</button>
         <button class="btn" id="empty3">↺ 把水倒掉</button>
-        <label class="slider"><span class="tlabel">水深</span><input type="range" id="h3" min="0" max="1" step="0.01" value="0"><output id="h3o"></output></label>
+        <label class="slider" id="h3w"><span class="tlabel">水深</span><input type="range" id="h3" min="0" max="1" step="0.01" value="0"><output id="h3o"></output></label>
       </div>
-      <div class="cbox"><canvas id="cv3" aria-label="碗底硬幣與水中筷子的視深，可拖曳眼睛"></canvas></div>
-      <p class="hint">拖曳橘色的眼睛。一開始碗裡沒有水，硬幣剛好被碗邊擋住；慢慢倒水，硬幣就「浮」出來了。紅線是光實際走的路，虛線是眼睛以為光來的方向。</p>
+      <div class="cbox"><canvas id="cv3" aria-label="視深：碗底硬幣、水中筷子、鳥看魚、魚看鳥"></canvas></div>
+      <p class="hint" id="hint3"></p>
     </div>
     <div class="grid2">
       <section class="panel box">
@@ -154,6 +154,7 @@
         <ul>
           <li><b>視深＜實深</b>：杯底的硬幣、泳池的底部看起來比實際淺（游泳池「看起來不深」是很危險的錯覺！）。</li>
           <li>水中筷子「折斷」：水中部分看起來被抬高。</li>
+          <li><b>鳥看魚</b>：魚看起來比實際淺；<b>魚看鳥</b>：鳥看起來比實際高。眼睛都是把進來的光往回延長。</li>
           <li>清晨與黃昏：大氣越低越密、光速越慢，陽光被折彎，我們看到的夕陽實際上已經在地平線下。</li>
           <li>海市蜃樓：地面附近空氣溫度不同、折射率不同，光線彎曲造成虛像。</li>
         </ul>
@@ -421,55 +422,110 @@ $('n2').addEventListener('input',e=>{S2.n2=+e.target.value;UI.huygens();kick();}
 // =====================================================================
 // 3 浮起的硬幣、折斷的筷子
 // =====================================================================
-const NW=4/3,S3={obj:'coin',h:0,target:0,pour:false,eye:{fx:.12,fy:.12}};
+const NW=4/3,S3={obj:'coin',h:0,target:0,pour:false,eye:null,pos:{birdsee:{bird:{fx:.66,fy:.14},fish:{fx:.3,fy:.8}},fishsee:{bird:{fx:.56,fy:.24},fish:{fx:.36,fy:.88}}}};
 const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;
 SIZE.depth=()=>{const r=fit(cv3,.5,320,500);W3=r.W;H3=r.H;};
-function cup3(){const cx0=W3*.34,cx1=W3*.82,yt=H3*.3,yb=H3*.88;return{cx0,cx1,yt,yb,yw:yb-S3.h*(yb-yt)*.92,coin:[cx0+(cx1-cx0)*.2,yb-4]};}
-// 從水下的點 Q 到眼睛 E 的光：在水面上找出折射點（二分法）
-function path3(Q,E){const c=cup3();if(Q[1]<=c.yw+.5||S3.h<=0.001)return{P:null,app:Q};
-  const f=x=>{const dw=Math.hypot(x-Q[0],c.yw-Q[1]),da=Math.hypot(E[0]-x,E[1]-c.yw);return NW*(x-Q[0])/dw+(x-E[0])/da;};
-  let a=Math.min(Q[0],E[0]),b=Math.max(Q[0],E[0]);const fa=f(a);for(let k=0;k<60;k++){const m=(a+b)/2;if((f(m)>0)===(fa>0))a=m;else b=m;}
-  const P=[(a+b)/2,c.yw];const k=(Q[0]-E[0])/(P[0]-E[0]);return{P,app:[Q[0],E[1]+(P[1]-E[1])*k]};}
-function blocked3(A,B){const c=cup3();for(const wx of[c.cx0,c.cx1]){if((A[0]-wx)*(B[0]-wx)<0){const y=A[1]+(B[1]-A[1])*(wx-A[0])/(B[0]-A[0]);if(y>c.yt&&y<c.yb)return true;}}return false;}
-function stick3(){const c=cup3();return[[c.cx1+W3*.05,c.yt-H3*.2],[c.cx0+(c.cx1-c.cx0)*.25,c.yb-6]];}
-DRAW.depth=()=>{const g=g3,W=W3,H=H3,c=cup3(),E=[S3.eye.fx*W,S3.eye.fy*H];g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
-  // 水、碗
+// 碗：深度不超過寬度的 1/1.5，硬幣放在「沒水時剛好被碗邊擋住、水滿時看得到」的位置
+const EYE_A=52*D2R,TAN_A=Math.tan(EYE_A),TAN_W=Math.tan(Math.asin(Math.sin(EYE_A)/NW));
+function cup3(){const cx0=W3*.36,cx1=W3*.86,yb=H3*.9,D=Math.min(H3*.6,(cx1-cx0)/1.45),yt=yb-D;
+  return{cx0,cx1,yt,yb,D,yw:yb-S3.h*D*.92,coin:[cx0+D*.95,yb-4]};}
+function eye3(){const c=cup3();if(S3.eye)return[S3.eye.fx*W3,S3.eye.fy*H3];const L=Math.min((c.yt-H3*.07)/Math.cos(EYE_A),(c.cx0-26)/Math.sin(EYE_A));return[c.cx0-L*Math.sin(EYE_A),c.yt-L*Math.cos(EYE_A)];}
+// 一般化：A、B 在水面兩側，求水面上的折射點 P（nA sinθA ＝ nB sinθB）
+function surfP(A,B,ys,nA,nB){const f=x=>nA*(x-A[0])/Math.hypot(x-A[0],ys-A[1])+nB*(x-B[0])/Math.hypot(x-B[0],ys-B[1]);
+  let a=Math.min(A[0],B[0]),b=Math.max(A[0],B[0]);if(b-a<1e-6)return[A[0],ys];const fa=f(a);for(let k=0;k<60;k++){const m=(a+b)/2;if((f(m)>0)===(fa>0))a=m;else b=m;}return[(a+b)/2,ys];}
+// 看起來的位置：觀察者→P 延長線與物體正上（下）方鉛直線的交點；幾乎正對時用 n 的比例
+function appPos(A,B,P,ys,nA,nB){if(Math.abs(P[0]-B[0])<2||Math.abs(A[0]-B[0])<3)return[A[0],ys+(A[1]-ys)*nB/nA];const k=(A[0]-B[0])/(P[0]-B[0]);return[A[0],B[1]+(P[1]-B[1])*k];}
+// 碗：從水下點 Q 到眼睛 E；回傳折射點、看起來的位置、看不看得到
+function path3(Q,E){const c=cup3();
+  if(S3.h<=0.001||Q[1]<=c.yw+.5){return{P:null,app:Q,ok:!blocked3(Q,E)};}
+  const P=surfP(Q,E,c.yw,NW,1),inCup=P[0]>c.cx0+1&&P[0]<c.cx1-1;return{P,app:appPos(Q,E,P,c.yw,NW,1),ok:inCup&&!blocked3(P,E)};}
+function blocked3(A,B){const c=cup3();for(const wx of[c.cx0,c.cx1]){if((A[0]-wx)*(B[0]-wx)<0){const y=A[1]+(B[1]-A[1])*(wx-A[0])/(B[0]-A[0]);if(y>c.yt-1&&y<c.yb+1)return true;}}return false;}
+function stick3(){const c=cup3();return[[c.cx1+W3*.05,c.yt-H3*.18],[c.cx0+c.D*.55,c.yb-6]];}
+function coinIcon(g,x,y,ghost){g.save();if(ghost){g.globalAlpha=.7;g.setLineDash([4,3]);}g.fillStyle='#d9a521';g.strokeStyle='#a87a10';g.lineWidth=2;g.beginPath();g.ellipse(x,y,16,5,0,0,TAU);if(!ghost)g.fill();g.stroke();g.restore();}
+function fishIcon(g,x,y,dir,ghost){g.save();g.translate(x,y);g.scale(dir,1);if(ghost){g.globalAlpha=.75;g.setLineDash([4,3]);}
+  g.fillStyle='#e8893a';g.strokeStyle='#a4551b';g.lineWidth=2;g.beginPath();g.ellipse(0,0,22,11,0,0,TAU);if(!ghost)g.fill();g.stroke();
+  g.beginPath();g.moveTo(-18,0);g.lineTo(-34,-11);g.lineTo(-34,11);g.closePath();if(!ghost)g.fill();g.stroke();
+  g.setLineDash([]);g.fillStyle='#222';g.beginPath();g.arc(12,-3,2.6,0,TAU);g.fill();g.restore();}
+function birdIcon(g,x,y,dir,ghost){g.save();g.translate(x,y);g.scale(dir,1);if(ghost){g.globalAlpha=.75;g.setLineDash([4,3]);}
+  g.fillStyle='#4f7fbf';g.strokeStyle='#2c4f80';g.lineWidth=2;g.beginPath();g.ellipse(0,0,18,10,-.15,0,TAU);if(!ghost)g.fill();g.stroke();
+  g.beginPath();g.arc(15,-8,7,0,TAU);if(!ghost)g.fill();g.stroke();
+  g.beginPath();g.moveTo(-4,-4);g.lineTo(-16,-22);g.lineTo(6,-6);g.closePath();if(!ghost)g.fill();g.stroke();
+  g.setLineDash([]);g.fillStyle='#f0b429';g.beginPath();g.moveTo(21,-9);g.lineTo(30,-6);g.lineTo(21,-5);g.closePath();g.fill();
+  g.fillStyle='#111';g.beginPath();g.arc(17,-9,1.8,0,TAU);g.fill();g.restore();}
+const pond=()=>H3*(S3.obj==='fishsee'?.6:.45),PS=()=>S3.pos[S3.obj],cmPx=()=>100/(H3-pond());
+DRAW.depth=()=>{const g=g3,W=W3,H=H3;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  if(S3.obj==='birdsee'||S3.obj==='fishsee'){drawPond(g,W,H);return;}
+  const c=cup3(),E=eye3();
   if(S3.h>0){g.fillStyle=C.water;g.fillRect(c.cx0,c.yw,c.cx1-c.cx0,c.yb-c.yw);line(g,c.cx0,c.yw,c.cx1,c.yw,C.ai,2);}
   g.strokeStyle=C.ink;g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(c.cx0,c.yt);g.lineTo(c.cx0,c.yb);g.lineTo(c.cx1,c.yb);g.lineTo(c.cx1,c.yt);g.stroke();g.lineCap='butt';
   let seen=false,info=null;
-  if(S3.obj==='coin'){const Q=c.coin,p=path3(Q,E);
-    const coin=(x,y,ghost)=>{g.save();if(ghost){g.globalAlpha=.6;g.setLineDash([4,3]);}g.fillStyle=ghost?'transparent':'#d9a521';g.strokeStyle='#a87a10';g.lineWidth=2;g.beginPath();g.ellipse(x,y,16,5,0,0,TAU);if(!ghost)g.fill();g.stroke();g.restore();};
-    if(p.P){seen=!blocked3(p.P,E);const col=seen?C.ray:C.muted;ray(g,Q[0],Q[1],p.P[0],p.P[1],col,2.4,seen?null:[4,4]);ray(g,p.P[0],p.P[1],E[0],E[1],col,2.4,seen?null:[4,4]);
-      if(seen){line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.6,[6,5]);coin(p.app[0],p.app[1],true);text(g,'看起來在這裡',p.app[0]+22,p.app[1]-4,{col:C.ray,size:12,bold:true,bg:C.panel});}
-      info={real:(c.yb-c.yw),app:(p.app[1]-c.yw)};}
-    else{seen=!blocked3(Q,E);ray(g,Q[0],Q[1],E[0],E[1],seen?C.ray:C.muted,2.4,seen?null:[4,4]);}
-    coin(Q[0],Q[1],false);text(g,'硬幣',Q[0],Q[1]+22,{col:C.ink,size:12,bold:true,align:'center'});
-    if(!seen)text(g,'光被碗邊擋住，看不到硬幣',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});
-  }else{const[A,B]=stick3();
-    // 實際的筷子
-    line(g,A[0],A[1],B[0],B[1],'#b5793a',6);
+  if(S3.obj==='coin'){const Q=c.coin,p=path3(Q,E);seen=p.ok;
+    if(seen&&p.P){ray(g,Q[0],Q[1],p.P[0],p.P[1],C.ray,2.4);ray(g,p.P[0],p.P[1],E[0],E[1],C.ray,2.4);line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.6,[6,5]);
+      line(g,p.P[0],p.P[1]-34,p.P[0],p.P[1]+34,C.muted,1,[3,3]);
+      coinIcon(g,p.app[0],p.app[1],true);text(g,'看起來在這裡',p.app[0]+22,p.app[1]-4,{col:C.ray,size:12,bold:true,bg:C.panel});info={real:c.yb-c.yw,app:p.app[1]-c.yw};}
+    else if(seen){ray(g,Q[0],Q[1],E[0],E[1],C.ray,2.4);}
+    else{// 看不到：畫一條灰色虛線表示「直直過去會撞到碗壁」
+      const t=(c.cx0-Q[0])/(E[0]-Q[0]),hy=Q[1]+(E[1]-Q[1])*t;line(g,Q[0],Q[1],c.cx0,hy,C.muted,1.6,[4,4]);text(g,'✕',c.cx0+5,hy+5,{col:'#c0453b',size:16,bold:true});
+      text(g,S3.h>0?'還看不到：光被碗邊擋住':'光被碗邊擋住，看不到硬幣',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});}
+    coinIcon(g,Q[0],Q[1],false);text(g,'硬幣',Q[0],Q[1]+22,{col:C.ink,size:12,bold:true,align:'center'});}
+  else{const[A,B]=stick3();line(g,A[0],A[1],B[0],B[1],'#b5793a',6);
     if(S3.h>0){const t0=(c.yw-A[1])/(B[1]-A[1]),X=[lerp(A[0],B[0],t0),c.yw],pts=[];
-      for(let k=0;k<=24;k++){const Q=[lerp(X[0],B[0],k/24),lerp(X[1],B[1],k/24)];const p=path3(Q,E);pts.push(p.app);}
-      g.save();g.globalAlpha=.85;g.setLineDash([7,5]);g.strokeStyle=C.ray;g.lineWidth=5;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();g.restore();
-      const Q=B,p=path3(Q,E);if(p.P){ray(g,Q[0],Q[1],p.P[0],p.P[1],C.ray,1.8);ray(g,p.P[0],p.P[1],E[0],E[1],C.ray,1.8);line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.2,[4,4]);}
-      text(g,'眼睛看到的筷子（水中部分被抬高）',pts[pts.length-1][0]+12,pts[pts.length-1][1]-10,{col:C.ray,size:12,bold:true,bg:C.panel});seen=true;}
+      for(let k=0;k<=30;k++){const Q=[lerp(X[0],B[0],k/30),lerp(X[1],B[1],k/30)],p=path3(Q,E);if(p.ok)pts.push(p.app);else break;}
+      if(pts.length>1){g.save();g.globalAlpha=.85;g.setLineDash([7,5]);g.strokeStyle=C.ray;g.lineWidth=5;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();g.restore();
+        const Qi=Math.min(pts.length-1,30),Q=[lerp(X[0],B[0],Qi/30),lerp(X[1],B[1],Qi/30)],p=path3(Q,E);
+        if(p.ok&&p.P){ray(g,Q[0],Q[1],p.P[0],p.P[1],C.ray,1.8);ray(g,p.P[0],p.P[1],E[0],E[1],C.ray,1.8);line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.2,[4,4]);}
+        const L=pts[pts.length-1];text(g,'眼睛看到的筷子（水中部分被抬高）',L[0]+12,L[1]-10,{col:C.ray,size:12,bold:true,bg:C.panel});seen=true;}
+      if(pts.length<31)text(g,'筷子的下半段被碗邊擋住，看不到',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});}
     text(g,'實際的筷子',A[0]-8,A[1]+4,{col:'#b5793a',size:12,bold:true,align:'right',bg:C.panel});}
-  eyeIcon(g,E[0],E[1],Math.atan2(c.yb-E[1],c.cx0+(c.cx1-c.cx0)*.3-E[0]),15);handle(g,E[0],E[1]+24,7);
+  eyeIcon(g,E[0],E[1],Math.atan2(c.yt-E[1],c.cx0-E[0]),15);handle(g,E[0],E[1]+24,7);
   S3._seen=seen;S3._info=info;
 };
-TICK.depth=dt=>{if(!S3.pour)return false;S3.h=Math.min(S3.target,S3.h+dt*.25);if(S3.h>=S3.target)S3.pour=false;UI.depth();return S3.pour;};
-UI.depth=()=>{$('h3').value=S3.h;$('h3o').textContent=Math.round(S3.h*100)+'%';segSet($('obj3'),S3.obj);
+function drawPond(g,W,H){const ys=pond(),ps=PS(),B=[ps.bird.fx*W,ps.bird.fy*H],F=[ps.fish.fx*W,ps.fish.fy*H],bs=S3.obj==='birdsee';
+  g.fillStyle=C.water;g.fillRect(0,ys,W,H-ys);line(g,0,ys,W,ys,C.ai,2);text(g,'空氣',10,22,{col:C.muted,size:13,bold:true});text(g,'水 n＝1.33',10,H-12,{col:C.muted,size:13,bold:true});
+  // 物體 A 發出的光到觀察者 O
+  const A=bs?F:B,O=bs?B:F,nA=bs?NW:1,nO=bs?1:NW,P=surfP(A,O,ys,nA,nO),app=appPos(A,O,P,ys,nA,nO);
+  line(g,P[0],P[1]-46,P[0],P[1]+46,C.muted,1.2,[4,4]);
+  ray(g,A[0],A[1],P[0],P[1],C.ray,2.6);ray(g,P[0],P[1],O[0],O[1],C.ray,2.6);line(g,P[0],P[1],app[0],app[1],C.ray,1.6,[7,5]);
+  line(g,A[0],A[1],app[0],app[1],C.muted,1,[2,4]);
+  const fdir=B[0]>=F[0]?1:-1;
+  if(bs){fishIcon(g,F[0],F[1],fdir,false);fishIcon(g,app[0],app[1],fdir,true);birdIcon(g,B[0],B[1],-fdir,false);
+    text(g,'魚實際在這裡',F[0],F[1]+30,{col:C.ink,size:12,bold:true,align:'center',bg:C.water});text(g,'鳥看到的魚（比較淺）',app[0],app[1]-20,{col:C.ray,size:13,bold:true,align:'center',bg:C.water});}
+  else{birdIcon(g,B[0],B[1],-fdir,false);fishIcon(g,F[0],F[1],fdir,false);
+    text(g,'鳥實際在這裡',B[0],B[1]+28,{col:C.ink,size:12,bold:true,align:'center',bg:C.panel});
+    if(app[1]>26){birdIcon(g,app[0],app[1],-fdir,true);text(g,'魚看到的鳥（比較高）',app[0],app[1]-28>14?app[1]-28:app[1]+30,{col:C.ray,size:13,bold:true,align:'center',bg:C.panel});}
+    else{const x=clamp(app[0],20,W-20);ray(g,x,46,x,8,C.ray,2.4,null,1);text(g,'魚看到的鳥在更高的地方（畫面外）',clamp(x+10,10,W-230),24,{col:C.ray,size:13,bold:true,bg:C.panel});}}
+  text(g,bs?'鳥的眼睛':'魚的眼睛',O[0],O[1]+(bs?-26:34),{col:C.accent,size:12,bold:true,align:'center',bg:bs?C.panel:C.water});
+  handle(g,B[0],B[1]+16,7);handle(g,F[0],F[1]+16,7);
+  S3._pond={real:Math.abs(A[1]-ys)*cmPx(),app:Math.abs(app[1]-ys)*cmPx(),thA:R2D(Math.atan2(Math.abs(P[0]-A[0]),Math.abs(P[1]-A[1]))),thO:R2D(Math.atan2(Math.abs(P[0]-O[0]),Math.abs(P[1]-O[1])))};}
+TICK.depth=dt=>{if(!S3.pour)return false;S3.h=Math.min(S3.target,S3.h+dt*.2);if(S3.h>=S3.target)S3.pour=false;UI.depth();return S3.pour;};
+const HINT3={coin:'拖曳橘色的眼睛。一開始碗裡沒有水，硬幣剛好被碗邊擋住；按「倒水」慢慢加水，硬幣就「浮」出來了。紅線是光實際走的路，虛線是眼睛以為光來的方向。',
+  stick:'拖曳橘色的眼睛。倒水之後，水中那一段筷子看起來被抬高，好像在水面折斷了。',
+  birdsee:'拖曳鳥和魚（橘點）。紅線是魚身上的光進入鳥眼睛的路線；鳥把光往回延長，以為魚在虛線那裡。',
+  fishsee:'拖曳鳥和魚（橘點）。紅線是鳥身上的光進入魚眼睛的路線；魚把光往回延長，以為鳥在虛線那裡。'};
+UI.depth=()=>{const cup=S3.obj==='coin'||S3.obj==='stick';$('h3').value=S3.h;$('h3o').textContent=Math.round(S3.h*100)+'%';segSet($('obj3'),S3.obj);
+  ['pour3','empty3','h3w'].forEach(id=>$(id).hidden=!cup);$('hint3').textContent=HINT3[S3.obj];
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const L=[];
     if(S3.obj==='coin'){$('r3big').textContent=S3._seen?(S3.h>0?'硬幣「浮」出來了！':'看得到硬幣'):'看不到硬幣';
       if(S3.h<=0)L.push(['info','碗裡沒有水：光從硬幣直直射向眼睛，被碗邊擋住了。按「倒水」看看。']);
+      else if(!S3._seen)L.push(['info','水還不夠深，轉彎後的光還是被碗邊擋住。繼續倒水。']);
       else{L.push(['info','光從水射向空氣時<b>偏離法線</b>，在水面轉彎後繞過了碗邊，進入眼睛。']);
-        if(S3._info&&S3._seen){const real=10*S3.h,app=real*S3._info.app/S3._info.real;L.push(['ok',`水深 ${real.toFixed(1)} cm，硬幣看起來只有 ${app.toFixed(1)} cm 深：<b>視深＜實深</b>（從正上方看約為實深 ÷ 1.33）。`]);}}}
-    else{$('r3big').textContent=S3.h>0?'筷子看起來在水面「折斷」':'倒水看看筷子會怎樣';L.push(['info','水中每一點發出的光在水面偏離法線，眼睛把光往回延長，以為那一點比較淺——水中部分整段被抬高，看起來就折斷了。']);}
-    L.push(['info','拖曳眼睛：從越斜的角度看，被抬高得越多。']);checks($('r3c'),L);}));};
-dragger(cv3,()=>[{x:S3.eye.fx*W3,y:S3.eye.fy*H3+10,r:36,move:(x,y)=>{const c=cup3();S3.eye.fx=clamp(x/W3,.03,.3);S3.eye.fy=clamp((y-10)/H3,.04,.3);UI.depth();}}],kick);
+        if(S3._info){const real=S3._info.real*20/cup3().D,app=real*S3._info.app/S3._info.real;L.push(['ok',`水深 ${real.toFixed(1)} cm，硬幣看起來只有 ${app.toFixed(1)} cm 深：<b>視深＜實深</b>（從正上方看約為實深 ÷ 1.33）。`]);}}
+      L.push(['info','拖曳眼睛：眼睛放低一點就看不到，抬高一點空碗也看得到。']);}
+    else if(S3.obj==='stick'){$('r3big').textContent=S3.h>0?'筷子看起來在水面「折斷」':'倒水看看筷子會怎樣';L.push(['info','水中每一點發出的光在水面偏離法線，眼睛把光往回延長，以為那一點比較淺——水中部分整段被抬高，看起來就折斷了。']);L.push(['info','拖曳眼睛：從越斜的角度看，被抬高得越多。']);}
+    else{const d=S3._pond,bs=S3.obj==='birdsee';if(d){
+      $('r3big').textContent=bs?'鳥看到的魚比較淺':'魚看到的鳥比較高';
+      L.push(['info',bs?`光從水進入空氣：<b>偏離法線</b>（水中 ${f1(d.thA)}° → 空氣中 ${f1(d.thO)}°）。`:`光從空氣進入水：<b>偏向法線</b>（空氣中 ${f1(d.thA)}° → 水中 ${f1(d.thO)}°）。`]);
+      L.push(['ok',bs?`魚實際在水面下 ${d.real.toFixed(0)} cm，鳥看到的魚只在水面下 ${d.app.toFixed(0)} cm。`:`鳥實際在水面上 ${d.real.toFixed(0)} cm，魚看到的鳥在水面上 ${d.app.toFixed(0)} cm。`]);
+      L.push(['info',bs?'鳥要抓魚，得往「看到的魚」更下面一點啄下去。從正上方往下看，看起來的深度約為實際的 1／1.33。':'魚從水裡往上看，鳥看起來比實際更高、更遠。從正下方往上看，看起來的高度約為實際的 1.33 倍。']);
+      L.push(['info','規則都一樣：眼睛把進來的光往回延長，物體看起來在延長線上。']);}}
+    checks($('r3c'),L);}));};
+dragger(cv3,()=>{if(S3.obj==='birdsee'||S3.obj==='fishsee'){const ys=pond();return[
+    {x:PS().bird.fx*W3,y:PS().bird.fy*H3,r:34,move:(x,y)=>{const b=PS().bird;b.fx=clamp(x/W3,.05,.95);b.fy=clamp(y/H3,.08,(ys-30)/H3);UI.depth();}},
+    {x:PS().fish.fx*W3,y:PS().fish.fy*H3,r:34,move:(x,y)=>{const f=PS().fish;f.fx=clamp(x/W3,.06,.94);f.fy=clamp(y/H3,(ys+30)/H3,.93);UI.depth();}}];}
+  const E=eye3();return[{x:E[0],y:E[1]+10,r:36,move:(x,y)=>{S3.eye={fx:clamp(x/W3,.03,.33),fy:clamp((y-10)/H3,.03,.4)};UI.depth();}}];},kick);
 segOn($('obj3'),v=>{S3.obj=v;UI.depth();kick();});
-$('pour3').addEventListener('click',()=>{S3.target=S3.h>=.99?1:Math.min(1,Math.max(.75,S3.h+.25));S3.pour=true;kick();});
-$('empty3').addEventListener('click',()=>{S3.h=0;S3.pour=false;UI.depth();kick();});
+$('pour3').addEventListener('click',()=>{S3.target=1;S3.pour=true;kick();});
+$('empty3').addEventListener('click',()=>{S3.h=0;S3.pour=false;S3.eye=null;UI.depth();kick();});
 $('h3').addEventListener('input',e=>{S3.h=+e.target.value;S3.pour=false;UI.depth();kick();});
 
 // =====================================================================
