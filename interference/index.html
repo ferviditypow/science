@@ -299,6 +299,9 @@
         <label class="tog"><input type="checkbox" id="cov4">遮住下面那條縫</label>
         <label class="tog"><input type="checkbox" id="lamp4">改用兩盞獨立燈泡</label>
         <label class="tog"><input type="checkbox" id="pha4">相量圖（進階）</label>
+        <label class="tog"><input type="checkbox" id="zm4">曲線放大側邊 ×10</label>
+        <div class="pick"><span class="tlabel">光點</span><span class="seg" id="beam4"><button data-v="dot">雷射光點</button><button data-v="line">長條</button></span></div>
+        <button class="btn" id="anim4">▶ 縫寬慢慢變化</button>
       </div>
       <div class="cbox" style="position:relative"><canvas id="cv4" aria-label="雙狹縫干涉：側視示意圖與屏幕"></canvas><canvas id="cv4b" hidden aria-label="3D 雙狹縫實驗裝置"></canvas>
         <div id="y3tip" hidden style="position:absolute;left:18px;top:14px;font-size:.8rem;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px">拖曳旋轉、滾輪或雙指縮放。狹縫間距與距離不按比例</div></div>
@@ -307,6 +310,7 @@
         <label class="slider"><span class="tlabel">縫距 d</span><input type="range" id="d4" min="0.05" max="1" step="0.01" value="0.25"><output id="d4o"></output></label>
         <label class="slider"><span class="tlabel">屏距 r</span><input type="range" id="r4" min="0.5" max="3" step="0.1" value="1.5"><output id="r4o"></output></label>
         <label class="slider"><span class="tlabel">縫寬 a</span><input type="range" id="a4" min="0.02" max="0.2" step="0.01" value="0.05"><output id="a4o"></output></label>
+        <label class="slider"><span class="tlabel">曝光（亮度）</span><input type="range" id="ex4" min="1" max="60" step="1" value="16"><output id="ex4o"></output></label>
       </div>
       <p class="hint">左邊是側視示意圖（狹縫間距放大畫），屏幕右邊的曲線是光強度；右邊是正面看屏幕的樣子（刻度 mm）。拖曳屏幕上的橘點 P 看兩道光的路程差，拖曳屏幕下方的橘點改變屏距。</p>
     </div>
@@ -840,7 +844,11 @@ PRE3.forEach(([n,fn])=>{const b=document.createElement('button');b.className='ch
 // =====================================================================
 // 4 楊氏雙狹縫
 // =====================================================================
-const S4={src:'650',lam:650,n:1,type:'double',ori:'v',cov:false,lamp:false,d:.25,r:1.5,a:.05,Py:2,rec:[],jit:0};
+const S4={src:'650',lam:650,n:1,type:'double',ori:'v',cov:false,lamp:false,d:.25,r:1.5,a:.05,Py:2,rec:[],jit:0,exp:16,zoom:false,beam:'dot',anim:false,at:0};
+// 像相機拍到的亮度：強的地方飽和變白，弱的旁邊亮紋也看得到
+function tone4(c,k){k=k||S4.exp;const m=Math.max(c[0],c[1],c[2]),w=clamp((k*m-2)/6,0,.75);return c.map(v=>(1-Math.exp(-k*v))*(1-w)+w*Math.min(1,k*m/4));}
+const toneStr=(c,k)=>{const t=tone4(c,k);return`rgb(${t.map(v=>Math.round(255*clamp(v,0,1))).join(',')})`;};
+function env4(y,lamnm){const lm=lamnm*1e-6/S4.n,be=Math.PI*S4.a*y/(lm*S4.r*1000);return Math.abs(be)<1e-6?1:(Math.sin(be)/be)**2;}
 const cv4=$('cv4'),g4=cv4.getContext('2d');let W4=800,H4=420;const YMM=30;
 SIZE.young=()=>{if(Y3.ren)resize3Y();const w=cv4.clientWidth||cv4.parentElement.clientWidth-20;const r=fit(cv4,w<700?1.05:.5,300,w<700?640:520);W4=r.W;H4=r.H;};
 function lay4(){if(W4>=700)return{sd:{x:0,y:0,w:W4*.6,h:H4},fr:{x:W4*.62,y:0,w:W4*.38,h:H4}};return{sd:{x:0,y:0,w:W4,h:H4*.55},fr:{x:0,y:H4*.57,w:W4,h:H4*.43}};}
@@ -866,10 +874,13 @@ DRAW.young=()=>{if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g
   text(g,S4.type==='single'?'單狹縫':'S₁',G.slitX+6,(S4.type==='single'?G.cy:s1y)-8,{col:'#cfd6de',size:12,bold:true});if(S4.type==='double')text(g,'S₂',G.slitX+6,s2y+18,{col:'#cfd6de',size:12,bold:true});
   // 屏幕＋強度條
   const N=Math.round(sd.h*.84),ytop=G.cy-YMM*G.sy;
-  for(let i=0;i<N;i++){const ypx=ytop+i*(2*YMM*G.sy)/N,ymm=(G.cy-ypx)/G.sy,c=col4(ymm);g.fillStyle=rgbStr(c,1.15);g.fillRect(G.scrX-3,ypx,7,2*YMM*G.sy/N+1);}
+  for(let i=0;i<N;i++){const ypx=ytop+i*(2*YMM*G.sy)/N,ymm=(G.cy-ypx)/G.sy,c=col4(ymm);g.fillStyle=toneStr(c);g.fillRect(G.scrX-3,ypx,7,2*YMM*G.sy/N+1);}
   // 強度曲線
   const cw=Math.min(80,sd.x+sd.w-G.scrX-14);if(cw>20){g.strokeStyle='#cfd6de';g.lineWidth=1.6;g.beginPath();for(let i=0;i<=N;i++){const ypx=ytop+i*(2*YMM*G.sy)/N,ymm=(G.cy-ypx)/G.sy,c=col4(ymm),v=(c[0]+c[1]+c[2])/3*(white4()?1:1/ Math.max(.3,(nmRGBa(S4.lam).reduce((a,b)=>a+b,0)/3)));
-      const x=G.scrX+8+cw*clamp(v,0,1.05);i?g.lineTo(x,ypx):g.moveTo(x,ypx);}g.stroke();text(g,'光強度',G.scrX+12,sd.y+32,{col:'#9aa4ae',size:11});}
+      const x=G.scrX+8+cw*clamp(v,0,1.05);i?g.lineTo(x,ypx):g.moveTo(x,ypx);}g.stroke();text(g,'光強度',G.scrX+12,sd.y+32,{col:'#9aa4ae',size:11});
+    const lamE=white4()?550:S4.lam,norm=white4()?1:1/Math.max(.3,(nmRGBa(S4.lam).reduce((a,b)=>a+b,0)/3));
+    if(S4.type==='double'&&!S4.cov){g.strokeStyle='rgba(255,210,122,.75)';g.lineWidth=1.2;g.setLineDash([4,3]);g.beginPath();for(let i=0;i<=N;i++){const ypx=ytop+i*(2*YMM*G.sy)/N,x=G.scrX+8+cw*env4((G.cy-ypx)/G.sy,lamE);i?g.lineTo(x,ypx):g.moveTo(x,ypx);}g.stroke();g.setLineDash([]);}
+    if(S4.zoom){g.strokeStyle=C.accent;g.lineWidth=1.3;g.beginPath();let pen=false;for(let i=0;i<=N;i++){const ypx=ytop+i*(2*YMM*G.sy)/N,c=col4((G.cy-ypx)/G.sy),v=(c[0]+c[1]+c[2])/3*norm*10;if(v>1.05){pen=false;continue;}const x=G.scrX+8+cw*v;pen?g.lineTo(x,ypx):g.moveTo(x,ypx);pen=true;}g.stroke();text(g,'×10',G.scrX+12+cw,sd.y+46,{col:C.accent,size:11,bold:true,align:'right'});}}
   text(g,'屏幕',G.scrX,sd.y+16,{col:'#cfd6de',size:12,align:'center'});
   // P 與兩條光線
   const py=G.cy-S4.Py*G.sy;if(S4.type==='double'&&!S4.cov){line(g,G.slitX,s1y,G.scrX,py,lc,1.4);line(g,G.slitX,s2y,G.scrX,py,lc,1.4);
@@ -885,8 +896,8 @@ DRAW.young=()=>{if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g
   const fs=Math.min(fr.w-20,fr.h-34),fx0=fr.x+(fr.w-fs)/2,fy0=fr.y+24,pxmm=fs/(2*YMM);
   text(g,'正面看屏幕（mm）',fr.x+fr.w/2,fr.y+16,{col:'#cfd6de',size:12,align:'center',bold:true});
   for(let i=0;i<fs;i++){const u=(i-fs/2)/pxmm,c=col4(S4.ori==='v'?u:-u);
-    for(let k=0;k<24;k++){const vv=(k+.5)/24,prof=Math.exp(-((((vv-.5)*2)/.75)**2));g.fillStyle=rgbStr(c,1.15*prof);
-      if(S4.ori==='v')g.fillRect(fx0+i,fy0+fs*k/24,1.2,fs/24+1);else g.fillRect(fx0+fs*k/24,fy0+i,fs/24+1,1.2);}}
+    const NK=S4.beam==='dot'?60:24,sg=S4.beam==='dot'?.075:.38;for(let k=0;k<NK;k++){const vv=(k+.5)/NK,prof=Math.exp(-(((vv-.5)/sg)**2));if(prof<.002)continue;g.fillStyle=toneStr(c.map(q=>q*prof));
+      if(S4.ori==='v')g.fillRect(fx0+i,fy0+fs*k/NK,1.2,fs/NK+1);else g.fillRect(fx0+fs*k/NK,fy0+i,fs/NK+1,1.2);}}
   g.strokeStyle='#5d6670';g.lineWidth=1;g.strokeRect(fx0,fy0,fs,fs);
   for(let mm=-YMM;mm<=YMM;mm+=5){const p=mm*pxmm+fs/2;if(S4.ori==='v'){line(g,fx0+p,fy0+fs,fx0+p,fy0+fs+(mm%10?4:7),'#9aa4ae',1);if(mm%10===0&&fs>200)text(g,String(mm),fx0+p,fy0+fs+16,{col:'#9aa4ae',size:10,align:'center'});}
     else{line(g,fx0,fy0+p,fx0-(mm%10?4:7),fy0+p,'#9aa4ae',1);if(mm%10===0&&fs>200)text(g,String(-mm),fx0-9,fy0+p+4,{col:'#9aa4ae',size:10,align:'right'});}}
@@ -898,10 +909,10 @@ DRAW.young=()=>{if(S4.view==='3d'){if(S4.lamp)upd3Y();draw3Y();return;}const g=g
     else{const y=fy0+fs/2-p;g.beginPath();g.moveTo(fx0+fs-10,y);g.lineTo(fx0+fs-2,y-6);g.lineTo(fx0+fs-2,y+6);g.fill();}}
   if(S4.lamp)text(g,'兩盞獨立燈泡：條紋一直亂跳 → 眼睛看到的是平均（均勻）',sd.x+sd.w/2,sd.y+34,{col:'#ffd27a',size:12,bold:true,align:'center',bg:'rgba(0,0,0,.5)'});
 };
-TICK.young=dt=>{if(S4.lamp)S4.jit=Math.random()*TAU;return S4.lamp||(S4.view==='3d'&&!!Y3.ren);};
+TICK.young=dt=>{if(S4.lamp)S4.jit=Math.random()*TAU;if(S4.anim){S4.at+=dt;S4.a=Math.round((.11-.085*Math.cos(S4.at*.7))*1000)/1000;ui4();if(S4.view==='3d')upd3Y();}return S4.lamp||S4.anim||(S4.view==='3d'&&!!Y3.ren);};
 function dy4(lam){return S4.r*lam/(S4.n*S4.d)*1e-3;}
 function ui4(){segSet($('src4'),S4.src);segSet($('type4'),S4.type);segSet($('ori4'),S4.ori);segSet($('n4'),String(S4.n));$('cov4').checked=S4.cov;$('lamp4').checked=S4.lamp;
-  $('lam4w').hidden=white4();$('lam4').value=S4.lam;$('lam4o').textContent=S4.lam+' nm';$('d4o').textContent=f2(S4.d)+' mm';$('d4').value=S4.d;$('r4o').textContent=f1(S4.r)+' m';$('r4').value=S4.r;$('a4o').textContent=f2(S4.a)+' mm';$('a4').value=S4.a;
+  $('lam4w').hidden=white4();$('lam4').value=S4.lam;$('lam4o').textContent=S4.lam+' nm';$('d4o').textContent=f2(S4.d)+' mm';$('d4').value=S4.d;$('r4o').textContent=f1(S4.r)+' m';$('r4').value=S4.r;$('a4o').textContent=(Math.round(S4.a*1000)/1000).toFixed(3)+' mm';$('a4').value=S4.a;
   $('cov4').parentElement.hidden=S4.type==='single';$('lamp4').parentElement.hidden=S4.type==='single';
   const lam=white4()?550:S4.lam,lw=lam/S4.n,dy=dy4(lam),cw=2*S4.r*lw/S4.a*1e-3;
   if(S4.type==='double'&&!S4.cov)$('r4big').innerHTML=white4()?'白光：中央白、兩側彩色':`亮紋間距 Δy ＝ <span class="mono">${f2(dy)}</span> mm`;
@@ -917,15 +928,16 @@ function ui4(){segSet($('src4'),S4.src);segSet($('type4'),S4.type);segSet($('ori
   if(S4.lamp)L.push(['no','兩盞獨立燈泡<b>不同調</b>：相位關係每奈秒都在亂變，條紋瞬間移動、平均後消失。楊氏用「一道光分成兩道」解決。']);
   if(S4.n>1)L.push(['info','整套裝置浸在水中：光速變慢、<b>波長變為 λ／1.33</b>（頻率不變），條紋變密。']);
   if(white4())L.push(['info','白光：中央到兩縫等距，各色都加強 → <b>白色</b>；兩側各色亮紋位置不同，紫色在內、紅色在外。']);
-  if(S4.type==='single')L.push(['info','單狹縫繞射：<b>中央亮紋約為其他亮紋的 2 倍寬</b>，亮度往兩側快速變暗；縫越窄、中央越寬。']);
+  if(S4.type==='single')L.push(['info','單狹縫繞射：<b>中央亮紋約為其他亮紋的 2 倍寬</b>，亮度往兩側快速變暗（第一個旁邊亮紋只有中央的 4.5%，所以拍照時中央常常過亮變白）；縫越窄、中央越寬。']);
+  if(S4.type==='double'&&!S4.cov){const q=S4.d/S4.a,m=Math.round(q);L.push(['info',`黃色虛線是每一條縫自己的<b>單狹縫繞射包絡</b>：雙狹縫的條紋被它「框住」，越外側越暗。${Math.abs(q-m)<.03&&m>=2?`d／a＝${m}，第 ±${m} 亮紋剛好落在包絡的暗紋上而<b>消失（缺級）</b>。`:''}`]);}
   else if(!S4.cov)L.push(['info','雙狹縫：亮紋幾乎<b>等寬、等間隔</b>；外圍亮度受單縫繞射的包絡影響（縫寬 a 越窄，包絡越寬）。']);
   L.push(['info',`條紋排列方向與狹縫<b>垂直</b>：${S4.ori==='v'?'直的狹縫 → 一條條直的亮紋沿水平方向排開。':'橫的狹縫 → 一條條橫的亮紋沿鉛直方向排開。'}`]);
-  checks($('r4c'),L);drawPhasor4();segSet($('view4'),S4.view);$('pha4').checked=S4.pha;
+  checks($('r4c'),L);drawPhasor4();segSet($('view4'),S4.view);$('pha4').checked=S4.pha;$('zm4').checked=S4.zoom;segSet($('beam4'),S4.beam);$('ex4').value=S4.exp;$('ex4o').textContent=S4.exp;$('anim4').textContent=S4.anim?'❚❚ 停止縫寬變化':'▶ 縫寬慢慢變化';
   $('tab4').innerHTML=S4.rec.map(r=>`<tr><td>${r.l}</td><td>${r.m}</td><td>${f2(r.d)}</td><td>${f1(r.r)}</td><td>${r.dy}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted);font-family:var(--f-body)">還沒有記錄</td></tr>';}
 UI.young=ui4;
 function set4(o){Object.assign(S4,o);S4.Py=clamp(S4.Py,-YMM,YMM);ui4();if(S4.view==='3d')upd3Y();kick();}
 segOn($('src4'),v=>set4(v==='white'?{src:'white'}:{src:v,lam:+v}));
-segOn($('type4'),v=>set4({type:v}));segOn($('ori4'),v=>set4({ori:v}));segOn($('n4'),v=>set4({n:+v}));
+segOn($('type4'),v=>set4(v==='single'?{type:v,a:.12}:{type:v,a:.05}));segOn($('ori4'),v=>set4({ori:v}));segOn($('n4'),v=>set4({n:+v}));
 $('cov4').addEventListener('change',e=>set4({cov:e.target.checked}));$('lamp4').addEventListener('change',e=>set4({lamp:e.target.checked}));
 $('lam4').addEventListener('input',e=>{const v=+e.target.value;set4({lam:v,src:['650','532','450'].includes(String(v))?String(v):'mono'});});
 $('d4').addEventListener('input',e=>set4({d:+e.target.value}));$('r4').addEventListener('input',e=>set4({r:+e.target.value}));$('a4').addEventListener('input',e=>set4({a:+e.target.value}));
@@ -963,14 +975,14 @@ function upd3Y(){const R=Y3;if(!R.ren)return;const THREE=R.THREE,zs=1.2+S4.r*2.3
   R.screen.position.set(0,0,zs);R.frame.position.set(0,0,zs+.05);R.beamM.color.set(lc);
   // 屏幕貼圖
   {const c=R.scrC,g=c.getContext('2d'),W=c.width,H=c.height;g.fillStyle='#000';g.fillRect(0,0,W,H);
-    for(let i=0;i<W;i++){const mm=(i/W-.5)*60,col=at(S4.ori==='v'?mm:0);if(S4.ori==='v'){for(let k=0;k<20;k++){const v=(k+.5)/20,pr=Math.exp(-((((v-.5)*2)/.7)**2));g.fillStyle=rgbStr(col,1.2*pr);g.fillRect(i,H*k/20,1.2,H/20+1);}}}
-    if(S4.ori==='h')for(let j=0;j<H;j++){const mm=(.5-j/H)*40,col=at(mm);for(let k=0;k<30;k++){const u=(k+.5)/30,pr=Math.exp(-((((u-.5)*2)/.6)**2));g.fillStyle=rgbStr(col,1.2*pr);g.fillRect(W*k/30,j,W/30+1,1.2);}}
+    for(let i=0;i<W;i++){const mm=(i/W-.5)*60,col=at(S4.ori==='v'?mm:0);if(S4.ori==='v'){for(let k=0;k<60;k++){const v=(k+.5)/60,pr=Math.exp(-(((v-.5)/(S4.beam==='dot'?.09:.35))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(i,H*k/60,1.2,H/60+1);}}}
+    if(S4.ori==='h')for(let j=0;j<H;j++){const mm=(.5-j/H)*40,col=at(mm);for(let k=0;k<60;k++){const u=(k+.5)/60,pr=Math.exp(-(((u-.5)/(S4.beam==='dot'?.09:.3))**2));g.fillStyle=toneStr(col.map(q=>q*pr));g.fillRect(W*k/60,j,W/60+1,1.2);}}
     g.fillStyle='rgba(200,210,220,.7)';g.font='16px '+FONT;for(let mm=-30;mm<=30;mm+=5){const x=W/2+mm/60*W;g.fillRect(x,H-(mm%10?8:16),1.5,mm%10?8:16);if(mm%10===0)g.fillText(String(mm),x-8,H-20);}
     R.scrT.needsUpdate=true;}
   // 扇形光帶
   {const c=R.fanC,g=c.getContext('2d'),W=c.width,H=c.height,img=g.createImageData(W,H),d=img.data,span=S4.ori==='v'?3:2;
-    for(let r=0;r<H;r++){const sfr=(r+.5)/H;for(let q=0;q<W;q++){const X=(q/W-.5)*6,Xs=X/sfr,o=(r*W+q)*4;if(Math.abs(Xs)>span){d[o+3]=0;continue;}const col=at(Xs/MM3),a=.55*(.4+.6*sfr);
-      d[o]=255*Math.min(1,col[0]*1.3);d[o+1]=255*Math.min(1,col[1]*1.3);d[o+2]=255*Math.min(1,col[2]*1.3);d[o+3]=255*a;}}
+    for(let r=0;r<H;r++){const sfr=(r+.5)/H;for(let q=0;q<W;q++){const X=(q/W-.5)*6,Xs=X/sfr,o=(r*W+q)*4;if(Math.abs(Xs)>span){d[o+3]=0;continue;}const col=tone4(at(Xs/MM3)),a=.55*(.4+.6*sfr);
+      d[o]=255*col[0];d[o+1]=255*col[1];d[o+2]=255*col[2];d[o+3]=255*a;}}
     g.putImageData(img,0,0);R.fanT.needsUpdate=true;
     if(R.fan){R.scene.remove(R.fan);R.fan.geometry.dispose();}const geo=new THREE.PlaneGeometry(6,zs);geo.rotateX(-Math.PI/2);geo.translate(0,0,zs/2);if(S4.ori==='h')geo.rotateZ(Math.PI/2);
     R.fan=new THREE.Mesh(geo,R.fanM);R.scene.add(R.fan);}
@@ -1001,6 +1013,10 @@ function drawPhasor4(){const box=$('ph4box');box.hidden=!S4.pha;if(!S4.pha)retur
   $('ph4cap').textContent=nsl===2?`相量圖：把每條縫分成 ${N} 小段，每段發出的光畫成一支小箭頭（藍＝上縫、綠＝下縫），首尾相接；黃箭頭＝P 點的合成振幅。`:`相量圖：把狹縫分成 ${N} 小段，每段發出的光是一支小箭頭，到 P 點的路程越來越長、箭頭逐漸轉向；首尾相接後的黃箭頭＝合成振幅。在暗紋處，箭頭剛好繞成一個圓，合成為 0。`;}
 segOn($('view4'),v=>{S4.view=v;$('cv4').hidden=v==='3d';$('cv4b').hidden=v!=='3d';$('y3tip').hidden=v!=='3d';segSet($('view4'),v);if(v==='3d')init3Y().then(()=>{resize3Y();upd3Y();kick();});else{SIZE.young();ui4();}kick();});
 $('pha4').addEventListener('change',e=>{S4.pha=e.target.checked;drawPhasor4();});
+$('zm4').addEventListener('change',e=>set4({zoom:e.target.checked}));
+segOn($('beam4'),v=>set4({beam:v}));
+$('ex4').addEventListener('input',e=>set4({exp:+e.target.value}));
+$('anim4').addEventListener('click',()=>{S4.anim=!S4.anim;S4.at=0;ui4();kick();});
 // =====================================================================
 // 4 狹縫作圖（惠更斯原理，2D／3D）
 // =====================================================================
@@ -1048,7 +1064,7 @@ DRAW.huy=()=>{if(H.view==='3d'){draw3H();return;}if(dirtyH){prepH();if(H.fd)comp
     text(g,H.mode==='double'?'雙狹縫':'單狹縫',hx(0),hy(HY0)+14,{col:H.fd?'#fff':C.ink,size:13,bold:true,align:'center',bg:H.fd?'rgba(0,0,0,.4)':C.panel});}
   // 屏幕
   const sx0=hx(H.L),sw=Math.max(10,2.6*s),rgb=HCOL[H.col][1];g.fillStyle='#05070a';g.fillRect(sx0,0,sw,HH);
-  for(let py=0;py<HH;py+=1){const y=HY0+py/s,v=scrI(y),hw=sw*.48*Math.sqrt(v);if(hw<.3)continue;g.fillStyle=rgbStr(rgb,Math.pow(v,.6)*1.1);g.fillRect(sx0+sw/2-hw,py,2*hw,1.2);}
+  for(let py=0;py<HH;py+=1){const y=HY0+py/s,v=scrI(y),hw=sw*.48*Math.sqrt(1-Math.exp(-14*v));if(hw<.3)continue;g.fillStyle=toneStr(rgb.map(q=>q*v),14);g.fillRect(sx0+sw/2-hw,py,2*hw,1.2);}
   text(g,'屏幕',sx0+sw/2,14,{col:H.fd?'#fff':C.ink,size:12,bold:true,align:'center',bg:H.fd?'rgba(0,0,0,.4)':C.panel});
   if(H.cu){const cx0=sx0+sw+3,cw=WH-cx0-4;if(cw>12){g.strokeStyle=H.fd?'#ffd27a':cc;g.lineWidth=1.6;g.beginPath();for(let py=0;py<HH;py+=2){const v=scrI(HY0+py/s),x=cx0+cw*v;py?g.lineTo(x,py):g.moveTo(x,py);}g.stroke();}}
   handle(g,sx0+sw/2,HH-14,7);
@@ -1128,7 +1144,7 @@ function draw3H(){const R=HZ;if(!R.ren||R.lost)return;const THREE=R.THREE,S=srcH
     while(R.srcG.children.length<S.length){const sp=new THREE.Mesh(new THREE.SphereGeometry(1.1,18,14),new THREE.MeshStandardMaterial({color:0xff8a57,emissive:0x662200}));R.srcG.add(sp);}
     while(R.srcG.children.length>S.length)R.srcG.remove(R.srcG.children[R.srcG.children.length-1]);
     // 屏幕貼圖
-    {const c=R.scrC,g=c.getContext('2d'),W=c.width,Hh=c.height;g.fillStyle='#05070a';g.fillRect(0,0,W,Hh);for(let i=0;i<W;i++){const y=HY0+(i+.5)/W*(HY1-HY0),v=scrI(y),hh=Hh*.46*Math.sqrt(v);if(hh<.3)continue;g.fillStyle=rgbStr(hc[1],Math.pow(v,.6)*1.1);g.fillRect(i,Hh/2-hh,1.2,2*hh);}R.scrT.needsUpdate=true;}
+    {const c=R.scrC,g=c.getContext('2d'),W=c.width,Hh=c.height;g.fillStyle='#05070a';g.fillRect(0,0,W,Hh);for(let i=0;i<W;i++){const y=HY0+(i+.5)/W*(HY1-HY0),v=scrI(y),hh=Hh*.46*Math.sqrt(1-Math.exp(-14*v));if(hh<.3)continue;g.fillStyle=toneStr(hc[1].map(q=>q*v),14);g.fillRect(i,Hh/2-hh,1.2,2*hh);}R.scrT.needsUpdate=true;}
     R.lines.material.color.setHex(hc[2]);R.lines.material.transparent=true;R.lines.material.opacity=H.mode==='single'?.45:1;R.lines.material.needsUpdate=true;R.tlines.material.color.setHex(hc[2]);}
   R.screen.position.set(H.L+.4,7,0);R.back.position.set(H.L+.9,7,0);R.surf.visible=H.fd;
   S.forEach((p,i)=>{const sp=R.srcG.children[i];sp.userData.i=i;sp.position.set(p.x,H.fd?2.2:1.1,p.y);sp.scale.setScalar(H.mode==='single'?.55:1);});
@@ -1380,7 +1396,7 @@ const QS=[{g:'講義隨堂練習（2-1、2-5、2-6）',items:[
    p:'Δy＝rλ／d＝1.0 × 6.0×10⁻⁷ ÷ 2.0×10⁻⁴＝3.0×10⁻³ m＝3.0 mm。\n看右邊屏幕的刻度：相鄰亮紋相隔 3 mm，用尺就量得到。P 點放在 y＝3 mm，正好是第 1 亮紋（路程差 1λ）。'},
   {n:'第 31 題　路程差 1.5λ',pg:'p.27',b:'young',set:()=>set4({src:'650',lam:650,n:1,type:'double',cov:false,lamp:false,d:.25,r:1.5,Py:5.85,ori:'v'}),t:'第 31 題　答案 (C)',
    p:'路程差 0.5λ 為第一暗紋、1.5λ 為第二暗紋、2.5λ 為第三暗紋；整數倍 λ 為亮紋。\nP 點的路程差是 1.5λ：下方振動圖中兩道光一個波峰一個波谷，合成幾乎是一條直線。'},
-  {n:'第 32 題　單狹縫與雙狹縫',pg:'p.27',b:'young',set:()=>set4({src:'650',lam:650,type:'single',cov:false,lamp:false,a:.06,r:1.5,ori:'v'}),t:'第 32 題　答案 (A)',
+  {n:'第 32 題　單狹縫與雙狹縫',pg:'p.27',b:'young',set:()=>set4({src:'650',lam:650,type:'single',cov:false,lamp:false,a:.12,r:1.5,ori:'v'}),t:'第 32 題　答案 (A)',
    p:'單狹縫：中央亮紋寬約為其他亮紋的 2 倍 (A)。切到雙狹縫：亮紋等寬 (B✕)。\n(C) 勾「遮住下面那條縫」：暗紋反而變亮，不是影子。(D) 勾「兩盞獨立燈泡」：條紋亂跳、看不到。(E) 換白光：中央是白色。'},
   {n:'第 33 題　哪些彩色是干涉',pg:'p.28',b:'film',set:()=>set5({mode:'soap',T:900,run:true,P:{fx:.5,fy:.35}}),t:'第 33 題　答案 (ACE)',
    p:'肥皂泡 (A)、油膜 (C)、大藍閃蝶 (E)：薄層上下表面的反射光干涉。\n彩虹 (B)、三稜鏡 (D)：折射造成的色散（看「光的折射」的色散實驗台）。'},
@@ -1399,7 +1415,7 @@ const QS=[{g:'講義隨堂練習（2-1、2-5、2-6）',items:[
    p:'實線與實線相交（波峰遇波峰）、虛線與虛線相交（波谷遇波谷）都在腹線上；實線遇虛線在節線上。\n按兩次「▸ ¼T」＝半週期：波峰變波谷、波谷變波峰，但節線上的點仍然不動。'},
   {n:'雙狹縫方向與條紋排列',pg:'一中 111-2-3 #10、114-1-3 #13；二中 112-1-2 #20、113-1-3 #2',b:'young',set:()=>set4({ori:'h',type:'double',src:'650',lam:650,cov:false,lamp:false}),t:'條紋的排列方向',
    p:'條紋沿著「垂直於狹縫」的方向排開：橫的狹縫 → 橫的亮紋上下排列；直的狹縫 → 直的亮紋左右排列。\n切換「方向」與「單狹縫／雙狹縫」比較右邊的屏幕。'},
-  {n:'光強度分布圖：單縫 vs 雙縫',pg:'二中 113-2-3 #3、114-1-3 #24',b:'young',set:()=>set4({type:'single',src:'650',lam:650,a:.06,cov:false,lamp:false}),t:'看強度曲線分辨單縫、雙縫',
+  {n:'光強度分布圖：單縫 vs 雙縫',pg:'二中 113-2-3 #3、114-1-3 #24',b:'young',set:()=>set4({type:'single',src:'650',lam:650,a:.12,cov:false,lamp:false}),t:'看強度曲線分辨單縫、雙縫',
    p:'屏幕右邊的白色曲線是光強度。單狹縫：中央最亮、寬度約為兩側亮紋的 2 倍；雙狹縫：亮紋等寬等距，外圍亮度受單縫包絡影響慢慢變暗。切換「雙狹縫」比較。'},
   {n:'雙狹縫數據表：控制變因',pg:'一中 111-1-3 #5-6、112-1-3 #16',b:'young',set:()=>{S4.rec=[];set4({type:'double',src:'650',lam:650,n:1,d:.25,r:1,cov:false,lamp:false});},t:'用數據表找 Δy 的關係',
    p:'每次只改一個變因（λ、d 或 r），按「記錄這一組」。\n你會發現：r 加倍 Δy 加倍；d 加倍 Δy 減半；λ 越長 Δy 越大 ⇒ Δy＝rλ／d。'},
