@@ -1,0 +1,621 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>色光與顏色</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+:root{--box:#111418;--wall:#f4f1ea}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--box:#05070a;--wall:#d8d4ca;color-scheme:dark}}
+:root[data-theme="dark"]{--box:#05070a;--wall:#d8d4ca;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box p{margin:0 0 6px;font-size:.95rem}
+.box ul{margin:4px 0 0;padding-left:1.2em;font-size:.95rem}
+.box li{margin:2px 0}
+.big{font-family:var(--f-display);font-weight:900;font-size:1.45rem;line-height:1.3;margin:0 0 6px}
+.big .mono{font-family:var(--f-mono);font-weight:600}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.95rem}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.checks li::before{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;margin-top:1px}
+.checks li.ok::before{content:'✓';background:var(--green)}
+.checks li.no::before{content:'✕';background:#c0453b}
+.checks li.info::before{content:'i';background:var(--blue)}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.7}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+.pick{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.gcap{font-size:.8rem;color:var(--muted);margin:6px 0 2px}
+.soon{font-size:.82rem;color:var(--muted)}
+.ctable{border-collapse:collapse;font-size:.85rem;margin-top:8px;width:100%}
+.ctable th,.ctable td{border:1px solid var(--line);padding:3px 4px;text-align:center}
+.ctable tr.on td,.ctable tr.on th{background:var(--accent-soft);font-weight:700}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px;border:1px solid rgba(0,0,0,.25)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國二 · 第四章 光、影像與顏色 4-5 · <a href="../sound/">上一頁：聲音</a></div>
+      <h1>色光與顏色</h1>
+    </div>
+    <p>四個實驗台對應翰林自然(3) 4-5：三稜鏡色散與彩虹、光的三原色混合、不透明物體的顏色、透明物體與濾光。換燈光顏色、拖曳燈與物體，看看顏色怎麼來的；最下方有講義與考古題的情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="disp" aria-pressed="true"><span class="n">1</span>色散與彩虹</button>
+      <button data-v="mix" aria-pressed="false"><span class="n">2</span>色光的混合</button>
+      <button data-v="obj" aria-pressed="false"><span class="n">3</span>不透明物體的顏色</button>
+      <button data-v="filt" aria-pressed="false"><span class="n">4</span>透明物體與濾光</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 色散與彩虹 ============ -->
+  <section class="bench" id="b-disp">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="dsMode"><button data-v="prism">三稜鏡</button><button data-v="rain">彩虹</button></span>
+      </div>
+      <div class="toolbar dsc" data-m="prism">
+        <span class="tlabel">光源</span><span class="seg" id="dsSrc"><button data-v="white">白光（太陽光）</button><button data-v="red">紅色雷射</button><button data-v="green">綠光</button><button data-v="violet">紫光</button><button data-v="rb">紅光＋藍光</button></span>
+        <label class="tog"><input type="checkbox" id="dsP2">再放一個倒放的三稜鏡</label>
+        <label class="tog"><input type="checkbox" id="dsEx" checked>色散放大 4 倍</label>
+      </div>
+      <div class="toolbar dsc" data-m="rain">
+        <label class="slider"><span class="tlabel">時間</span><input type="range" id="dsH" min="6" max="18" step="0.25" value="16"><output id="dsHo"></output></label>
+        <span class="tlabel">人面向</span><span class="seg" id="dsFace"><button data-v="E">東方</button><button data-v="W">西方</button></span>
+      </div>
+      <div class="cbox"><canvas id="cvDs" aria-label="色散與彩虹"></canvas></div>
+      <p class="hint" id="dsHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="dsBig"></p><div class="formula2" id="dsF"></div><ul class="checks" id="dsC"></ul></section>
+      <section class="panel box"><h3 id="dsHowT">怎麼看</h3><ul id="dsHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 色光的混合 ============ -->
+  <section class="bench" id="b-mix" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="mxMode"><button data-v="spot">三盞聚光燈</button><button data-v="shadow">彩色的影子</button><button data-v="pixel">螢幕的畫素</button></span>
+      </div>
+      <div class="toolbar mxc" data-m="spot">
+        <label class="tog"><input type="checkbox" id="mxR" checked>紅燈</label><label class="tog"><input type="checkbox" id="mxG" checked>綠燈</label><label class="tog"><input type="checkbox" id="mxB" checked>藍燈</label>
+        <button class="btn" id="mxReset">⟲ 排回三角形</button>
+      </div>
+      <div class="toolbar mxc" data-m="shadow">
+        <span class="tlabel">燈</span><span class="seg" id="mxSh"><button data-v="RB">紅燈＋藍燈</button><button data-v="RG">紅燈＋綠燈</button><button data-v="RGB">紅＋綠＋藍</button></span>
+      </div>
+      <div class="toolbar mxc" data-m="pixel">
+        <label class="slider"><span class="tlabel">紅 R</span><input type="range" id="pxR" min="0" max="255" step="1" value="255"><output id="pxRo"></output></label>
+        <label class="slider"><span class="tlabel">綠 G</span><input type="range" id="pxG" min="0" max="255" step="1" value="255"><output id="pxGo"></output></label>
+        <label class="slider"><span class="tlabel">藍 B</span><input type="range" id="pxB" min="0" max="255" step="1" value="0"><output id="pxBo"></output></label>
+      </div>
+      <div class="toolbar mxc" data-m="pixel"><span class="tlabel">範例</span><span class="chips" id="pxPre"></span></div>
+      <div class="cbox"><canvas id="cvMx" aria-label="色光的混合"></canvas></div>
+      <p class="hint" id="mxHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mxBig"></p><div class="formula2" id="mxF"></div><ul class="checks" id="mxC"></ul></section>
+      <section class="panel box"><h3 id="mxHowT">怎麼看</h3><ul id="mxHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 不透明物體的顏色 ============ -->
+  <section class="bench" id="b-obj" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="obMode"><button data-v="cards">暗箱裡的色紙</button><button data-v="pic">圖卡</button><button data-v="outfit">舞台上的服裝</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">照射的光</span><span class="seg" id="obLight"></span>
+      </div>
+      <div class="toolbar obc" data-m="pic"><span class="tlabel">圖卡</span><span class="seg" id="obPic"><button data-v="scene">風景圖卡</button><button data-v="blocks">色塊圖卡（看面積）</button><button data-v="face">四色卡（頭、眼珠、臉頰、嘴巴）</button></span></div>
+      <div class="toolbar obc" data-m="outfit">
+        <span class="tlabel">上衣</span><span class="seg" id="obTop"></span>
+      </div>
+      <div class="toolbar obc" data-m="outfit">
+        <span class="tlabel">裙子</span><span class="seg" id="obBot"></span>
+      </div>
+      <div class="cbox"><canvas id="cvOb" aria-label="物體的顏色"></canvas></div>
+      <p class="hint" id="obHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="obBig"></p><div class="formula2" id="obF"></div><ul class="checks" id="obC"></ul><div id="obTab"></div></section>
+      <section class="panel box"><h3 id="obHowT">怎麼看</h3><ul id="obHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 4 透明物體與濾光 ============ -->
+  <section class="bench" id="b-filt" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="ftMode"><button data-v="filter">光穿過玻璃紙</button><button data-v="glasses">戴有色眼鏡看圖卡</button><button data-v="house">溫室的玻璃</button></span>
+      </div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">光源</span><span class="seg" id="ftLight"></span></div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">第一片</span><span class="seg" id="ftF1"></span></div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">第二片</span><span class="seg" id="ftF2"></span></div>
+      <div class="toolbar ftc" data-m="glasses"><span class="tlabel">鏡片</span><span class="seg" id="ftLens"></span><span class="tlabel">圖卡</span><span class="seg" id="ftCard"><button data-v="dog">dog 字卡</button><button data-v="shirt">白 T 恤圖案</button></span></div>
+      <div class="toolbar ftc" data-m="house"><span class="tlabel">溫室玻璃</span><span class="seg" id="ftGlass"></span></div>
+      <div class="cbox"><canvas id="cvFt" aria-label="透明物體與濾光"></canvas></div>
+      <p class="hint" id="ftHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="ftBig"></p><div class="formula2" id="ftF"></div><ul class="checks" id="ftC"></ul></section>
+      <section class="panel box"><h3 id="ftHowT">怎麼看</h3><ul id="ftHow"></ul></section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(3)》；考古題標示學校、學年-學期-次別與題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>
+<script>
+// ================= common =================
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,f)=>a+(b-a)*f,TAU=Math.PI*2,D2R=Math.PI/180;
+const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','grid','accent','accent-soft','blue','green','red','purple','ray','water','w1','w2','sum'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+function fit(cv,ratio,minH,maxH){if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}const w=Math.max(10,cv.clientWidth);const h=Math.round(clamp(w*ratio,minH,maxH));
+  cv.style.height=h+'px';const d=DPR();cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null}={}){
+  g.font=`${bold?700:500} ${size}px ${FONT}`;g.textAlign=align;g.textBaseline=base;
+  {const w=g.measureText(s).width,cw=g.canvas.clientWidth||1e9;let px=align==='center'?x-w/2:align==='right'?x-w:x;const sh=Math.max(6-px,0)+Math.min(cw-6-(px+w),0);x+=sh;}
+  if(bg){const w=g.measureText(s).width,px=align==='center'?x-w/2:align==='right'?x-w:x,py=base==='middle'?y-size/2:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-4,py-2,w+8,size+6);g.restore();}
+  g.fillStyle=col;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
+function head(g,x,y,ang,col,size=9){g.fillStyle=col;g.beginPath();g.moveTo(x+Math.cos(ang)*size*.5,y+Math.sin(ang)*size*.5);g.lineTo(x-size*Math.cos(ang-.45),y-size*Math.sin(ang-.45));g.lineTo(x-size*Math.cos(ang+.45),y-size*Math.sin(ang+.45));g.closePath();g.fill();}
+function arrow(g,x1,y1,x2,y2,col,w=2){line(g,x1,y1,x2,y2,col,w);head(g,x2,y2,Math.atan2(y2-y1,x2-x1),col,10);}
+function handle(g,x,y,r=9){g.fillStyle=C.accent;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const h of handles()){const d=h.hit?h.hit(x,y):Math.hypot(x-h.x,y-h.y);if(d<(h.r||26)&&d<bd){bd=d;best=h;}}return best;};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const h=pick(x,y);if(!h)return;cur={h,dx:h.free?0:h.x-x,dy:h.free?0:h.y-y};h.start&&h.start();cv.setPointerCapture(ev.pointerId);ev.preventDefault();});
+  cv.addEventListener('pointermove',ev=>{const[x,y]=pos(ev);if(!cur){cv.style.cursor=pick(x,y)?'grab':'default';return;}cur.h.move(x+cur.dx,y+cur.dy);after();});
+  const up=()=>{cur=null;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+function nmRGBa(nm){let r=0,g=0,b=0;if(nm<440){r=-(nm-440)/60;b=1;}else if(nm<490){g=(nm-440)/50;b=1;}else if(nm<510){g=1;b=-(nm-510)/20;}else if(nm<580){r=(nm-510)/70;g=1;}else if(nm<645){r=1;g=-(nm-645)/65;}else r=1;
+  let f=1;if(nm<420)f=.45+.55*(nm-380)/40;else if(nm>700)f=.45+.55*(780-nm)/80;return[r*f,g*f,b*f].map(v=>clamp(v,0,1));}
+const rgbStr=(a,k=1)=>`rgb(${a.map(v=>Math.round(255*Math.pow(clamp(v*k,0,1),.8))).join(',')})`;
+const nmCol=nm=>rgbStr(nmRGBa(nm));
+const f1=x=>(Math.round(x*10)/10).toFixed(1),f2=x=>(Math.round(x*100)/100).toFixed(2);
+const checks=(el,L)=>{el.innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');};
+
+// ================= 實驗台切換與迴圈 =================
+let bench='disp';const BENCHES=['disp','mix','obj','filt'];
+const SIZE={},DRAW={},TICK={},UI={};
+function setBench(b,noHash){if(!BENCHES.includes(b))b='disp';bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();SIZE[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
+function hideStory(){$('story').hidden=true;}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+const nf=(x,dp=2)=>(Math.round(x*10**dp)/10**dp).toString();
+const howList=(el,arr)=>{$(el).innerHTML=arr.map(s=>`<li>${s}</li>`).join('');};
+
+// ================= 顏色工具 =================
+// 三色模型：每種光或物體用 [紅, 綠, 藍] 三個成分（0～1）表示
+const CK=['W','R','G','B','Y','M','C','K'];
+const CV={W:[1,1,1],R:[1,0,0],G:[0,1,0],B:[0,0,1],Y:[1,1,0],M:[1,0,1],C:[0,1,1],K:[0,0,0]};
+const CN={W:'白',R:'紅',G:'綠',B:'藍',Y:'黃',M:'洋紅',C:'青',K:'黑'};
+const LN={W:'白光',R:'紅光',G:'綠光',B:'藍光',Y:'黃光',M:'洋紅光',C:'青光',K:'沒有光'};
+// 紙張（物體）在白光下的顏色
+const PAPER={W:[245,245,240],R:[214,40,40],G:[36,160,70],B:[36,86,204],Y:[244,206,40],M:[204,48,160],C:[40,184,206],K:[24,24,26]};
+// 光的顏色（在黑底上）
+const LIGHT={W:[255,255,255],R:[255,40,30],G:[40,230,60],B:[50,90,255],Y:[255,230,40],M:[255,50,220],C:[40,230,255],K:[0,0,0]};
+const mul=(a,b)=>a.map((v,i)=>v*b[i]);
+const add=(a,b)=>a.map((v,i)=>Math.min(1,v+b[i]));
+function keyOf(c){const b=c.map(v=>v>.5?1:0);for(const k of CK)if(CV[k].every((v,i)=>v===b[i]))return k;return 'K';}
+// 物體在某種光下看起來的顏色（畫在畫面上）
+function seenRGB(paperKey,light){const p=CV[paperKey],s=mul(p,light);const k=keyOf(s);if(k==='K')return 'rgb(24,24,26)';const base=PAPER[k];const lum=Math.max(...s.filter((v,i)=>p[i]>0).concat([0]));const f=.35+.65*Math.min(1,lum);return `rgb(${base.map(v=>Math.round(v*f)).join(',')})`;}
+const paperCss=k=>`rgb(${PAPER[k].join(',')})`;
+const lightCss=(c,a=1)=>`rgba(${Math.round(c[0]*255)},${Math.round(c[1]*255)},${Math.round(c[2]*255)},${a})`;
+const swatch=k=>`<span class="sw" style="background:${paperCss(k)}"></span>`;
+function nameRGB(c){const mx=Math.max(...c);if(mx<.08)return '黑';const n=c.map(v=>v/mx);const on=n.map(v=>v>.75),mid=n.map(v=>v>.25&&v<=.75);
+  const cnt=on.filter(Boolean).length;let base;
+  if(cnt===3)base='白';else if(cnt===2)base=on[0]&&on[1]?'黃':on[0]&&on[2]?'洋紅':'青';else base=on[0]?'紅':on[1]?'綠':'藍';
+  let mod='';if(cnt===1&&mid.some(Boolean)){const i=mid.indexOf(true);mod=base==='紅'&&i===1?'橙':base==='綠'&&i===0?'黃綠':base==='綠'&&i===2?'青綠':base==='藍'&&i===0?'紫':base==='藍'&&i===1?'天藍':base==='紅'&&i===2?'桃紅':'';}
+  if(cnt===2&&mid.some(Boolean))mod='偏白的'+base;if(cnt===3)return mx<.6?'灰':'白';
+  const nm=mod&&!mod.startsWith('偏')?mod:(mod||base);return (mx<.55?'暗':'')+nm;}
+function possible(seenK,light){return CK.filter(k=>keyOf(mul(CV[k],light))===seenK);}
+function segFill(id,keys,names){const s=$(id);s.innerHTML='';keys.forEach(k=>{const b=document.createElement('button');b.dataset.v=k;b.innerHTML=(k==='none'?'':swatch(k))+(names[k]||k);s.appendChild(b);});}
+
+// =====================================================================
+// 1 色散與彩虹
+// =====================================================================
+const DS={mode:'prism',src:'white',p2:false,ex:true,sy:.3,h:16,face:'E'};
+let WD=600,HD=320;
+const DSRC={white:[],red:[650],green:[530],violet:[410],rb:[650,460]};for(let l=400;l<=700;l+=12)DSRC.white.push(l);
+const nGlass=(nm,ex)=>{const n=1.5046+4200/(nm*nm),n0=1.5046+4200/(550*550);return ex?n0+(n-n0)*4:n;};
+const nWater=(nm,ex=1)=>{const n=1.3236+3180/(nm*nm),n0=1.3236+3180/(550*550);return n0+(n-n0)*ex;};
+const nmCss=(nm,a=1)=>{const c=nmRGBa(nm);return `rgba(${c.map(v=>Math.round(255*Math.pow(v,.8))).join(',')},${a})`;};
+function dsGeo(W,H){const s=Math.min(H*.6,W*.28),h=s*Math.sqrt(3)/2,cx=W*.38,cy=H*.56;const A=[cx,cy-2*h/3],Bl=[cx-s/2,cy+h/3],Br=[cx+s/2,cy+h/3];
+  const gx=8,P1=[A[0]+gx,A[1]],P2=[A[0]+gx+s,A[1]],P3=[Br[0]+gx,Br[1]];return {s,h,cx,cy,A,Bl,Br,P:[[A,Br,Bl]],P2:[P1,P2,P3],sx:34,scr:W-34};}
+function segHit(p,d,a,b){const ex=b[0]-a[0],ey=b[1]-a[1];const den=d[0]*ey-d[1]*ex;if(Math.abs(den)<1e-9)return null;
+  const t=((a[0]-p[0])*ey-(a[1]-p[1])*ex)/den,u=((a[0]-p[0])*d[1]-(a[1]-p[1])*d[0])/den;return t>1e-6&&u>=0&&u<=1?t:null;}
+function refr(d,nrm,n1,n2){// nrm 指向入射那一側
+  const ci=-(d[0]*nrm[0]+d[1]*nrm[1]),r=n1/n2,k=1-r*r*(1-ci*ci);if(k<0)return [d[0]+2*ci*nrm[0],d[1]+2*ci*nrm[1]];const ct=Math.sqrt(k);return [r*d[0]+(r*ci-ct)*nrm[0],r*d[1]+(r*ci-ct)*nrm[1]];}
+function tracePolys(p,d,n,polys,xEnd){const pts=[p.slice()];let inside=-1;
+  for(let it=0;it<8;it++){let best=null;polys.forEach((P,pi)=>{for(let i=0;i<3;i++){const a=P[i],b=P[(i+1)%3];const t=segHit(p,d,a,b);if(t!==null&&(!best||t<best.t))best={t,pi,a,b};}});
+    if(!best)break;p=[p[0]+d[0]*best.t,p[1]+d[1]*best.t];pts.push(p.slice());
+    const ex=best.b[0]-best.a[0],ey=best.b[1]-best.a[1],L=Math.hypot(ex,ey);let nr=[ey/L,-ex/L];if(nr[0]*d[0]+nr[1]*d[1]>0)nr=[-nr[0],-nr[1]];
+    if(inside<0){d=refr(d,nr,1,n);inside=best.pi;}else{const nd=refr(d,nr,n,1);const tir=(nd[0]*nr[0]+nd[1]*nr[1])>0;d=nd;if(!tir)inside=-1;}}
+  const t=d[0]>0?(xEnd-p[0])/d[0]:400;pts.push([p[0]+d[0]*Math.max(0,t),p[1]+d[1]*Math.max(0,t)]);return pts;}
+function drawPrism(g,W,H){const G=dsGeo(W,H);g.fillStyle='#0b0d12';g.fillRect(0,0,W,H);
+  const polys=DS.p2?[G.P[0],G.P2]:[G.P[0]];
+  polys.forEach(P=>{g.fillStyle='rgba(170,200,255,.13)';g.strokeStyle='rgba(200,220,255,.65)';g.lineWidth=1.5;g.beginPath();P.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.closePath();g.fill();g.stroke();});
+  const M=[(G.A[0]+G.Bl[0])/2,(G.A[1]+G.Bl[1])/2],S=[G.sx,G.cy+DS.sy*H];const L=Math.hypot(M[0]-S[0],M[1]-S[1]);const d=[(M[0]-S[0])/L,(M[1]-S[1])/L];
+  // 光源
+  g.save();g.translate(S[0],S[1]);g.rotate(Math.atan2(d[1],d[0]));g.fillStyle='#5b6470';g.fillRect(-26,-9,30,18);g.restore();
+  const nms=DSRC[DS.src];const bins=new Float32Array(Math.ceil(H))  ,binC=[new Float32Array(Math.ceil(H)),new Float32Array(Math.ceil(H)),new Float32Array(Math.ceil(H))];
+  g.save();g.globalCompositeOperation='lighter';const ends=[];
+  nms.forEach(nm=>{const pts=tracePolys(S,d,nGlass(nm,DS.ex),polys,G.scr);const col=nmCss(nm,DS.src==='white'?.5:.95);g.strokeStyle=col;g.lineWidth=DS.src==='white'?2:3;
+    g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();const e=pts[pts.length-1];ends.push([nm,e]);
+    if(e[0]>=G.scr-1&&e[1]>0&&e[1]<H){const c=nmRGBa(nm);for(let y=Math.max(0,Math.floor(e[1]-6));y<Math.min(H,e[1]+6);y++){const w=Math.exp(-((y-e[1])**2)/8);for(let k=0;k<3;k++)binC[k][y]+=c[k]*w;}}});
+  g.restore();
+  // 屏幕
+  g.fillStyle='#e9e6df';g.fillRect(G.scr,0,14,H);const mx=Math.max(.001,...binC[0],...binC[1],...binC[2]);const norm=DS.src==='white'?(DS.p2?mx:mx*.55):mx;
+  for(let y=0;y<H;y++){const r=binC[0][y],gg=binC[1][y],b=binC[2][y];if(r+gg+b<1e-3)continue;const k=1/norm;g.fillStyle=`rgb(${Math.min(255,Math.round(255*Math.pow(Math.min(1,r*k),.7)))},${Math.min(255,Math.round(255*Math.pow(Math.min(1,gg*k),.7)))},${Math.min(255,Math.round(255*Math.pow(Math.min(1,b*k),.7)))})`;g.fillRect(G.scr,y,14,1);}
+  text(g,'屏幕',G.scr+7,14,{size:11,col:'#ccc',align:'center'});
+  if(DS.src==='white'&&!DS.p2&&ends.length){const r=ends.find(e=>e[0]>=650)||ends[ends.length-1],v=ends[0];text(g,'紅',G.scr-6,r[1][1]+4,{size:13,bold:true,col:'#ff6b5b',align:'right'});text(g,'紫',G.scr-6,v[1][1]+4,{size:13,bold:true,col:'#b48cff',align:'right'});
+    text(g,'紅光偏折最小、紫光偏折最大',G.cx+G.s*.55,G.cy+G.h*.62,{size:12,col:'#ddd'});}
+  if(DS.p2)text(g,'倒放的三稜鏡把色光偏折回來，重疊處又變成白光',W/2,22,{size:13,bold:true,col:'#fff',align:'center'});
+  handle(g,S[0],S[1],9);}
+// 彩虹
+function drawRain(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const half=W<640?W:W*.46;
+  // 左：水滴
+  const R=Math.min(H*.36,half*.36),cx=half*.55,cy=H*.48;g.fillStyle='rgba(120,180,255,.18)';g.strokeStyle=C.blue;g.lineWidth=2;g.beginPath();g.arc(cx,cy,R,0,TAU);g.fill();g.stroke();
+  text(g,'小水滴（放大）',8,18,{size:12,col:C.muted});
+  const nm0=550,n0=nWater(nm0,3),b=R*Math.sqrt((4-n0*n0)/3);const E=[cx-Math.sqrt(R*R-b*b),cy-b];line(g,8,E[1],E[0],E[1],'#e0a800',3);arrow(g,8,E[1],E[0]-30,E[1],'#e0a800',3);text(g,'陽光',10,E[1]-8,{size:12,bold:true,col:'#c08a00'});
+  g.save();g.globalCompositeOperation=document.documentElement.matches('[data-theme="dark"]')||matchMedia('(prefers-color-scheme: dark)').matches?'lighter':'source-over';
+  [700,640,590,550,510,470,420].forEach(nm=>{const n=nWater(nm,3);let p=E,d=[1,0];let nr=[(p[0]-cx)/R,(p[1]-cy)/R];d=refr(d,nr,1,n);const pts=[p];
+    const hitC=(p,d)=>{const fx=p[0]-cx,fy=p[1]-cy;const bb=fx*d[0]+fy*d[1];const cc=fx*fx+fy*fy-R*R;const t=-bb+Math.sqrt(Math.max(0,bb*bb-cc));return [p[0]+d[0]*t,p[1]+d[1]*t];};
+    p=hitC(p,d);pts.push(p);nr=[-(p[0]-cx)/R,-(p[1]-cy)/R];d=[d[0]+2*(-(d[0]*nr[0]+d[1]*nr[1]))*nr[0],d[1]+2*(-(d[0]*nr[0]+d[1]*nr[1]))*nr[1]];
+    p=hitC(p,d);pts.push(p);nr=[-(p[0]-cx)/R,-(p[1]-cy)/R];d=refr(d,nr,n,1);pts.push([p[0]+d[0]*R*1.3,p[1]+d[1]*R*1.3]);
+    g.strokeStyle=nmCss(nm,.9);g.lineWidth=2;g.beginPath();pts.forEach((q,i)=>i?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();});
+  g.restore();text(g,'折射 → 內部反射 → 折射',cx,cy-R-12,{size:12,bold:true,align:'center'});
+  text(g,'紅光約 42°、紫光約 40°',cx-R*.2,cy+R*1.18,{size:12,col:C.muted,align:'center'});
+  if(W<640)return;
+  // 右：天空
+  const L=W*.5,T=14,Wd=W-L-12,Hs=H-28,hz=T+Hs*.78,k=(hz-T)/62;const hh=DS.h,e=Math.max(0,65*Math.sin(Math.PI*(hh-6)/12)),sunSide=hh<12?'E':hh>12?'W':'S',anti=sunSide==='E'?'W':sunSide==='W'?'E':'N';
+  g.save();g.beginPath();g.rect(L,T,Wd,Hs);g.clip();g.fillStyle=C.sky||'#dbe9f7';g.fillStyle='#cfe3f6';g.fillRect(L,T,Wd,hz-T);g.fillStyle='#8fbf6a';g.fillRect(L,hz,Wd,T+Hs-hz);
+  const vx=L+Wd/2;
+  if(DS.face===anti){// 雨雲在前方
+    g.fillStyle='rgba(110,120,135,.55)';g.fillRect(L,T,Wd,(hz-T)*.25);for(let i=0;i<40;i++){const x=L+((i*53)%Wd),y=T+(hz-T)*.25+((i*37)%((hz-T)*.7));line(g,x,y,x-3,y+10,'rgba(90,110,140,.35)',1);}
+    if(e<42){const cy2=hz+e*k;[[42,'#ff3b30'],[41.6,'#ff9500'],[41.2,'#ffd60a'],[40.9,'#34c759'],[40.6,'#0a84ff'],[40.3,'#5e5ce6'],[40,'#af52de']].forEach(([a,c])=>{g.strokeStyle=c;g.globalAlpha=.75;g.lineWidth=Math.max(2,k*.45);g.beginPath();g.arc(vx,cy2,a*k,Math.PI,0);g.stroke();});g.globalAlpha=1;}}
+  else if(e>0){const sy=hz-e*k;g.fillStyle='#ffcc33';g.beginPath();g.arc(vx,Math.max(T+14,sy),14,0,TAU);g.fill();}
+  g.restore();g.strokeStyle=C.line;g.strokeRect(L,T,Wd,Hs);
+  // 人與影子
+  g.save();g.fillStyle=C.ink;g.beginPath();g.arc(vx,T+Hs-46,7,0,TAU);g.fill();g.fillRect(vx-6,T+Hs-38,12,24);g.restore();
+  if(DS.face===anti&&e>0){g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(vx,T+Hs-12+0,8,3,0,0,TAU);g.fill();line(g,vx,T+Hs-12,vx,T+Hs-12-Math.min(60,30/Math.tan(Math.max(.1,e*D2R))),'rgba(0,0,0,.25)',8);}
+  text(g,'面向'+(DS.face==='E'?'東方':'西方'),L+8,T+18,{size:13,bold:true});
+  text(g,`${Math.floor(hh)}:${String(Math.round((hh%1)*60)).padStart(2,'0')}　太陽仰角 ${Math.round(e)}°（在${sunSide==='E'?'東方':sunSide==='W'?'西方':'正上方附近'}）`,L+Wd-8,T+18,{size:12,align:'right'});}
+function dsUI(){segSet($('dsMode'),DS.mode);document.querySelectorAll('.dsc').forEach(e=>e.hidden=e.dataset.m!==DS.mode);segSet($('dsSrc'),DS.src);$('dsP2').checked=DS.p2;$('dsEx').checked=DS.ex;
+  $('dsH').value=DS.h;$('dsHo').textContent=Math.floor(DS.h)+':'+String(Math.round((DS.h%1)*60)).padStart(2,'0');segSet($('dsFace'),DS.face);
+  $('dsHint').textContent=DS.mode==='prism'?'拖曳左邊光源的橘點改變入射角度；換成單色光看看還會不會分開。':'拖曳時間、選擇面向的方向：彩虹總是出現在太陽的對面。';
+  $('dsHowT').textContent=DS.mode==='prism'?'三稜鏡：怎麼看':'彩虹：怎麼看';
+  howList('dsHow',DS.mode==='prism'?['白光（太陽光）經過三稜鏡，各色光偏折程度不同而分開：色散。1666 年牛頓的實驗。','紅光偏折最小、紫光偏折最大；在玻璃中紅光最快、紫光最慢。在真空中各色光一樣快。','單色光（雷射）只會偏折，不會再分出其他顏色。','再放一個倒放的三稜鏡，七色光又合成白光：白光是由各色光混合而成的。']
+    :['陽光射入空中的小水滴，經過「折射 → 內部反射 → 折射」射出，各色光分開，形成彩虹。','彩虹一定在太陽的對面：背對太陽才看得到。早上彩虹在西方，下午彩虹在東方。','太陽太高（仰角超過約 42°）時，彩虹落在地平線下看不到，所以中午很少看到彩虹。','彩虹外圈紅、內圈紫。']);}
+segOn($('dsMode'),v=>{DS.mode=v;hideStory();dsUI();SIZE.disp();kick();});
+segOn($('dsSrc'),v=>{DS.src=v;dsUI();kick();});
+$('dsP2').addEventListener('change',()=>{DS.p2=$('dsP2').checked;kick();});
+$('dsEx').addEventListener('change',()=>{DS.ex=$('dsEx').checked;kick();});
+$('dsH').addEventListener('input',()=>{DS.h=+$('dsH').value;dsUI();kick();});
+segOn($('dsFace'),v=>{DS.face=v;dsUI();kick();});
+dragger($('cvDs'),()=>{if(DS.mode!=='prism')return [];const G=dsGeo(WD,HD);return [{x:G.sx,y:G.cy+DS.sy*HD,r:26,move:(x,y)=>{DS.sy=clamp((y-G.cy)/HD,-.3,.42);}}];},()=>kick());
+$('cvDs').style.touchAction='none';
+function dsResults(){let big,f,ck;
+  if(DS.mode==='prism'){const s=DS.src;big=s==='white'?(DS.p2?'七色光再合成白光：白光由各色光混合而成':'白光分成紅、橙、黃、綠、藍、靛、紫：光的色散'):s==='rb'?'紅光和藍光各自偏折：藍光偏折較多':'單色光只偏折，不會色散';
+    const nr=nGlass(650,false),nv=nGlass(410,false);f=`玻璃中：紅光 n ≈ ${nf(nr,3)}，v ≈ ${nf(3/nr,3)}×10⁸ m/s<br>　　　　紫光 n ≈ ${nf(nv,3)}，v ≈ ${nf(3/nv,3)}×10⁸ m/s<br>真空中各色光都是 3×10⁸ m/s`;
+    ck=[['info','色散的原因：各色光在玻璃中的速率不同，偏折程度不同。'],['info','紅光波長最長、在玻璃中最快、偏折最小；紫光波長最短、最慢、偏折最大。'],['info','複色光（白光）會色散；單色光（雷射）不會。']];}
+  else{const e=Math.max(0,65*Math.sin(Math.PI*(DS.h-6)/12)),side=DS.h<12?'E':DS.h>12?'W':'S',anti=side==='E'?'W':side==='W'?'E':'N';const vis=DS.face===anti&&e<42;
+    big=vis?`看得到彩虹（在${DS.face==='E'?'東':'西'}方天空）`:DS.face!==anti?'面向太陽那一側，看不到彩虹':'太陽太高，彩虹在地平線下';
+    f=`彩虹的中心在太陽的正對面、地平線下 ${Math.round(e)}°<br>彩虹半徑約 42°：太陽仰角要小於 42° 才看得到`;
+    ck=[['info','早上太陽在東，彩虹在西方；下午太陽在西，彩虹在東方。'],['info','彩虹是色散：陽光進出水滴時折射，各色光偏折程度不同。']];}
+  $('dsBig').textContent=big;$('dsF').innerHTML=f;checks($('dsC'),ck);}
+SIZE.disp=()=>{({W:WD,H:HD}=fit($('cvDs'),DS.mode==='rain'?.42:.46,280,460));};
+UI.disp=()=>{dsUI();};
+DRAW.disp=()=>{const g=$('cvDs').getContext('2d');if(DS.mode==='prism')drawPrism(g,WD,HD);else drawRain(g,WD,HD);dsResults();};
+
+// =====================================================================
+// 2 色光的混合
+// =====================================================================
+const MX={mode:'spot',on:[1,1,1],pos:[[.42,.4],[.58,.4],[.5,.64]],probe:[.5,.47],sh:'RB',shL:{RB:[.28,.72],RG:[.28,.72],RGB:[.22,.5,.78]},obj:[.5,.62],px:[255,255,0]};
+const SHC={RB:['R','B'],RG:['R','G'],RGB:['R','G','B']};
+let WX=600,HX=320;
+const LIGHTV={R:[1,0,0],G:[0,1,0],B:[0,0,1]};
+function spotR(W,H){return Math.min(W,H)*.27;}
+function spotAt(x,y,W,H){const r=spotR(W,H);const c=[0,0,0];MX.pos.forEach((p,i)=>{if(!MX.on[i])return;const d=Math.hypot(x-p[0]*W,y-p[1]*H);const f=d<r*.85?1:d<r?(r-d)/(r*.15):0;c[i]+=f;});return c.map(v=>Math.min(1,v));}
+function drawSpot(g,W,H){g.fillStyle='#07080b';g.fillRect(0,0,W,H);const r=spotR(W,H);g.save();g.globalCompositeOperation='lighter';
+  MX.pos.forEach((p,i)=>{if(!MX.on[i])return;const x=p[0]*W,y=p[1]*H;const gr=g.createRadialGradient(x,y,0,x,y,r);const c=['255,0,0','0,255,0','0,0,255'][i];gr.addColorStop(0,`rgba(${c},1)`);gr.addColorStop(.85,`rgba(${c},1)`);gr.addColorStop(1,`rgba(${c},0)`);g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();});
+  g.restore();
+  MX.pos.forEach((p,i)=>{handle(g,p[0]*W,p[1]*H,8);text(g,['紅燈','綠燈','藍燈'][i],p[0]*W,p[1]*H-14,{size:11,bold:true,col:'#fff',align:'center'});});
+  const px=MX.probe[0]*W,py=MX.probe[1]*H;g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.arc(px,py,10,0,TAU);g.stroke();line(g,px-16,py,px-6,py,'#fff',2);line(g,px+6,py,px+16,py,'#fff',2);line(g,px,py-16,px,py-6,'#fff',2);line(g,px,py+6,px,py+16,'#fff',2);
+  const c=spotAt(px,py,W,H);text(g,'這裡：'+nameRGB(c)+'光',px+20,py-12,{size:13,bold:true,col:'#fff',bg:'rgba(0,0,0,.6)'});
+  text(g,'白色牆面（暗室）',10,H-10,{size:11,col:'#aaa'});}
+function shGeo(W,H){return {ys:H*.08,hs:H*.24,yw:H*.42,yl:H*.92,ro:Math.min(W,H)*.045};}
+function shWall(x,W,H){const G=shGeo(W,H),ks=SHC[MX.sh],L=MX.shL[MX.sh];const c=[0,0,0];const ox=MX.obj[0]*W,oy=MX.obj[1]*H;
+  ks.forEach((k,i)=>{const lx=L[i]*W,ly=G.yl;// 光源到牆上點的線段是否被物體擋住
+    const dx=x-lx,dy=G.yw-ly,t=clamp(((ox-lx)*dx+(oy-ly)*dy)/(dx*dx+dy*dy),0,1);const d=Math.hypot(lx+dx*t-ox,ly+dy*t-oy);if(d>G.ro)LIGHTV[k].forEach((v,j)=>c[j]+=v);});return c.map(v=>Math.min(1,v));}
+function drawShadow(g,W,H){const G=shGeo(W,H),ks=SHC[MX.sh],L=MX.shL[MX.sh];g.fillStyle='#0b0d12';g.fillRect(0,0,W,H);
+  // 牆面正視
+  let seg=[];let prev=null,start=0;for(let x=0;x<=W;x+=2){const c=x<W?shWall(x,W,H):null;const k=c?c.join():'end';if(k!==prev){if(prev!==null)seg.push({a:start,b:x,c:prev.split(',').map(Number)});prev=k;start=x;}}
+  seg.forEach(s=>{g.fillStyle=lightCss(s.c);g.fillRect(s.a,G.ys,s.b-s.a,G.hs);if(s.b-s.a>44)text(g,nameRGB(s.c),(s.a+s.b)/2,G.ys+G.hs/2+5,{size:13,bold:true,col:s.c.reduce((a,b)=>a+b,0)>1.5||s.c[1]>.5?'#111':'#fff',align:'center'});});
+  text(g,'牆面（正面看）',8,G.ys-4,{size:11,col:'#bbb'});
+  // 俯視圖
+  line(g,0,G.yw,W,G.yw,'#ddd',3);text(g,'牆（上方俯視）',8,G.yw+16,{size:11,col:'#bbb'});
+  const ox=MX.obj[0]*W,oy=MX.obj[1]*H;
+  ks.forEach((k,i)=>{const lx=L[i]*W;g.save();g.globalCompositeOperation='lighter';g.fillStyle=lightCss(LIGHTV[k],.12);g.beginPath();g.moveTo(lx,G.yl);g.lineTo(0,G.yw);g.lineTo(W,G.yw);g.closePath();g.fill();g.restore();
+    // 影子邊界
+    const ang=Math.atan2(oy-G.yl,ox-lx),dd=Math.hypot(ox-lx,oy-G.yl),da=Math.asin(Math.min(1,G.ro/dd));[ang-da,ang+da].forEach(a=>{const t=(G.yw-G.yl)/Math.sin(a);line(g,lx,G.yl,lx+Math.cos(a)*t,G.yw,lightCss(LIGHTV[k],.6),1,[4,4]);});
+    g.fillStyle=lightCss(LIGHTV[k]);g.beginPath();g.arc(lx,G.yl,12,0,TAU);g.fill();handle(g,lx,G.yl,6);text(g,CN[k]+'燈',lx,G.yl-18,{size:12,bold:true,col:'#fff',align:'center'});});
+  g.fillStyle='#8a6b4a';g.beginPath();g.arc(ox,oy,G.ro,0,TAU);g.fill();handle(g,ox,oy,6);text(g,'物體',ox+G.ro+6,oy+4,{size:12,col:'#ddd'});}
+function drawPixel(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=MX.px;const sw=Math.min(W*.38,H*.8);g.fillStyle=`rgb(${c.join(',')})`;g.fillRect(20,(H-sw)/2,sw,sw);g.strokeStyle=C.line;g.strokeRect(20,(H-sw)/2,sw,sw);
+  text(g,'遠遠看：'+nameRGB(c.map(v=>v/255))+'色',20+sw/2,(H-sw)/2-8,{size:13,bold:true,align:'center'});
+  const L=sw+60,cols=6,rows=4,pw=Math.min((W-L-20)/cols,(H-40)/rows);g.fillStyle='#000';g.fillRect(L,20,pw*cols,pw*rows);
+  for(let r=0;r<rows;r++)for(let k=0;k<cols;k++){const x=L+k*pw,y=20+r*pw;[0,1,2].forEach(j=>{const v=c[j]/255;const col=[0,0,0];col[j]=v;g.fillStyle=lightCss(col);g.fillRect(x+pw*(.06+j*.31),y+pw*.08,pw*.26,pw*.84);});}
+  text(g,'靠近看：每個畫素都是紅、綠、藍三個小燈',L,H-8,{size:12,col:C.muted});}
+function mxUI(){segSet($('mxMode'),MX.mode);document.querySelectorAll('.mxc').forEach(e=>e.hidden=e.dataset.m!==MX.mode);['mxR','mxG','mxB'].forEach((id,i)=>$(id).checked=!!MX.on[i]);segSet($('mxSh'),MX.sh);
+  ['pxR','pxG','pxB'].forEach((id,i)=>{$(id).value=MX.px[i];$(id+'o').textContent=MX.px[i];});
+  $('mxHint').textContent={spot:'拖曳三盞燈（橘點）讓光重疊，拖曳白色十字看那一點是什麼顏色。',shadow:'拖曳燈或物體（橘點）：被擋住一盞燈的地方，只剩另一盞燈的顏色。',pixel:'拖三個滑桿調整紅、綠、藍小燈的亮度，混出各種顏色。'}[MX.mode];
+  $('mxHowT').textContent={spot:'三盞聚光燈：怎麼看',shadow:'彩色的影子：怎麼看',pixel:'螢幕的畫素：怎麼看'}[MX.mode];
+  howList('mxHow',{spot:['紅、綠、藍是光的三原色（RGB），不能由其他色光混合出來。','紅＋綠＝黃；紅＋藍＝洋紅；綠＋藍＝青；紅＋綠＋藍＝白。','色光混合越混越亮（加法）；顏料混合越混越暗，兩者不同。'],
+    shadow:['兩盞不同顏色的燈照牆，物體擋住其中一盞燈的光，影子就是另一盞燈的顏色。','兩盞燈都被擋住的地方才是黑色。','兩盞燈都照到的地方是兩色光混合，例如紅＋藍＝洋紅。'],
+    pixel:['手機、電視、電腦螢幕的每個畫素都由紅、綠、藍三個小燈組成。','調整三個小燈的亮度比例，就能混出幾百萬種顏色；三個全亮是白，全暗是黑。','夜間模式把藍光調暗，畫面看起來偏黃。']}[MX.mode]);}
+segOn($('mxMode'),v=>{MX.mode=v;hideStory();mxUI();SIZE.mix();kick();});
+['mxR','mxG','mxB'].forEach((id,i)=>$(id).addEventListener('change',()=>{MX.on[i]=$(id).checked?1:0;kick();}));
+$('mxReset').addEventListener('click',()=>{MX.pos=[[.42,.4],[.58,.4],[.5,.64]];MX.probe=[.5,.47];kick();});
+segOn($('mxSh'),v=>{MX.sh=v;mxUI();kick();});
+['pxR','pxG','pxB'].forEach((id,i)=>$(id).addEventListener('input',()=>{MX.px[i]=+$(id).value;mxUI();kick();}));
+const PXP=[['白',[255,255,255]],['黃',[255,255,0]],['洋紅',[255,0,255]],['青',[0,255,255]],['紅',[255,0,0]],['橙',[255,128,0]],['灰',[128,128,128]],['黑',[0,0,0]],['夜間模式（藍光調暗）',[255,200,120]]];
+{const b=$('pxPre');PXP.forEach(([n,c])=>{const x=document.createElement('button');x.className='chip';x.textContent=n;x.addEventListener('click',()=>{MX.px=c.slice();mxUI();kick();});b.appendChild(x);});}
+dragger($('cvMx'),()=>{const W=WX,H=HX;if(MX.mode==='spot')return MX.pos.map((p,i)=>({x:p[0]*W,y:p[1]*H,r:22,move:(x,y)=>{MX.pos[i]=[clamp(x/W,0,1),clamp(y/H,0,1)];}})).concat([{x:MX.probe[0]*W,y:MX.probe[1]*H,r:22,move:(x,y)=>{MX.probe=[clamp(x/W,0,1),clamp(y/H,0,1)];}}]);
+  if(MX.mode==='shadow'){const G=shGeo(W,H),L=MX.shL[MX.sh];return L.map((lx,i)=>({x:lx*W,y:G.yl,r:22,move:x=>{L[i]=clamp(x/W,.02,.98);}})).concat([{x:MX.obj[0]*W,y:MX.obj[1]*H,r:24,move:(x,y)=>{MX.obj=[clamp(x/W,.05,.95),clamp(y/H,(G.yw+G.ro+8)/H,(G.yl-30)/H)];}}]);}return [];},()=>kick());
+$('cvMx').style.touchAction='none';
+function mxResults(){let big='',f='',ck=[];
+  if(MX.mode==='spot'){const c=spotAt(MX.probe[0]*WX,MX.probe[1]*HX,WX,HX);const parts=['紅','綠','藍'].filter((n,i)=>c[i]>.5);big=parts.length?`十字處：${parts.join('＋')} ＝ ${nameRGB(c)}光`:'十字處沒有光：黑';
+    f='紅＋綠＝黃　紅＋藍＝洋紅　綠＋藍＝青<br>紅＋綠＋藍＝白';ck=[['info','三原色光：紅、綠、藍（RGB）。黃光可以由紅光＋綠光混合出來，所以黃不是原色光。'],['info','白光不是一種顏色，是各色光混合而成。']];}
+  else if(MX.mode==='shadow'){const ks=SHC[MX.sh];big=`${ks.map(k=>CN[k]).join('、')}兩盞燈：影子有${ks.length===2?'兩':'好幾'}種顏色`;f=ks.length===2?`擋住${CN[ks[0]]}燈的影子是${CN[ks[1]]}色；擋住${CN[ks[1]]}燈的影子是${CN[ks[0]]}色；兩盞都擋住是黑色<br>兩盞都照到：${CN[keyOf(add(CV[ks[0]],CV[ks[1]]))]}`:'每個影子是「沒被擋住的燈」混合的顏色';
+    ck=[['info','影子不是一定是黑色：只要還有別的色光照到，影子就有顏色。']];}
+  else{const c=MX.px;big=`R ${c[0]}、G ${c[1]}、B ${c[2]} → ${nameRGB(c.map(v=>v/255))}`;f='每個小燈 0～255 共 256 種亮度：256 × 256 × 256 ≈ 1677 萬種顏色';ck=[['info','螢幕只用三種原色光的小燈，靠亮度比例混出所有顏色。']];}
+  $('mxBig').textContent=big;$('mxF').innerHTML=f;checks($('mxC'),ck);}
+SIZE.mix=()=>{({W:WX,H:HX}=fit($('cvMx'),MX.mode==='pixel'?.36:.5,260,480));};
+UI.mix=()=>{mxUI();};
+DRAW.mix=()=>{const g=$('cvMx').getContext('2d');if(MX.mode==='spot')drawSpot(g,WX,HX);else if(MX.mode==='shadow')drawShadow(g,WX,HX);else drawPixel(g,WX,HX);mxResults();};
+
+// =====================================================================
+// 3 不透明物體的顏色
+// =====================================================================
+const OB={mode:'cards',light:'R',sel:'R',pic:'scene',top:'W',bot:'R'};
+const OL=['W','R','G','B','Y','M','C'];let WO=600,HO=320;
+segFill('obLight',OL,LN);segFill('obTop',CK,CN);segFill('obBot',CK,CN);
+const mulCss=(rgb,L)=>`rgb(${rgb.map((v,i)=>Math.round(v*(.06+.94*L[i]))).join(',')})`;
+function cardRects(W,H){const n=8,cols=W<560?4:8,rows=Math.ceil(n/cols),gap=12,top=H*.3,cw=Math.min(90,(W-40-gap*(cols-1))/cols),ch=Math.min(cw*1.25,(H-top-30)/rows-40);
+  const x0=(W-(cols*cw+(cols-1)*gap))/2;return CK.map((k,i)=>({k,x:x0+(i%cols)*(cw+gap),y:top+Math.floor(i/cols)*(ch+44),w:cw,h:ch}));}
+function lamp(g,x,y,Lk,H){const L=CV[Lk];g.fillStyle='#555';g.fillRect(x-30,y-10,60,14);if(Lk!=='K'){const gr=g.createLinearGradient(0,y,0,H);gr.addColorStop(0,lightCss(L,.35));gr.addColorStop(1,lightCss(L,.03));g.fillStyle=gr;g.beginPath();g.moveTo(x-26,y+4);g.lineTo(x+26,y+4);g.lineTo(x+H*.9,H);g.lineTo(x-H*.9,H);g.closePath();g.fill();}
+  g.fillStyle=lightCss(L);g.beginPath();g.ellipse(x,y+5,22,6,0,0,TAU);g.fill();}
+function drawCards(g,W,H){const L=CV[OB.light];g.fillStyle='#0d0f13';g.fillRect(0,0,W,H);lamp(g,W/2,16,OB.light,H);text(g,'暗箱：只有'+LN[OB.light]+'照射',12,22,{size:13,bold:true,col:'#ddd'});
+  cardRects(W,H).forEach(r=>{g.fillStyle=seenRGB(r.k,L);g.fillRect(r.x,r.y,r.w,r.h);g.strokeStyle=r.k===OB.sel?'#ff9a5c':'rgba(255,255,255,.25)';g.lineWidth=r.k===OB.sel?3:1;g.strokeRect(r.x,r.y,r.w,r.h);
+    const sk=keyOf(mul(CV[r.k],L));text(g,CN[r.k]+'紙',r.x+r.w/2,r.y+r.h+16,{size:12,bold:true,col:'#ccc',align:'center'});text(g,'看起來'+CN[sk],r.x+r.w/2,r.y+r.h+32,{size:12,col:sk==='K'?'#888':'#fff',align:'center'});});}
+// 圖卡
+const SCENE=[{k:'B',n:'天空'},{k:'Y',n:'太陽'},{k:'G',n:'山'},{k:'W',n:'牆'},{k:'R',n:'屋頂'},{k:'K',n:'門'},{k:'M',n:'花'},{k:'C',n:'湖'}];
+function drawScene(g,x,y,w,h,L){const P=k=>seenRGB(k,L);g.fillStyle=P('B');g.fillRect(x,y,w,h*.6);g.fillStyle=P('Y');g.beginPath();g.arc(x+w*.8,y+h*.18,h*.09,0,TAU);g.fill();
+  g.fillStyle=P('G');g.beginPath();g.moveTo(x,y+h*.6);g.lineTo(x+w*.25,y+h*.25);g.lineTo(x+w*.55,y+h*.6);g.closePath();g.fill();g.fillStyle=P('C');g.fillRect(x,y+h*.6,w,h*.4);
+  g.fillStyle=P('G');g.fillRect(x,y+h*.6,w*.6,h*.4);g.fillStyle=P('W');g.fillRect(x+w*.12,y+h*.45,w*.3,h*.3);g.fillStyle=P('R');g.beginPath();g.moveTo(x+w*.08,y+h*.45);g.lineTo(x+w*.27,y+h*.3);g.lineTo(x+w*.46,y+h*.45);g.closePath();g.fill();
+  g.fillStyle=P('K');g.fillRect(x+w*.24,y+h*.58,w*.07,h*.17);g.fillStyle=P('M');for(let i=0;i<5;i++){g.beginPath();g.arc(x+w*(.08+i*.1),y+h*.86,h*.035,0,TAU);g.fill();}
+  g.strokeStyle='rgba(128,128,128,.5)';g.strokeRect(x,y,w,h);}
+const BLK=[{k:'B',a:8},{k:'R',a:2},{k:'G',a:2},{k:'W',a:2}];
+function drawBlocks(g,x,y,w,h,L){const u=Math.min(w/4,h/4);// 4×4 格，藍 8 格，紅、綠、白各 2 格
+  const lay=['BBBB','BBBB','RRGG','WW..'];lay.forEach((row,r)=>[...row].forEach((k,c)=>{if(k==='.')return;g.fillStyle=seenRGB(k,L);g.fillRect(x+c*u,y+r*u,u-1,u-1);}));
+  g.strokeStyle='rgba(128,128,128,.5)';g.strokeRect(x,y,u*4,u*4);text(g,'每格 1 cm²',x,y+u*4+16,{size:11,col:C.muted});}
+function drawFace(g,x,y,w,h,L){const items=[['B','頭'],['K','眼珠'],['W','臉頰'],['R','嘴巴']];const cw=w/2-10,chh=(h-30)/2-10;
+  items.forEach(([k,n],i)=>{const xx=x+(i%2)*(cw+20),yy=y+Math.floor(i/2)*(chh+20);g.fillStyle=seenRGB(k,L);g.fillRect(xx,yy,cw,chh);g.strokeStyle='rgba(128,128,128,.5)';g.strokeRect(xx,yy,cw,chh);text(g,n,xx+cw/2,yy+chh+14,{size:12,align:'center',col:C.muted});});}
+function drawPic(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const L=CV[OB.light],gap=24,pw=(W-gap*3)/2,ph=H-60;
+  [[CV.W,'白光下'],[L,'在'+LN[OB.light]+'下']].forEach(([LL,t],i)=>{const x=gap+i*(pw+gap),y=34;text(g,t,x,24,{size:13,bold:true});
+    if(OB.pic==='scene')drawScene(g,x,y,pw,ph,LL);else if(OB.pic==='blocks')drawBlocks(g,x,y,pw,ph,LL);else drawFace(g,x,y,pw,ph,LL);});}
+function drawOutfit(g,W,H){const L=CV[OB.light];g.fillStyle='#0d0f13';g.fillRect(0,0,W,H);lamp(g,W/2,12,OB.light,H);
+  const cx=W/2,base=H-14,s=Math.min(1.25,H/320);g.fillStyle=mulCss([236,192,152],L);g.beginPath();g.arc(cx,base-210*s,22*s,0,TAU);g.fill();
+  g.fillStyle=seenRGB(OB.top,L);g.beginPath();g.moveTo(cx-34*s,base-186*s);g.lineTo(cx+34*s,base-186*s);g.lineTo(cx+44*s,base-110*s);g.lineTo(cx-44*s,base-110*s);g.closePath();g.fill();
+  g.fillRect(cx-58*s,base-182*s,22*s,60*s);g.fillRect(cx+36*s,base-182*s,22*s,60*s);
+  g.fillStyle=seenRGB(OB.bot,L);g.beginPath();g.moveTo(cx-44*s,base-112*s);g.lineTo(cx+44*s,base-112*s);g.lineTo(cx+62*s,base-50*s);g.lineTo(cx-62*s,base-50*s);g.closePath();g.fill();
+  g.fillStyle=mulCss([236,192,152],L);g.fillRect(cx-22*s,base-50*s,12*s,48*s);g.fillRect(cx+10*s,base-50*s,12*s,48*s);
+  const tk=keyOf(mul(CV[OB.top],L)),bk=keyOf(mul(CV[OB.bot],L));text(g,'看起來：'+CN[tk]+'衣、'+CN[bk]+'裙',W-14,H-14,{size:14,bold:true,col:'#fff',align:'right'});
+  text(g,'白光下：'+CN[OB.top]+'衣、'+CN[OB.bot]+'裙',14,H-14,{size:12,col:'#aaa'});}
+$('cvOb').addEventListener('click',ev=>{if(OB.mode!=='cards')return;const r=$('cvOb').getBoundingClientRect(),x=ev.clientX-r.left,y=ev.clientY-r.top;for(const c of cardRects(WO,HO))if(x>=c.x&&x<=c.x+c.w&&y>=c.y&&y<=c.y+c.h+36){OB.sel=c.k;kick();}});
+function obUI(){segSet($('obMode'),OB.mode);document.querySelectorAll('.obc').forEach(e=>e.hidden=e.dataset.m!==OB.mode);segSet($('obLight'),OB.light);segSet($('obPic'),OB.pic);segSet($('obTop'),OB.top);segSet($('obBot'),OB.bot);
+  $('obHint').textContent={cards:'換上方「照射的光」，看每張色紙變成什麼顏色；點一張色紙看它反射、吸收了哪些光。',pic:'左邊是白光下真正的顏色，右邊是在選定的光下看起來的顏色。',outfit:'選擇服裝顏色和舞台燈光，看看觀眾看到什麼。'}[OB.mode];
+  $('obHowT').textContent={cards:'暗箱裡的色紙：怎麼看',pic:'圖卡：怎麼看',outfit:'舞台上的服裝：怎麼看'}[OB.mode];
+  howList('obHow',['不透明物體的顏色，由它「反射」的色光決定：反射和自己同色的光，吸收其他色光。','白色物體反射所有色光，所以照什麼光就呈現什麼顏色；黑色物體吸收所有色光。','黃色紙反射紅、綠（黃）光，吸收藍光；洋紅紙反射紅、藍光；青色紙反射綠、藍光。','照到的光裡如果沒有物體能反射的顏色，物體就看起來是黑色。']);
+  const rows=['W','R','G','B'],cols=['R','B','G','K','W','Y','M','C'];
+  $('obTab').innerHTML='<table class="ctable"><tr><th>光＼紙</th>'+cols.map(k=>`<th>${swatch(k)}${CN[k]}</th>`).join('')+'</tr>'+rows.map(l=>`<tr class="${l===OB.light?'on':''}"><th>${LN[l]}</th>`+cols.map(k=>{const s=keyOf(mul(CV[k],CV[l]));return `<td>${swatch(s)}${CN[s]}</td>`;}).join('')+'</tr>').join('')+'</table>';}
+segOn($('obMode'),v=>{OB.mode=v;hideStory();obUI();SIZE.obj();kick();});
+segOn($('obLight'),v=>{OB.light=v;obUI();kick();});segOn($('obPic'),v=>{OB.pic=v;obUI();kick();});
+segOn($('obTop'),v=>{OB.top=v;obUI();kick();});segOn($('obBot'),v=>{OB.bot=v;obUI();kick();});
+function obResults(){const L=CV[OB.light];let big='',f='',ck=[];const comp=c=>['紅','綠','藍'].filter((n,i)=>c[i]>.5).join('、')||'沒有';
+  if(OB.mode==='cards'){const k=OB.sel,s=mul(CV[k],L),sk=keyOf(s);big=`${CN[k]}紙在${LN[OB.light]}下：${CN[sk]}色`;
+    f=`照到的光：${comp(L)}<br>${CN[k]}紙能反射：${comp(CV[k])}<br>反射出來：${comp(s)} → 看起來${CN[sk]}色`;
+    const ps=possible(sk,L);ck=[['info',`反過來推理：在${LN[OB.light]}下看起來${CN[sk]}色的紙，可能是：${ps.map(p=>CN[p]).join('、')}。`],['info',`在${LN[OB.light]}下看起來是黑色的紙：${possible('K',L).map(p=>CN[p]).join('、')}。`]];}
+  else if(OB.mode==='pic'){if(OB.pic==='blocks'){let black=0;BLK.forEach(b=>{if(keyOf(mul(CV[b.k],L))==='K')black+=b.a;});big=`在${LN[OB.light]}下，黑色部分共 ${black} cm²`;f='藍 8、紅 2、綠 2、白 2（cm²）<br>看起來黑色＝反射不到任何照到的光';}
+    else{const items=OB.pic==='scene'?SCENE:[{k:'B',n:'頭'},{k:'K',n:'眼珠'},{k:'W',n:'臉頰'},{k:'R',n:'嘴巴'}];big=`在${LN[OB.light]}下：`+items.map(it=>it.n+CN[keyOf(mul(CV[it.k],L))]).join('、');f='白色的部分會變成燈光的顏色；照不到能反射的光就變黑';}
+    ck=[['info','只照單色光時，畫面只剩那一種顏色和黑色。']];}
+  else{const tk=keyOf(mul(CV[OB.top],L)),bk=keyOf(mul(CV[OB.bot],L));big=`觀眾看到：${CN[tk]}衣、${CN[bk]}裙`;f=`上衣可能是：${possible(tk,L).map(p=>CN[p]).join('、')}<br>裙子可能是：${possible(bk,L).map(p=>CN[p]).join('、')}`;
+    ck=[['info','換兩種燈光觀察，就能縮小可能的範圍，推出真正的顏色。']];}
+  $('obBig').textContent=big;$('obF').innerHTML=f;checks($('obC'),ck);}
+SIZE.obj=()=>{({W:WO,H:HO}=fit($('cvOb'),OB.mode==='pic'?.42:.44,260,440));};
+UI.obj=()=>{obUI();};
+DRAW.obj=()=>{const g=$('cvOb').getContext('2d');if(OB.mode==='cards')drawCards(g,WO,HO);else if(OB.mode==='pic')drawPic(g,WO,HO);else drawOutfit(g,WO,HO);obResults();};
+
+// =====================================================================
+// 4 透明物體與濾光
+// =====================================================================
+const FT={mode:'filter',light:'W',f1:'R',f2:'none',lens:'G',card:'dog',glass:'G'};
+const FK=['none','R','G','B','Y','M','C'],FN={none:'無',R:'紅',G:'綠',B:'藍',Y:'黃',M:'洋紅',C:'青'};
+const TV=k=>k==='none'?[1,1,1]:CV[k];let WF=600,HF=320;
+segFill('ftLight',OL,LN);segFill('ftF1',FK,FN);segFill('ftF2',FK,FN);segFill('ftLens',FK,FN);segFill('ftGlass',FK,FN);
+function filterRect(g,x,y,h,k){if(k==='none')return;const c=PAPER[k];g.fillStyle=`rgba(${c.join(',')},.45)`;g.fillRect(x-8,y,16,h);g.strokeStyle=`rgba(${c.join(',')},1)`;g.lineWidth=2;g.strokeRect(x-8,y,16,h);}
+function drawFilter(g,W,H){g.fillStyle='#0b0d12';g.fillRect(0,0,W,H);const L=CV[FT.light],xs=[W*.36,W*.6],xsc=W*.86,ym=H*.52,fh=H*.5;
+  g.fillStyle='#5b6470';g.fillRect(14,ym-16,34,32);g.fillStyle=lightCss(L);g.beginPath();g.arc(48,ym,10,-Math.PI/2,Math.PI/2);g.fill();
+  let cur=L.slice();const segs=[[48,xs[0]],[xs[0],xs[1]],[xs[1],xsc]];const fs=[FT.f1,FT.f2];
+  g.save();g.globalCompositeOperation='lighter';
+  segs.forEach(([a,b],si)=>{if(si>0)cur=mul(cur,TV(fs[si-1]));[0,1,2].forEach(j=>{if(cur[j]<.5)return;const c=[0,0,0];c[j]=1;line(g,a,ym+(j-1)*12,b,ym+(j-1)*12,lightCss(c,.95),4);});
+    if(cur.some(v=>v>.5)){g.fillStyle=lightCss(cur,.12);g.fillRect(a,ym-24,b-a,48);}});
+  g.restore();
+  fs.forEach((k,i)=>{filterRect(g,xs[i],ym-fh/2,fh,k);text(g,k==='none'?'（沒有放）':FN[k]+'色玻璃紙',xs[i],ym-fh/2-8,{size:12,bold:true,col:'#ddd',align:'center'});
+    const before=i===0?L:mul(L,TV(fs[0])),after=mul(before,TV(k));[0,1,2].forEach(j=>{if(before[j]>.5&&after[j]<.5)text(g,'✕',xs[i]-14,ym+(j-1)*12+5,{size:13,bold:true,col:'#ff8080',align:'right'});});});
+  const fin=mul(mul(L,TV(FT.f1)),TV(FT.f2));g.fillStyle='#e9e6df';g.fillRect(xsc,ym-fh/2,18,fh);if(fin.some(v=>v>.5)){g.fillStyle=seenRGB('W',fin);g.fillRect(xsc,ym-34,18,68);}
+  text(g,'白色屏幕：'+CN[keyOf(fin)],xsc+9,ym+fh/2+18,{size:12,bold:true,col:'#fff',align:'center'});
+  text(g,'紅',58,ym-12+4,{size:10,col:'#f88'});text(g,'綠',58,ym+4,{size:10,col:'#8f8'});text(g,'藍',58,ym+12+4,{size:10,col:'#88f'});}
+function drawGlasses(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const T=TV(FT.lens),gap=24,pw=(W-gap*3)/2,ph=H-60;
+  [[[1,1,1],'不戴眼鏡'],[T,'透過'+(FT.lens==='none'?'透明':FN[FT.lens]+'色')+'鏡片']].forEach(([TT,t],i)=>{const x=gap+i*(pw+gap),y=36;text(g,t,x,24,{size:13,bold:true});
+    if(FT.card==='dog'){g.fillStyle=seenRGB('W',TT);g.fillRect(x,y,pw,ph);g.strokeStyle=C.line;g.strokeRect(x,y,pw,ph);const fs=Math.min(ph*.55,pw*.3);g.font=`900 ${fs}px "Noto Sans TC",sans-serif`;g.textAlign='center';g.textBaseline='middle';
+      [['d','K'],['o','K'],['g','G']].forEach(([ch,k],j)=>{g.fillStyle=seenRGB(k,TT);g.fillText(ch,x+pw*(.25+j*.25),y+ph/2);});g.textBaseline='alphabetic';}
+    else{g.fillStyle=C.panel;g.fillRect(x,y,pw,ph);const sx=x+pw/2,sy=y+ph*.08,sw=Math.min(pw*.8,ph*.95);g.fillStyle=seenRGB('W',TT);g.beginPath();g.moveTo(sx-sw*.3,sy);g.lineTo(sx-sw*.5,sy+sw*.18);g.lineTo(sx-sw*.38,sy+sw*.3);g.lineTo(sx-sw*.3,sy+sw*.24);g.lineTo(sx-sw*.3,sy+sw*.82);g.lineTo(sx+sw*.3,sy+sw*.82);g.lineTo(sx+sw*.3,sy+sw*.24);g.lineTo(sx+sw*.38,sy+sw*.3);g.lineTo(sx+sw*.5,sy+sw*.18);g.lineTo(sx+sw*.3,sy);g.closePath();g.fill();g.strokeStyle='#999';g.stroke();
+      const star=(cx,cy,r)=>{g.beginPath();for(let k=0;k<10;k++){const rr=k%2?r*.45:r,a=-Math.PI/2+k*Math.PI/5;g.lineTo(cx+Math.cos(a)*rr,cy+Math.sin(a)*rr);}g.closePath();g.fill();};
+      g.fillStyle=seenRGB('B',TT);star(sx-sw*.1,sy+sw*.42,sw*.15);g.fillStyle=seenRGB('R',TT);g.beginPath();g.arc(sx+sw*.15,sy+sw*.5,sw*.07,0,TAU);g.fill();
+      g.fillStyle=seenRGB('Y',TT);g.fillRect(sx-sw*.2,sy+sw*.68,sw*.4,sw*.05);}});
+  if(FT.card==='dog')text(g,'字卡：白紙，d、o 是黑色，g 是綠色',W/2,H-6,{size:11,col:C.muted,align:'center'});else text(g,'白 T 恤：藍色星星、紅色圓點、黃色條紋',W/2,H-6,{size:11,col:C.muted,align:'center'});}
+function drawHouse(g,W,H){const T=TV(FT.glass);g.fillStyle='#cfe3f6';g.fillRect(0,0,W,H);g.fillStyle='#8fbf6a';g.fillRect(0,H*.85,W,H*.15);
+  const x0=W*.18,x1=W*.82,top=H*.12,bot=H*.85;g.fillStyle=seenRGB('W',T);g.fillRect(x0,top+40,x1-x0,bot-top-40);g.fillStyle=FT.glass==='none'?'#f4f1ea':`rgba(${PAPER[FT.glass].join(',')},.35)`;
+  g.fillStyle='#202428';g.fillRect(x0,top+40,x1-x0,bot-top-40);// 室內（只有透過玻璃的光）
+  g.save();g.globalAlpha=.25;g.fillStyle=lightCss(T);g.fillRect(x0,top+40,x1-x0,bot-top-40);g.restore();
+  g.strokeStyle=FT.glass==='none'?'#9aa':paperCss(FT.glass);g.lineWidth=6;g.strokeRect(x0,top+40,x1-x0,bot-top-40);g.beginPath();g.moveTo(x0-10,top+44);g.lineTo((x0+x1)/2,top);g.lineTo(x1+10,top+44);g.stroke();
+  for(let i=0;i<3;i++){const cx=x0+(x1-x0)*(i+.5)/3,cy=bot-10;g.strokeStyle=seenRGB('G',T);g.lineWidth=4;line(g,cx,cy,cx,cy-110,seenRGB('G',T),5);
+    g.fillStyle=seenRGB('G',T);[[-1,60],[1,80],[-1,95]].forEach(([s,h])=>{g.beginPath();g.ellipse(cx+s*18,cy-h,18,8,s*.5,0,TAU);g.fill();});
+    g.fillStyle=seenRGB('R',T);for(let k=0;k<6;k++){g.beginPath();g.arc(cx+Math.cos(k)*10,cy-120+Math.sin(k)*8,9,0,TAU);g.fill();}}
+  const gr=(T[0]+T[2])/2;const mx=W-34,mh=H*.5,my=H*.2;g.fillStyle=C.panel;g.fillRect(mx-6,my-30,32,mh+40);g.strokeStyle=C.ink;g.strokeRect(mx,my,20,mh);g.fillStyle=C.green;g.fillRect(mx+2,my+mh-mh*gr,16,mh*gr);text(g,'生長',mx+10,my-12,{size:11,align:'center'});
+  text(g,'溫室：'+(FT.glass==='none'?'透明玻璃':FN[FT.glass]+'色玻璃'),12,22,{size:13,bold:true,col:'#13202c'});}
+function ftUI(){segSet($('ftMode'),FT.mode);document.querySelectorAll('.ftc').forEach(e=>e.hidden=e.dataset.m!==FT.mode);segSet($('ftLight'),FT.light);segSet($('ftF1'),FT.f1);segSet($('ftF2'),FT.f2);segSet($('ftLens'),FT.lens);segSet($('ftCard'),FT.card);segSet($('ftGlass'),FT.glass);
+  $('ftHint').textContent={filter:'光由左邊射出：三條細線代表紅、綠、藍三種成分，被玻璃紙吸收的成分在那裡停止（✕）。',glasses:'左邊是不戴眼鏡看到的圖卡，右邊是透過有色鏡片看到的樣子。',house:'換溫室玻璃的顏色，看玫瑰看起來的顏色，以及植物能利用的光。'}[FT.mode];
+  $('ftHowT').textContent={filter:'光穿過玻璃紙：怎麼看',glasses:'戴有色眼鏡：怎麼看',house:'溫室的玻璃：怎麼看'}[FT.mode];
+  howList('ftHow',{filter:['透明物體的顏色，由它「透過」的色光決定：有色玻璃紙只讓同色光通過，吸收其他色光。','無色透明的玻璃讓所有色光通過。','黃色玻璃紙讓紅、綠光通過（擋藍光）——抗藍光鏡片就是這樣；紅、綠、藍玻璃紙疊在一起，什麼光都過不去。'],
+    glasses:['透過紅色鏡片：只有紅光進入眼睛。白紙反射全部的光，經過鏡片後剩紅光，看起來紅色。','和鏡片同色的字會和白紙一樣顏色，看起來「消失」；其他顏色的字變黑。','綠色鏡片看紅色、藍色的圖案都變黑。'],
+    house:['葉子是綠色，表示葉子反射（不吸收）綠光；植物生長主要利用紅光和藍光。','只給綠光，植物幾乎沒有可以利用的光，會長不好。','藍色玻璃溫室裡只有藍光：紅花和綠葉都看起來是黑色。']}[FT.mode]);}
+segOn($('ftMode'),v=>{FT.mode=v;hideStory();ftUI();SIZE.filt();kick();});
+[['ftLight','light'],['ftF1','f1'],['ftF2','f2'],['ftLens','lens'],['ftCard','card'],['ftGlass','glass']].forEach(([id,k])=>segOn($(id),v=>{FT[k]=v;ftUI();kick();}));
+function ftResults(){let big='',f='',ck=[];const comp=c=>['紅','綠','藍'].filter((n,i)=>c[i]>.5).join('、')||'沒有光';
+  if(FT.mode==='filter'){const L=CV[FT.light],a=mul(L,TV(FT.f1)),b=mul(a,TV(FT.f2));big=`屏幕上：${CN[keyOf(b)]}${keyOf(b)==='K'?'（沒有光通過）':'光'}`;
+    f=`${LN[FT.light]}：${comp(L)}<br>${FT.f1==='none'?'':'通過'+FN[FT.f1]+'色玻璃紙：'+comp(a)+'<br>'}${FT.f2==='none'?'':'通過'+FN[FT.f2]+'色玻璃紙：'+comp(b)}`;
+    ck=[['info','有色透明體：透過同色光，吸收其他色光。'],['info','抗藍光鏡片可以用白光檢驗：通過後屏幕偏黃（藍光被擋掉）；或用藍光照，屏幕幾乎不亮。']];}
+  else if(FT.mode==='glasses'){const T=TV(FT.lens);if(FT.card==='dog'){const vis=[['d','K'],['o','K'],['g','G']].filter(([c,k])=>keyOf(mul(CV[k],T))!==keyOf(mul(CV.W,T))).map(a=>a[0]).join('');big=`看到的字：「${vis}」`;f='跟背景（白紙經過鏡片後的顏色）一樣的字，就看不出來';}
+    else{big='白 T 恤看起來：'+CN[keyOf(mul(CV.W,T))]+'；藍星星：'+CN[keyOf(mul(CV.B,T))]+'；紅圓點：'+CN[keyOf(mul(CV.R,T))]+'；黃條紋：'+CN[keyOf(mul(CV.Y,T))];f='進入眼睛的光 ＝ 物體反射的光 再經過鏡片過濾';}
+    ck=[['info','有色鏡片 ＝ 濾光片：只讓同色光進入眼睛。']];}
+  else{const T=TV(FT.glass);big=`玫瑰看起來：花${CN[keyOf(mul(CV.R,T))]}、葉${CN[keyOf(mul(CV.G,T))]}`;f=`植物能利用的紅光＋藍光：${Math.round((T[0]+T[2])/2*100)}%`;
+    ck=[['info','同樣強度的單色光中，洋紅光（紅＋藍）讓植物長得最好；綠光最差。']];}
+  $('ftBig').textContent=big;$('ftF').innerHTML=f;checks($('ftC'),ck);}
+SIZE.filt=()=>{({W:WF,H:HF}=fit($('cvFt'),.42,260,420));};
+UI.filt=()=>{ftUI();};
+DRAW.filt=()=>{const g=$('cvFt').getContext('2d');if(FT.mode==='filter')drawFilter(g,WF,HF);else if(FT.mode==='glasses')drawGlasses(g,WF,HF);else drawHouse(g,WF,HF);ftResults();};
+
+// ================= 題目情境 =================
+const gDs=(p)=>{if(p.mode==='prism'&&p.sy===undefined)p.sy=.3;Object.assign(DS,p);UI.disp();SIZE.disp();kick();};
+const gMx=(p)=>{Object.assign(MX,p);UI.mix();SIZE.mix();kick();};
+const gOb=(p)=>{Object.assign(OB,p);UI.obj();SIZE.obj();kick();};
+const gFt=(p)=>{Object.assign(FT,p);UI.filt();SIZE.filt();kick();};
+const QS=[{g:'翰林講義 4-5 光與顏色',items:[
+  {n:'隨堂1　色散的主要原因',pg:'p.157',b:'disp',set:()=>gDs({mode:'prism',src:'white',p2:false}),t:'p.157 隨堂1　答案：各色光在玻璃中的速率不同',
+   p:'各色光在真空中一樣快，在玻璃中速率不同，偏折程度不同而分開。紅光最快、偏折最小；紫光最慢、偏折最大。'},
+  {n:'隨堂2　色散敘述何者錯誤',pg:'p.157',b:'disp',set:()=>gDs({mode:'prism',src:'white',p2:false}),t:'p.157 隨堂2　答案 (B)',
+   p:'紅光在三稜鏡中傳播速率最快，但波長是「最長」，不是最短。'},
+  {n:'隨堂3　白光和雷射光的比較',pg:'p.157',b:'disp',set:()=>gDs({mode:'prism',src:'red',p2:false}),t:'p.157 隨堂3　答案 (C) 在真空中速率相等',
+   p:'雷射光（單色光）經過三稜鏡只偏折、不色散；白光會色散。兩者都會折射、反射；在真空中一樣快。'},
+  {n:'隨堂4　紅綠藍光照在白紙上',pg:'p.157',b:'mix',set:()=>gMx({mode:'spot',on:[1,1,1]}),t:'p.157 隨堂4　三原色光的混合',
+   p:'三色交會處是白色；紅＋綠＝黃；綠＋藍＝青；紅＋藍＝洋紅。拖曳白色十字到各區域檢查選項。'},
+  {n:'探討活動 4-4　色紙在各色光下的顏色',pg:'p.158',b:'obj',set:()=>gOb({mode:'cards',light:'R',sel:'R'}),t:'p.158 探討活動：光被選擇性的吸收與反射',
+   p:'紅紙在白光、紅光下呈紅色，在綠光、藍光下呈黑色：紅紙只反射紅光，吸收其他色光。下方表格和講義的表一樣，換燈光逐列對照。'},
+  {n:'隨堂1　物體吸收或反射光的敘述',pg:'p.159',b:'obj',set:()=>gOb({mode:'cards',light:'W',sel:'G'}),t:'p.159 隨堂1　答案 (B)',
+   p:'綠色的葉子是「反射」綠光，吸收其他色光，所以看起來是綠色。'},
+  {n:'隨堂2　透過藍色玻璃紙看日光燈',pg:'p.159',b:'filt',set:()=>gFt({mode:'filter',light:'W',f1:'B',f2:'none'}),t:'p.159 隨堂2　答案 (C) 透射藍光',
+   p:'藍色玻璃紙只讓藍光通過，吸收紅光和綠光。'},
+  {n:'隨堂3　紅色、綠色眼鏡看 dog',pg:'p.159',b:'filt',set:()=>gFt({mode:'glasses',lens:'R',card:'dog'}),t:'p.159 隨堂3　字的顏色和鏡片同色就看不見',
+   p:'戴紅色鏡片看得到「dog」，戴綠色鏡片只看到「do」：g 透過綠色鏡片和白紙一樣，代表 g 是綠色（或能反射綠光的顏色）；透過紅色鏡片時 g 變黑，所以看得到。\n切換鏡片比較。'},
+  {n:'第1、2題　三稜鏡色散',pg:'p.159',b:'disp',set:()=>gDs({mode:'prism',src:'white',p2:false}),t:'p.159 第1題 (C) 光的色散；第2題 (D)',
+   p:'紫光偏向角最大、折射角最小；紅光偏向角最小。所以「紫光折射角最大」是錯的。'},
+  {n:'第3～6題　三原色光',pg:'p.160',b:'mix',set:()=>gMx({mode:'pixel',px:[255,255,0]}),t:'p.160 第3題 紅綠藍；第4題 3 種；第5題 (A) 黃；第6題 (D)',
+   p:'電視、電腦螢幕用紅、綠、藍三種色光混合出所有顏色。紅光＋綠光＝黃光，所以黃光不是原色光；紅光無法由其他色光混合出來。'},
+  {n:'第7題　白色物體與黑色物體',pg:'p.160',b:'obj',set:()=>gOb({mode:'cards',light:'W',sel:'W'}),t:'p.160 第7題　答案 (B)',p:'白色物體反射各色光，黑色物體吸收各色光。'},
+  {n:'第8題　紅綠藍光照黃色紙',pg:'p.160',b:'obj',set:()=>gOb({mode:'cards',light:'W',sel:'Y'}),t:'p.160 第8題　答案 (D) 黃色',p:'紅＋綠＋藍＝白光，黃紙在白光下就是黃色（反射紅、綠，吸收藍）。'},
+  {n:'第9題　甲乙丙在紅光、綠光下',pg:'p.160',b:'obj',set:()=>gOb({mode:'cards',light:'R',sel:'W'}),t:'p.160 第9題　答案 (B) 白、紅、藍',
+   p:'紅光下：甲紅、乙紅、丙黑；綠光下：甲綠、乙黑、丙黑。\n甲兩種光都反射 → 白；乙只反射紅 → 紅；丙兩種都不反射，題目說有一張是藍色 → 丙藍。\n切換紅光、綠光，看哪些色紙符合。'},
+  {n:'第10題　紅綠藍玻璃紙疊在一起',pg:'p.160',b:'filt',set:()=>gFt({mode:'filter',light:'W',f1:'R',f2:'G'}),t:'p.160 第10題　答案：黑色',
+   p:'紅色玻璃紙只讓紅光過，綠色玻璃紙又把紅光吸收——已經沒有光可以通過，再加藍色也一樣。白紙看起來是黑的。'},
+  {n:'第2、3題　綠色、藍色玻璃溫室',pg:'p.161',b:'filt',set:()=>gFt({mode:'house',glass:'G'}),t:'p.161 第2題 (D) 黑色；第3題 全部皆黑',
+   p:'綠色玻璃只讓綠光進來：紅花沒有紅光可以反射，看起來黑色；葉子是綠色。\n藍色玻璃：紅花、綠葉都沒有能反射的光，全部看起來黑色。'},
+  {n:'第4、5題　紅光派對的命案',pg:'p.161',b:'obj',set:()=>gOb({mode:'outfit',light:'R',top:'B',bot:'K'}),t:'p.161 第4題 (A) 1 人；第5題 (C) 3 人',
+   p:'第4題：燈熄後看不見（甲錯）；紅光下看到「黑衣」可能（乙對）；紅光下不會看到藍色或黃色衣服（丙、丁錯）。\n第5題：兇手在紅光下看起來是黑衣——藍色、綠色（郵差）、黑色衣服的人都可能，紅色、白色不可能 → 3 人。\n換上衣顏色試試看哪些在紅光下會變黑。'},
+  {n:'第2題　四種光照紅色玻璃',pg:'p.162',b:'filt',set:()=>gFt({mode:'filter',light:'W',f1:'R',f2:'none'}),t:'p.162 第2題　紅色玻璃只讓紅光通過',p:'白光、紅光照紅色玻璃 → 紅光通過；綠光、藍光照 → 沒有光通過。切換光源比較。'},
+  {n:'第4題　黑色部分 10 cm² 用什麼光',pg:'p.162',b:'obj',set:()=>gOb({mode:'pic',pic:'blocks',light:'R'}),t:'p.162 第4題　答案 (A) 紅光',
+   p:'藍 8、紅 2、綠 2、白 2 cm²。紅光照射：藍、綠變黑 → 8 ＋ 2 ＝ 10 cm²。換成藍光、綠光比較。'},
+  {n:'第5題　只反射紅光的圖卡改照藍光',pg:'p.162',b:'obj',set:()=>gOb({mode:'cards',light:'B',sel:'R'}),t:'p.162 第5題　答案 (B) 吸收藍光',p:'紅色圖卡只反射紅光；照藍光時藍光被吸收，看起來黑色。'},
+  {n:'自我評量第12題　阿秀的舞會服裝',pg:'p.164',b:'obj',set:()=>gOb({mode:'outfit',light:'R',top:'W',bot:'R'}),t:'p.164 第12題　答案 (B) 白衣紅裙',
+   p:'紅光下紅衣紅裙、藍光下藍衣黑裙：上衣能反射紅光也能反射藍光 → 白（選項中）；裙子只反射紅光 → 紅。\n切換紅光、藍光確認。'},
+  {n:'自我評量第13題　藍光照四色卡',pg:'p.165',b:'obj',set:()=>gOb({mode:'pic',pic:'face',light:'B'}),t:'p.165 第13題　答案 (C)',
+   p:'藍光照射：藍色的頭仍是藍；黑眼珠黑；白色臉頰反射藍光 → 藍；紅色嘴巴沒有紅光可反射 → 黑。'}]},
+ {g:'考古題（大業、向上 八年級）',items:[
+  {n:'白光與綠光射入三稜鏡',pg:'向上 113-1-2 #35',b:'disp',set:()=>gDs({mode:'prism',src:'green',p2:false}),t:'向上 113-1-2 #35　白光色散、綠光不色散',p:'白光是複色光，會分出七色；綠光是單色光，只偏折。切換光源比較。'},
+  {n:'三稜鏡色散的敘述',pg:'向上 114-1-2 #10',b:'disp',set:()=>gDs({mode:'prism',src:'red',p2:false}),t:'向上 114-1-2 #10　答案 (D)',
+   p:'改用紅色雷射光，只會出現在「紅光」的位置（甲），不是紫光的位置（丙）。在三稜鏡中紅光比紫光快，真空中一樣快。'},
+  {n:'彩虹何時、往哪裡看',pg:'向上 113-1-2 #43',b:'disp',set:()=>gDs({mode:'rain',h:16,face:'E'}),t:'向上 113-1-2 #43　答案 (C) 下午 4 點面向東方',
+   p:'彩虹在太陽的對面，太陽仰角要低。下午 4 點太陽在西方、仰角低，面向東方天空看得到彩虹。中午太陽太高看不到。'},
+  {n:'紅燈、藍燈照物體的彩色影子',pg:'向上 113-1-2 #25',b:'mix',set:()=>gMx({mode:'shadow',sh:'RB'}),t:'向上 113-1-2 #25　彩色的影子',
+   p:'擋住紅燈的影子只剩藍光 → 藍；擋住藍燈的影子只剩紅光 → 紅；兩盞都擋住 → 黑；都照到 → 洋紅。對照考卷的燈與影子位置判斷甲乙丙。'},
+  {n:'檢驗抗藍光鏡片',pg:'向上 113-1-2 #26',b:'filt',set:()=>gFt({mode:'filter',light:'W',f1:'Y',f2:'none'}),t:'向上 113-1-2 #26　擋藍光 ＝ 屏幕少了藍光',
+   p:'白光經過有效的抗藍光鏡片，藍光被吸收，剩紅＋綠 → 屏幕呈黃色。也可以只用藍光照射：鏡片有效時屏幕幾乎不亮。'},
+  {n:'紅光下三顆小球紅、紅、黑',pg:'向上 114-1-2 #26',b:'obj',set:()=>gOb({mode:'cards',light:'R',sel:'W'}),t:'向上 114-1-2 #26　答案 (C) 最多有兩顆白球',
+   p:'紅光下看起來紅色的：紅、白、黃、洋紅都可能——不一定有紅球，最多兩顆白球。\n看起來黑色的：綠、藍、青、黑都可能——不一定有黑球，綠球最多一顆。'},
+  {n:'溫室植物要照什麼光、藍玻璃看到什麼',pg:'向上 114-1-2 #35～36',b:'filt',set:()=>gFt({mode:'house',glass:'M'}),t:'向上 114-1-2 #35 (A) 洋紅光；#36 (C) 全部皆黑',
+   p:'#35：葉子反射綠光、主要吸收紅光和藍光：洋紅光（紅＋藍）最好。\n#36：藍色玻璃只讓藍光進來，紅花綠葉都看起來黑色。切換玻璃顏色比較生長。'},
+  {n:'戴綠色蛙鏡看白 T 恤圖案',pg:'大業 113-1-2 #33',b:'filt',set:()=>gFt({mode:'glasses',lens:'G',card:'shirt'}),t:'大業 113-1-2 #33　綠色鏡片：白變綠，其他顏色多半變黑',
+   p:'只有綠光能穿過鏡片：白色部分看起來綠色；藍色、紅色部分沒有綠光反射 → 黑色；黃色（反射紅、綠）→ 綠色。'},
+  {n:'紅光密室裡的場景',pg:'大業 114-1-2 #29',b:'obj',set:()=>gOb({mode:'cards',light:'R',sel:'K'}),t:'大業 114-1-2 #29　答案 (C) 乙丁',
+   p:'紅光下：綠色仙人掌看起來黑（甲錯）；紅蘋果看起來紅（乙對）；藍色大衣看起來黑，不會看出藍色（丙錯）；黑色氣球可能是綠、藍、青、黑，無法確定（丁對）。'},
+  {n:'紅光密室裡的圖卡',pg:'大業 114-1-2 #30',b:'obj',set:()=>gOb({mode:'cards',light:'R',sel:'W'}),t:'大業 114-1-2 #30　答案 (B)',
+   p:'紅光下看起來黑、紅、紅：黑色處可能是藍、綠、黑；紅色處可能是紅、白、黃、洋紅。\n逐一檢查選項：只有 (B) 藍、白、紅 在紅光下變成 黑、紅、紅。'},
+  {n:'螢幕的 RGB 三原色',pg:'大業 114-1-2 #33～35',b:'mix',set:()=>gMx({mode:'pixel',px:[255,200,120]}),t:'大業 114-1-2 #33～35　RGB 三種光的亮度比例',
+   p:'每個畫素有紅、綠、藍三個 LED，調整亮度比例就能混出各種顏色；全亮白、全暗黑。\n紅綠亮、藍暗 → 偏黃（夜間模式）。'}]}];
+{const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
+  gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
+    b.addEventListener('click',()=>{setBench(it.b);it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});
+  d.appendChild(c);box.appendChild(d);});}
+let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();kick();}).observe(document.querySelector('.wrap'));
+setBench((location.hash||'#disp').slice(1),true);
+window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+</script>
+</body>
+</html>
