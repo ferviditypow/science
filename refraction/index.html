@@ -271,6 +271,7 @@ function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('
 const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
 function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null}={}){
   g.font=`${bold?700:500} ${size}px ${FONT}`;g.textAlign=align;g.textBaseline=base;
+  {const w=g.measureText(s).width,cw=g.canvas.clientWidth||1e9;let px=align==='center'?x-w/2:align==='right'?x-w:x;const sh=Math.max(6-px,0)+Math.min(cw-6-(px+w),0);x+=sh;}
   if(bg){const w=g.measureText(s).width,px=align==='center'?x-w/2:align==='right'?x-w:x,py=base==='middle'?y-size/2:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-4,py-2,w+8,size+6);g.restore();}
   g.fillStyle=col;g.fillText(s,x,y);}
 function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
@@ -422,14 +423,15 @@ $('n2').addEventListener('input',e=>{S2.n2=+e.target.value;UI.huygens();kick();}
 // =====================================================================
 // 3 浮起的硬幣、折斷的筷子
 // =====================================================================
-const NW=4/3,S3={obj:'coin',h:0,target:0,pour:false,eye:null,pos:{birdsee:{bird:{fx:.66,fy:.14},fish:{fx:.3,fy:.8}},fishsee:{bird:{fx:.56,fy:.24},fish:{fx:.36,fy:.88}}}};
+const NW=4/3,S3={obj:'coin',h:0,target:0,pour:false,eye:null,eyeS:null,pos:{birdsee:{bird:{fx:.66,fy:.14},fish:{fx:.3,fy:.8}},fishsee:{bird:{fx:.56,fy:.24},fish:{fx:.36,fy:.88}}}};
 const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;
 SIZE.depth=()=>{const r=fit(cv3,.5,320,500);W3=r.W;H3=r.H;};
 // 碗：深度不超過寬度的 1/1.5，硬幣放在「沒水時剛好被碗邊擋住、水滿時看得到」的位置
 const EYE_A=52*D2R,TAN_A=Math.tan(EYE_A),TAN_W=Math.tan(Math.asin(Math.sin(EYE_A)/NW));
-function cup3(){const cx0=W3*.36,cx1=W3*.86,yb=H3*.9,D=Math.min(H3*.6,(cx1-cx0)/1.45),yt=yb-D;
+function cup3(){const cx0=W3*.36,cx1=W3*.86,yb=H3*.9,D=Math.min(H3*(S3.obj==='stick'?.46:.6),(cx1-cx0)/1.45),yt=yb-D;
   return{cx0,cx1,yt,yb,D,yw:yb-S3.h*D*.92,coin:[cx0+D*.95,yb-4]};}
-function eye3(){const c=cup3();if(S3.eye)return[S3.eye.fx*W3,S3.eye.fy*H3];const L=Math.min((c.yt-H3*.07)/Math.cos(EYE_A),(c.cx0-26)/Math.sin(EYE_A));return[c.cx0-L*Math.sin(EYE_A),c.yt-L*Math.cos(EYE_A)];}
+function eye3(){const c=cup3();if(S3.obj==='stick'){if(S3.eyeS)return[S3.eyeS.fx*W3,S3.eyeS.fy*H3];return[Math.max(26,c.cx0-c.D*.15),Math.max(H3*.07,c.yt-c.D*.95)];}
+  if(S3.eye)return[S3.eye.fx*W3,S3.eye.fy*H3];const L=Math.min((c.yt-H3*.07)/Math.cos(EYE_A),(c.cx0-26)/Math.sin(EYE_A));return[c.cx0-L*Math.sin(EYE_A),c.yt-L*Math.cos(EYE_A)];}
 // 一般化：A、B 在水面兩側，求水面上的折射點 P（nA sinθA ＝ nB sinθB）
 function surfP(A,B,ys,nA,nB){const f=x=>nA*(x-A[0])/Math.hypot(x-A[0],ys-A[1])+nB*(x-B[0])/Math.hypot(x-B[0],ys-B[1]);
   let a=Math.min(A[0],B[0]),b=Math.max(A[0],B[0]);if(b-a<1e-6)return[A[0],ys];const fa=f(a);for(let k=0;k<60;k++){const m=(a+b)/2;if((f(m)>0)===(fa>0))a=m;else b=m;}return[(a+b)/2,ys];}
@@ -464,8 +466,14 @@ DRAW.depth=()=>{const g=g3,W=W3,H=H3;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.
       line(g,p.P[0],p.P[1]-34,p.P[0],p.P[1]+34,C.muted,1,[3,3]);
       coinIcon(g,p.app[0],p.app[1],true);text(g,'看起來在這裡',p.app[0]+22,p.app[1]-4,{col:C.ray,size:12,bold:true,bg:C.panel});info={real:c.yb-c.yw,app:p.app[1]-c.yw};}
     else if(seen){ray(g,Q[0],Q[1],E[0],E[1],C.ray,2.4);}
-    else{// 看不到：畫一條灰色虛線表示「直直過去會撞到碗壁」
-      const t=(c.cx0-Q[0])/(E[0]-Q[0]),hy=Q[1]+(E[1]-Q[1])*t;line(g,Q[0],Q[1],c.cx0,hy,C.muted,1.6,[4,4]);text(g,'✕',c.cx0+5,hy+5,{col:'#c0453b',size:16,bold:true});
+    else{// 看不到：畫出往眼睛方向走的那道光（有水就先在水面折射），在碰到碗壁的地方打 ✕
+      let hy;g.save();g.globalAlpha=.55;
+      if(S3.h>0){const P=surfP(Q,E,c.yw,NW,1);
+        if(P[0]>c.cx0+1){const t=(c.cx0-P[0])/(E[0]-P[0]);hy=P[1]+(E[1]-P[1])*t;ray(g,Q[0],Q[1],P[0],P[1],C.ray,2.2);ray(g,P[0],P[1],c.cx0,hy,C.ray,2.2);
+          g.restore();line(g,P[0],P[1]-34,P[0],P[1]+34,C.muted,1,[3,3]);g.save();}
+        else{const t=(c.cx0-Q[0])/(P[0]-Q[0]);hy=Q[1]+(P[1]-Q[1])*t;ray(g,Q[0],Q[1],c.cx0,hy,C.ray,2.2);}}
+      else{const t=(c.cx0-Q[0])/(E[0]-Q[0]);hy=Q[1]+(E[1]-Q[1])*t;ray(g,Q[0],Q[1],c.cx0,hy,C.ray,2.2);}
+      g.restore();text(g,'✕',c.cx0+5,hy+6,{col:'#c0453b',size:18,bold:true});
       text(g,S3.h>0?'還看不到：光被碗邊擋住':'光被碗邊擋住，看不到硬幣',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});}
     coinIcon(g,Q[0],Q[1],false);text(g,'硬幣',Q[0],Q[1]+22,{col:C.ink,size:12,bold:true,align:'center'});}
   else{const[A,B]=stick3();line(g,A[0],A[1],B[0],B[1],'#b5793a',6);
@@ -474,7 +482,7 @@ DRAW.depth=()=>{const g=g3,W=W3,H=H3;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.
       if(pts.length>1){g.save();g.globalAlpha=.85;g.setLineDash([7,5]);g.strokeStyle=C.ray;g.lineWidth=5;g.beginPath();pts.forEach((q,k)=>k?g.lineTo(q[0],q[1]):g.moveTo(q[0],q[1]));g.stroke();g.restore();
         const Qi=Math.min(pts.length-1,30),Q=[lerp(X[0],B[0],Qi/30),lerp(X[1],B[1],Qi/30)],p=path3(Q,E);
         if(p.ok&&p.P){ray(g,Q[0],Q[1],p.P[0],p.P[1],C.ray,1.8);ray(g,p.P[0],p.P[1],E[0],E[1],C.ray,1.8);line(g,p.P[0],p.P[1],p.app[0],p.app[1],C.ray,1.2,[4,4]);}
-        const L=pts[pts.length-1];text(g,'眼睛看到的筷子（水中部分被抬高）',L[0]+12,L[1]-10,{col:C.ray,size:12,bold:true,bg:C.panel});seen=true;}
+        const L=pts[pts.length-1];text(g,W3<520?'看到的筷子（被抬高）':'眼睛看到的筷子（水中部分被抬高）',L[0]+12,L[1]-10,{col:C.ray,size:12,bold:true,bg:C.panel});seen=true;}
       if(pts.length<31)text(g,'筷子的下半段被碗邊擋住，看不到',c.cx0-8,c.yt-12,{col:'#c0453b',size:13,bold:true,align:'right',bg:C.panel});}
     text(g,'實際的筷子',A[0]-8,A[1]+4,{col:'#b5793a',size:12,bold:true,align:'right',bg:C.panel});}
   eyeIcon(g,E[0],E[1],Math.atan2(c.yt-E[1],c.cx0-E[0]),15);handle(g,E[0],E[1]+24,7);
@@ -507,7 +515,7 @@ UI.depth=()=>{const cup=S3.obj==='coin'||S3.obj==='stick';$('h3').value=S3.h;$('
   requestAnimationFrame(()=>requestAnimationFrame(()=>{const L=[];
     if(S3.obj==='coin'){$('r3big').textContent=S3._seen?(S3.h>0?'硬幣「浮」出來了！':'看得到硬幣'):'看不到硬幣';
       if(S3.h<=0)L.push(['info','碗裡沒有水：光從硬幣直直射向眼睛，被碗邊擋住了。按「倒水」看看。']);
-      else if(!S3._seen)L.push(['info','水還不夠深，轉彎後的光還是被碗邊擋住。繼續倒水。']);
+      else if(!S3._seen)L.push(['info','光在水面已經<b>偏離法線</b>轉彎了，但水還不夠深，轉彎後的光還是撞到碗壁（✕）。繼續倒水。']);
       else{L.push(['info','光從水射向空氣時<b>偏離法線</b>，在水面轉彎後繞過了碗邊，進入眼睛。']);
         if(S3._info){const real=S3._info.real*20/cup3().D,app=real*S3._info.app/S3._info.real;L.push(['ok',`水深 ${real.toFixed(1)} cm，硬幣看起來只有 ${app.toFixed(1)} cm 深：<b>視深＜實深</b>（從正上方看約為實深 ÷ 1.33）。`]);}}
       L.push(['info','拖曳眼睛：眼睛放低一點就看不到，抬高一點空碗也看得到。']);}
@@ -522,10 +530,10 @@ UI.depth=()=>{const cup=S3.obj==='coin'||S3.obj==='stick';$('h3').value=S3.h;$('
 dragger(cv3,()=>{if(S3.obj==='birdsee'||S3.obj==='fishsee'){const ys=pond();return[
     {x:PS().bird.fx*W3,y:PS().bird.fy*H3,r:34,move:(x,y)=>{const b=PS().bird;b.fx=clamp(x/W3,.05,.95);b.fy=clamp(y/H3,.08,(ys-30)/H3);UI.depth();}},
     {x:PS().fish.fx*W3,y:PS().fish.fy*H3,r:34,move:(x,y)=>{const f=PS().fish;f.fx=clamp(x/W3,.06,.94);f.fy=clamp(y/H3,(ys+30)/H3,.93);UI.depth();}}];}
-  const E=eye3();return[{x:E[0],y:E[1]+10,r:36,move:(x,y)=>{S3.eye={fx:clamp(x/W3,.03,.33),fy:clamp((y-10)/H3,.03,.4)};UI.depth();}}];},kick);
+  const E=eye3();return[{x:E[0],y:E[1]+10,r:36,move:(x,y)=>{const e={fx:clamp(x/W3,.03,.33),fy:clamp((y-10)/H3,.03,.4)};if(S3.obj==='stick')S3.eyeS=e;else S3.eye=e;UI.depth();}}];},kick);
 segOn($('obj3'),v=>{S3.obj=v;UI.depth();kick();});
 $('pour3').addEventListener('click',()=>{S3.target=1;S3.pour=true;kick();});
-$('empty3').addEventListener('click',()=>{S3.h=0;S3.pour=false;S3.eye=null;UI.depth();kick();});
+$('empty3').addEventListener('click',()=>{S3.h=0;S3.pour=false;if(S3.obj==='stick')S3.eyeS=null;else S3.eye=null;UI.depth();kick();});
 $('h3').addEventListener('input',e=>{S3.h=+e.target.value;S3.pour=false;UI.depth();kick();});
 
 // =====================================================================
