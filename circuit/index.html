@@ -54,6 +54,23 @@
 .otab{border-collapse:collapse;font-size:.88rem;margin-top:8px;width:100%;font-family:var(--f-mono)}
 .otab th,.otab td{border:1px solid var(--line);padding:3px 6px;text-align:center}
 .otab th{font-family:var(--f-body,inherit);font-weight:600}
+.edgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;align-items:stretch}
+@media (max-width:900px){.edgrid{grid-template-columns:minmax(0,1fr)}}
+.edgrid canvas{outline:none}
+.eprop{border-left:1px solid var(--line);padding:10px 12px 14px;font-size:.9rem;min-width:0}
+@media (max-width:900px){.eprop{border-left:0;border-top:1px solid var(--line)}}
+.eprop .ptype{font-weight:700;margin:0 0 8px;font-size:1rem}
+.prow{display:grid;grid-template-columns:4.6em minmax(0,1fr) 4.4em 1.6em;gap:6px;align-items:center;margin:6px 0}
+.prow2{display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:6px;align-items:center;margin:6px 0}
+.eprop input[type=number],.eprop input[type=text],.eprop select{font:inherit;font-family:var(--f-mono);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);width:100%;min-height:32px}
+.eprop input[type=range]{width:100%;accent-color:var(--accent)}
+.pbtns{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pbtns .btn{min-height:34px;padding:0 10px;font-size:.85rem}
+kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-radius:4px;padding:0 3px;color:var(--muted)}
+.pread{font-family:var(--f-mono);background:var(--accent-soft);border-radius:8px;padding:8px 10px;line-height:1.7;font-size:.88rem}
+.pread:empty{display:none}
+.pnote{font-size:.82rem;color:var(--muted);margin:4px 0;padding-left:1.1em}
+.pal .btn{min-height:36px;padding:0 11px;cursor:grab}
 .reveal{font-family:var(--f-mono);font-weight:700;color:var(--accent)}
 </style>
 </head>
@@ -71,7 +88,7 @@
     <span class="tlabel">實驗台</span>
     <span class="seg" id="benchSeg">
       <button data-v="flow" aria-pressed="true"><span class="n">1</span>電流與電子流</button>
-      <button data-v="sp" aria-pressed="false"><span class="n">2</span>串聯與並聯</button>
+      <button data-v="sp" aria-pressed="false"><span class="n">2</span>電路編輯器（串並聯）</button>
       <button data-v="meter" aria-pressed="false"><span class="n">3</span>安培計與伏特計</button>
       <button data-v="ohm" aria-pressed="false"><span class="n">4</span>歐姆定律</button>
     </span>
@@ -102,24 +119,19 @@
     </div>
   </section>
 
-  <!-- ============ 2 串聯與並聯 ============ -->
+  <!-- ============ 2 串聯與並聯（電路編輯器） ============ -->
   <section class="bench" id="b-sp" hidden>
     <div class="panel">
-      <div class="toolbar"><span class="tlabel">電路</span><span class="seg" id="spT"><button data-v="one">一個燈泡</button><button data-v="ser2">兩個串聯</button><button data-v="ser3">三個串聯</button><button data-v="ser4">四個串聯</button><button data-v="par2">兩個並聯</button><button data-v="par3">三個並聯</button><button data-v="mix">1 串（2∥3）</button><button data-v="spx">（1 串 2）∥3</button><button data-v="rheo">滑線變阻器</button><button data-v="cells">電池串並聯</button><button data-v="free">自己接</button></span></div>
-      <div class="toolbar">
-        <label class="slider" id="spEw"><span class="tlabel">電池組電壓</span><input type="range" id="spE" min="0.5" max="24" step="0.5" value="3"><output id="spEo"></output></label>
-        <span id="spCellsW"><span class="tlabel">電池</span><span class="seg" id="spCells"><button data-v="one">一個</button><button data-v="s2">兩個串聯</button><button data-v="p2">兩個並聯</button><button data-v="r2">串聯但一個接反</button><button data-v="p2s1">兩個並聯再串一個</button></span></span>
-        <span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">燈泡</button><button data-v="res">電阻器</button></span>
-        <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button></span>
-      </div>
-      <div class="toolbar">
-        <label class="tog"><input type="checkbox" id="spVm">伏特計（拖曳紅、黑探棒）</label><label class="tog"><input type="checkbox" id="spJp">跨接導線（拖曳橘點）</label>
-        <label class="tog"><input type="checkbox" id="spV">電位顏色</label><label class="tog"><input type="checkbox" id="spVI">標出每個燈泡的 V、I</label>
-        <label class="tog" id="spEditW"><input type="checkbox" id="spEdit">✎ 改接線</label><button class="btn" id="spReset">⟲ 重來</button>
-      </div>
-      <div class="toolbar" id="spSelW" hidden><span class="tlabel">選取 <b id="spSelN"></b></span><label class="slider"><span class="tlabel">電阻</span><input type="range" id="spR" min="0.5" max="20" step="0.5" value="5"><output id="spRo"></output></label><button class="btn" id="spOff">取下</button></div>
-      <div class="cbox"><canvas id="cvSp" aria-label="串聯與並聯電路"></canvas></div>
-      <p class="hint" id="spHint" style="padding:0 12px 10px"></p>
+      <div class="toolbar"><span class="tlabel">範本</span><span class="seg" id="spT"><button data-v="one">一個燈泡</button><button data-v="ser2">兩個串聯</button><button data-v="ser3">三個串聯</button><button data-v="ser4">四個串聯</button><button data-v="par2">兩個並聯</button><button data-v="par3">三個並聯</button><button data-v="mix">1 串（2∥3）</button><button data-v="spx">（1 串 2）∥3</button><button data-v="rheo">滑線變阻器</button><button data-v="cells">電池串並聯</button><button data-v="blank">空白</button></span>
+        <span id="spCellsW"><span class="seg" id="spCells"><button data-v="one">一個</button><button data-v="s2">兩個串聯</button><button data-v="p2">兩個並聯</button><button data-v="r2">串聯但一個接反</button><button data-v="p2s1">兩個並聯再串一個</button></span></span></div>
+      <div class="toolbar pal" id="spPal"><span class="tlabel">加入</span><button class="btn" data-add="bat">電池</button><button class="btn" data-add="bulb">燈泡</button><button class="btn" data-add="res">電阻器</button><button class="btn" data-add="rheo">滑線變阻器</button><button class="btn" data-add="sw">開關</button><button class="btn" data-add="amm">安培計</button><button class="btn" data-add="vm">伏特計</button><button class="btn" data-add="fuse">保險絲</button><button class="btn" data-add="wire">導線</button><button class="btn" data-add="jump">跨接導線（弧形）</button>
+        <span class="seg" id="spTool"><button data-v="sel">選取／移動</button><button data-v="wire">✎ 畫導線</button></span></div>
+      <div class="toolbar"><button class="btn" id="spUndo">↶ 復原</button><button class="btn" id="spFix">全部修好</button><button class="btn" id="spFit">⤢ 符合畫面</button><button class="btn" id="spZout">－</button><button class="btn" id="spZin">＋</button>
+        <label class="tog"><input type="checkbox" id="spSnap">對齊格點</label><label class="tog"><input type="checkbox" id="spLet">接點字母</label><label class="tog"><input type="checkbox" id="spVm">伏特計探棒</label>
+        <label class="tog"><input type="checkbox" id="spV">電位顏色</label><label class="tog"><input type="checkbox" id="spVI">標出 V、I</label><label class="tog"><input type="checkbox" id="spHide">先猜再看</label><button class="btn primary" id="spReveal">揭曉</button></div>
+      <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
+        <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button></span></div>
+      <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
     </div>
     <div class="grid2">
       <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF"></div><ul class="checks" id="spC"></ul></section>
@@ -234,8 +246,8 @@ const fV=x=>(Math.abs(x)<5e-3?'0':Math.abs(x)>=100?Math.round(x).toString():nf(x
 const fR=x=>x>=1e5?'很大':nf(x,2)+' Ω';
 const potCol=f=>`hsl(${Math.round(230-230*clamp(f,0,1))},${CC.dark?80:72}%,${CC.dark?62:44}%)`;
 
-function elR(c,e){if(e.off)return 0;switch(e.t){case'wire':return 1e-6;case'jump':return e.on?1e-6:0;case'sw':return e.on?1e-6:0;
-  case'bulb':case'res':case'rheo':case'mat':return Math.max(e.R,1e-4);case'bat':return e.r||1e-4;case'amm':return c.ammR||1e-5;case'vm':return c.vmR||1e6;}return 0;}
+function elR(c,e){if(e.off||e.broken)return 0;switch(e.t){case'wire':return 1e-6;case'jump':return e.on?1e-6:0;case'sw':return e.on?1e-6:0;
+  case'bulb':case'res':case'rheo':case'mat':return Math.max(e.R,1e-4);case'fuse':return 1e-4;case'bat':return e.r||1e-4;case'amm':return c.ammR||1e-5;case'vm':return c.vmR||1e6;}return 0;}
 function gauss(A,b){const n=b.length;for(let i=0;i<n;i++){let p=i;for(let r=i+1;r<n;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
   if(p!==i){[A[i],A[p]]=[A[p],A[i]];const t=b[i];b[i]=b[p];b[p]=t;}const d=A[i][i]||1e-18;
   for(let r=i+1;r<n;r++){const f=A[r][i]/d;if(!f)continue;for(let k=i;k<n;k++)A[r][k]-=f*A[i][k];b[r]-=f*b[i];}}
@@ -298,9 +310,10 @@ function drawEl(g,c,e,o,lc){const s=c.s,P=c.P[e.a],Q=c.P[e.b],L=e.L,ux=(Q[0]-P[0
   const nx=-uy,ny=ux;
   switch(e.t){
   case'wire':line(g,P[0],P[1],Q[0],Q[1],ca,2.4);break;
-  case'bulb':{lead(s);const b=bright(e,c.Pref);if(b>.01){const gr=g.createRadialGradient(mx,my,s*.3,mx,my,s*(1.3+2.6*b));gr.addColorStop(0,`rgba(255,214,80,${.95*b})`);gr.addColorStop(1,'rgba(255,214,80,0)');g.fillStyle=gr;g.beginPath();g.arc(mx,my,s*(1.3+2.6*b),0,TAU);g.fill();}
+  case'bulb':{lead(s);const b=o.hideB||e.broken?0:bright(e,e.Pref||c.Pref);if(b>.01){const gr=g.createRadialGradient(mx,my,s*.3,mx,my,s*(1.3+2.6*b));gr.addColorStop(0,`rgba(255,214,80,${.95*b})`);gr.addColorStop(1,'rgba(255,214,80,0)');g.fillStyle=gr;g.beginPath();g.arc(mx,my,s*(1.3+2.6*b),0,TAU);g.fill();}
     g.fillStyle=e.off?C.panel:b>.01?`rgba(255,236,150,${.35+.6*b})`:C.panel;g.strokeStyle=C.ink;g.lineWidth=2;g.setLineDash(e.off?[4,3]:[]);g.beginPath();g.arc(mx,my,s,0,TAU);g.fill();g.stroke();g.setLineDash([]);
-    if(!e.off){const k=s*.68;line(g,mx-k,my-k,mx+k,my+k,C.ink,1.8);line(g,mx-k,my+k,mx+k,my-k,C.ink,1.8);}
+    if(e.broken){const k=s*.68;line(g,mx-k,my-k,mx-k*.2,my-k*.2,C.ink,1.8);line(g,mx+k*.25,my+k*.25,mx+k,my+k,C.ink,1.8);line(g,mx-k,my+k,mx-k*.2,my+k*.2,C.ink,1.8);line(g,mx+k*.25,my-k*.25,mx+k,my-k,C.ink,1.8);text(g,'燒壞',mx,my+s+14,{size:11,bold:true,align:'center',col:CC.pos,bg:C.panel});}
+    else if(!e.off){const k=s*.68;line(g,mx-k,my-k,mx+k,my+k,C.ink,1.8);line(g,mx-k,my+k,mx+k,my-k,C.ink,1.8);}
     else{line(g,P[0],P[1],mx-ux*s,my-uy*s,ca,2.4);text(g,'已取下',mx,my+4,{size:10,align:'center',col:C.muted});}break;}
   case'res':case'rheo':case'mat':{const r=s*1.35;lead(r);
     if(e.t==='mat'){const M=MATS[e.mat]||{};g.save();g.translate(mx,my);g.rotate(Math.atan2(uy,ux));
@@ -316,6 +329,8 @@ function drawEl(g,c,e,o,lc){const s=c.s,P=c.P[e.a],Q=c.P[e.b],L=e.L,ux=(Q[0]-P[0
       if(i<n-1)line(g,mx+ux*t2,my+uy*t2,mx+ux*(t2+gap),my+uy*(t2+gap),C.ink,1.6);}
     const pp=w/2+9;text(g,'＋',mx+ux*pp+nx*s*.9,my+uy*pp+ny*s*.9+4,{size:12,bold:true,col:CC.pos,align:'center'});text(g,'−',mx-ux*pp+nx*s*.9,my-uy*pp+ny*s*.9+4,{size:13,bold:true,col:CC.neg,align:'center'});
     if((e.n||1)>4)text(g,'…',mx+nx*s*1.3,my+ny*s*1.3,{size:12,align:'center'});break;}
+  case'fuse':{const r=s*1.2;lead(r);g.save();g.translate(mx,my);g.rotate(Math.atan2(uy,ux));g.fillStyle=C.panel;g.strokeStyle=C.ink;g.lineWidth=1.8;g.beginPath();g.rect(-r,-s*.42,2*r,s*.84);g.fill();g.stroke();
+    if(e.broken){line(g,-r,0,-r*.25,s*.15,CC.pos,2);line(g,r*.25,-s*.15,r,0,CC.pos,2);}else line(g,-r,0,r,0,C.ink,1.6);g.restore();break;}
   case'sw':{lead(s);g.fillStyle=C.ink;[-1,1].forEach(k=>{g.beginPath();g.arc(mx+k*ux*s,my+k*uy*s,4.2,0,TAU);g.fill();});
     const a=-.5,rx=ux*Math.cos(a)-uy*Math.sin(a),ry=ux*Math.sin(a)+uy*Math.cos(a);
     line(g,mx-ux*s,my-uy*s,e.on?mx+ux*s:mx-ux*s+rx*2.1*s,e.on?my+uy*s:my-uy*s+ry*2.1*s,C.ink,3.4);break;}
@@ -325,12 +340,15 @@ function drawEl(g,c,e,o,lc){const s=c.s,P=c.P[e.a],Q=c.P[e.b],L=e.L,ux=(Q[0]-P[0
     if(e.burnt){line(g,mx-s,my-s,mx+s,my+s,CC.pos,3);line(g,mx-s,my+s,mx+s,my-s,CC.pos,3);}break;}}}
 function labelEl(g,c,e,o){const s=c.s,P=c.P[e.a],Q=c.P[e.b];const hz=Math.abs(Q[0]-P[0])>=Math.abs(Q[1]-P[1]);const lp=e.lp||(hz?'u':'r');
   const [mx,my]=e.M;const lines=[e.lab+(e.t==='bulb'||e.t==='res'||e.t==='rheo'?(o.showR===false?'':' '+nf(e.R,1)+'Ω'):'')];
-  if(e.t==='amm')lines.push(e.burnt?'燒毀！':fI(e.I));if(e.t==='vm')lines.push(fV(e.dV));
-  if(o.showVI&&(e.t==='bulb'||e.t==='res'||e.t==='rheo')&&!e.off)lines.push(fV(Math.abs(e.dV))+'，'+fI(Math.abs(e.I)));
+  const hr=o.hideR;if(e.t==='amm')lines.push(e.burnt||e.broken?'燒毀！':hr?'？ A':fI(e.I)+(e.rng&&Math.abs(e.I)>e.rng*1.02?' 超過量程':''));if(e.t==='vm')lines.push(hr?'？ V':fV(e.dV)+(e.rng&&Math.abs(e.dV)>e.rng*1.02?' 超過量程':''));
+  if(e.t==='fuse')lines.push(e.broken?'熔斷':'額定 '+nf(e.Ir,2)+' A');if(e.t==='bulb'&&e.rate)lines[0]=e.lab+' '+nf(e.Vr,1)+'V '+nf(e.Pr,1)+'W';
+  if(o.showVI&&!hr&&(e.t==='bulb'||e.t==='res'||e.t==='rheo')&&!e.off&&!e.broken)lines.push(fV(Math.abs(e.dV))+'，'+fI(Math.abs(e.I)));
   const d=s+(e.t==='bulb'?10:e.t==='bat'?14:8);let x=mx,y=my,al='center';
   if(lp==='u')y=my-d-(lines.length-1)*14;else if(lp==='d')y=my+d+10;else if(lp==='r'){x=mx+d;al='left';y=my-(lines.length-1)*7+4;}else{x=mx-d;al='right';y=my-(lines.length-1)*7+4;}
-  lines.forEach((t,i)=>text(g,t,x,y+i*14,{size:i?11.5:12.5,bold:!i,align:al,col:i?(e.t==='amm'||e.t==='vm'?C.blue:C.muted):C.ink,bg:C.panel}));}
-function drawDots(g,c,o,vmin,vmax){const sp=18;for(const e of c.E){if(!e.L||e.t==='vm'||Math.abs(e.I)<2e-5||e.off||(e.t==='jump'&&!e.on))continue;
+  if(e.lo&&c.z){x+=e.lo[0]*c.z;y+=e.lo[1]*c.z;}
+  g.font=`700 12.5px ${FONT}`;const w=Math.max(...lines.map(t=>g.measureText(t).width))+6;const bx=al==='center'?x-w/2:al==='right'?x-w:x;e.lbox=[bx,y-14,bx+w,y+(lines.length-1)*14+4];
+  lines.forEach((t,i)=>text(g,t,x,y+i*14,{size:i?11.5:12.5,bold:!i,align:al,col:i?(e.t==='amm'||e.t==='vm'||e.t==='fuse'?(/超過|燒毀|熔斷/.test(t)?CC.pos:C.blue):C.muted):C.ink,bg:C.panel}));}
+function drawDots(g,c,o,vmin,vmax){if(o.noDots)return;const sp=18;for(const e of c.E){if(!e.L||e.t==='vm'||Math.abs(e.I)<2e-5||e.off||(e.t==='jump'&&!e.on))continue;
   const ph=((e.ph%sp)+sp)%sp;const el=o.mode!=='c';const fwd=(e.I>0)!==el;
   for(let d=ph;d<e.L;d+=sp){const t=d/e.L,[x,y]=e.pt(t);
     if(el){g.fillStyle=CC.neg;g.beginPath();g.arc(x,y,3.3,0,TAU);g.fill();g.strokeStyle='#fff';g.lineWidth=1.2;g.beginPath();g.moveTo(x-1.8,y);g.lineTo(x+1.8,y);g.stroke();}
@@ -427,7 +445,7 @@ let flAcc=0;TICK.flow=dt=>{FL.tt=(FL.tt||0)+dt;tickDots(FL.c,dt,{mode:FL.mode});
 DRAW.flow=()=>{drawFlow($('cvFl').getContext('2d'),WF,HF);drawZoom($('cvFz').getContext('2d'),WZ,HZ,FL.dt||0);if(flAcc>.25||!$('flBig').textContent){flAcc=0;flResults();}};
 
 // =====================================================================
-// 2 串聯與並聯
+// 2 電路編輯器（串聯與並聯）：所有元件、接點、端點、標籤都可以拖曳
 // =====================================================================
 const TP={
  one:{n:'一個燈泡',N:{A:[0,0],B:[2,0],C:[4,0],D:[4,2],E:[0,2]},E:[['bat','E','A'],['sw','A','B',{lab:'S'}],['L','B','C',{lab:1}],['amm','C','D',{lab:'A'}],['wire','D','E']]},
@@ -435,91 +453,244 @@ const TP={
  ser3:{n:'三個串聯',N:{A:[0,0],B:[4/3,0],C:[8/3,0],D:[4,0],E:[4,2],F:[2,2],G:[0,2]},E:[['bat','G','A'],['L','A','B',{lab:1}],['L','B','C',{lab:2}],['L','C','D',{lab:3}],['amm','D','E',{lab:'A'}],['sw','E','F',{lab:'S',lp:'d'}],['wire','F','G']],kind:'ser'},
  ser4:{n:'四個串聯',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[4,2],G:[0,2]},E:[['bat','G','A'],['L','A','B',{lab:1}],['L','B','C',{lab:2}],['L','C','D',{lab:3}],['L','D','E',{lab:4}],['sw','E','F',{lab:'S'}],['wire','F','G']],kind:'ser'},
  par2:{n:'兩個並聯',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[2,1],G:[4,1],H:[4,2],I:[2,2],J:[0,2]},E:[['bat','J','A'],['amm','A','B',{lab:'A'}],['sw','B','C',{lab:'S'}],['sw','C','D',{lab:'S2'}],['wire','D','E'],['L','C','F',{lab:1}],['amm','F','I',{lab:'A1'}],['L','E','G',{lab:2}],['amm','G','H',{lab:'A2'}],['wire','H','I'],['wire','I','J']],kind:'par'},
- par3:{n:'三個並聯',N:{A:[0,0],B:[1,0],C:[1.8,0],D:[3.2,0],E:[4.6,0],F:[1.8,2],G:[3.2,2],H:[4.6,2],I:[1,2],J:[0,2]},E:[['bat','J','A'],['amm','A','B',{lab:'A'}],['wire','B','C'],['wire','C','D'],['wire','D','E'],['L','C','F',{lab:1}],['L','D','G',{lab:2}],['L','E','H',{lab:3}],['wire','H','G'],['wire','G','F'],['wire','F','I'],['sw','I','J',{lab:'S',lp:'d'}]],kind:'par'},
- mix:{n:'串並聯：1 串（2∥3）',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[3,2],G:[4,2],H:[1,2],I:[0,2]},E:[['bat','I','A'],['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['wire','C','D'],['wire','D','E'],['L','D','F',{lab:2,lp:'l'}],['L','E','G',{lab:3}],['wire','G','F'],['wire','F','H'],['sw','H','I',{lab:'S',lp:'d'}]],kind:'mix'},
- spx:{n:'串並聯：（1 串 2）∥3',N:{A:[0,0],B:[1,0],C:[2.5,0],D:[4,0],E:[1,1],F:[4,1],G:[4,2],H:[0,2]},E:[['bat','H','A'],['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['L','C','D',{lab:2}],['wire','D','F'],['wire','B','E'],['L','E','F',{lab:3,lp:'d'}],['wire','F','G'],['sw','G','H',{lab:'S',lp:'d'}]],kind:'mix'},
- rheo:{n:'滑線變阻器',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[4,2],G:[0,2],P:[1,-1],Q:[2,-1],R:[3,-1],S:[4,-1]},E:[['bat','G','A'],['wire','A','B'],['L','B','C',{lab:1,lp:'d'}],['wire','C','D'],['rheo','D','E',{lab:'Rv',lp:'d',R:10}],['amm','E','F',{lab:'A'}],['sw','F','G',{lab:'S',lp:'d'}],['wire','B','P'],['vm','P','Q',{lab:'V1'}],['wire','Q','C'],['wire','D','R'],['vm','R','S',{lab:'V2'}],['wire','S','E']],noLet:['P','Q','R','S'],kind:'ser'},
- cells:{n:'電池串聯／並聯'},free:{n:'自己接'}};
-const CELLM={one:'一個電池',s2:'兩個串聯',p2:'兩個並聯',r2:'串聯但一個接反',p2s1:'兩個並聯再串一個'};
-const FREE_N={};'ABCDEFGHIJKLMNO'.split('').forEach((k,i)=>FREE_N[k]=[i%5,Math.floor(i/5)]);
-const FREE_EDGES=[];for(let r=0;r<3;r++)for(let k=0;k<5;k++){const id='ABCDEFGHIJKLMNO'[r*5+k];if(k<4)FREE_EDGES.push([id,'ABCDEFGHIJKLMNO'[r*5+k+1]]);if(r<2)FREE_EDGES.push([id,'ABCDEFGHIJKLMNO'[r*5+k+5]]);}
-const FREE_CYC=['','wire','bulb','bat+','bat-','sw','amm'];
-const FREE_DEF={'A-F':'bat-','A-B':'sw','B-C':'bulb','C-D':'bulb','D-E':'wire','E-J':'wire','J-O':'wire','N-O':'wire','M-N':'wire','L-M':'wire','K-L':'wire','F-K':'wire'};
-const SP={tpl:'ser2',E:3,kind:'bulb',sel:null,vm:false,jp:false,vp:'B',vn:'C',ja:'B',jb:'C',mode:'e',showV:false,showVI:true,cells:'s2',edit:false,free:Object.assign({},FREE_DEF),c:null};let WS=700,HS=400;
-function spBuild(){const T=TP[SP.tpl];let N,E,o={};const pre=SP.kind==='bulb'?'L':'R';const nc=clamp(Math.round(SP.E/1.5),1,5);
-  const bat=(a,b)=>['bat',a,b,{E:SP.E,n:nc,lab:nf(SP.E,1)+' V',lp:'l'}];
-  if(SP.tpl==='cells'){N={A:[0,0],B:[2,0],C:[4,0],D:[4,2],Z:[0,2]};E=[['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['wire','C','D'],['wire','D','Z']];
-    const cell=(a,b,lab,lp)=>['bat',a,b,{E:1.5,n:1,lab,lp}];const m=SP.cells;
-    if(m==='one')E.push(cell('Z','A','1.5 V','l'));
+ par3:{n:'三個並聯',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[2,2],G:[3,2],H:[4,2],I:[1,2],J:[0,2]},E:[['bat','J','A'],['amm','A','B',{lab:'A'}],['wire','B','C'],['wire','C','D'],['wire','D','E'],['L','C','F',{lab:1}],['L','D','G',{lab:2}],['L','E','H',{lab:3}],['wire','H','G'],['wire','G','F'],['wire','F','I'],['sw','I','J',{lab:'S',lp:'d'}]],kind:'par'},
+ mix:{n:'1 串（2∥3）',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[3,2],G:[4,2],H:[1,2],I:[0,2]},E:[['bat','I','A'],['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['wire','C','D'],['wire','D','E'],['L','D','F',{lab:2,lp:'l'}],['L','E','G',{lab:3}],['wire','G','F'],['wire','F','H'],['sw','H','I',{lab:'S',lp:'d'}]],kind:'mix'},
+ spx:{n:'（1 串 2）∥3',N:{A:[0,0],B:[1,0],C:[2.5,0],D:[4,0],E:[1,1],F:[4,1],G:[4,2],H:[0,2]},E:[['bat','H','A'],['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['L','C','D',{lab:2}],['wire','D','F'],['wire','B','E'],['L','E','F',{lab:3,lp:'d'}],['wire','F','G'],['sw','G','H',{lab:'S',lp:'d'}]],kind:'mix'},
+ rheo:{n:'滑線變阻器',N:{A:[0,0],B:[1,0],C:[2,0],D:[3,0],E:[4,0],F:[4,2],G:[0,2],P:[1,-1],Q:[2,-1],R:[3,-1],S:[4,-1]},E:[['bat','G','A'],['wire','A','B'],['L','B','C',{lab:1,lp:'d'}],['wire','C','D'],['rheo','D','E',{lab:'Rv',lp:'d',R:10}],['amm','E','F',{lab:'A'}],['sw','F','G',{lab:'S',lp:'d'}],['wire','B','P'],['vm','P','Q',{lab:'V1'}],['wire','Q','C'],['wire','D','R'],['vm','R','S',{lab:'V2'}],['wire','S','E']],kind:'ser'},
+ cells:{n:'電池串並聯'},blank:{n:'空白'}};
+const DEF={bat:{E:3},bulb:{R:5,Vr:3,Pr:1.8},res:{R:5},rheo:{R:10},sw:{on:true},jump:{on:true},amm:{rng:5},vm:{rng:15},fuse:{Ir:1},wire:{}};
+const TNAME={bat:'電池',bulb:'燈泡',res:'電阻器',rheo:'滑線變阻器',sw:'開關',jump:'跨接導線（弧形）',amm:'安培計',vm:'伏特計',fuse:'保險絲',wire:'導線'};
+const PRE={bulb:'L',res:'R',amm:'A',vm:'V',sw:'S',rheo:'Rv',fuse:'F'};
+const SP={tpl:'ser2',kind:'bulb',mode:'e',showV:false,showVI:true,cells:'s2',vm:false,vp:null,vn:null,letters:false,snap:true,hide:false,tool:'sel',
+  sel:null,selN:null,N:{},E:[],z:44,ox:0,oy:0,c:null,hist:[],nid:0,eid:0,tp:null,tn:null,edited:false};let WS=900,HS=520;
+const LET='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+function newLab(){const used=new Set(Object.values(SP.N).map(n=>n.lab));for(let i=0;;i++){const s=i<26?LET[i]:LET[i%26]+Math.floor(i/26);if(!used.has(s))return s;}}
+function addNode(x,y,lab){const id='n'+(++SP.nid);SP.N[id]={x,y,lab:lab||newLab()};return id;}
+function autoName(t){const p=PRE[t];if(!p)return '';const used=new Set(SP.E.map(e=>e.lab));for(let i=1;;i++)if(!used.has(p+i))return p+i;}
+function addEl(t,a,b,p={}){const e=Object.assign({id:'e'+(++SP.eid),t,a,b,ph:rnd(SP.eid)*30},JSON.parse(JSON.stringify(DEF[t]||{})),p);SP.E.push(e);return e;}
+const idOf=lab=>Object.keys(SP.N).find(k=>SP.N[k].lab===lab);
+const selEl=()=>SP.E.find(e=>e.id===SP.sel);
+const scr=id=>[SP.ox+SP.N[id].x*SP.z,SP.oy+SP.N[id].y*SP.z];
+const wxy=(x,y)=>[(x-SP.ox)/SP.z,(y-SP.oy)/SP.z];
+const snapV=v=>SP.snap?Math.round(v):Math.round(v*4)/4;
+const degN=id=>SP.E.filter(e=>e.a===id||e.b===id).length;
+// ---------- 範本 ----------
+function loadTpl(name){SP.tpl=name;SP.N={};SP.E=[];SP.sel=null;SP.selN=null;SP.tp=SP.tn=null;SP.hist=[];SP.edited=false;let N={},E=[];
+  if(name==='cells'){N={A:[0,0],B:[2,0],C:[4,0],D:[4,2],Z:[0,2]};E=[['amm','A','B',{lab:'A'}],['L','B','C',{lab:1}],['wire','C','D'],['wire','D','Z']];
+    const cell=(a,b,nm,lp)=>['bat',a,b,{E:1.5,nm,lp}];const m=SP.cells;
+    if(m==='one')E.push(cell('Z','A','','l'));
     else if(m==='s2'||m==='r2'){N.M=[0,1];E.push(cell('Z','M','甲','l'));E.push(m==='s2'?cell('M','A','乙','l'):cell('A','M','乙（反接）','l'));}
     else if(m==='p2'){N.X=[-1,0];N.Y=[-1,2];E.push(cell('Z','A','甲','r'),['wire','A','X'],cell('Y','X','乙','l'),['wire','Y','Z']);}
-    else{N.M=[0,1];N.X=[-1,1];N.Y=[-1,2];E.push(cell('Z','M','甲','r'),cell('Y','X','乙','l'),['wire','Z','Y'],['wire','M','X'],cell('M','A','丙','l'));}
-    o.tp='A';o.tn='Z';}
-  else if(SP.tpl==='free'){N=FREE_N;E=[];let nb=0,na=0;for(const [a,b] of FREE_EDGES){const t=SP.free[a+'-'+b];if(!t)continue;
-      if(t==='bat+')E.push(bat(a,b));else if(t==='bat-')E.push(bat(b,a));else if(t==='bulb')E.push(['L',a,b,{lab:++nb}]);else if(t==='amm')E.push(['amm',a,b,{lab:'A'+(++na)}]);else if(t==='sw')E.push(['sw',a,b,{lab:'S'}]);else E.push(['wire',a,b]);}}
-  else{N=T.N;E=T.E.map(x=>x[0]==='bat'?bat(x[1],x[2]):x);o.noLet=T.noLet;const b=E.find(x=>x[0]==='bat');o.tp=b[2];o.tn=b[1];}
-  E=E.map(x=>x[0]==='L'?[SP.kind,x[1],x[2],Object.assign({},x[3],{lab:pre+x[3].lab})]:x);
-  E.push(['jump',SP.ja,SP.jb,{on:SP.jp,probe:true}]);
-  const old=SP.c;SP.c=mkC(N,E,Object.assign({Iref:.6,Pref:1.2},o));SP.c.tpl=SP.tpl;
-  if(old&&old.tpl===SP.tpl)SP.c.E.forEach(e=>{const p=old.E.find(q=>q.lab&&q.lab===e.lab&&q.t===e.t||(q.probe&&e.probe));if(p){['R','off','on','ph'].forEach(k=>{if(p[k]!==undefined&&!(e.probe&&k==='on'))e[k]=p[k];});}});
-  spSolve();}
-function spSolve(){const c=SP.c;const j=c.E.find(e=>e.probe);j.a=SP.ja;j.b=SP.jb;j.on=SP.jp;c.E.filter(e=>e.t==='bat'&&SP.tpl!=='cells').forEach(e=>{e.E=SP.E;e.n=clamp(Math.round(SP.E/1.5),1,5);e.lab=nf(SP.E,1)+' V';});solve(c);}
-const spSel=()=>SP.c&&SP.c.E.find(e=>e.id===SP.sel);
-function spUI(){segSet($('spT'),SP.tpl);segSet($('spKind'),SP.kind);segSet($('spMode'),SP.mode);segSet($('spCells'),SP.cells);
-  $('spEw').hidden=SP.tpl==='cells';$('spCellsW').hidden=SP.tpl!=='cells';$('spE').value=SP.E;$('spEo').textContent=nf(SP.E,1)+' V';
-  $('spEditW').hidden=SP.tpl!=='free';$('spEdit').checked=SP.edit;$('spVm').checked=SP.vm;$('spJp').checked=SP.jp;$('spV').checked=SP.showV;$('spVI').checked=SP.showVI;
-  const e=spSel();$('spSelW').hidden=!e;if(e){$('spSelN').textContent=e.lab;$('spR').value=e.R;$('spRo').textContent=nf(e.R,1)+' Ω';$('spOff').hidden=e.t==='rheo';$('spOff').textContent=e.off?'裝回 '+e.lab:'取下 '+e.lab;}
-  $('spHint').textContent=SP.edit?'改接線模式：點兩個節點之間的位置，依序換成 導線 → 燈泡 → 電池 → 電池（反向）→ 開關 → 安培計 → 空白。':'點開關可以接通／打開；點燈泡（或電阻）選取它，再改電阻或取下。勾「伏特計」或「跨接導線」後，拖曳彩色的點接到任意兩個節點。';
+    else{N.M=[0,1];N.X=[-1,1];N.Y=[-1,2];E.push(cell('Z','M','甲','r'),cell('Y','X','乙','l'),['wire','Z','Y'],['wire','M','X'],cell('M','A','丙','l'));}}
+  else if(TP[name].N){N=TP[name].N;E=TP[name].E;}
+  const map={};for(const k in N)map[k]=addNode(Math.round(N[k][0]*2*4)/4+2,N[k][1]*2+2,k);
+  E.forEach(x=>{let [t,a,b,p]=x;p=Object.assign({},p||{});if(t==='L'){t=SP.kind;p.lab=(SP.kind==='bulb'?'L':'R')+p.lab;}addEl(t,map[a],map[b],p);});
+  if(name==='cells'){SP.tp=map.A;SP.tn=map.Z;}else{const b=SP.E.find(e=>e.t==='bat');if(b){SP.tp=b.b;SP.tn=b.a;}}
+  const ks=Object.keys(SP.N);SP.vp=ks[1]||null;SP.vn=ks[2]||null;edFit();edSolve();}
+// ---------- 求解（含燒壞、熔斷） ----------
+function edSync(){SP.E.forEach(e=>{if(e.t==='bat'){e.n=clamp(Math.round(e.E/1.5),1,5);e.lab=(e.nm?e.nm+' ':'')+nf(e.E,1)+' V';}
+  if(e.t==='bulb'&&e.rate){e.R=e.Vr*e.Vr/Math.max(e.Pr,.01);e.Pref=e.Pr*.6;}else if(e.t==='bulb')e.Pref=0;});}
+function edSolve(){edSync();const N={};for(const k in SP.N)N[k]=[SP.N[k].x,SP.N[k].y];const bat=SP.E.find(e=>e.t==='bat'&&!e.off);
+  const old=SP.c;SP.c={N,E:SP.E,V:{},Iref:.6,Pref:1.2,gnd:bat?bat.a:undefined,P:old&&old.P,u:old&&old.u,s:old&&old.s,z:SP.z};
+  if(!Object.keys(N).length){SP.c.P={};return;}
+  for(let k=0;k<8;k++){solve(SP.c);let ch=false;
+    for(const e of SP.E){if(e.broken)continue;
+      if(e.t==='bulb'&&e.rate&&e.P>2*e.Pr){e.broken=true;ch=true;}
+      if(e.t==='fuse'&&Math.abs(e.I)>e.Ir){e.broken=true;ch=true;}
+      if(e.t==='amm'&&Math.abs(e.I)>Math.max(20,4*(e.rng||5))){e.broken=true;ch=true;}}
+    if(!ch)break;}}
+// ---------- 編輯動作 ----------
+const snapState=()=>JSON.stringify({N:SP.N,E:SP.E.map(e=>{const o={};for(const k in e)if(!['I','dV','P','pt','M','L','nv','lbox','ph'].includes(k))o[k]=e[k];return o;}),nid:SP.nid,eid:SP.eid,tp:SP.tp,tn:SP.tn});
+function pushHist(s){SP.hist.push(s||snapState());if(SP.hist.length>80)SP.hist.shift();SP.edited=true;}
+function undo(){const s=SP.hist.pop();if(!s)return;const o=JSON.parse(s);SP.N=o.N;SP.E=o.E.map((e,i)=>Object.assign(e,{ph:rnd(i)*30}));SP.nid=o.nid;SP.eid=o.eid;SP.tp=o.tp;SP.tn=o.tn;
+  if(!selEl())SP.sel=null;if(SP.selN&&!SP.N[SP.selN])SP.selN=null;edSolve();edPanel();kick();}
+function cleanup(){SP.E=SP.E.filter(e=>e.a!==e.b&&SP.N[e.a]&&SP.N[e.b]);const used=new Set();SP.E.forEach(e=>{used.add(e.a);used.add(e.b);});
+  for(const k in SP.N)if(!used.has(k))delete SP.N[k];if(SP.vp&&!SP.N[SP.vp])SP.vp=null;if(SP.vn&&!SP.N[SP.vn])SP.vn=null;if(SP.selN&&!SP.N[SP.selN])SP.selN=null;if(!selEl())SP.sel=null;}
+function mergeN(src,dst){if(src===dst)return true;if(SP.E.some(e=>e.t!=='wire'&&((e.a===src&&e.b===dst)||(e.a===dst&&e.b===src))))return false;
+  SP.E.forEach(e=>{if(e.a===src)e.a=dst;if(e.b===src)e.b=dst;});if(SP.vp===src)SP.vp=dst;if(SP.vn===src)SP.vn=dst;if(SP.tp===src)SP.tp=dst;if(SP.tn===src)SP.tn=dst;delete SP.N[src];cleanup();return true;}
+function wireHit(x,y,ex){for(const e of SP.E){if(e.t!=='wire'||e.a===ex||e.b===ex)continue;const P=scr(e.a),Q=scr(e.b);const dx=Q[0]-P[0],dy=Q[1]-P[1],L2=dx*dx+dy*dy;if(L2<1)continue;
+  const t=((x-P[0])*dx+(y-P[1])*dy)/L2;if(t<.06||t>.94)continue;const d=Math.hypot(x-P[0]-t*dx,y-P[1]-t*dy);if(d<7)return{e,t};}return null;}
+function splitWire(h){const e=h.e,A=SP.N[e.a],B=SP.N[e.b];let x=A.x+(B.x-A.x)*h.t,y=A.y+(B.y-A.y)*h.t;if(Math.abs(A.x-B.x)<1e-6)y=snapV(y);else if(Math.abs(A.y-B.y)<1e-6)x=snapV(x);
+  const M=addNode(x,y);addEl('wire',M,e.b);e.b=M;return M;}
+function nodeAt(x,y,r=10,ex){let best=null,bd=r;for(const id in SP.N){if(id===ex)continue;const p=scr(id);const d=Math.hypot(x-p[0],y-p[1]);if(d<bd){bd=d;best=id;}}return best;}
+function tryMerge(id){if(!SP.N[id])return;const p=scr(id);const q=nodeAt(p[0],p[1],12,id);if(q){if(!mergeN(id,q)){SP.N[id].x+=.5;}return;}
+  const h=wireHit(p[0],p[1],id);if(h){const M=splitWire(h);mergeN(id,M);}}
+function pick(x,y){const n=nodeAt(x,y,11);if(n)return n;const h=wireHit(x,y);if(h)return splitWire(h);const [wx,wy]=wxy(x,y);return addNode(snapV(wx),snapV(wy));}
+function rotEl(e){const A=SP.N[e.a],B=SP.N[e.b],mx=(A.x+B.x)/2,my=(A.y+B.y)/2;[A,B].forEach(p=>{const dx=p.x-mx,dy=p.y-my;p.x=snapV(mx-dy);p.y=snapV(my+dx);});}
+function splitNode(id){const p=SP.N[id];const at=SP.E.filter(e=>e.a===id||e.b===id);at.slice(1).forEach(e=>{const o=SP.N[e.a===id?e.b:e.a];const d=Math.hypot(o.x-p.x,o.y-p.y)||1;
+  const n=addNode(p.x+(o.x-p.x)/d*.6,p.y+(o.y-p.y)/d*.6);if(e.a===id)e.a=n;else e.b=n;});}
+function delSel(){if(SP.sel){pushHist();SP.E=SP.E.filter(e=>e.id!==SP.sel);SP.sel=null;cleanup();}else if(SP.selN){pushHist();const id=SP.selN;SP.E=SP.E.filter(e=>e.a!==id&&e.b!==id);SP.selN=null;cleanup();}else return;edSolve();edPanel();kick();}
+function freeSpot(){const [cx,cy]=wxy(WS/2,HS/2);for(let r=0;r<12;r++)for(let k=0;k<8;k++){const x=Math.round(cx+(k%4-1.5)*r*.9),y=Math.round(cy+(Math.floor(k/4)*2-1)*r*.7);
+  if(!Object.values(SP.N).some(n=>Math.abs(n.x-x)<2.6&&Math.abs(n.y-y)<1.2))return[x,y];}return[Math.round(cx),Math.round(cy)];}
+function addAt(t,x,y){pushHist();const len=t==='wire'?2:t==='jump'?2:2;const a=addNode(snapV(x-len/2),snapV(y)),b=addNode(snapV(x+len/2),snapV(y));const e=addEl(t,a,b,{lab:autoName(t)});
+SP.sel=e.id;SP.selN=null;SP.tool='sel';edSolve();edPanel();spUI();kick();}
+function edFit(){const ns=Object.values(SP.N);if(!ns.length){SP.z=54;SP.ox=WS/2;SP.oy=HS/2;return;}let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;ns.forEach(n=>{x0=Math.min(x0,n.x);x1=Math.max(x1,n.x);y0=Math.min(y0,n.y);y1=Math.max(y1,n.y);});
+  SP.z=clamp(Math.min((WS-150)/Math.max(2,x1-x0),(HS-130)/Math.max(2,y1-y0)),22,66);SP.ox=WS/2-SP.z*(x0+x1)/2;SP.oy=HS/2-SP.z*(y0+y1)/2+6;}
+function zoomAt(f,x,y){const [wx,wy]=wxy(x,y);SP.z=clamp(SP.z*f,16,110);SP.ox=x-wx*SP.z;SP.oy=y-wy*SP.z;kick();}
+// ---------- 指標操作 ----------
+const cvS=$('cvSp');cvS.tabIndex=0;cvS.style.touchAction='none';let drg=null,hov=null;
+const posS=ev=>{const r=cvS.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+const probeH=()=>SP.vm?[{k:'vp',col:CC.pos,lab:'+',off:[9,-9]},{k:'vn',col:CC.dark?'#9aa3ad':'#333',lab:'−',off:[-9,9]}]:[];
+const probePos=h=>h.drag||(SP[h.k]&&SP.N[SP[h.k]]?[scr(SP[h.k])[0]+h.off[0],scr(SP[h.k])[1]+h.off[1]]:null);
+function endHandles(e){if(!e||!SP.N[e.a]||!SP.N[e.b])return[];const P=scr(e.a),Q=scr(e.b),L=Math.hypot(Q[0]-P[0],Q[1]-P[1])||1,ux=(Q[0]-P[0])/L,uy=(Q[1]-P[1])/L,d=Math.min(18,L*.25);
+  return[{end:'a',x:P[0]+ux*d,y:P[1]+uy*d},{end:'b',x:Q[0]-ux*d,y:Q[1]-uy*d}];}
+function elAt(x,y){const c=SP.c;let best=null,bd=1e9;for(const e of SP.E){if(!e.L)continue;let d;
+  if(e.t==='jump'){d=1e9;for(let i=0;i<=20;i++){const p=e.pt(i/20);d=Math.min(d,Math.hypot(x-p[0],y-p[1]));}}
+  else{const P=c.P[e.a],Q=c.P[e.b],dx=Q[0]-P[0],dy=Q[1]-P[1],L2=dx*dx+dy*dy||1;const t=clamp(((x-P[0])*dx+(y-P[1])*dy)/L2,0,1);d=Math.hypot(x-P[0]-t*dx,y-P[1]-t*dy);
+    if(e.t!=='wire'&&Math.hypot(x-e.M[0],y-e.M[1])<c.s+6)d=Math.min(d,1);}
+  const lim=e.t==='wire'?6:9;if(d<lim&&(d<bd||(e.t!=='wire'&&best&&best.t==='wire'))){bd=d;best=e;}}return best;}
+function labAt(x,y){for(const e of SP.E){const b=e.lbox;if(b&&x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3])return{e};}if(SP.letters||SP.vm)for(const id in SP.N){const b=SP.N[id].lb;if(b&&x>=b[0]&&x<=b[2]&&y>=b[1]&&y<=b[3])return{n:id};}return null;}
+cvS.addEventListener('pointerdown',ev=>{if(ev.button===2)return;const [x,y]=posS(ev);cvS.setPointerCapture(ev.pointerId);cvS.focus({preventScroll:true});ev.preventDefault();const snap=snapState();
+  for(const h of probeH()){const p=probePos(h);if(p&&Math.hypot(x-p[0],y-p[1])<11){drg={k:'probe',h,x,y};return;}}
+  if(SP.tool==='wire'){drg={k:'wire',x,y,cx:x,cy:y,snap};return;}
+  for(const h of endHandles(selEl())){if(Math.hypot(x-h.x,y-h.y)<8){drg={k:'end',e:selEl(),end:h.end,x,y,snap};return;}}
+  const n=nodeAt(x,y,8);if(n){drg={k:'node',id:n,x,y,snap};return;}
+  const L=labAt(x,y);if(L){const o=L.e||SP.N[L.n];drg={k:'lab',L,x,y,lo:(o.lo||[0,0]).slice(),snap};return;}
+  const e=elAt(x,y);if(e){drg={k:'el',e,x,y,a0:Object.assign({},SP.N[e.a]),b0:Object.assign({},SP.N[e.b]),snap};return;}
+  drg={k:'pan',x,y,ox:SP.ox,oy:SP.oy};});
+cvS.addEventListener('pointermove',ev=>{const [x,y]=posS(ev);
+  if(!drg){let cur='default';if(SP.tool==='wire')cur='crosshair';else if(probeH().some(h=>{const p=probePos(h);return p&&Math.hypot(x-p[0],y-p[1])<11;})||nodeAt(x,y,8)||labAt(x,y))cur='grab';else if(elAt(x,y))cur='pointer';else cur='move';cvS.style.cursor=cur;
+    if(SP.tool==='wire'){hov=[x,y];kick();}return;}
+  const mv=Math.hypot(x-drg.x,y-drg.y)>4;drg.moved=drg.moved||mv;if(!drg.moved)return;const [wx,wy]=wxy(x,y);
+  switch(drg.k){
+  case'probe':drg.h.drag=[x,y];break;
+  case'wire':drg.cx=x;drg.cy=y;break;
+  case'end':{if(!drg.id){let id=drg.e[drg.end];if(degN(id)>1){const p=SP.N[id];const n=addNode(p.x,p.y);drg.e[drg.end]=n;id=n;}drg.id=id;}SP.N[drg.id].x=snapV(wx);SP.N[drg.id].y=snapV(wy);break;}
+  case'node':SP.N[drg.id].x=snapV(wx);SP.N[drg.id].y=snapV(wy);break;
+  case'lab':{const o=drg.L.e||SP.N[drg.L.n];o.lo=[drg.lo[0]+(x-drg.x)/SP.z,drg.lo[1]+(y-drg.y)/SP.z];break;}
+  case'el':{const [x0,y0]=wxy(drg.x,drg.y);const dx=snapV(wx-x0),dy=snapV(wy-y0);const A=SP.N[drg.e.a],B=SP.N[drg.e.b];A.x=drg.a0.x+dx;A.y=drg.a0.y+dy;if(B!==A){B.x=drg.b0.x+dx;B.y=drg.b0.y+dy;}break;}
+  case'pan':SP.ox=drg.ox+x-drg.x;SP.oy=drg.oy+y-drg.y;break;}
+  kick();});
+function ptrUp(ev){if(!drg)return;const [x,y]=ev?posS(ev):[drg.x,drg.y];const d=drg;drg=null;let changed=false;
+  if(d.k==='probe'){const k=nodeAt(x,y,34);if(k)SP[d.h.k]=k;d.h.drag=null;}
+  else if(d.k==='wire'){if(d.moved){const a=pick(d.x,d.y),b=pick(x,y);if(a!==b){addEl('wire',a,b);changed=true;}cleanup();}}
+  else if(!d.moved){// 點一下
+    if(d.k==='el'){SP.sel=d.e.id;SP.selN=null;if(d.e.t==='sw'||d.e.t==='jump'){pushHist(d.snap);d.e.on=!d.e.on;}}
+    else if(d.k==='node'){SP.selN=d.id;SP.sel=null;}else if(d.k==='lab'){if(d.L.e){SP.sel=d.L.e.id;SP.selN=null;}else{SP.selN=d.L.n;SP.sel=null;}}
+    else if(d.k==='pan'){SP.sel=null;SP.selN=null;}}
+  else{if(d.k==='end'||d.k==='node'){tryMerge(d.id);changed=true;}else if(d.k==='el'){tryMerge(d.e.a);tryMerge(d.e.b);changed=true;}else if(d.k==='lab')changed=true;}
+  if(changed)pushHist(d.snap);edSolve();edPanel();spUI();kick();}
+cvS.addEventListener('pointerup',ptrUp);cvS.addEventListener('pointercancel',()=>ptrUp(null));
+cvS.addEventListener('pointerleave',()=>{hov=null;kick();});
+cvS.addEventListener('wheel',ev=>{if(!ev.ctrlKey&&!ev.metaKey)return;ev.preventDefault();const [x,y]=posS(ev);zoomAt(ev.deltaY<0?1.12:1/1.12,x,y);},{passive:false});
+cvS.addEventListener('dblclick',ev=>{const [x,y]=posS(ev);const e=elAt(x,y);if(e&&e.t!=='wire'&&e.t!=='sw'&&e.t!=='jump'){SP.sel=e.id;edPanel();const f=$('spProp').querySelector('input[type=text],input[type=number]');if(f)f.focus();}});
+document.addEventListener('keydown',ev=>{if(bench!=='sp')return;const tg=ev.target.tagName;if(tg==='INPUT'||tg==='TEXTAREA'||tg==='SELECT')return;
+  if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();undo();return;}
+  if(ev.key==='Delete'||ev.key==='Backspace'){if(SP.sel||SP.selN){ev.preventDefault();delSel();}return;}
+  if(ev.key==='Escape'){SP.sel=null;SP.selN=null;SP.tool='sel';edPanel();spUI();kick();return;}
+  const e=selEl();if(ev.key==='r'&&e){pushHist();rotEl(e);edSolve();kick();}else if(ev.key==='f'&&e){pushHist();[e.a,e.b]=[e.b,e.a];edSolve();edPanel();kick();}
+  else if(ev.key==='w'){SP.tool=SP.tool==='wire'?'sel':'wire';spUI();kick();}});
+// 工具列：點一下加在空位、拖到畫布上放在指定位置
+document.querySelectorAll('#spPal button[data-add]').forEach(btn=>{btn.addEventListener('pointerdown',ev=>{ev.preventDefault();const t=btn.dataset.add,sx=ev.clientX,sy=ev.clientY;
+  const mv=e2=>{if(Math.hypot(e2.clientX-sx,e2.clientY-sy)>6){document.body.style.cursor='copy';}};
+  const up=e2=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.body.style.cursor='';
+    const r=cvS.getBoundingClientRect();const inside=e2.clientX>=r.left&&e2.clientX<=r.right&&e2.clientY>=r.top&&e2.clientY<=r.bottom;
+    if(Math.hypot(e2.clientX-sx,e2.clientY-sy)>6&&inside){const [wx,wy]=wxy(e2.clientX-r.left,e2.clientY-r.top);addAt(t,wx,wy);}else if(Math.hypot(e2.clientX-sx,e2.clientY-sy)<=6){const [x,y]=freeSpot();addAt(t,x,y);}};
+  document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);});});
+// ---------- 屬性面板 ----------
+const row=(lab,k,v,min,max,step,u,dis)=>`<div class="prow"><span>${lab}</span><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"${dis?' disabled':''}><input type="number" data-k="${k}" min="0" step="${step}" value="${nf(v,3)}"${dis?' disabled':''}><span>${u}</span></div>`;
+const chk=(lab,k,v)=>`<label class="tog"><input type="checkbox" data-k="${k}"${v?' checked':''}>${lab}</label>`;
+function edPanel(){const P=$('spProp');const e=selEl();let h='';
+  if(e){h+=`<p class="ptype">${TNAME[e.t]}</p>`;if(e.t!=='wire'&&e.t!=='jump')h+=`<div class="prow2"><span>名稱</span><input type="text" data-k="${e.t==='bat'?'nm':'lab'}" value="${(e.t==='bat'?e.nm:e.lab)||''}"></div>`;
+    if(e.t==='bat')h+=row('電壓','E',e.E,.5,24,.5,'V');
+    if(e.t==='bulb'){h+=chk('用規格（額定電壓、功率）','rate',e.rate);h+=e.rate?row('額定電壓','Vr',e.Vr,.5,24,.5,'V')+row('額定功率','Pr',e.Pr,.1,40,.1,'W')+`<p class="pnote">電阻 R ＝ V²／P ＝ ${nf(e.R,2)} Ω；實際功率超過額定的 2 倍會燒壞</p>`:row('電阻','R',e.R,.5,30,.5,'Ω');}
+    if(e.t==='res')h+=row('電阻','R',e.R,.5,30,.5,'Ω');if(e.t==='rheo')h+=row('電阻','R',e.R,0,30,.5,'Ω');
+    if(e.t==='sw')h+=chk('接通','on',e.on);if(e.t==='jump')h+=chk('接上','on',e.on);
+    if(e.t==='fuse')h+=row('額定電流','Ir',e.Ir,.1,10,.1,'A');
+    if(e.t==='amm')h+=`<div class="prow2"><span>量程</span><select data-k="rng">${[[.05,'50 mA'],[.5,'500 mA'],[5,'5 A'],[0,'不限']].map(([v,t])=>`<option value="${v}"${+e.rng===v?' selected':''}>${t}</option>`).join('')}</select></div>`;
+    if(e.t==='vm')h+=`<div class="prow2"><span>量程</span><select data-k="rng">${[[3,'3 V'],[15,'15 V'],[300,'300 V'],[0,'不限']].map(([v,t])=>`<option value="${v}"${+e.rng===v?' selected':''}>${t}</option>`).join('')}</select></div>`;
+    h+=`<div class="pbtns"><button class="btn" data-act="rot">↻ 旋轉 <kbd>R</kbd></button><button class="btn" data-act="flip">⇄ 對調兩端 <kbd>F</kbd></button>`;
+    if(e.t==='bulb'||e.t==='res')h+=`<button class="btn" data-act="off">${e.off?'裝回':'取下'}</button>`;if(e.broken)h+=`<button class="btn primary" data-act="fix">${e.t==='fuse'?'換新的保險絲':'修好'}</button>`;
+    h+=`<button class="btn" data-act="del">🗑 刪除 <kbd>Del</kbd></button></div><div class="pread" id="spPR"></div>`;}
+  else if(SP.selN&&SP.N[SP.selN]){const n=SP.N[SP.selN];h+=`<p class="ptype">接點 ${n.lab}（連著 ${degN(SP.selN)} 個元件）</p><div class="prow2"><span>名稱</span><input type="text" data-n="lab" value="${n.lab}"></div>`;
+    h+=`<div class="pbtns">${degN(SP.selN)>1?'<button class="btn" data-act="split">拆開這個接點</button>':''}<button class="btn" data-act="del">🗑 刪除接點與相連元件</button></div><div class="pread" id="spPR"></div>`;}
+  else h+=`<p class="ptype">怎麼操作</p><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動；拖黑色接點＝整個接點一起移動；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li>
+    <li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、Ctrl＋Z 復原。</li></ul>`;
+  P.innerHTML=h;edRead();}
+function edRead(){const el=$('spPR');if(!el)return;const e=selEl();if(SP.hide){el.innerHTML='<span class="pnote">先猜再看：按「揭曉」才會顯示讀數</span>';return;}
+  if(e){const L=[];const v=Math.abs(e.dV||0),i=Math.abs(e.I||0);
+    if(e.t==='bat')L.push(`輸出電流 ${fI(i)}`);else if(e.t==='amm')L.push(`讀數 ${fI(e.I)}`);else if(e.t==='vm')L.push(`讀數 ${fV(e.dV)}`);
+    else{L.push(`兩端電壓 ${fV(v)}`,`電流 ${fI(i)}`);if(['bulb','res','rheo'].includes(e.t)&&!e.off&&!e.broken)L.push(`電功率 P ＝ IV ≈ ${nf(e.P,2)} W`);}
+    if(e.t==='bulb'&&!e.off&&!e.broken)L.push(`亮度 ${Math.round(100*bright(e,e.Pref||1.2))}%`+(e.rate?`（額定 ${nf(e.Pr,1)} W 時約 63%）`:''));el.innerHTML=L.join('<br>');}
+  else if(SP.selN&&SP.c.V){el.innerHTML=`電位 ${fV(SP.c.V[SP.selN]-(SP.tn&&SP.N[SP.tn]?SP.c.V[SP.tn]:0))}（以電池負極為 0）`;}}
+const PP=$('spProp');let preS=null;
+PP.addEventListener('pointerdown',()=>{preS=snapState();});PP.addEventListener('focusin',()=>{if(!preS)preS=snapState();});
+PP.addEventListener('input',ev=>{const t=ev.target;const e=selEl();
+  if(t.dataset.n&&SP.selN){SP.N[SP.selN].lab=t.value;kick();return;}if(!e||!t.dataset.k)return;const k=t.dataset.k;
+  if(t.type==='checkbox')e[k]=t.checked;else if(t.type==='text')e[k]=t.value;else{const v=parseFloat(t.value);if(!Number.isFinite(v))return;e[k]=t.tagName==='SELECT'?v:Math.max(0,v);
+    PP.querySelectorAll(`input[data-k="${k}"]`).forEach(o=>{if(o!==t)o.value=t.type==='number'?v:nf(v,3);});}
+  if(e.broken&&k!=='lab'&&k!=='nm')e.broken=false;edSolve();if(t.type==='checkbox'||t.tagName==='SELECT')edPanel();else edRead();kick();});
+PP.addEventListener('change',()=>{if(preS){pushHist(preS);preS=null;}});
+PP.addEventListener('click',ev=>{const b=ev.target.closest('button[data-act]');if(!b)return;const a=b.dataset.act,e=selEl();pushHist(preS||snapState());preS=null;
+  if(a==='del'){SP.hist.pop();delSel();return;}if(a==='rot'&&e)rotEl(e);if(a==='flip'&&e)[e.a,e.b]=[e.b,e.a];if(a==='off'&&e)e.off=!e.off;if(a==='fix'&&e)e.broken=false;if(a==='split'&&SP.selN)splitNode(SP.selN);
+  edSolve();edPanel();kick();});
+// ---------- 上方控制 ----------
+function spUI(){segSet($('spT'),SP.edited?'':SP.tpl);segSet($('spKind'),SP.kind);segSet($('spMode'),SP.mode);segSet($('spCells'),SP.cells);segSet($('spTool'),SP.tool);
+  $('spCellsW').hidden=SP.tpl!=='cells';$('spVm').checked=SP.vm;$('spV').checked=SP.showV;$('spVI').checked=SP.showVI;$('spLet').checked=SP.letters;$('spSnap').checked=SP.snap;$('spHide').checked=SP.hide;$('spReveal').hidden=!SP.hide;
   howList('spHow',['串聯：電流只有一條路，各處電流相等；總電壓 ＝ 各燈電壓相加；總電阻 R ＝ R1 ＋ R2 ＋ …。取下任一個燈泡，整個電路斷路。','並聯：每個燈泡兩端都直接接到電池，各支路電壓相等（＝ 電池電壓）；總電流 ＝ 各支路電流相加；1／R ＝ 1／R1 ＋ 1／R2 ＋ …。取下一個，其他照常亮。',
-    '相同的燈泡：串聯越多越暗；並聯時每個都和單獨接時一樣亮，但電池輸出的總電流變大。','電池串聯：總電壓相加；相同電池並聯：總電壓和一個電池相同（可用較久）；接反會互相抵消。','導線直接接在某個燈泡兩端，那個燈泡被短路不亮；其餘串聯的燈泡電壓變大、變亮。','國中題目通常把燈泡電阻視為固定值；實際的燈絲越熱電阻越大（見實驗台 4）。']);}
-segOn($('spT'),v=>{SP.tpl=v;SP.sel=null;SP.edit=false;const T=TP[v];if(T&&T.N){const ks=Object.keys(T.N);SP.vp=ks[1];SP.vn=ks[2];SP.ja=ks[1];SP.jb=ks[2];}else if(v==='cells'){SP.vp='A';SP.vn='Z';SP.ja='B';SP.jb='C';}else{SP.vp='B';SP.vn='C';SP.ja='B';SP.jb='C';}hideStory();spBuild();spUI();kick();});
-segOn($('spKind'),v=>{SP.kind=v;SP.sel=null;spBuild();spUI();kick();});segOn($('spMode'),v=>{SP.mode=v;spUI();kick();});
-segOn($('spCells'),v=>{SP.cells=v;SP.c=null;spBuild();spUI();kick();});
-$('spE').addEventListener('input',()=>{SP.E=+$('spE').value;spSolve();spUI();kick();});
-$('spR').addEventListener('input',()=>{const e=spSel();if(e){e.R=+$('spR').value;spSolve();spUI();kick();}});
-$('spOff').addEventListener('click',()=>{const e=spSel();if(e){e.off=!e.off;spSolve();spUI();kick();}});
-[['spVm','vm'],['spJp','jp'],['spV','showV'],['spVI','showVI'],['spEdit','edit']].forEach(([id,k])=>$(id).addEventListener('change',()=>{SP[k]=$(id).checked;if(k==='jp')spSolve();spUI();kick();}));
-$('spReset').addEventListener('click',()=>{if(SP.tpl==='free')SP.free=Object.assign({},FREE_DEF);SP.c=null;SP.sel=null;spBuild();spUI();kick();});
-const spHandles=()=>{const H=[];if(SP.vm)H.push({col:CC.pos,lab:'+',node:()=>SP.vp,set:k=>{SP.vp=k;},off:[8,-8]},{col:CC.dark?'#9aa3ad':'#333',lab:'−',node:()=>SP.vn,set:k=>{SP.vn=k;},off:[-8,8]});
-  if(SP.jp)H.push({col:C.accent,lab:'',node:()=>SP.ja,set:k=>{SP.ja=k;spSolve();},off:[0,0]},{col:C.accent,lab:'',node:()=>SP.jb,set:k=>{SP.jb=k;spSolve();},off:[0,0]});return H;};
-const spHpos=circPointer($('cvSp'),()=>SP.c,spHandles,(e,x,y)=>{const c=SP.c;
-  if(SP.edit&&SP.tpl==='free'){let best=null,bd=c.u*.32;for(const [a,b] of FREE_EDGES){const P=c.P[a],Q=c.P[b];const d=Math.hypot(x-(P[0]+Q[0])/2,y-(P[1]+Q[1])/2);if(d<bd){bd=d;best=a+'-'+b;}}
-    if(best){const i=FREE_CYC.indexOf(SP.free[best]||'');SP.free[best]=FREE_CYC[(i+1)%FREE_CYC.length];SP.sel=null;spBuild();spUI();}return;}
-  if(!e){SP.sel=null;spUI();return;}if(e.t==='sw'){e.on=!e.on;spSolve();}else if(['bulb','res','rheo'].includes(e.t)){SP.sel=SP.sel===e.id?null:e.id;}spUI();},()=>kick());
-function drawSp(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=SP.c;lay(c,W,H,W<520?34:50,170);
-  if(SP.edit&&SP.tpl==='free'){for(const [a,b] of FREE_EDGES){if(SP.free[a+'-'+b])continue;const P=c.P[a],Q=c.P[b];line(g,P[0],P[1],Q[0],Q[1],C.line,1.5,[3,5]);g.fillStyle=C.line;g.beginPath();g.arc((P[0]+Q[0])/2,(P[1]+Q[1])/2,5,0,TAU);g.fill();}
-    for(const k in c.P){g.fillStyle=C.muted;g.beginPath();g.arc(c.P[k][0],c.P[k][1],3,0,TAU);g.fill();}}
-  drawCirc(g,c,{mode:SP.mode,showV:SP.showV,showVI:SP.showVI,letters:SP.vm||SP.jp||SP.tpl==='free'||SP.letters,sel:spSel()});
-  if(SP.vm){const p=spHpos(c,spHandles()[0]),q=spHpos(c,spHandles()[1]);const bx=W-122,by=H-50;g.fillStyle=C.panel;g.strokeStyle=C.ink;g.lineWidth=1.5;g.beginPath();g.roundRect(bx,by,112,40,8);g.fill();g.stroke();
-    const v=c.V[SP.vp]-c.V[SP.vn];text(g,'V',bx+14,by+25,{size:16,bold:true});text(g,(SP.vp===SP.vn?'—':fV(v)),bx+102,by+26,{size:15,bold:true,col:C.blue,align:'right'});
-    [[p,CC.pos,bx+30],[q,CC.dark?'#9aa3ad':'#333',bx+80]].forEach(([pp,col,tx])=>{if(!pp)return;g.strokeStyle=col;g.lineWidth=1.6;g.beginPath();g.moveTo(tx,by);g.bezierCurveTo(tx,by-60,pp[0],pp[1]+60,pp[0],pp[1]);g.stroke();});}
-  spHandles().forEach(h=>{const p=spHpos(c,h);if(p)drawHandle(g,p,h.col,h.lab);});
-  const S=spState();if(S.short)text(g,'短路！電流非常大',W/2,H-10,{size:14,bold:true,col:CC.pos,align:'center',bg:C.panel});}
-function spState(){const c=SP.c;const bats=c.E.filter(e=>e.t==='bat');let Vt=0,I=0;
-  if(c.tp){Vt=c.V[c.tp]-c.V[c.tn];const a=c.E.find(e=>e.lab==='A'&&e.t==='amm');I=SP.tpl==='cells'&&a?a.I:bats.length?bats[0].I:0;}
-  else if(bats.length===1){Vt=bats[0].E-bats[0].I*elR(c,bats[0]);I=bats[0].I;}
-  const Rext=Math.abs(I)>1e-7?Vt/I:Infinity;return{Vt,I,Rext,short:Math.abs(I)>1e-4&&Rext<.05,nb:bats.length};}
-function spResults(){const c=SP.c,S=spState(),T=TP[SP.tpl];const loads=c.E.filter(e=>['bulb','res','rheo'].includes(e.t));let big,f=[],ck=[];
-  if(S.short)big='短路：電流幾乎都走導線，電流極大！';else if(Math.abs(S.I)<1e-6&&S.nb)big='斷路：沒有電流（檢查開關、燈泡或電池接法）';
-  else if(S.nb===0)big='還沒有電池：電路需要電源';else big=`總電壓 ${fV(S.Vt)}，總電流 ${fI(S.I)}，總電阻 ${Number.isFinite(S.Rext)?fR(S.Rext):'—'}`;
-  loads.forEach(e=>f.push(`${e.lab}：${e.off?'已取下':`V ＝ ${fV(Math.abs(e.dV))}，I ＝ ${fI(Math.abs(e.I))}`}`+(e.off?'':`，R ＝ ${nf(e.R,2)} Ω`)+(e.t==='bulb'&&!e.off?`，亮度 ${Math.round(100*bright(e,1.2))}%`:'')));
-  const am=c.E.filter(e=>e.t==='amm');if(am.length>1)f.push(am.map(e=>e.lab+' '+fI(e.I)).join('，'));
-  if(SP.vm)f.push(`伏特計：＋接 ${SP.vp}、−接 ${SP.vn}，讀數 ${fV(c.V[SP.vp]-c.V[SP.vn])}`);
-  const kind=SP.tpl==='cells'?'cells':T&&T.kind;
+    '相同的燈泡：串聯越多越暗；並聯時每個都和單獨接時一樣亮，但電池輸出的總電流變大。','電池串聯：總電壓相加；相同電池並聯：總電壓和一個電池相同（可用較久）；接反會互相抵消。','導線直接接在某個燈泡兩端，那個燈泡被短路不亮；其餘串聯的燈泡電壓變大、變亮。','國中題目通常把燈泡電阻視為固定值；勾「用規格」的燈泡，實際功率超過額定 2 倍會燒壞；保險絲電流超過額定會熔斷。']);}
+segOn($('spT'),v=>{hideStory();if(v==='blank'&&SP.E.length)pushHist();loadTpl(v);edPanel();spUI();kick();});
+segOn($('spCells'),v=>{SP.cells=v;loadTpl('cells');edPanel();spUI();kick();});
+segOn($('spKind'),v=>{if(v===SP.kind)return;pushHist();SP.kind=v;SP.E.forEach(e=>{if(e.t==='bulb'||e.t==='res'){e.t=v;if(e.lab)e.lab=e.lab.replace(/^[LR](?=\d)/,v==='bulb'?'L':'R');e.rate=false;}});edSolve();edPanel();spUI();kick();});
+segOn($('spMode'),v=>{SP.mode=v;spUI();kick();});segOn($('spTool'),v=>{SP.tool=v;spUI();kick();});
+[['spVm','vm'],['spV','showV'],['spVI','showVI'],['spLet','letters'],['spSnap','snap'],['spHide','hide']].forEach(([id,k])=>$(id).addEventListener('change',()=>{SP[k]=$(id).checked;
+  if(k==='vm'&&SP.vm){const ks=Object.keys(SP.N);if(!SP.N[SP.vp])SP.vp=ks[0];if(!SP.N[SP.vn])SP.vn=ks[1];}edRead();spUI();kick();}));
+$('spReveal').addEventListener('click',()=>{SP.hide=false;edRead();spUI();kick();});
+$('spUndo').addEventListener('click',undo);$('spFix').addEventListener('click',()=>{pushHist();SP.E.forEach(e=>e.broken=false);edSolve();edPanel();kick();});
+$('spFit').addEventListener('click',()=>{edFit();kick();});$('spZin').addEventListener('click',()=>zoomAt(1.2,WS/2,HS/2));$('spZout').addEventListener('click',()=>zoomAt(1/1.2,WS/2,HS/2));
+// ---------- 繪圖 ----------
+function drawSp(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=SP.c,z=SP.z;
+  if(SP.snap){g.fillStyle=C.line;const [x0,y0]=wxy(0,0);for(let x=Math.ceil(x0);x*z+SP.ox<W;x++)for(let y=Math.ceil(y0);y*z+SP.oy<H;y++){g.fillRect(SP.ox+x*z-1,SP.oy+y*z-1,2,2);}}
+  if(!SP.E.length){text(g,'從上方工具列點一下或拖曳元件到這裡，開始接電路',W/2,H/2,{size:15,align:'center',col:C.muted});c.P={};}
+  else{c.P={};for(const k in SP.N)c.P[k]=scr(k);c.u=z*2;c.s=clamp(z*.34,9,16);c.z=z;const ps=Object.values(c.P);c.cx=ps.reduce((s,p)=>s+p[0],0)/ps.length;c.cy=ps.reduce((s,p)=>s+p[1],0)/ps.length;
+    SP.E.forEach(e=>geom(c,e));const o={mode:SP.mode,showV:SP.showV&&!SP.hide,showVI:SP.showVI,sel:selEl(),hideR:SP.hide,hideB:SP.hide,noDots:SP.hide};
+    drawCirc(g,c,o);
+    // 端點：沒接上的端點畫空心圈
+    for(const k in SP.N){const p=c.P[k],d=degN(k);if(d===1){g.strokeStyle=CC.pos;g.lineWidth=1.6;g.fillStyle=C.panel;g.beginPath();g.arc(p[0],p[1],4.2,0,TAU);g.fill();g.stroke();}else if(d===2){g.fillStyle=C.ink;g.beginPath();g.arc(p[0],p[1],2.2,0,TAU);g.fill();}}
+    if(SP.letters||SP.vm)for(const k in SP.N){const n=SP.N[k],p=c.P[k];let x=p[0]-7+(n.lo?n.lo[0]*z:0),y=p[1]-7+(n.lo?n.lo[1]*z:0);text(g,n.lab,x,y,{size:12.5,bold:true,col:C.purple,align:'right'});g.font=`700 12.5px ${FONT}`;const w=g.measureText(n.lab).width;n.lb=[x-w-3,y-13,x+3,y+3];}
+    if(SP.selN&&c.P[SP.selN]){const p=c.P[SP.selN];g.strokeStyle=C.accent;g.lineWidth=2;g.setLineDash([3,3]);g.beginPath();g.arc(p[0],p[1],10,0,TAU);g.stroke();g.setLineDash([]);}
+    endHandles(selEl()).forEach(h=>{g.fillStyle=C.accent;g.beginPath();g.arc(h.x,h.y,5.5,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=1.5;g.stroke();});
+    if(SP.vm){const H2=probeH(),p=probePos(H2[0]),q=probePos(H2[1]);const bx=W-122,by=H-50;g.fillStyle=C.panel;g.strokeStyle=C.ink;g.lineWidth=1.5;g.beginPath();g.roundRect(bx,by,112,40,8);g.fill();g.stroke();
+      const v=SP.vp&&SP.vn&&c.V?c.V[SP.vp]-c.V[SP.vn]:0;text(g,'V',bx+14,by+25,{size:16,bold:true});text(g,SP.hide?'？':(SP.vp===SP.vn||!SP.vp||!SP.vn?'—':fV(v)),bx+102,by+26,{size:15,bold:true,col:C.blue,align:'right'});
+      [[p,CC.pos,bx+30],[q,CC.dark?'#9aa3ad':'#333',bx+80]].forEach(([pp,col,tx])=>{if(!pp)return;g.strokeStyle=col;g.lineWidth=1.6;g.beginPath();g.moveTo(tx,by);g.bezierCurveTo(tx,by-60,pp[0],pp[1]+60,pp[0],pp[1]);g.stroke();});
+      H2.forEach(h=>{const pp=probePos(h);if(pp)drawHandle(g,pp,h.col,h.lab);});}
+    const S=spState();if(S.short&&!SP.hide)text(g,'短路！電流非常大',W/2,H-12,{size:14,bold:true,col:CC.pos,align:'center',bg:C.panel});}
+  if(drg&&drg.k==='wire'&&drg.moved){const s0=nodeAt(drg.x,drg.y,11),s1=nodeAt(drg.cx,drg.cy,11);const sn=(x,y,n)=>n?SP.c.P[n]||scr(n):(()=>{const [a,b]=wxy(x,y);return[SP.ox+snapV(a)*z,SP.oy+snapV(b)*z];})();
+    const a=sn(drg.x,drg.y,s0),b=sn(drg.cx,drg.cy,s1);line(g,a[0],a[1],b[0],b[1],C.accent,2.6,[6,4]);}
+  else if(SP.tool==='wire'&&hov){const n=nodeAt(hov[0],hov[1],11);const [a,b]=wxy(hov[0],hov[1]);const p=n?scr(n):[SP.ox+snapV(a)*z,SP.oy+snapV(b)*z];g.strokeStyle=C.accent;g.lineWidth=2;g.beginPath();g.arc(p[0],p[1],7,0,TAU);g.stroke();}
+  if(SP.tool==='wire')text(g,'畫導線模式：從一點拖到另一點（按 W 或 Esc 結束）',10,18,{size:12,bold:true,col:C.accent});}
+function spState(){const bats=SP.E.filter(e=>e.t==='bat'&&!e.off);const c=SP.c;let Vt=null,I=0;
+  if(SP.tpl==='cells'&&!SP.edited&&SP.tp&&c.V){Vt=c.V[SP.tp]-c.V[SP.tn];const a=SP.E.find(e=>e.lab==='A'&&e.t==='amm');I=a?a.I:0;}
+  else if(bats.length===1&&c.V){const b=bats[0];Vt=b.E-b.I*elR(c,b);I=b.I;}
+  const Rext=Vt!==null&&Math.abs(I)>1e-7?Vt/I:Infinity;return{Vt,I,Rext,nb:bats.length,short:bats.some(b=>Math.abs(b.I)>30)||(Math.abs(I)>1e-4&&Rext<.05)};}
+function spResults(){const c=SP.c,S=spState();const loads=SP.E.filter(e=>['bulb','res','rheo'].includes(e.t));let big,f=[],ck=[];
+  if(SP.hide){$('spBig').textContent='先猜猜看：哪些燈泡會亮？電表讀數是多少？';$('spF').innerHTML='想好之後按上方的「揭曉」。';checks($('spC'),[]);return;}
+  const loose=Object.keys(SP.N).filter(k=>degN(k)===1).length;
+  if(!SP.E.length)big='加入電池、燈泡和導線，把它們接成一個迴路';else if(S.short)big='短路：電流幾乎都走導線，電流極大！';else if(S.nb===0)big='還沒有電池：電路需要電源';
+  else if(Math.abs(S.I)<1e-6&&S.nb===1)big='斷路：沒有電流（檢查開關、燈泡或接線）';else if(S.Vt!==null)big=`總電壓 ${fV(S.Vt)}，總電流 ${fI(S.I)}，總電阻 ${Number.isFinite(S.Rext)?fR(S.Rext):'—'}`;
+  else big=`有 ${S.nb} 個電池：各電池電流 ${SP.E.filter(e=>e.t==='bat'&&!e.off).map(b=>(b.nm||b.lab)+' '+fI(b.I)).join('、')}`;
+  loads.forEach(e=>f.push(`${e.lab||TNAME[e.t]}：${e.off?'已取下':e.broken?'燒壞（斷路）':`V ＝ ${fV(Math.abs(e.dV))}，I ＝ ${fI(Math.abs(e.I))}，R ＝ ${nf(e.R,2)} Ω`+(e.t==='bulb'?`，亮度 ${Math.round(100*bright(e,e.Pref||1.2))}%`:'')}`));
+  const am=SP.E.filter(e=>e.t==='amm'||e.t==='vm');if(am.length)f.push(am.map(e=>(e.lab||TNAME[e.t])+' '+(e.broken?'燒毀':e.t==='amm'?fI(e.I):fV(e.dV))).join('，'));
+  if(SP.vm&&SP.vp&&SP.vn)f.push(`伏特計探棒：＋接 ${SP.N[SP.vp].lab}、−接 ${SP.N[SP.vn].lab}，讀數 ${fV(c.V[SP.vp]-c.V[SP.vn])}`);
+  const T=TP[SP.tpl],kind=SP.edited?null:SP.tpl==='cells'?'cells':T&&T.kind;
   if(kind==='ser')ck.push(['info','串聯：各處電流相等；總電壓 ＝ 各元件電壓相加；R ＝ R1 ＋ R2 ＋ …']);
   if(kind==='par')ck.push(['info','並聯：各支路電壓都等於電池電壓；總電流 ＝ 各支路電流相加；1／R ＝ 1／R1 ＋ 1／R2 ＋ …']);
   if(kind==='mix')ck.push(['info','先把並聯的部分合成一個電阻，再和其他部分串聯計算。']);
-  if(SP.tpl==='rheo')ck.push(['info','滑線變阻器電阻變大 → 總電阻變大 → 電流變小，燈泡變暗；V1 變小、V2 變大，但 V1 ＋ V2 ＝ 電池電壓。']);
-  if(SP.tpl==='cells')ck.push(['info',{one:'一個電池：1.5 V。',s2:'兩個電池串聯（正極接負極）：總電壓 1.5 ＋ 1.5 ＝ 3 V，燈泡較亮。',p2:'兩個相同電池並聯：總電壓仍是 1.5 V，亮度和一個電池相同，但可用比較久。',r2:'串聯但一個接反：電壓互相抵消，總電壓 0 V，燈泡不亮。',p2s1:'兩個並聯（1.5 V）再串聯一個（1.5 V）：總電壓 3 V。'}[SP.cells]]);
-  loads.forEach(e=>{if(!e.off&&e.t==='bulb'&&Math.abs(e.I)<1e-4&&Math.abs(S.I)>1e-6)ck.push(['no',`${e.lab} 不亮：兩端沒有電壓（被短路，或所在的支路斷了）。`]);});
-  loads.forEach(e=>{if(e.off)ck.push(['info',`${e.lab} 取下後：${Math.abs(S.I)>1e-6?'電流還有別的路可走，其他燈泡仍會亮。':'電流沒有路可走，整個電路斷路。'}`]);});
-  if(SP.jp)ck.push(['info',`跨接導線接在 ${SP.ja}、${SP.jb} 之間（兩點原本的電位差 → 導線讓它變成 0）。`]);
+  if(SP.tpl==='rheo'&&!SP.edited)ck.push(['info','滑線變阻器電阻變大 → 總電阻變大 → 電流變小，燈泡變暗；V1 變小、V2 變大，但 V1 ＋ V2 ＝ 電池電壓。']);
+  if(kind==='cells')ck.push(['info',{one:'一個電池：1.5 V。',s2:'兩個電池串聯（正極接負極）：總電壓 1.5 ＋ 1.5 ＝ 3 V，燈泡較亮。',p2:'兩個相同電池並聯：總電壓仍是 1.5 V，亮度和一個電池相同，但可用比較久。',r2:'串聯但一個接反：電壓互相抵消，總電壓 0 V，燈泡不亮。',p2s1:'兩個並聯（1.5 V）再串聯一個（1.5 V）：總電壓 3 V。'}[SP.cells]]);
+  loads.forEach(e=>{if(!e.off&&!e.broken&&e.t==='bulb'&&Math.abs(e.I)<1e-4&&Math.abs(S.I)>1e-6)ck.push(['no',`${e.lab} 不亮：兩端沒有電壓（被短路，或所在的支路斷了）。`]);});
+  SP.E.forEach(e=>{if(e.broken)ck.push(['no',e.t==='fuse'?`${e.lab} 熔斷：電流超過額定 ${nf(e.Ir,2)} A，電路被切斷。`:e.t==='amm'?`${e.lab} 燒毀：安培計電阻極小，不能並聯或直接接電池。`:`${e.lab} 燒壞：實際功率超過額定的 2 倍，燈絲斷了（斷路）。`]);});
+  SP.E.forEach(e=>{if(e.t==='amm'&&e.rng&&Math.abs(e.I)>e.rng*1.02&&!e.broken)ck.push(['no',`${e.lab} 超過量程，要改接較大量程的端子。`]);if(e.t==='vm'&&e.rng&&Math.abs(e.dV)>e.rng*1.02)ck.push(['no',`${e.lab} 超過量程。`]);
+    if((e.t==='amm'&&e.I<-1e-4)||(e.t==='vm'&&e.dV<-1e-3))ck.push(['no',`${e.lab} 的＋、−端接反了（指針反偏）：選取後按「對調兩端」。`]);});
+  if(loose)ck.push(['info',`有 ${loose} 個端點還沒接上（紅色空心圈）。`]);
   if(S.short)ck.push(['no','短路：電阻極小、電流極大，導線和電池會發熱，非常危險。']);
-  $('spBig').textContent=big;$('spF').innerHTML=f.join('<br>');checks($('spC'),ck);}
-SIZE.sp=()=>{({W:WS,H:HS}=fit($('cvSp'),.52,320,460));};
-UI.sp=()=>{if(!SP.c)spBuild();spUI();};
-let spAcc=1;TICK.sp=dt=>{tickDots(SP.c,dt,{mode:SP.mode});spAcc+=dt;return true;};
-DRAW.sp=()=>{drawSp($('cvSp').getContext('2d'),WS,HS);if(spAcc>.2){spAcc=0;spResults();}};
+  $('spBig').textContent=big;$('spF').innerHTML=f.join('<br>')||'—';checks($('spC'),ck);}
+SIZE.sp=()=>{const ow=WS;({W:WS,H:HS}=fit($('cvSp'),.56,420,620));if(!SP.fitted||ow!==WS){SP.fitted=true;edFit();}};
+UI.sp=()=>{if(!SP.E.length&&!SP.loaded){SP.loaded=true;loadTpl('ser2');}edPanel();spUI();};
+let spAcc=1;TICK.sp=dt=>{if(SP.c&&SP.c.P)tickDots(SP.c,dt,{mode:SP.mode});spAcc+=dt;return true;};
+DRAW.sp=()=>{drawSp($('cvSp').getContext('2d'),WS,HS);if(spAcc>.2){spAcc=0;spResults();edRead();}};
+// 舊版題目用的捷徑
+function spBuild(){loadTpl(SP.tpl);}function spSolve(){edSolve();}
 
 // =====================================================================
 // 3 安培計與伏特計
@@ -655,13 +826,15 @@ DRAW.ohm=()=>{const g=$('cvOc').getContext('2d');g.fillStyle=C.panel;g.fillRect(
 
 // ================= 題目情境 =================
 const gFl=p=>{Object.assign(FL,{n:1,mat:'cu',sw:true,jL:false,jB:false,mode:'e',showV:false,energy:false,zoom:'mat'},p);flBuild();flUI();kick();};
-const gSp=(tpl,p={})=>{SP.tpl=tpl;SP.c=null;Object.assign(SP,{E:3,kind:'bulb',sel:null,vm:false,jp:false,mode:'e',showV:false,showVI:true,cells:'s2',edit:false});
-  ['E','kind','mode','showV','showVI','cells'].forEach(k=>{if(p[k]!==undefined)SP[k]=p[k];});
-  const ks=TP[tpl]&&TP[tpl].N?Object.keys(TP[tpl].N):['A','Z','B','C'];SP.vp=ks[1];SP.vn=ks[2];SP.ja=ks[1];SP.jb=ks[2];
-  if(p.vm){SP.vm=true;[SP.vp,SP.vn]=p.vm;}if(p.jp){SP.jp=true;[SP.ja,SP.jb]=p.jp;}spBuild();
-  const pre=SP.kind==='bulb'?'L':'R';if(p.R)for(const k in p.R){const e=Eget(SP.c,pre+k)||Eget(SP.c,k);if(e)e.R=p.R[k];}
-  (p.off||[]).forEach(k=>{const e=Eget(SP.c,pre+k);if(e)e.off=true;});(p.open||[]).forEach(k=>{const e=Eget(SP.c,k);if(e)e.on=false;});
-  if(p.sel){const e=Eget(SP.c,p.sel);if(e)SP.sel=e.id;}spSolve();spUI();kick();};
+const gSp=(tpl,p={})=>{Object.assign(SP,{kind:'bulb',mode:'e',showV:false,showVI:true,vm:false,letters:false,hide:false,tool:'sel'});
+  ['kind','mode','showV','showVI','cells'].forEach(k=>{if(p[k]!==undefined)SP[k]=p[k];});if(tpl==='cells'&&!p.cells)SP.cells='s2';loadTpl(tpl);const pre=SP.kind==='bulb'?'L':'R';
+  if(p.E!==undefined&&tpl!=='cells')SP.E.forEach(e=>{if(e.t==='bat')e.E=p.E;});
+  if(p.R)for(const k in p.R){const e=Eget(SP,pre+k)||Eget(SP,k);if(e)e.R=p.R[k];}
+  (p.off||[]).forEach(k=>{const e=Eget(SP,pre+k);if(e)e.off=true;});(p.open||[]).forEach(k=>{const e=Eget(SP,k);if(e)e.on=false;});
+  if(p.sel){const e=Eget(SP,p.sel);if(e)SP.sel=e.id;}
+  if(p.vm){SP.vm=true;SP.vp=idOf(p.vm[0]);SP.vn=idOf(p.vm[1]);}
+  if(p.jp){addEl('jump',idOf(p.jp[0]),idOf(p.jp[1]),{lab:''});SP.letters=true;}
+  edSolve();edPanel();spUI();kick();};
 const gMt=(p={})=>{Object.assign(MT,{mode:'amm',conn:'ok',n:2,sw:true,prac:null},p);if(p.ta!==undefined)MT.ta=p.ta;if(p.tv!==undefined)MT.tv=p.tv;mtBuild();if(p.pr!==undefined)mtNewPrac(p.pr);mtUI();kick();};
 const gOh=(p={})=>{OH.data={};OH.order=[];Object.assign(OH,{n:2,ax:'VI',mt:'ideal',mat:'ni',L:1,A:.5},p);(p.rec||[]).forEach(s=>{OH.smp=s;for(let n=1;n<=4;n++){OH.n=n;ohBuild();ohRec();}});
   OH.smp=p.smp||OH.smp;OH.n=p.n||2;ohBuild();ohUI();kick();};
@@ -707,7 +880,7 @@ const QS=[{g:'翰林講義 4-2 電流',items:[
   {n:'P 燈 2 A、Q 燈 3 A（並聯）',pg:'12/28',b:'sp',set:()=>gSp('par2',{R:{1:1.5,2:1},E:3}),t:'由電池正極流出 5 A、流回負極也是 5 A',p:'電流不會損耗，流出與流回電池的電流相同。'},
   {n:'R4 ＝ R1 ＋ R3 落在哪一區',pg:'12/28',b:'ohm',set:()=>gOh({rec:['A','B','pen'],smp:'pen'}),t:'R1 ＝ 2R2、R3 ＝ R2／2 → R4 ＝ 2.5 R2，比 R1 更陡',p:'設 R2 ＝ 1 Ω（B），R1 ＝ 2 Ω（A），R4 ＝ 2.5 Ω（畫面用 2.5 Ω 的鉛筆芯代表），在 V–I 圖上比 R1 的線更陡。'},
   {n:'彈珠檯：串聯與並聯的電阻',pg:'12/28',b:'sp',set:()=>gSp('par2',{kind:'res',R:{1:1,2:1},E:3}),t:'並聯像多開一條通道，電阻變小、總電流變大',p:'甲、乙都是 1 Ω：串聯 2 Ω，並聯 0.5 Ω。換成「兩個串聯」比較總電流。'},
-  {n:'短路實驗：裸露電線碰觸',pg:'12/28',b:'sp',set:()=>gSp('ser2',{jp:['B','C']}),t:'被導線跨接的燈泡熄滅，另一個變亮',p:'L1 兩端被導線接通，電壓變 0 不亮；總電阻變小，L2 分到全部 3 V，變亮。拖曳橘點跨接別的位置試試。'}]},
+  {n:'短路實驗：裸露電線碰觸',pg:'12/28',b:'sp',set:()=>gSp('ser2',{jp:['B','C']}),t:'被導線跨接的燈泡熄滅，另一個變亮',p:'L1 兩端被導線接通，電壓變 0 不亮；總電阻變小，L2 分到全部 3 V，變亮。選取弧形的跨接導線後拖曳兩端的橘點，可以改接別的位置；點一下它可以拿開／接上。'}]},
  {g:'考古題（向上、大業 九年級）',items:[
   {n:'燈泡發光時導線中的電子與原子核',pg:'大業 113-1-3 #32、114-1-3 #5、向上 114-1-3 #13',b:'flow',set:()=>gFl({zoom:'wire'}),t:'自由電子移動，原子核（質子）不移動',p:'放大導線：只有電子往正極方向漂移，原子核在原位置。電子沒有被燈泡用掉。'},
   {n:'9 V 電池的意義',pg:'大業 113-2-1 #2、114-2-1 #10',b:'flow',set:()=>gFl({n:6,mode:'c',energy:true}),t:'每 1 庫侖電荷通過電池獲得 9 焦耳電能',p:'電壓 ＝ 能量 ÷ 電量（V ＝ W／Q）。'},
@@ -715,7 +888,7 @@ const QS=[{g:'翰林講義 4-2 電流',items:[
   {n:'卡車載電荷比喻',pg:'大業 113-2-1 #3',b:'flow',set:()=>gFl({mode:'c',energy:true}),t:'電荷不會被消耗，消耗的是電能',p:'經過燈泡後電荷仍在，只是帶的電能變少。'},
   {n:'電路與水路類比',pg:'大業 114-1-3 #22',b:'sp',set:()=>gSp('one',{showV:true,mode:'c'}),t:'電池 ↔ 抽水機；燈泡 ↔ 水輪機；電流 ↔ 水流',p:'電位高低像水位高低；電流從高電位流向低電位。'},
   {n:'電池被導線短路',pg:'大業 113-2-1 #9',b:'flow',set:()=>gFl({jB:true}),t:'燈泡不亮；電池中的電流非常大',p:'導線直接接在電池兩端，電阻極小，電流幾乎全從導線流過，電池和導線發熱。'},
-  {n:'燈泡兩端接銅線（短路）',pg:'向上 114-2-1 #16',b:'sp',set:()=>gSp('ser2',{jp:['B','C']}),t:'被跨接的燈泡沒有電流、不亮',p:'電流走幾乎沒有電阻的銅線；若電路只剩導線（一個燈泡時），就是整個電路短路。'},
+  {n:'燈泡兩端接銅線（短路）',pg:'向上 114-2-1 #16',b:'sp',set:()=>gSp('ser2',{jp:['B','C']}),t:'被跨接的燈泡沒有電流、不亮',p:'電流走幾乎沒有電阻的銅線（點一下弧形導線可以拿開比較）；若電路只剩導線（一個燈泡時），就是整個電路短路。'},
   {n:'甲串聯（乙∥丙）接 9 V',pg:'向上 113-1-3 #3',b:'sp',set:()=>gSp('mix',{E:9}),t:'若三燈相同：甲 6 V，乙、丙各 3 V',p:'乙∥丙 的電阻是一個燈泡的一半，所以甲分到的電壓是並聯部分的 2 倍：6 V 與 3 V。（燈泡規格依題目圖而定，可點燈泡改電阻。）'},
   {n:'取下某一個燈泡，其他燈還亮嗎',pg:'向上 113-1-3 #4、大業 113-1-3 #22',b:'sp',set:()=>gSp('mix',{off:['3']}),t:'串聯部分取下 → 全斷；並聯支路取下 → 其他支路照亮',p:'這裡取下 L3，L1、L2 仍亮（L1 變暗、L2 變亮，因為總電阻變大）。改取下 L1 看看。'},
   {n:'三燈串聯，各燈電壓相加',pg:'向上 113-1-3 #6、大業 114-1-3 #16',b:'sp',set:()=>gSp('ser3',{E:9,vm:['A','B']}),t:'三個相同燈泡串聯接 9 V：各 3 V',p:'探棒移到 B、C、C、D 量另外兩個，相加 ＝ 9 V。'},
@@ -727,8 +900,8 @@ const QS=[{g:'翰林講義 4-2 電流',items:[
   {n:'2 V、4 V 兩燈串聯再與 L 並聯',pg:'向上 114-1-3 #4',b:'sp',set:()=>gSp('spx',{R:{1:2,2:4,3:5},E:6,vm:['B','F']}),t:'電池電壓 ＝ 2 ＋ 4 ＝ 6 V，L 也是 6 V',p:'並聯的兩條路，電壓相同；上面那條由兩燈分成 2 V 與 4 V。'},
   {n:'三燈並聯接兩電池串聯',pg:'向上 114-1-3 #26',b:'sp',set:()=>gSp('par3',{E:3,vm:['C','F']}),t:'每個燈泡都是 3 V',p:'兩個 1.5 V 串聯 ＝ 3 V；並聯各燈電壓 ＝ 電池電壓。'},
   {n:'6 Ω 串聯（3 Ω∥2 Ω）',pg:'向上 114-2-2 #38',b:'sp',set:()=>gSp('mix',{kind:'res',R:{1:6,2:3,3:2},E:18}),t:'由 2 Ω 的電流 → 並聯電壓 → 3 Ω 電流 → 總電流',p:'畫面以 2 Ω 的電流 1.5 A 為例：並聯電壓 3 V，3 Ω 電流 1 A，總電流 2.5 A，6 Ω 兩端 15 V，電池 18 V。'},
-  {n:'開關、導線跨接時電表讀數',pg:'向上 113-1-3 #37、113-2-1 #1',b:'sp',set:()=>gSp('ser2',{kind:'res',R:{1:2,2:4},E:6,jp:['B','C'],vm:['D','E']}),t:'部分電阻被短路 → 總電阻變小 → 電流變大',p:'跨接 R1 後只剩 R2：I 由 1 A 變 1.5 A，R2 電壓由 4 V 變 6 V。取消勾選「跨接導線」比較。'},
-  {n:'導線短接後幾個燈泡亮',pg:'大業 113-2-1 #12、113-2-2 #23、114-2-1 #17',b:'sp',set:()=>gSp('ser4',{jp:['A','C'],E:6}),t:'被跨接的兩點之間的燈泡都不亮',p:'A、C 之間的 L1、L2 不亮，L3、L4 分到全部電壓變亮。拖曳橘點改接 A–D、B–D 等。'},
+  {n:'開關、導線跨接時電表讀數',pg:'向上 113-1-3 #37、113-2-1 #1',b:'sp',set:()=>gSp('ser2',{kind:'res',R:{1:2,2:4},E:6,jp:['B','C'],vm:['D','E']}),t:'部分電阻被短路 → 總電阻變小 → 電流變大',p:'跨接 R1 後只剩 R2：I 由 1 A 變 1.5 A，R2 電壓由 4 V 變 6 V。點一下弧形的跨接導線把它拿開，比較前後差別。'},
+  {n:'導線短接後幾個燈泡亮',pg:'大業 113-2-1 #12、113-2-2 #23、114-2-1 #17',b:'sp',set:()=>gSp('ser4',{jp:['A','C'],E:6}),t:'被跨接的兩點之間的燈泡都不亮',p:'A、C 之間的 L1、L2 不亮，L3、L4 分到全部電壓變亮。選取跨接導線，拖曳兩端的橘點改接 A–D、B–D 等。'},
   {n:'滑線變阻器移動時電表與亮度',pg:'向上 113-1-3 #26、113-2-1 #3',b:'sp',set:()=>gSp('rheo',{E:6,sel:'Rv'}),t:'Rv 變大：電流變小、燈變暗；V1 變小、V2 變大',p:'拖動「電阻」滑桿改變 Rv。V1 ＋ V2 一直等於電池電壓。'},
   {n:'電池串聯／並聯接法比較',pg:'向上 113-1-3 #22、大業 113-1-3 #7',b:'sp',set:()=>gSp('cells',{cells:'s2',vm:['A','Z']}),t:'串聯電壓相加；並聯電壓不變',p:'例：6 個 2 V 電池要得到 4 V → 兩個串聯成一組（4 V），各組再並聯。'},
   {n:'兩電池並聯再串一個電池',pg:'大業 114-1-3 #21',b:'sp',set:()=>gSp('cells',{cells:'p2s1',vm:['A','Z']}),t:'總電壓 1.5 ＋ 1.5 ＝ 3 V',p:'並聯的兩個只算一個電池的電壓。'},
