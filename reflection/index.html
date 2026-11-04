@@ -50,7 +50,7 @@
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 電磁波與光（二） · <a href="../emwave/">上一頁：電磁波</a> · <a href="../refraction/">下一頁：光的折射</a></div>
       <h1>光的反射</h1>
     </div>
-    <p>拖曳橘色的點操作：雷射筆、眼睛、人、鏡子的上下緣都可以拖。實驗台 1～4 與 7 對應高一講義 2-3；實驗台 5 是國二講義的方格題「看得到嗎」，實驗台 6 是國二的凹面鏡與凸面鏡；最下方有隨堂練習的題目情境。</p>
+    <p>拖曳橘色的點操作：雷射筆、眼睛、人、鏡子的上下緣都可以拖。實驗台 1～4 與 8 對應高一講義 2-3；實驗台 5、6 是國二講義的方格題與兩面鏡子的像，實驗台 7 是國二的凹面鏡與凸面鏡；最下方有隨堂練習的題目情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -61,8 +61,9 @@
       <button data-v="image" aria-pressed="false"><span class="n">3</span>平面鏡成像</button>
       <button data-v="full" aria-pressed="false"><span class="n">4</span>全身鏡</button>
       <button data-v="grid" aria-pressed="false"><span class="n">5</span>看得到嗎（方格題）</button>
-      <button data-v="mirror" aria-pressed="false"><span class="n">6</span>凹面鏡與凸面鏡</button>
-      <button data-v="lever" aria-pressed="false"><span class="n">7</span>光槓桿與角反射器</button>
+      <button data-v="two" aria-pressed="false"><span class="n">6</span>兩面鏡子的像</button>
+      <button data-v="mirror" aria-pressed="false"><span class="n">7</span>凹面鏡與凸面鏡</button>
+      <button data-v="lever" aria-pressed="false"><span class="n">8</span>光槓桿與角反射器</button>
     </span>
   </nav>
 
@@ -246,12 +247,49 @@
     </div>
   </section>
 
-  <!-- ============ 6 凹面鏡與凸面鏡（原本的 mirror/ 頁，內容在 curved.html）============ -->
+  <!-- ============ 6 兩面鏡子的像 ============ -->
+  <section class="bench" id="b-two" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="chips"><button class="chip" id="q7">講義 五、實驗 1：箭頭向東</button></span>
+        <span class="tlabel">箭頭指向</span>
+        <span class="seg" id="dir7"><button data-v="0" aria-pressed="true">東</button><button data-v="1">北</button><button data-v="2">西</button><button data-v="3">南</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">箭頭往哪邊移動</span>
+        <span class="seg" id="mv7"><button data-v="0" aria-pressed="true">東</button><button data-v="1">北</button><button data-v="2">西</button><button data-v="3">南</button></span>
+        <button class="btn" id="prev7">◂ 上一秒</button>
+        <button class="btn primary" id="next7">下一秒 ▸</button>
+        <button class="btn" id="back7">↺ 回原位</button>
+        <label class="tog"><input type="checkbox" id="sym7" checked>對稱連線</label>
+        <label class="tog"><input type="checkbox" id="dbl7">兩面鏡各反射一次的像</label>
+      </div>
+      <div class="cbox"><canvas id="cv7" aria-label="兩面互相垂直的鏡子與箭頭的像，俯視圖"></canvas></div>
+      <p class="hint">從正上方往下看：兩面鏡子 A、B 互相垂直，箭頭放在兩鏡前面。拖曳橘點移動箭頭；選好移動方向後按「下一秒」，箭頭每秒移動半格，像會一起移動，淡淡的點是前幾秒的位置。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box">
+        <p class="big" id="r7big"></p>
+        <ul class="checks" id="r7c"></ul>
+      </section>
+      <section class="panel box">
+        <h3>鏡像就是線對稱</h3>
+        <ul>
+          <li>像和物體<b>對稱於鏡面</b>（或鏡面的延長線）：物距＝像距、物長＝像長。</li>
+          <li>畫像的方法：把箭頭的<b>頭、尾分別</b>對鏡面畫對稱點，再連起來，就知道像的箭頭指向哪裡。</li>
+          <li>鏡子斜放時，像的方向會轉一個角度；兩面鏡子各斜 45° 時，兩個像分別轉向相反的兩邊。</li>
+          <li>物體移動時，像也跟著移動，移動的方向同樣對鏡面對稱。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 7 凹面鏡與凸面鏡（原本的 mirror/ 頁，內容在 curved.html）============ -->
   <section class="bench" id="b-mirror" hidden>
     <iframe id="mirrorFrame" title="凹面鏡與凸面鏡成像" data-src="curved.html" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
   </section>
 
-  <!-- ============ 7 光槓桿 ============ -->
+  <!-- ============ 8 光槓桿 ============ -->
   <section class="bench" id="b-lever" hidden>
     <div class="panel">
       <div class="toolbar">
@@ -323,7 +361,7 @@ function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBou
 const deg=x=>Math.round(x*10)/10+'°';
 
 // ================= bench switching / loop =================
-let bench='law';const BENCHES=['law','diffuse','image','full','grid','mirror','lever'];
+let bench='law';const BENCHES=['law','diffuse','image','full','grid','two','mirror','lever'];
 const SIZE={},DRAW={},TICK={};
 // 面鏡實驗台：第一次打開時才載入 iframe；網址 #mirror-convex 直接開凸面鏡
 SIZE.mirror=()=>{};DRAW.mirror=()=>{};
@@ -789,6 +827,75 @@ dragger(cvG,()=>{const T=tfG(),v=RG.view,sn=x=>optG().snap?Math.round(x*2)/2:Mat
   list.push({x:T.X(RG.eye.x),y:T.Y(RG.eye.y),r:26,move:(x,y)=>{RG.eye.x=fx(T.ix(x));RG.eye.y=fy(T.iy(y));uiG();}});
   return list;},kick);
 loadG(0);
+
+
+// =====================================================================
+// 6 兩面鏡子的像（俯視；兩鏡互相垂直，頂點在上，像〈光的直進性、光的反射〉五、實驗 1 的圖）
+// 座標：x 向東、y 向北（畫面上方），單位＝格
+// =====================================================================
+const S2=Math.SQRT1_2,AP7=[0,2],UA7=[-S2,-S2],UB7=[S2,-S2],L7=3.3,AL7=1.4,SPD7=.5;
+const DIR7=[[1,0],[0,1],[-1,0],[0,-1]];
+const C07=[-.2,.15];
+const R7={c:C07.slice(),dir:0,mv:0,t:0,x0:C07.slice(),stepTo:null,sym:true,dbl:false};
+const cv7=$('cv7'),g7=cv7.getContext('2d');let W7=800,H7=500;
+SIZE.two=()=>{const r=fit(cv7,.6,320,560);W7=r.W;H7=r.H;};
+function refl7(p,u){const r=[p[0]-AP7[0],p[1]-AP7[1]],d=r[0]*u[0]+r[1]*u[1];return[AP7[0]+2*d*u[0]-r[0],AP7[1]+2*d*u[1]-r[1]];}
+function reflV7(v,u){const d=v[0]*u[0]+v[1]*u[1];return[2*d*u[0]-v[0],2*d*u[1]-v[1]];}
+function tf7(){const v=[-4.4,4.4,-1.6,4.4],s=Math.min((W7-20)/(v[1]-v[0]),(H7-20)/(v[3]-v[2])),ox=(W7-s*(v[1]-v[0]))/2,oy=(H7-s*(v[3]-v[2]))/2;
+  return{s,P:p=>[ox+(p[0]-v[0])*s,oy+(v[3]-p[1])*s],inv:(x,y)=>[v[0]+(x-ox)/s,v[3]-(y-oy)/s]};}
+function dirName7(v){const a=Math.atan2(v[1],v[0])*180/Math.PI,k=Math.round((((a%360)+360)%360)/45)%8;
+  return['東','東北','北','西北','西','西南','南','東南'][k]+(k===2?'（畫面的上方）':k===6?'（畫面的下方）':'');}
+function ends7(c){const d=DIR7[R7.dir];return[[c[0]-d[0]*AL7/2,c[1]-d[1]*AL7/2],[c[0]+d[0]*AL7/2,c[1]+d[1]*AL7/2]];}
+function arr7(g,P,a,b,col,w,dash){const A=P(a),B=P(b);line(g,A[0],A[1],B[0],B[1],col,w,dash);head(g,B[0],B[1],Math.atan2(B[1]-A[1],B[0]-A[0]),col,15);}
+DRAW.two=()=>{const g=g7,W=W7,H=H7,{s,P}=tf7();g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  // 方位
+  {const m=P([0,-1.25]);text(g,'西',14,m[1],{col:C.ink,size:20,bold:true});text(g,'東',W-14,m[1],{col:C.ink,size:20,bold:true,align:'right'});
+   text(g,'北',W/2,22,{col:C.muted,size:14,bold:true,align:'center'});text(g,'南',W/2,H-8,{col:C.muted,size:14,bold:true,align:'center'});}
+  // 鏡面延長線（像是對這條線對稱）
+  for(const u of[UA7,UB7]){const a=P([AP7[0]+u[0]*9,AP7[1]+u[1]*9]),b=P([AP7[0]-u[0]*9,AP7[1]-u[1]*9]);line(g,a[0],a[1],b[0],b[1],C.line,1.2,[3,5]);}
+  const ap=P(AP7),pa=P([AP7[0]+UA7[0]*L7,AP7[1]+UA7[1]*L7]),pb=P([AP7[0]+UB7[0]*L7,AP7[1]+UB7[1]*L7]);
+  mirrorSeg(g,ap[0],ap[1],pa[0],pa[1],[-S2,-S2]);mirrorSeg(g,ap[0],ap[1],pb[0],pb[1],[S2,-S2]);
+  text(g,'A',pa[0]-4,pa[1]+26,{col:C.ink,size:22,bold:true,align:'center'});text(g,'B',pb[0]+4,pb[1]+26,{col:C.ink,size:22,bold:true,align:'center'});
+  const[t0,t1]=ends7(R7.c),IM=[['A',UA7,C.blue],['B',UB7,C.green]];
+  // 前幾秒的位置
+  if(R7.t>0){const v=DIR7[R7.mv];for(let k=0;k<=Math.floor(R7.t+1e-6);k++){const ck=[R7.x0[0]+v[0]*SPD7*k,R7.x0[1]+v[1]*SPD7*k];
+      const pts=[[ck,C.red],[refl7(ck,UA7),C.blue],[refl7(ck,UB7),C.green]];
+      for(const[q,col]of pts){const z=P(q);g.fillStyle=col;g.globalAlpha=.35;g.beginPath();g.arc(z[0],z[1],5,0,TAU);g.fill();g.globalAlpha=1;
+        text(g,k+' s',z[0]+7,z[1]+14,{col,size:11});}}}
+  // 兩個像
+  for(const[n,u,col]of IM){const i0=refl7(t0,u),i1=refl7(t1,u);
+    if(R7.sym)for(const[p,q]of[[t0,i0],[t1,i1]]){const a=P(p),b=P(q);line(g,a[0],a[1],b[0],b[1],col,1.2,[2,4]);}
+    arr7(g,P,i0,i1,col,5,[9,5]);const m=P([(i0[0]+i1[0])/2,(i0[1]+i1[1])/2]);
+    text(g,n+' 鏡中的像',m[0]+(n==='A'?-18:18),m[1],{col,size:15,bold:true,align:n==='A'?'right':'left',bg:C.panel});}
+  if(R7.dbl){const i0=refl7(refl7(t0,UB7),UA7),i1=refl7(refl7(t1,UB7),UA7);arr7(g,P,i0,i1,C.purple,4,[4,4]);const m=P([(i0[0]+i1[0])/2,(i0[1]+i1[1])/2]);
+    text(g,'A、B 各反射一次的像',m[0],m[1]-14,{col:C.purple,size:13,bold:true,align:'center',bg:C.panel});}
+  // 物體
+  arr7(g,P,t0,t1,C.red,6,null);const pc=P(R7.c);handle(g,pc[0],pc[1],9);
+  {const z=P([R7.c[0],R7.c[1]-.45]);text(g,'物體（箭頭）',z[0],z[1]+6,{col:C.red,size:14,bold:true,align:'center',bg:C.panel});}
+};
+function ui7(){const d=DIR7[R7.dir],v=DIR7[R7.mv],dA=reflV7(d,UA7),dB=reflV7(d,UB7),vA=reflV7(v,UA7),vB=reflV7(v,UB7),nm=x=>dirName7(x).replace(/（.*）/,'');
+  const tt=Math.abs(R7.t-Math.round(R7.t))<1e-6?String(Math.round(R7.t)):R7.t.toFixed(1);
+  $('r7big').innerHTML=`A 鏡中的像指向 <span class="mono">${nm(dA)}</span>，B 鏡中的像指向 <span class="mono">${nm(dB)}</span>`;
+  const L=[['info',`物體的箭頭指向 <b>${nm(d)}</b>。`],
+    ['ok',`(1) A 鏡中的像：箭頭指向 <b>${dirName7(dA)}</b>。`],
+    ['ok',`(2) B 鏡中的像：箭頭指向 <b>${dirName7(dB)}</b>。`],
+    ['ok',`(3) 箭頭向${nm(v)}移動時，A 鏡中的像向 <b>${dirName7(vA)}</b> 移動，B 鏡中的像向 <b>${dirName7(vB)}</b> 移動。`]];
+  if(R7.t>0||R7.stepTo!=null)L.push(['info',`第 ${tt} 秒：箭頭已經向${nm(v)}移動 ${(SPD7*R7.t).toFixed(1)} 格，兩個像也各移動同樣的距離。`]);
+  $('r7c').innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');
+  segSet($('dir7'),R7.dir);segSet($('mv7'),R7.mv);$('sym7').checked=R7.sym;$('dbl7').checked=R7.dbl;}
+TICK.two=dt=>{if(R7.stepTo==null)return false;R7.t=Math.min(R7.stepTo,R7.t+dt);const v=DIR7[R7.mv];
+  R7.c=[R7.x0[0]+v[0]*SPD7*R7.t,R7.x0[1]+v[1]*SPD7*R7.t];if(R7.t>=R7.stepTo-1e-9){R7.t=R7.stepTo;R7.stepTo=null;}ui7();return R7.stepTo!=null;};
+function restart7(){R7.x0=R7.c.slice();R7.t=0;R7.stepTo=null;}
+segOn($('dir7'),v=>{R7.dir=+v;ui7();kick();});
+segOn($('mv7'),v=>{restart7();R7.mv=+v;ui7();kick();});
+$('next7').addEventListener('click',()=>{if(R7.stepTo!=null)return;if(R7.t===0)R7.x0=R7.c.slice();R7.stepTo=Math.floor(R7.t+1e-6)+1;ui7();kick();});
+$('prev7').addEventListener('click',()=>{R7.stepTo=null;const t=Math.max(0,Math.ceil(R7.t-1e-6)-1),v=DIR7[R7.mv];R7.t=t;R7.c=[R7.x0[0]+v[0]*SPD7*t,R7.x0[1]+v[1]*SPD7*t];ui7();kick();});
+$('back7').addEventListener('click',()=>{R7.c=C07.slice();restart7();ui7();kick();});
+$('q7').addEventListener('click',()=>{Object.assign(R7,{c:C07.slice(),dir:0,mv:0,sym:true,dbl:false});restart7();ui7();kick();});
+$('sym7').addEventListener('change',e=>{R7.sym=e.target.checked;kick();});
+$('dbl7').addEventListener('change',e=>{R7.dbl=e.target.checked;kick();});
+dragger(cv7,()=>{const T=tf7(),pc=T.P(R7.c);return[{x:pc[0],y:pc[1],r:30,move:(x,y)=>{const q=T.inv(x,y);R7.c=[clamp(q[0],-4,4),clamp(q[1],-1.4,4)];restart7();ui7();}}];},kick);
+ui7();
 
 // ================= start =================
 ui1();ui2();ui3();ui5();
