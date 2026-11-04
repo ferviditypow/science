@@ -6,6 +6,7 @@
 <title>光的折射：折射定律、全反射、色散、救生員問題</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/optics.js"></script>
 <style>
 :root{--ray:#d23b2f;--mir:#5b7fa6;--ai:#1c68ad;--ar:#1f8a5b;--water:#d6ebf7;--glass:#e3e8f0;--dia:#ece4f7;--sand:#f3ead2}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ray:#ff7468;--mir:#9cc0e6;--ai:#5ba8ec;--ar:#4cc28e;--water:#15304a;--glass:#252d3a;--dia:#2c2440;--sand:#2f2a1d;color-scheme:dark}}
@@ -87,16 +88,16 @@
     <div class="grid2">
       <section class="panel box">
         <p class="big" id="r1big"></p>
-        <div class="formula2" id="r1f"></div>
+        <div class="formula2 sh-only" id="r1f"></div>
         <ul class="checks" id="r1c"></ul>
       </section>
       <section class="panel box">
         <h3>折射率與折射定律</h3>
         <ul>
-          <li>折射率 <b>n＝c／v</b>：真空 1、空氣 ≈ 1.00、水 ≈ 1.33、玻璃 ≈ 1.5、鑽石 ≈ 2.42。</li>
-          <li>由光速快 → 光速慢（n 小 → n 大）：<b>偏向法線</b>；由慢 → 快：<b>偏離法線</b>。口訣「進慢靠法線，進快離法線」。</li>
+          <li class="sh-only">折射率 <b>n＝c／v</b>：真空 1、空氣 ≈ 1.00、水 ≈ 1.33、玻璃 ≈ 1.5、鑽石 ≈ 2.42。</li>
+          <li>由光速快 → 光速慢<span class="sh-only">（n 小 → n 大）</span>：<b>偏向法線</b>；由慢 → 快：<b>偏離法線</b>。口訣「進慢靠法線，進快離法線」。</li>
           <li>垂直入射時方向不變，但速率仍會改變。</li>
-          <li>【延伸】<b>n₁ sinθ₁＝n₂ sinθ₂</b>（等價於 sinθ₁／v₁＝sinθ₂／v₂）。</li>
+          <li class="sh-only">【延伸】<b>n₁ sinθ₁＝n₂ sinθ₂</b>（等價於 sinθ₁／v₁＝sinθ₂／v₂）。</li>
           <li><b>全反射</b>的兩個條件：① 由 n 大射向 n 小；② 入射角大於臨界角（水約 49°、玻璃約 42°）。</li>
         </ul>
       </section>
@@ -241,7 +242,7 @@
         <h3>光為什麼要轉彎？費馬原理</h3>
         <ul>
           <li>最快的路線不是直線，而是「在跑得快的陸地多走一點」。</li>
-          <li>最快的那一點剛好滿足 <b>sinθ₁／v₁＝sinθ₂／v₂</b>——這正是折射定律！</li>
+          <li class="sh-only">最快的那一點剛好滿足 <b>sinθ₁／v₁＝sinθ₂／v₂</b>——這正是折射定律！</li>
           <li>費馬：光走的，就是<b>最省時間的路徑</b>。折射定律不是天外飛來的。</li>
           <li>改變陸上、水中的速度看看：速度一樣時，最快的路線就是直線（不折射）。</li>
         </ul>
@@ -249,7 +250,7 @@
     </div>
   </section>
 
-  <section class="panel" id="qpanel">
+  <section class="panel sh-only" id="qpanel">
     <p class="ptitle">講義題目情境 <small>高一基礎物理｜電磁波與光（頁碼為學生版）</small></p>
     <div class="cbox" id="qbox"></div>
   </section>
@@ -336,7 +337,7 @@ function solve1(){const{O,R}=geo1(),a=S1.a*D2R,top=S1.side==='top';
 DRAW.snell=()=>{const g=g1,W=W1,H=H1;g.clearRect(0,0,W,H);const s=solve1(),{O,R,S}=s;
   g.fillStyle=C[MED[S1.top].col];g.fillRect(0,0,W,O[1]);g.fillStyle=C[MED[S1.bot].col];g.fillRect(0,O[1],W,H-O[1]);
   line(g,0,O[1],W,O[1],C.muted,1.5);
-  text(g,`${MED[S1.top].nm}  n＝${MED[S1.top].ns}`,10,22,{col:C.ink,size:14,bold:true});text(g,`${MED[S1.bot].nm}  n＝${MED[S1.bot].ns}`,10,H-12,{col:C.ink,size:14,bold:true});
+  text(g,MED[S1.top].nm+(isJH()?'':`  n＝${MED[S1.top].ns}`),10,22,{col:C.ink,size:14,bold:true});text(g,MED[S1.bot].nm+(isJH()?'':`  n＝${MED[S1.bot].ns}`),10,H-12,{col:C.ink,size:14,bold:true});
   line(g,O[0],O[1]-R*1.05,O[0],O[1]+R*1.05,C.muted,1.4,[6,5]);text(g,'法線',O[0]+6,O[1]-R*1.05+12,{col:C.muted,size:12,bold:true});
   const E=(v,L)=>[O[0]+v[0]*L,O[1]+v[1]*L];
   // 波前
@@ -365,11 +366,11 @@ UI.snell=()=>{segSet($('m1a'),S1.top);segSet($('m1b'),S1.bot);$('wf1').checked=S
   const L=[];const v1=3/mi.n,v2=3/mt.n;
   if(mi.n===mt.n)L.push(['info','兩邊是同一種介質，光不會轉彎。']);
   else if(s.th1===0)L.push(['info','垂直入射：方向不變，但速率仍會改變。']);
-  else if(!s.t)L.push(['ok',`光由 n 大（${mi.nm}）射向 n 小（${mt.nm}），而且入射角 ${s.th1}° ＞ 臨界角 ${f1(R2D(Math.asin(mt.n/mi.n)))}°：<b>全反射</b>，光全部反射回${mi.nm}。`]);
+  else if(!s.t)L.push(['ok',`光由${isJH()?'慢':' n 大'}（${mi.nm}）射向${isJH()?'快':' n 小'}（${mt.nm}），而且入射角 ${s.th1}° ＞ 臨界角 ${f1(R2D(Math.asin(mt.n/mi.n)))}°：<b>全反射</b>，光全部反射回${mi.nm}。`]);
   else L.push(['info',mi.n<mt.n?`由快到慢（${mi.nm} → ${mt.nm}）：<b>偏向法線</b>（θ₂ ＜ θ₁）`:`由慢到快（${mi.nm} → ${mt.nm}）：<b>偏離法線</b>（θ₂ ＞ θ₁）`]);
-  L.push(['info',`光速 v＝c／n：${mi.nm}中 ${v1.toFixed(2)}×10⁸ m/s，${mt.nm}中 ${v2.toFixed(2)}×10⁸ m/s。頻率不變，波長變成 ${(mi.n/mt.n).toFixed(2)} 倍（打開「顯示波前」看波峰間距）。`]);
-  if(mi.n>mt.n&&s.t)L.push(['info',`由 n 大射向 n 小時有臨界角：sinθc ＝ ${mt.ns}／${mi.ns}，θc ≈ ${f1(R2D(Math.asin(mt.n/mi.n)))}°。入射角再大一點就會全反射。`]);
-  if(mi.n<mt.n)L.push(['info','由 n 小射向 n 大時，不管入射角多大都不會全反射。']);
+  if(!isJH())L.push(['info',`光速 v＝c／n：${mi.nm}中 ${v1.toFixed(2)}×10⁸ m/s，${mt.nm}中 ${v2.toFixed(2)}×10⁸ m/s。頻率不變，波長變成 ${(mi.n/mt.n).toFixed(2)} 倍（打開「顯示波前」看波峰間距）。`]);
+  if(!isJH()&&mi.n>mt.n&&s.t)L.push(['info',`由 n 大射向 n 小時有臨界角：sinθc ＝ ${mt.ns}／${mi.ns}，θc ≈ ${f1(R2D(Math.asin(mt.n/mi.n)))}°。入射角再大一點就會全反射。`]);
+  if(mi.n<mt.n)L.push(['info',isJH()?'由快射向慢時，不管入射角多大都不會全反射。':'由 n 小射向 n 大時，不管入射角多大都不會全反射。']);
   checks($('r1c'),L);};
 dragger(cv1,()=>{const s=solve1(),la=Math.atan2(s.O[1]-s.S[1],s.O[0]-s.S[0]);return[{x:s.S[0]-Math.cos(la)*30,y:s.S[1]-Math.sin(la)*30,r:34,move:(x,y)=>{const{O}=geo1(),dx=x-O[0],dy=y-O[1];
   if(dy<=0){S1.side='top';S1.a=clamp(Math.round(R2D(Math.atan2(dx,-dy))),-89,89);}else{S1.side='bot';S1.a=clamp(Math.round(R2D(Math.atan2(dx,dy))),-89,89);}UI.snell();}}];},kick);
@@ -384,7 +385,7 @@ SIZE.huygens=()=>{const r=fit(cv2,.5,300,500);W2=r.W;H2=r.H;};
 function geo2(){const y0=H2*.5,lam=Math.max(30,Math.min(W2,H2)*.11),v=lam*.9,i=S2.i*D2R,r=Math.asin(Math.sin(i)/S2.n2);return{y0,lam,v,i,r,d1:[Math.sin(i),Math.cos(i)],d2:[Math.sin(r),Math.cos(r)],O:[W2*.5,y0]};}
 DRAW.huygens=()=>{const g=g2,W=W2,H=H2,G=geo2(),{y0,lam,v,O,d1,d2}=G;g.clearRect(0,0,W,H);
   g.fillStyle=C.panel;g.fillRect(0,0,W,y0);g.fillStyle=C.sand;g.fillRect(0,y0,W,H-y0);line(g,0,y0,W,y0,C.muted,1.5);
-  text(g,'空氣（快）n＝1',10,22,{col:C.ink,size:14,bold:true});text(g,`慢的介質 n＝${S2.n2.toFixed(2)}`,10,H-12,{col:C.ink,size:14,bold:true});
+  text(g,isJH()?'空氣（快）':'空氣（快）n＝1',10,22,{col:C.ink,size:14,bold:true});text(g,isJH()?'慢的介質':`慢的介質 n＝${S2.n2.toFixed(2)}`,10,H-12,{col:C.ink,size:14,bold:true});
   const off=(v*S2.t)%lam,L=Math.hypot(W,H)*1.5,p1=[d1[1],-d1[0]],p2=[d2[1],-d2[0]];
   // 波峰：上方 d1·(r−O)＝c，下方 d2·(r−O)＝c／n
   g.save();g.beginPath();g.rect(0,0,W,y0);g.clip();
@@ -489,7 +490,7 @@ DRAW.depth=()=>{const g=g3,W=W3,H=H3;g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.
   S3._seen=seen;S3._info=info;
 };
 function drawPond(g,W,H){const ys=pond(),ps=PS(),B=[ps.bird.fx*W,ps.bird.fy*H],F=[ps.fish.fx*W,ps.fish.fy*H],bs=S3.obj==='birdsee';
-  g.fillStyle=C.water;g.fillRect(0,ys,W,H-ys);line(g,0,ys,W,ys,C.ai,2);text(g,'空氣',10,22,{col:C.muted,size:13,bold:true});text(g,'水 n＝1.33',10,H-12,{col:C.muted,size:13,bold:true});
+  g.fillStyle=C.water;g.fillRect(0,ys,W,H-ys);line(g,0,ys,W,ys,C.ai,2);text(g,'空氣',10,22,{col:C.muted,size:13,bold:true});text(g,isJH()?'水':'水 n＝1.33',10,H-12,{col:C.muted,size:13,bold:true});
   // 物體 A 發出的光到觀察者 O
   const A=bs?F:B,O=bs?B:F,nA=bs?NW:1,nO=bs?1:NW,P=surfP(A,O,ys,nA,nO),app=appPos(A,O,P,ys,nA,nO);
   line(g,P[0],P[1]-46,P[0],P[1]+46,C.muted,1.2,[4,4]);
@@ -576,7 +577,7 @@ DRAW.fiber=()=>{const g=g4,W=W4,H=H4,T=trace4(),F=T.F;g.clearRect(0,0,W,H);g.fil
   const s=F.start,ain=S4.a*D2R,dir=[Math.cos(ain),Math.sin(ain)],L0=[s[0]-dir[0]*W*.1,s[1]-dir[1]*W*.1];
   ray(g,L0[0],L0[1],s[0],s[1],C.ray,2.4,null,.5);g.save();g.translate(L0[0],L0[1]);g.rotate(ain);g.fillStyle=C.ink;g.fillRect(-36,-6,36,12);g.restore();
   handle(g,L0[0]-dir[0]*18,L0[1]-dir[1]*18,9);
-  text(g,'玻璃芯 n＝1.5',F.start[0]+12,F.start[1]-F.hw-8,{col:C.mir,size:12,bold:true});
+  text(g,isJH()?'玻璃芯':'玻璃芯 n＝1.5',F.start[0]+12,F.start[1]-F.hw-8,{col:C.mir,size:12,bold:true});
 };
 UI.fiber=()=>{segSet($('shape4'),S4.shape);segSet($('out4'),S4.nout);$('a4').value=S4.a;$('a4o').textContent=S4.a+'°';const T=trace4();
   const ok=!!T.exit&&T.exit.I>.8,leak=T.leaks.some(l=>l.I>.03);
@@ -728,6 +729,8 @@ const QS=[{g:'2-4 光的折射',items:[
 let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();kick();}).observe(document.querySelector('.wrap'));
 setBench((location.hash||'#snell').slice(1),true);
 window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+// 國中／高中切換：重新產生文字與畫面
+window.addEventListener('levelchange',()=>{UI[bench]&&UI[bench]();kick();});
 </script>
 </body>
 </html>

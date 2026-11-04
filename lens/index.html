@@ -6,6 +6,7 @@
 <title>透鏡成像模擬</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/optics.js"></script>
 <style>
 /* 版面：標題 → 光學台（SVG 畫面）→ 下方「控制」與「數據」兩欄，手機時疊成一欄 */
 :root {--axis: #7d8a99;--lens: #4f63d6;--lens-fill: rgba(79, 99, 214, 0.16);--zone: rgba(79, 99, 214, 0.06);--obj: #17775f;--img: #c0442a;--ray1: #e0572d;/* 平行光線 */
@@ -65,18 +66,32 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
 .chip.real { border-color: var(--img); color: var(--img); }
 .chip.virtual { border-style: dashed; border-color: var(--img); color: var(--img); }
 .region { margin: 0; font-weight: 500; }
+/* 實驗台切換：側視／立體視角 */
+.panebar { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 8px 10px; }
+.panebar .seg button { font-weight: 700; min-height: 44px; padding: 0 14px; }
+.panebar .seg button .n { font-family: var(--f-mono); margin-right: 5px; opacity: .65; }
+#frame3d { width: 100%; height: 1100px; border: 0; display: block; background: transparent; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <header>
-    <div class="crumb"><a href="../">自然科模擬動畫</a> · 光學 · <a id="to3d" href="../lens3d/">立體視角版</a> · <a href="../mirror/">面鏡成像</a></div>
+    <div class="crumb"><a href="../">自然科模擬動畫</a> · 光學 · 透鏡</div>
     <h1>透鏡成像模擬</h1>
-    <p class="formula">1/f = 1/p + 1/q　　m = −q / p</p>
+    <p class="formula sh-only">1/f = 1/p + 1/q　　m = −q / p</p>
     <p class="hint">先選凸透鏡或凹透鏡，再拖曳綠色箭頭（物體）：左右改變物距，上下改變高度；也可以用下方拉桿調整。靠近 F 或 2F 時會自動吸附。</p>
     <p class="rotate-hint">手機橫拿，畫面會更大。</p>
   </header>
 
+  <nav class="panel panebar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="paneSeg">
+      <button type="button" data-v="2d" aria-pressed="true"><span class="n">1</span>透鏡成像（側視）</button>
+      <button type="button" data-v="3d" aria-pressed="false"><span class="n">2</span>立體視角：實像左右也相反</button>
+    </span>
+  </nav>
+
+  <div id="pane2d">
   <div class="bench">
     <svg id="scene" viewBox="0 0 1000 500" aria-label="透鏡成像光路圖">
       <defs>
@@ -124,10 +139,16 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
         <dt>像距 q</dt><dd id="qOut"></dd>
         <dt>物高 h</dt><dd id="hOut"></dd>
         <dt>像高 h′</dt><dd id="hiOut"></dd>
-        <dt>放大率 m</dt><dd id="mOut"></dd>
+        <dt class="sh-only">放大率 m</dt><dd class="sh-only" id="mOut"></dd>
       </dl>
       <div class="verdict" id="verdict"></div>
     </section>
+  </div>
+  </div>
+
+  <!-- 立體視角：原本的 lens3d/ 頁，內容在 3d.html -->
+  <div id="pane3d" hidden>
+    <iframe id="frame3d" title="透鏡成像立體視角"></iframe>
   </div>
 </div>
 
@@ -466,14 +487,50 @@ function setType(type) {
   document.getElementById('tConcave').setAttribute('aria-pressed', String(isConcave()));
   document.getElementById('r1Text').textContent = RAY_TEXT[lensType][0];
   document.getElementById('r3Text').textContent = RAY_TEXT[lensType][1];
-  const hash = isConcave() ? '#concave' : '';
-  document.getElementById('to3d').href = '../lens3d/' + hash;
-  try { history.replaceState(null, '', location.pathname + location.search + hash); } catch (e) {}
+  writeHash();
   scheduleRender();
 }
 document.getElementById('tConvex').addEventListener('click', () => setType('convex'));
 document.getElementById('tConcave').addEventListener('click', () => setType('concave'));
-window.addEventListener('hashchange', () => setType(location.hash === '#concave' ? 'concave' : 'convex'));
+window.addEventListener('hashchange', () => readHash());
+
+// ===== 實驗台：側視／立體視角（立體視角是 3d.html，嵌在 iframe 裡）=====
+// 網址：#concave 凹透鏡、#3d 立體視角、#3d-concave 立體視角的凹透鏡
+let pane = '2d';
+function writeHash() {
+  const h = (pane === '3d' ? '3d' : '') + (isConcave() ? (pane === '3d' ? '-concave' : 'concave') : '');
+  try { history.replaceState(null, '', location.pathname + location.search + (h ? '#' + h : '')); } catch (e) {}
+}
+function setPane(p) {
+  // 從立體視角切回側視時，沿用那邊選的透鏡種類
+  if (pane === '3d' && p !== '3d') {
+    try {
+      const d = document.getElementById('frame3d').contentDocument;
+      const c = d.getElementById('tConcave').getAttribute('aria-pressed') === 'true';
+      if (c !== isConcave()) lensType = c ? 'concave' : 'convex';
+    } catch (e) {}
+  }
+  pane = p === '3d' ? '3d' : '2d';
+  document.querySelectorAll('#paneSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === pane)));
+  document.getElementById('pane2d').hidden = pane !== '2d';
+  document.getElementById('pane3d').hidden = pane !== '3d';
+  if (pane === '3d') {
+    const f = document.getElementById('frame3d');
+    if (!f.getAttribute('src')) f.setAttribute('src', '3d.html' + (isConcave() ? '#concave' : ''));
+    else { try { f.contentWindow.location.hash = isConcave() ? 'concave' : 'convex'; } catch (e) {} }
+    writeHash();
+  } else {
+    setType(lensType);
+    updateScale();
+  }
+}
+document.getElementById('paneSeg').addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) setPane(b.dataset.v); });
+function readHash() {
+  const h = location.hash.slice(1);
+  lensType = /concave/.test(h) ? 'concave' : 'convex';
+  setPane(/^3d/.test(h) ? '3d' : '2d');
+  setType(lensType);
+}
 
 // 螢幕旋轉或視窗大小改變時重畫；切換亮色／暗色主題時也重畫
 new ResizeObserver(() => { updateScale(); scheduleRender(); }).observe(svg);
@@ -483,7 +540,7 @@ new MutationObserver(onTheme).observe(document.documentElement, { attributes: tr
 
 updateScale();
 readColors();
-setType(location.hash === '#concave' ? 'concave' : 'convex');
+readHash();
 render();
 </script>
 

@@ -1,0 +1,496 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>面鏡成像模擬</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/optics.js"></script>
+<style>
+/* 版面：標題 → 光學台（SVG 畫面）→ 下方「控制」與「數據」兩欄，手機時疊成一欄 */
+:root {--axis: #7d8a99;--lens: #4f63d6;--lens-fill: rgba(79, 99, 214, 0.16);--zone: rgba(79, 99, 214, 0.06);--obj: #17775f;--img: #c0442a;--ray1: #e0572d;/* 平行光線 */
+  --ray2: #2a7bd6;/* 通過光心 */
+  --ray3: #b88400;/* 通過焦點 */
+  --f-display: "Noto Serif TC", "Songti TC", "PMingLiU", serif;}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {--axis: #6f7e8f;--lens: #8e9cff;--lens-fill: rgba(142, 156, 255, 0.2);--zone: rgba(142, 156, 255, 0.07);--obj: #4cc7a4;--img: #ff7c5e;--ray1: #ff7d55;--ray2: #5cabff;--ray3: #f1c13a;color-scheme: dark;}
+}
+:root[data-theme="dark"] {--axis: #6f7e8f;--lens: #8e9cff;--lens-fill: rgba(142, 156, 255, 0.2);--zone: rgba(142, 156, 255, 0.07);--obj: #4cc7a4;--img: #ff7c5e;--ray1: #ff7d55;--ray2: #5cabff;--ray3: #f1c13a;color-scheme: dark;}
+.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+
+header { display: grid; gap: 4px; }
+
+/* 光學台 */
+.bench {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.bench svg { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
+#obj { cursor: grab; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; }
+#obj:active { cursor: grabbing; }
+#obj:focus-visible .grip { stroke: var(--ink); stroke-width: 3; }
+/* 字級由程式依螢幕寬度設定，手機上會自動放大 */
+.svg-label { font-family: var(--f-mono); fill: var(--ink); }
+.svg-small { font-family: var(--f-mono); fill: var(--muted); }
+
+/* 手機直拿時的提示 */
+.rotate-hint { display: none; margin: 0; font-size: 0.88rem; color: var(--muted); }
+@media (max-width: 600px) and (orientation: portrait) { .rotate-hint { display: block; } }
+
+/* 手機：光學台固定在上方，捲動調整拉桿時仍看得到光路 */
+@media (max-width: 720px) {
+  .wrap { gap: 12px; }
+  .bench { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; box-shadow: 0 6px 14px -10px rgba(0, 0, 0, 0.35); }
+  body::before { content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px); z-index: 10; background: var(--bg); }
+  .formula, .hint { font-size: 0.85rem; }
+}
+
+/* 下方兩欄 */
+.below { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+@media (max-width: 720px) { .below { grid-template-columns: minmax(0, 1fr); } }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px 18px; display: grid; gap: 14px; align-content: start; }
+.card h2 { margin: 0; font-size: 0.8rem; letter-spacing: 0.12em; color: var(--muted); font-weight: 500; }
+
+.slider-row { display: grid; gap: 6px; }
+.slider-row .top { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; }
+.slider-row output { font-family: var(--f-mono); font-variant-numeric: tabular-nums; font-size: 1.05rem; }
+input[type="range"] { width: 100%;  height: 28px; margin: 0; }
+
+.rays { display: grid; gap: 6px; }
+.rays label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.swatch { width: 22px; height: 3px; border-radius: 2px; flex: none; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outline-offset: 2px; }
+.chip.real { border-color: var(--img); color: var(--img); }
+.chip.virtual { border-style: dashed; border-color: var(--img); color: var(--img); }
+.region { margin: 0; font-weight: 500; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="crumb"><a href="../">自然科模擬動畫</a> · 光學 · <a href="./#mirror">光的反射</a> · <a href="../lens/">透鏡</a></div>
+    <h1>面鏡成像模擬</h1>
+    <p class="formula sh-only">1/f = 1/p + 1/q　　m = −q / p　　f = R / 2</p>
+    <p class="hint">先選凹面鏡或凸面鏡，再拖曳綠色箭頭（物體）：左右改變物距，上下改變高度；也可以用下方拉桿調整。靠近 F 或 C 時會自動吸附。C 是曲率中心，距離鏡面 2 倍焦距。</p>
+    <p class="rotate-hint">手機橫拿，畫面會更大。</p>
+  </header>
+
+  <div class="bench">
+    <svg id="scene" viewBox="0 0 1000 500" aria-label="面鏡成像光路圖">
+      <defs>
+        <clipPath id="clip"><rect x="0" y="0" width="1000" height="500"></rect></clipPath>
+      </defs>
+      <!-- 動態內容都畫在這個群組裡，每次更新重新產生 -->
+      <g id="dyn" clip-path="url(#clip)"></g>
+      <!-- 物體（可拖曳） -->
+      <g id="obj" tabindex="0" role="slider" aria-label="物體位置，用方向鍵調整"></g>
+    </svg>
+  </div>
+
+  <div class="below">
+    <section class="card" aria-label="控制">
+      <h2>控制</h2>
+      <div class="seg" role="group" aria-label="面鏡種類">
+        <button id="tConcave" type="button" aria-pressed="true">凹面鏡</button>
+        <button id="tConvex" type="button" aria-pressed="false">凸面鏡</button>
+      </div>
+      <div class="slider-row">
+        <div class="top"><label for="fSlider">焦距 f</label><output id="fOut">60 公分</output></div>
+        <input id="fSlider" type="range" min="20" max="100" step="1" value="60">
+      </div>
+      <div class="slider-row">
+        <div class="top"><label for="pSlider">物距 p</label><output id="pSliderOut">150 公分</output></div>
+        <input id="pSlider" type="range" min="5" max="240" step="1" value="150">
+      </div>
+      <div class="slider-row">
+        <div class="top"><label for="hSlider">物高 h</label><output id="hSliderOut">40 公分</output></div>
+        <input id="hSlider" type="range" min="10" max="80" step="1" value="40">
+      </div>
+      <div class="rays">
+        <label><input type="checkbox" id="r1" checked><span class="swatch" style="background: var(--ray1)"></span><span id="r1Text">平行光軸 → 反射後通過焦點</span></label>
+        <label><input type="checkbox" id="r2" checked><span class="swatch" style="background: var(--ray2)"></span><span id="r2Text">射向鏡面中心 → 對稱反射</span></label>
+        <label><input type="checkbox" id="r3" checked><span class="swatch" style="background: var(--ray3)"></span><span id="r3Text">通過焦點 → 反射後平行光軸</span></label>
+      </div>
+      <button id="reset" type="button" class="btn">重設</button>
+    </section>
+
+    <section class="card" aria-label="數據">
+      <h2>數據</h2>
+      <p class="region" id="region"></p>
+      <dl>
+        <dt>物距 p</dt><dd id="pOut"></dd>
+        <dt>像距 q</dt><dd id="qOut"></dd>
+        <dt>物高 h</dt><dd id="hOut"></dd>
+        <dt>像高 h′</dt><dd id="hiOut"></dd>
+        <dt class="sh-only">放大率 m</dt><dd class="sh-only" id="mOut"></dd>
+      </dl>
+      <div class="verdict" id="verdict"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ===== 基本設定 =====
+const S = 2;              // 比例：1 公分 = 2 個 SVG 單位
+const LX = 700;           // 鏡面在畫面中的 x 座標（偏右，左邊留給物體和實像）
+const AY = 250;           // 光軸的 y 座標
+const W = 1000, H = 500;  // 畫面大小
+const FAR = 2000;         // 光線延伸到畫面外的距離
+
+const DEFAULT = { f: 60, p: 150, h: 40 };
+let state = { ...DEFAULT };
+let mirrorType = 'concave';   // 'concave' 凹面鏡、'convex' 凸面鏡
+const isConvex = () => mirrorType === 'convex';
+const signedF = () => (isConvex() ? -state.f : state.f);   // 凸面鏡的焦距取負值（焦點在鏡子後方）
+
+const svg = document.getElementById('scene');
+const dyn = document.getElementById('dyn');
+const objG = document.getElementById('obj');
+
+// 螢幕越窄，畫面裡的字、線條、箭頭就放大越多（手機上才看得清楚）
+let K = 1;
+function updateScale() {
+  const w = svg.clientWidth || 1000;
+  K = Math.min(2.2, Math.max(1, 720 / w));
+}
+
+// ===== 小工具 =====
+// 求直線 (x1,y1)-(x2,y2) 在 x 處的 y 值
+function yAt(x1, y1, x2, y2, x) {
+  return y1 + (y2 - y1) * (x - x1) / (x2 - x1);
+}
+function line(x1, y1, x2, y2, color, opts = {}) {
+  const dash = opts.dash ? `stroke-dasharray="${opts.dash.split(' ').map(n => n * K).join(' ')}"` : '';
+  const op = opts.opacity ?? 1;
+  const w = (opts.width ?? 2) * Math.sqrt(K);
+  return `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="${color}" stroke-width="${w}" ${dash} opacity="${op}" stroke-linecap="round"/>`;
+}
+function text(x, y, str, cls, opts = {}) {
+  const size = (cls === 'svg-small' ? 12 : 15) * K;
+  const anchor = opts.anchor ?? 'middle';
+  const style = opts.color ? `style="fill:${opts.color}"` : '';
+  return `<text class="${cls}" x="${x}" y="${y}" font-size="${size}" text-anchor="${anchor}" ${style}>${str}</text>`;
+}
+// 畫箭頭：從光軸上的 (x, AY) 指向 (x, tipY)
+function arrow(x, tipY, color, opts = {}) {
+  const dir = tipY < AY ? -1 : 1;           // 往上或往下
+  const head = Math.min(14 * K, Math.abs(AY - tipY) * 0.6);
+  const half = head * 0.72;
+  const baseHead = tipY - dir * head;
+  const dash = opts.dash ? `stroke-dasharray="${opts.dash.split(' ').map(n => n * K).join(' ')}"` : '';
+  const fill = opts.hollow ? 'none' : color;
+  return `
+    <line x1="${x}" y1="${AY}" x2="${x}" y2="${baseHead}" stroke="${color}" stroke-width="${4 * Math.sqrt(K)}" ${dash} stroke-linecap="round"/>
+    <polygon points="${x},${tipY} ${x - half},${baseHead} ${x + half},${baseHead}" fill="${fill}" stroke="${color}" stroke-width="${2 * Math.sqrt(K)}" stroke-linejoin="round"/>`;
+}
+const fmt = (v, d = 1) => (Math.round(v * 10 ** d) / 10 ** d).toFixed(d);
+
+// ===== 顏色快取：只在切換亮色／暗色主題時重新讀取 =====
+const colors = {};
+function readColors() {
+  const st = getComputedStyle(document.documentElement);
+  for (const n of ['axis', 'lens', 'lens-fill', 'zone', 'obj', 'img', 'ray1', 'ray2', 'ray3', 'ink', 'panel']) {
+    colors[n] = st.getPropertyValue(`--${n}`).trim();
+  }
+}
+
+// ===== 物體的圖形元素只建立一次 =====
+// 拖曳時手指按著的元素必須一直存在，手機瀏覽器才不會誤判成捲動頁面而卡頓
+const SVGNS = 'http://www.w3.org/2000/svg';
+function mk(tag, attrs) {
+  const el = document.createElementNS(SVGNS, tag);
+  setAttrs(el, attrs);
+  objG.appendChild(el);
+  return el;
+}
+function setAttrs(el, attrs) { for (const k in attrs) el.setAttribute(k, attrs[k]); }
+const objEls = {
+  hitRect: mk('rect', { fill: 'transparent' }),       // 觸控範圍（箭桿）
+  hitCircle: mk('circle', { fill: 'transparent' }),   // 觸控範圍（箭頭尖端）
+  stem: mk('line', { 'stroke-linecap': 'round' }),
+  head: mk('polygon', { 'stroke-linejoin': 'round' }),
+  grip: mk('circle', { class: 'grip', opacity: '0.3' }),
+  label: mk('text', { class: 'svg-label', 'text-anchor': 'middle' }),
+};
+objEls.label.textContent = '物體';
+function updateObject(xo, yo, color) {
+  const hit = 34 * K;
+  const head = Math.min(14 * K, Math.abs(AY - yo) * 0.6);
+  const half = head * 0.72, baseHead = yo + head;
+  setAttrs(objEls.hitRect, { x: xo - hit * 0.7, y: yo, width: hit * 1.4, height: AY - yo + 10 });
+  setAttrs(objEls.hitCircle, { cx: xo, cy: yo, r: hit });
+  setAttrs(objEls.stem, { x1: xo, y1: AY, x2: xo, y2: baseHead, stroke: color, 'stroke-width': 4 * Math.sqrt(K) });
+  setAttrs(objEls.head, { points: `${xo},${yo} ${xo - half},${baseHead} ${xo + half},${baseHead}`, fill: color, stroke: color, 'stroke-width': 2 * Math.sqrt(K) });
+  setAttrs(objEls.grip, { cx: xo, cy: yo, r: 10 * K, fill: color });
+  setAttrs(objEls.label, { x: xo, y: yo - 14 * K, 'font-size': 15 * K, style: `fill:${color}` });
+}
+
+// 每一個畫面更新週期最多重畫一次（手機螢幕 120Hz 時觸控事件很密集）
+let rafId = 0;
+function scheduleRender() {
+  if (!rafId) rafId = requestAnimationFrame(() => { rafId = 0; render(); });
+}
+
+// ===== 物理計算（面鏡公式，和薄透鏡公式同一個形式）=====
+// 物體在鏡子前方（左邊）。像距 q 為正：實像，在鏡子前方；q 為負：虛像，在鏡子後方（右邊）
+function solve() {
+  const { p, h } = state;
+  const f = signedF();
+  if (Math.abs(p - f) < 0.01) return { none: true };   // 物體在凹面鏡焦點上：反射光平行，不成像
+  const q = (p * f) / (p - f);
+  const m = -q / p;              // 放大率：負 = 倒立，正 = 正立
+  return { q, m, hi: m * h };
+}
+
+// ===== 繪圖 =====
+function render() {
+  const { f, p, h } = state;
+  const fs = f * S;
+  const r = solve();
+  const css = name => colors[name];
+  const conv = isConvex();
+  const fx = conv ? -fs : fs;     // 帶正負號的焦距（畫面單位）：凹面鏡焦點在左邊，凸面鏡在右邊
+  const Fx = LX - fx, Cx = LX - 2 * fx;   // 焦點 F、曲率中心 C 的位置
+  const XL = -FAR;                // 反射光往左延伸到畫面外
+  let out = '';
+
+  // F 與 C 之間的淺色區域
+  out += `<rect x="${Math.min(Fx, Cx)}" y="0" width="${fs}" height="${H}" fill="${css('zone')}"/>`;
+  // 鏡子後方：淡淡的灰底，提醒這裡是鏡子背面
+  out += `<rect x="${LX}" y="0" width="${W - LX}" height="${H}" fill="${css('axis')}" opacity="0.06"/>`;
+
+  // 刻度尺（距離鏡面的公分數）
+  const RY = 462;
+  const labelEvery = K > 1.5 ? 100 : 50;
+  for (let cm = 0; cm * S <= LX; cm += 10) {
+    for (const side of cm === 0 ? [0] : [-1, 1]) {
+      const x = LX + side * cm * S;
+      if (x > W) continue;
+      const big = cm % 50 === 0;
+      out += line(x, RY, x, RY - (big ? 10 : 5) * K, css('axis'), { width: 1 });
+      if (cm % labelEvery === 0) out += text(x, RY + 4 + 12 * K, cm, 'svg-small');
+    }
+  }
+  out += line(0, RY, W, RY, css('axis'), { width: 1 });
+  out += text(W - 8, RY - 12 * K, '公分', 'svg-small', { anchor: 'end' });
+  out += text(LX - 10 * K, 22 * K, '鏡子前方', 'svg-small', { anchor: 'end' });
+  out += text(LX + 10 * K, 22 * K, '鏡子後方', 'svg-small', { anchor: 'start' });
+
+  // 光軸
+  out += line(0, AY, W, AY, css('axis'), { width: 1.5, dash: '8 6' });
+
+  // 面鏡：焦距越短越彎。凹面鏡中間凹進去（邊緣朝向物體），凸面鏡中間凸出來
+  const sag = 6 + 900 / f;
+  const x0 = conv ? LX + sag : LX - sag, xc = conv ? LX - sag : LX + sag;
+  const y0 = AY - 175, y2 = AY + 175;
+  const qx = t => (1 - t) * (1 - t) * x0 + 2 * t * (1 - t) * xc + t * t * x0;
+  const qy = t => (1 - t) * (1 - t) * y0 + 2 * t * (1 - t) * AY + t * t * y2;
+  // 背面的斜線，表示這一面不反光
+  for (let i = 0; i <= 14; i++) {
+    const t = i / 14, x = qx(t), y = qy(t);
+    out += line(x + 3, y, x + 14 * Math.sqrt(K), y + 10 * Math.sqrt(K), css('axis'), { width: 1.2 });
+  }
+  out += `<path d="M${x0},${y0} Q${xc},${AY} ${x0},${y2}" fill="none" stroke="${css('lens')}" stroke-width="${4 * Math.sqrt(K)}" stroke-linecap="round"/>`;
+
+  // F 與 C 標記（凹面鏡在鏡子前方，凸面鏡在鏡子後方）
+  out += `<circle cx="${Fx}" cy="${AY}" r="${6 * K}" fill="${css('panel')}" stroke="${css('ink')}" stroke-width="${2 * Math.sqrt(K)}"/>`;
+  out += text(Fx, AY + 29 * K, 'F', 'svg-label');
+  out += line(Cx, AY - 12 * K, Cx, AY + 12 * K, css('ink'), { width: 2.5 });
+  out += text(Cx, AY + 29 * K, 'C', 'svg-label');
+  out += text(Cx, AY + 29 * K + 14 * K, '(2F)', 'svg-small');
+
+  // ----- 三條主光線（入射光是實線，反射光也是實線；反向延長線是虛線）-----
+  const xo = LX - p * S, yo = AY - h * S;   // 物體尖端
+  const show = id => document.getElementById(id).checked;
+  const xi = r.none ? null : LX - r.q * S;  // 像尖端（實像在左，虛像在右）
+  const yi = r.none ? null : AY - r.hi * S;
+  const virtual = !r.none && r.q < 0;
+
+  // 光線 1：平行光軸射向鏡面。凹面鏡：反射後通過 F；凸面鏡：反射後好像從鏡後的 F 發出
+  if (show('r1')) {
+    const c = css('ray1');
+    out += line(xo, yo, LX, yo, c);
+    out += line(LX, yo, XL, yAt(LX, yo, Fx, AY, XL), c);
+    if (conv) out += line(LX, yo, Fx, AY, c, { dash: '5 6', opacity: 0.75 });
+    else if (virtual) out += line(LX, yo, xi, yi, c, { dash: '5 6', opacity: 0.75 });
+  }
+  // 光線 2：射向鏡面中心（鏡面和光軸的交點），以光軸為對稱線反射
+  if (show('r2')) {
+    const c = css('ray2');
+    out += line(xo, yo, LX, AY, c);
+    out += line(LX, AY, XL, yAt(LX, AY, xo, 2 * AY - yo, XL), c);
+    if (virtual) out += line(LX, AY, xi, yi, c, { dash: '5 6', opacity: 0.75 });
+  }
+  // 光線 3：通過（或射向）焦點 F，反射後平行光軸
+  if (show('r3') && !r.none) {
+    const c = css('ray3');
+    const yb = yAt(Fx, AY, xo, yo, LX);   // 打到鏡面的高度
+    out += line(xo, yo, LX, yb, c);
+    out += line(LX, yb, XL, yb, c);
+    if (!conv && p < f) out += line(Fx, AY, xo, yo, c, { dash: '3 6', opacity: 0.6 });  // 看起來像從 F 發出
+    if (conv) out += line(LX, yb, Fx, AY, c, { dash: '3 6', opacity: 0.6 });           // 原本瞄準鏡後 F 的方向
+    if (virtual) out += line(LX, yb, xi, yi, c, { dash: '5 6', opacity: 0.75 });
+  }
+
+  // 像
+  if (!r.none) {
+    out += virtual
+      ? arrow(xi, yi, css('img'), { dash: '7 5', hollow: true })
+      : arrow(xi, yi, css('img'));
+    const ly = r.hi > 0 ? yi - 10 * K : yi + 8 * K + 15 * K;
+    out += text(xi, ly, virtual ? '虛像' : '實像', 'svg-label', { color: css('img') });
+  }
+  dyn.innerHTML = out;
+
+  // 物體：只移動既有的元素，不重建
+  updateObject(xo, yo, css('obj'));
+  objG.setAttribute('aria-valuetext', `物距 ${fmt(p)} 公分，物高 ${fmt(h)} 公分`);
+
+  updateReadout(r);
+}
+
+// ===== 數據區 =====
+function updateReadout(r) {
+  const { f, p, h } = state;
+  const near = (a, b) => Math.abs(a - b) < 0.01;
+  let region;
+  if (isConvex()) region = '凸面鏡：物體放在哪裡，都成正立、縮小的虛像';
+  else if (near(p, 2 * f)) region = '物體在 C（2F）上';
+  else if (p > 2 * f) region = '物體在 C 以外';
+  else if (p > f) region = '物體在 F 與 C 之間';
+  else if (near(p, f)) region = '物體在焦點 F 上';
+  else region = '物體在焦點 F 以內';
+  document.getElementById('region').textContent = region;
+
+  // 讓拉桿跟著拖曳結果同步
+  pSlider.value = Math.round(p);
+  hSlider.value = Math.round(h);
+  document.getElementById('fOut').textContent = isConvex() ? `−${f} 公分` : `${f} 公分`;
+  document.getElementById('pSliderOut').textContent = `${fmt(p, 0)} 公分`;
+  document.getElementById('hSliderOut').textContent = `${fmt(h, 0)} 公分`;
+  document.getElementById('pOut').textContent = `${fmt(p)} 公分`;
+  document.getElementById('hOut').textContent = `${fmt(h)} 公分`;
+
+  const verdict = document.getElementById('verdict');
+  if (r.none) {
+    document.getElementById('qOut').textContent = '∞（不成像）';
+    document.getElementById('hiOut').textContent = '—';
+    document.getElementById('mOut').textContent = '—';
+    verdict.innerHTML = '<span class="chip">反射光互相平行，不成像</span>';
+    return;
+  }
+  const offscreen = (r.q > 0 ? r.q * S > LX : -r.q * S > W - LX) || Math.abs(r.hi * S) > AY;
+  document.getElementById('qOut').textContent =
+    `${fmt(r.q)} 公分${r.q < 0 ? '（鏡子後方）' : '（鏡子前方）'}`;
+  document.getElementById('hiOut').textContent = `${fmt(r.hi)} 公分`;
+  document.getElementById('mOut').textContent = fmt(r.m, 2);
+
+  const real = r.q > 0;
+  const size = Math.abs(r.m) > 1.005 ? '放大' : Math.abs(r.m) < 0.995 ? '縮小' : '等大';
+  verdict.innerHTML = `
+    <span class="chip ${real ? 'real' : 'virtual'}">${real ? '實像' : '虛像'}</span>
+    <span class="chip">${r.m < 0 ? '倒立' : '正立'}</span>
+    <span class="chip">${size}</span>
+    ${offscreen ? '<span class="chip">像超出畫面</span>' : ''}`;
+}
+
+// ===== 拖曳物體（滑鼠與手指都適用）=====
+function svgPoint(evt) {
+  const pt = svg.createSVGPoint();
+  pt.x = evt.clientX; pt.y = evt.clientY;
+  return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+// 靠近 F 或 2F 時吸附過去
+function snap(p) {
+  for (const t of [state.f, 2 * state.f]) if (Math.abs(p - t) < 2) return t;
+  return p;
+}
+function setObject(p, h) {
+  state.p = snap(Math.min(240, Math.max(5, p)));
+  state.h = Math.min(80, Math.max(10, h));
+  scheduleRender();
+}
+
+let drag = null;
+objG.addEventListener('pointerdown', e => {
+  const pt = svgPoint(e);
+  // 記住手指與箭頭尖端的距離，拖曳時才不會跳動
+  drag = { dx: (LX - state.p * S) - pt.x, dy: (AY - state.h * S) - pt.y };
+  objG.setPointerCapture(e.pointerId);
+  objG.focus({ preventScroll: true });
+  e.preventDefault();
+});
+objG.addEventListener('pointermove', e => {
+  if (!drag) return;
+  const pt = svgPoint(e);
+  const tipX = pt.x + drag.dx, tipY = pt.y + drag.dy;
+  setObject((LX - tipX) / S, (AY - tipY) / S);
+});
+const endDrag = () => { drag = null; };
+objG.addEventListener('pointerup', endDrag);
+objG.addEventListener('pointercancel', endDrag);
+// 手指按在物體上時，讓瀏覽器不要捲動頁面
+objG.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+objG.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// 鍵盤操作：左右調物距，上下調物高
+objG.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 10 : 2;
+  const moves = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+  const m = moves[e.key];
+  if (!m) return;
+  e.preventDefault();
+  setObject(state.p + m[0], state.h + m[1]);
+});
+
+// ===== 控制項 =====
+const fSlider = document.getElementById('fSlider');
+const pSlider = document.getElementById('pSlider');
+const hSlider = document.getElementById('hSlider');
+fSlider.addEventListener('input', () => { state.f = Number(fSlider.value); scheduleRender(); });
+pSlider.addEventListener('input', () => setObject(Number(pSlider.value), state.h));
+hSlider.addEventListener('input', () => setObject(state.p, Number(hSlider.value)));
+['r1', 'r2', 'r3'].forEach(id => document.getElementById(id).addEventListener('change', render));
+document.getElementById('reset').addEventListener('click', () => {
+  state = { ...DEFAULT };
+  fSlider.value = DEFAULT.f;
+  ['r1', 'r2', 'r3'].forEach(id => document.getElementById(id).checked = true);
+  render();
+});
+
+// ===== 凹面鏡／凸面鏡切換 =====
+// 網址後面加 #convex 就直接打開凸面鏡
+const RAY_TEXT = {
+  concave: ['平行光軸 → 反射後通過焦點', '射向鏡面中心 → 對稱反射', '通過焦點 → 反射後平行光軸'],
+  convex: ['平行光軸 → 反射後好像從鏡後焦點 F 發出', '射向鏡面中心 → 對稱反射', '射向鏡後焦點 F → 反射後平行光軸'],
+};
+function setType(type) {
+  mirrorType = type === 'convex' ? 'convex' : 'concave';
+  document.getElementById('tConcave').setAttribute('aria-pressed', String(!isConvex()));
+  document.getElementById('tConvex').setAttribute('aria-pressed', String(isConvex()));
+  ['r1Text', 'r2Text', 'r3Text'].forEach((id, i) => { document.getElementById(id).textContent = RAY_TEXT[mirrorType][i]; });
+  const hash = isConvex() ? '#convex' : '';
+  try { history.replaceState(null, '', location.pathname + location.search + hash); } catch (e) {}
+  scheduleRender();
+}
+document.getElementById('tConcave').addEventListener('click', () => setType('concave'));
+document.getElementById('tConvex').addEventListener('click', () => setType('convex'));
+window.addEventListener('hashchange', () => setType(location.hash === '#convex' ? 'convex' : 'concave'));
+
+// 螢幕旋轉或視窗大小改變時重畫；切換亮色／暗色主題時也重畫
+new ResizeObserver(() => { updateScale(); scheduleRender(); }).observe(svg);
+const onTheme = () => { readColors(); scheduleRender(); };
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', onTheme);
+new MutationObserver(onTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+
+updateScale();
+readColors();
+setType(location.hash === '#convex' ? 'convex' : 'concave');
+render();
+</script>
+
+</body>
+</html>

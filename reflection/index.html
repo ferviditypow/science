@@ -3,9 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>光的反射：反射定律、平面鏡、全身鏡、光槓桿</title>
+<title>光的反射：反射定律、平面鏡、全身鏡、面鏡、光槓桿</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/optics.js"></script>
 <style>
 :root{--ray:#d23b2f;--mir:#5b7fa6;--ai:#1c68ad;--ar:#1f8a5b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ray:#ff7468;--mir:#9cc0e6;--ai:#5ba8ec;--ar:#4cc28e;color-scheme:dark}}
@@ -47,7 +48,7 @@
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 電磁波與光（二） · <a href="../emwave/">上一頁：電磁波</a> · <a href="../refraction/">下一頁：光的折射</a></div>
       <h1>光的反射</h1>
     </div>
-    <p>拖曳橘色的點操作：雷射筆、眼睛、人、鏡子的上下緣都可以拖。五個實驗台對應講義 2-3；最下方有隨堂練習的題目情境。</p>
+    <p>拖曳橘色的點操作：雷射筆、眼睛、人、鏡子的上下緣都可以拖。實驗台 1～4 與 6 對應講義 2-3，實驗台 5 是國二的凹面鏡與凸面鏡；最下方有隨堂練習的題目情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -57,7 +58,8 @@
       <button data-v="diffuse" aria-pressed="false"><span class="n">2</span>鏡面反射與漫反射</button>
       <button data-v="image" aria-pressed="false"><span class="n">3</span>平面鏡成像</button>
       <button data-v="full" aria-pressed="false"><span class="n">4</span>全身鏡</button>
-      <button data-v="lever" aria-pressed="false"><span class="n">5</span>光槓桿與角反射器</button>
+      <button data-v="mirror" aria-pressed="false"><span class="n">5</span>凹面鏡與凸面鏡</button>
+      <button data-v="lever" aria-pressed="false"><span class="n">6</span>光槓桿與角反射器</button>
     </span>
   </nav>
 
@@ -196,7 +198,12 @@
     </div>
   </section>
 
-  <!-- ============ 5 光槓桿 ============ -->
+  <!-- ============ 5 凹面鏡與凸面鏡（原本的 mirror/ 頁，內容在 curved.html）============ -->
+  <section class="bench" id="b-mirror" hidden>
+    <iframe id="mirrorFrame" title="凹面鏡與凸面鏡成像" data-src="curved.html" style="width:100%;height:900px;border:0;display:block;background:transparent"></iframe>
+  </section>
+
+  <!-- ============ 6 光槓桿 ============ -->
   <section class="bench" id="b-lever" hidden>
     <div class="panel">
       <div class="toolbar">
@@ -222,7 +229,7 @@
     </div>
   </section>
 
-  <section class="panel" id="qpanel">
+  <section class="panel sh-only" id="qpanel">
     <p class="ptitle">講義題目情境 <small>高一基礎物理｜電磁波與光（頁碼為學生版）</small></p>
     <div class="cbox" id="qbox"></div>
   </section>
@@ -268,9 +275,14 @@ function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBou
 const deg=x=>Math.round(x*10)/10+'°';
 
 // ================= bench switching / loop =================
-let bench='law';const BENCHES=['law','diffuse','image','full','lever'];
+let bench='law';const BENCHES=['law','diffuse','image','full','mirror','lever'];
 const SIZE={},DRAW={},TICK={};
-function setBench(b,noHash){if(!BENCHES.includes(b))b='law';bench=b;segSet($('benchSeg'),b);
+// 面鏡實驗台：第一次打開時才載入 iframe；網址 #mirror-convex 直接開凸面鏡
+SIZE.mirror=()=>{};DRAW.mirror=()=>{};
+function showMirror(type){const f=$('mirrorFrame');const want='curved.html'+(type==='convex'?'#convex':type==='concave'?'#concave':'');
+  if(!f.getAttribute('src'))f.setAttribute('src',want);else if(type){try{f.contentWindow.location.hash=type;}catch(e){f.setAttribute('src',want);}}}
+function setBench(b,noHash){let mt='';if(/^mirror-(convex|concave)$/.test(b)){mt=b.slice(7);b='mirror';}if(!BENCHES.includes(b))b='law';bench=b;segSet($('benchSeg'),b);
+  if(b==='mirror')showMirror(mt);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();kick();}
 segOn($('benchSeg'),v=>{hideStory();setBench(v);});
 let raf=0,lastT=0;
@@ -594,6 +606,7 @@ ui1();ui2();ui3();ui5();
 let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();kick();}).observe(document.querySelector('.wrap'));
 setBench((location.hash||'#law').slice(1),true);ui4();
 window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+window.addEventListener('levelchange',()=>kick());
 </script>
 </body>
 </html>
