@@ -213,16 +213,13 @@
       <p class="gq" id="gQ"></p>
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="gImgO" checked>物體在鏡中的像</label>
-        <label class="tog"><input type="checkbox" id="gImgE">眼睛在鏡中的像</label>
+        <label class="tog"><input type="checkbox" id="gImgE" checked>眼睛在鏡中的像</label>
         <label class="tog"><input type="checkbox" id="gZone">看得到的範圍</label>
         <label class="tog"><input type="checkbox" id="gRay" checked>光線</label>
-        <label class="tog"><input type="checkbox" id="gAns">顯示答案</label>
         <label class="tog"><input type="checkbox" id="gSnap" checked>對齊格點</label>
-        <button class="btn" id="gAdd">＋ 物體</button>
-        <button class="btn" id="gDel">－ 物體</button>
       </div>
       <div class="cbox"><canvas id="cvG" aria-label="平面鏡方格題，可拖曳眼睛、物體與鏡子兩端"></canvas></div>
-      <p class="hint">拖曳橘色的點：眼睛、每個物體、鏡子兩端都可以拖，改變鏡子長短和位置。「顯示答案」先關著讓學生猜，打開後才畫出光線和判斷結果。</p>
+      <p class="hint">拖曳橘色的點：眼睛、每個物體、鏡子兩端都可以拖，改變鏡子長短和位置。打開「光線」會畫出光從物體到鏡面再進入眼睛的路徑，看不到的物體標 ✕。</p>
     </div>
     <div class="grid2">
       <section class="panel box">
@@ -683,11 +680,9 @@ const GP=[
  {n:'複習第 8 題：桌上的鏡子',src:'〈聲波、面鏡複習〉第 8 題（側視）',desk:true,view:[-1.3,4.3,-2,2.2],mirror:[0,3],
   marks:[['A',0],['B',1],['C',2],['D',3]],objs:[{n:'物體',x:3.3,y:1.75}],eye:{n:'眼睛',x:-.55,y:.85},
   q:'一觀察者觀察物體在鏡中的像，請判斷物體的光線是由哪一區域的鏡子反射至觀察者的眼中？（請填 AB、BC 或 CD）',ans:'AB'},
- {n:'自由練習',src:'',grid:[0,10,-4,4],view:[-.6,10.6,-4.4,4.4],mirror:[3,7],
-  objs:[{n:'A',x:1,y:2},{n:'B',x:5,y:3},{n:'C',x:9,y:1}],eye:{n:'E',x:6,y:2},q:'',ans:''},
 ];
 const RG={i:0};let WG=800,HG=420;const cvG=$('cvG'),gG=cvG.getContext('2d');
-const optG=()=>({o:$('gImgO').checked,e:$('gImgE').checked,z:$('gZone').checked,r:$('gRay').checked,a:$('gAns').checked,snap:$('gSnap').checked});
+const optG=()=>({o:$('gImgO').checked,e:$('gImgE').checked,z:$('gZone').checked,r:$('gRay').checked,snap:$('gSnap').checked});
 function loadG(i){const p=GP[i];Object.assign(RG,{i,top:!!p.top,desk:!!p.desk,view:p.view.slice(),grid:p.grid||null,m:p.mirror.slice(),
   marks:(p.marks||[]).map(a=>a.slice()),objs:p.objs.map(o=>({...o})),eye:{...p.eye},q:p.q,ans:p.ans,src:p.src});
   $('preG').querySelectorAll('button').forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));
@@ -723,29 +718,28 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{s,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[0],m
   for(const[n,x]of RG.marks){line(g,X(x),y0-4,X(x),y0+4,C.ink,2);text(g,n,X(x),RG.desk?y0+22:y0+up*20+(RG.top?10:-2),{col:C.ink,size:15,bold:true,align:'center'});}
   // 光線
   const res=RG.objs.map(o=>({o,...seenG(o)}));
-  if(O.r&&O.a)for(const r of res){if(!r.ok||r.xr==null)continue;const o=r.o,R=[X(r.xr),y0];
+  if(O.r)for(const r of res){if(!r.ok||r.xr==null)continue;const o=r.o,R=[X(r.xr),y0];
     ray(g,X(o.x),Y(o.y),R[0],R[1],C.ray,2.4);ray(g,R[0],R[1],X(E.x),Y(E.y),C.ray,2.4);
     if(O.o)line(g,R[0],R[1],X(o.x),Y(-o.y),C.ray,1.6,[7,5]);g.fillStyle=C.ray;g.beginPath();g.arc(R[0],R[1],4,0,TAU);g.fill();}
-  if(O.a&&O.o)for(const r of res){if(r.ok||r.xr==null)continue;const o=r.o;   // 看不到：視線落在鏡子外
+  if(O.r&&O.o)for(const r of res){if(r.ok||r.xr==null)continue;const o=r.o;   // 看不到：視線落在鏡子外
     line(g,X(E.x),Y(E.y),X(o.x),Y(-o.y),C.muted,1.2,[3,4]);text(g,'✕',X(r.xr),y0+5,{col:'#c0453b',size:15,bold:true,align:'center'});}
   // 物體的像
   if(O.o)for(const o of RG.objs){const x=X(o.x),y=Y(-o.y);g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,6,0,TAU);g.stroke();g.restore();
     text(g,o.n+'′',x+9,y-7,{col:C.muted,size:13,bold:true,bg:C.panel});}
   // 眼睛的像
   const ang=RG.top?-Math.PI/2:Math.PI/2;
-  if(O.e&&E.y>0){g.save();g.globalAlpha=.45;eyeIcon(g,X(Ei.x),Y(Ei.y),-ang,14);g.restore();text(g,E.n+'′',X(Ei.x)+18,Y(Ei.y)+5,{col:C.muted,size:13,bold:true,bg:C.panel});}
+  if(O.e&&E.y>0){const x=X(Ei.x),y=Y(Ei.y);g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,7,0,TAU);g.stroke();g.restore();
+    g.save();g.globalAlpha=.5;eyeIcon(g,x-22,y,-ang,11);g.restore();text(g,E.n+'′（眼睛的像）',x+11,y+18,{col:C.muted,size:13,bold:true,bg:C.panel});}
   // 物體
   for(const r of res){const o=r.o,x=X(o.x),y=Y(o.y);g.fillStyle=C.ink;g.beginPath();g.arc(x,y,5,0,TAU);g.fill();handle(g,x,y,7);
-    const mark=O.a?(r.ok?' ✓':' ✕'):'';text(g,o.n+mark,x+10,y-9,{col:O.a?(r.ok?C.green:'#c0453b'):C.ink,size:15,bold:true,bg:C.panel});}
+    const mark=O.r?(r.ok?' ✓':' ✕'):'';text(g,o.n+mark,x+10,y-9,{col:O.r?(r.ok?C.green:'#c0453b'):C.ink,size:15,bold:true,bg:C.panel});}
   // 眼睛
-  eyeIcon(g,X(E.x),Y(E.y),ang,15);handle(g,X(E.x)+18,Y(E.y)-up*16,6);text(g,E.n,X(E.x)+16,Y(E.y)+up*24+(RG.top?4:0),{col:C.ink,size:15,bold:true,bg:C.panel});
+  {const x=X(E.x),y=Y(E.y);eyeIcon(g,x-22,y,ang,11);handle(g,x,y,8);text(g,E.n+'（眼睛）',x+11,y-11,{col:C.ink,size:15,bold:true,bg:C.panel});}
   handle(g,X(m0),y0,8);handle(g,X(m1),y0,8);
   RG._res=res;};
 function uiG(){const O=optG(),E=RG.eye,res=RG.objs.map(o=>({o,...seenG(o)}));
-  $('gQ').innerHTML=RG.q?`<b>${RG.src}</b>　${RG.q}`:'自由練習：拖曳眼睛、物體和鏡子兩端，或用「＋ 物體」多放幾個點。';
+  $('gQ').innerHTML=`<b>${RG.src}</b>　${RG.q}`;
   const seen=res.filter(r=>r.ok).map(r=>r.o.n);
-  if(!O.a){$('gBig').innerHTML='先猜猜看，再打開「顯示答案」';$('gList').innerHTML='';
-    $('gNote').textContent='提示：打開「物體在鏡中的像」，從每個像連一條線到眼睛，看這條線有沒有穿過鏡子。';return;}
   $('gBig').innerHTML=RG.marks.length&&res.length===1&&res[0].xr!=null?`光在鏡子的 <span class="mono">${whereG(res[0].xr)}</span> 反射`
     :`${E.n} 看得到：${seen.length?seen.join('、'):'都看不到'}`;
   $('gList').innerHTML=res.map(r=>{const w=r.xr==null?'':(RG.marks.length?`，視線落在 ${whereG(r.xr)}`:'');
@@ -756,10 +750,7 @@ function isModifiedG(){const p=GP[RG.i];if(!p)return false;const same=(a,b)=>Mat
   if(!same(p.mirror[0],RG.m[0])||!same(p.mirror[1],RG.m[1])||!same(p.eye.x,RG.eye.x)||!same(p.eye.y,RG.eye.y)||p.objs.length!==RG.objs.length)return true;
   return p.objs.some((o,k)=>!same(o.x,RG.objs[k].x)||!same(o.y,RG.objs[k].y));}
 {const box=$('preG');GP.forEach((p,k)=>{const b=document.createElement('button');b.className='chip';b.textContent=p.n;b.addEventListener('click',()=>loadG(k));box.appendChild(b);});}
-['gImgO','gImgE','gZone','gRay','gAns','gSnap'].forEach(id=>$(id).addEventListener('change',()=>{uiG();kick();}));
-$('gAdd').addEventListener('click',()=>{const used=new Set(RG.objs.map(o=>o.n));const n=[...'ABCDFGHJKLMN'].find(c=>!used.has(c))||'X';const v=RG.view;
-  RG.objs.push({n,x:Math.round((v[0]+v[1])/2),y:Math.max(1,Math.round(v[3]/2))});uiG();kick();});
-$('gDel').addEventListener('click',()=>{if(RG.objs.length>1)RG.objs.pop();uiG();kick();});
+['gImgO','gImgE','gZone','gRay','gSnap'].forEach(id=>$(id).addEventListener('change',()=>{uiG();kick();}));
 dragger(cvG,()=>{const T=tfG(),v=RG.view,sn=x=>optG().snap?Math.round(x*2)/2:Math.round(x*100)/100,list=[];
   const fy=y=>clamp(sn(y),.25,v[3]-.1),fx=x=>clamp(sn(x),v[0]+.1,v[1]-.1);
   list.push({x:T.X(RG.m[0]),y:T.Y(0),r:22,move:(x)=>{RG.m[0]=Math.min(fx(T.ix(x)),RG.m[1]-.5);uiG();}});
