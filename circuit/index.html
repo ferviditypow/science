@@ -130,7 +130,7 @@ kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);bord
         <label class="tog"><input type="checkbox" id="spSnap">對齊格點</label><label class="tog"><input type="checkbox" id="spLet">接點字母</label><label class="tog"><input type="checkbox" id="spVm">伏特計探棒</label>
         <label class="tog"><input type="checkbox" id="spV">電位顏色</label><label class="tog"><input type="checkbox" id="spVI">標出 V、I</label><label class="tog"><input type="checkbox" id="spHide">先猜再看</label><button class="btn primary" id="spReveal">揭曉</button></div>
       <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
-        <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button></span></div>
+        <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button><button data-v="off">不顯示</button></span></div>
       <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
     </div>
     <div class="grid2">
@@ -643,7 +643,7 @@ function drawSp(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=SP.c,z=SP
   if(SP.snap){g.fillStyle=C.line;const [x0,y0]=wxy(0,0);for(let x=Math.ceil(x0);x*z+SP.ox<W;x++)for(let y=Math.ceil(y0);y*z+SP.oy<H;y++){g.fillRect(SP.ox+x*z-1,SP.oy+y*z-1,2,2);}}
   if(!SP.E.length){text(g,'從上方工具列點一下或拖曳元件到這裡，開始接電路',W/2,H/2,{size:15,align:'center',col:C.muted});c.P={};}
   else{c.P={};for(const k in SP.N)c.P[k]=scr(k);c.u=z*2;c.s=clamp(z*.34,9,16);c.z=z;const ps=Object.values(c.P);c.cx=ps.reduce((s,p)=>s+p[0],0)/ps.length;c.cy=ps.reduce((s,p)=>s+p[1],0)/ps.length;
-    SP.E.forEach(e=>geom(c,e));const o={mode:SP.mode,showV:SP.showV&&!SP.hide,showVI:SP.showVI,sel:selEl(),hideR:SP.hide,hideB:SP.hide,noDots:SP.hide};
+    SP.E.forEach(e=>geom(c,e));const o={mode:SP.mode,showV:SP.showV&&!SP.hide,showVI:SP.showVI,sel:selEl(),hideR:SP.hide,hideB:SP.hide,noDots:SP.hide||SP.mode==='off'};
     drawCirc(g,c,o);
     // 端點：沒接上的端點畫空心圈
     for(const k in SP.N){const p=c.P[k],d=degN(k);if(d===1){g.strokeStyle=CC.pos;g.lineWidth=1.6;g.fillStyle=C.panel;g.beginPath();g.arc(p[0],p[1],4.2,0,TAU);g.fill();g.stroke();}else if(d===2){g.fillStyle=C.ink;g.beginPath();g.arc(p[0],p[1],2.2,0,TAU);g.fill();}}
