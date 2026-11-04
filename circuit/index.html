@@ -533,8 +533,8 @@ function insertInto(D){if(degN(D.a)!==1||degN(D.b)!==1)return false;const A=SP.N
 function dropEl(e,both){if(insertInto(e))return;const A=SP.N[e.a],B=SP.N[e.b];if(!A||!B)return;const a0=[A.x,A.y],b0=[B.x,B.y];const L=Math.hypot(B.x-A.x,B.y-A.y)||1,ux=(B.x-A.x)/L,uy=(B.y-A.y)/L;
   const axis=Math.abs(ux)<1e-6||Math.abs(uy)<1e-6;const shifts=axis?[0,-.5,.5,-1,1,-1.5,1.5,-2,2,-2.5,2.5]:[0];let ok=false;
   for(const sh of shifts){A.x=a0[0]+ux*sh;A.y=a0[1]+uy*sh;B.x=b0[0]+ux*sh;B.y=b0[1]+uy*sh;const ha=hitFor(e.a),hb=hitFor(e.b);
-    if(!ha&&!hb){if(sh===0){ok=true;break;}continue;}if(both&&!(ha&&hb))continue;
-    const bad=(ha&&ha.h&&ha.h.sym)||(hb&&hb.h&&hb.h.sym)||(ha&&hb&&ha.h&&hb.h&&ha.h.e===hb.h.e&&ha.h.e.t!=='wire');if(!bad){ok=true;break;}}
+    if(!ha&&!hb){if(sh===0){ok=true;break;}continue;}if(both&&!(ha&&hb)){if(sh===0&&!both)break;continue;}
+    const bad=(ha&&ha.h&&ha.h.sym)||(hb&&hb.h&&hb.h.sym)||(ha&&hb&&ha.h&&hb.h&&ha.h.e===hb.h.e&&ha.h.e.t!=='wire');if(!bad){ok=true;break;}if(sh===0&&!both&&!(ha&&ha.h&&ha.h.e.t!=='wire')&&!(hb&&hb.h&&hb.h.e.t!=='wire'))break;}
   if(!ok){A.x=a0[0];A.y=a0[1];B.x=b0[0];B.y=b0[1];return;}
   const m1=tryMerge(e.a),m2=tryMerge(e.b);if(m1||m2)SP.E=SP.E.filter(w=>!(w.t==='wire'&&((w.a===e.a&&w.b===e.b)||(w.a===e.b&&w.b===e.a))));cleanup();}
 function pick(x,y){const n=nodeAt(x,y,11);if(n)return n;const h=wireHit(x,y);if(h)return splitWire(h);const [wx,wy]=wxy(x,y);return addNode(snapV(wx),snapV(wy));}
