@@ -664,49 +664,58 @@ const QS=[{g:'2-3 光的反射',items:[
 // 模型：鏡面在 y＝0，鏡子前面 y＞0；單位＝格。物體在 (x,y) 的像在 (x,−y)。
 // 判斷：從物體的像連到眼睛，和 y＝0 的交點 xr 落在鏡子上就看得到。
 // =====================================================================
+// 座標都是照講義原圖量出來的（單位：格；鏡面在 y＝0，前方 y＞0）。ar＝格子的高／寬
 const GP=[
- {n:'練習 3：眼睛在 E',src:'講義〈光的直進性與光的反射〉練習 3',grid:[0,8,-3,2],view:[-.6,8.6,-3.4,2.6],mirror:[2,5],
-  objs:[{n:'A',x:0,y:2},{n:'B',x:2,y:1},{n:'C',x:4,y:1.5},{n:'D',x:5,y:1.5}],eye:{n:'E',x:7,y:1.5},
-  q:'右圖為一平面鏡，眼睛在 E 點時，在 A、B、C、D 各點的物體，何者在平面鏡所成的像，能被 E 看到？',ans:'A、B'},
- {n:'練習 4：眼睛在 D',src:'講義〈光的直進性與光的反射〉練習 4',grid:[0,8,-3,2],view:[-.6,8.6,-3.4,2.6],mirror:[2,5],
-  objs:[{n:'A',x:0,y:2},{n:'B',x:2,y:1},{n:'C',x:4,y:1.5},{n:'E',x:7,y:1.5}],eye:{n:'D',x:5,y:1.5},
-  q:'承上題，若眼睛在 D，在 A、B、C、E 的物體，何者在平面鏡所成的像，能被看到？',ans:'A、B、C'},
- {n:'例題 5：P 的光在哪一點反射',src:'講義〈光的直進性與光的反射〉第 5 題',top:true,view:[-2.6,6.6,-3,3.3],mirror:[-2.6,6.6],
-  marks:[['a',0],['b',1],['c',2],['d',3]],objs:[{n:'P',x:4,y:1.4}],eye:{n:'Q',x:-1.25,y:2.3},
-  q:'如右圖，平面鏡前 P 點為小燈泡，Q 點為觀察者的眼睛，則到達眼睛的反射光與平面鏡的交點為：① a　② b　③ c　④ d',ans:'③ c'},
- {n:'複習第 9 題：甲乙丙',src:'〈聲波、面鏡複習〉第 9 題',grid:[0,13,-5,5],view:[-.6,13.6,-4.8,5.4],mirror:[4,9],
-  objs:[{n:'甲',x:2,y:4},{n:'乙',x:4,y:4},{n:'丙',x:8,y:4}],eye:{n:'E',x:12,y:4},
-  q:'如圖所示，甲、乙、丙三點位於一平面鏡前，E 點為眼睛所在處。依光的反射定律，眼睛無法從平面鏡中看到的像是？(A) 丙　(B) 甲、乙　(C) 乙、丙　(D) 甲、乙、丙',ans:'(A) 丙'},
+ {n:'練習 3：眼睛在 E',src:'〈光的直進性、光的反射〉練習 3',grid:[0,8,-3,4],ar:47/71,gstyle:'solid',view:[-.5,8.6,-4.6,4.7],mirror:[2,5],
+  objs:[{n:'A',x:0,y:4,lp:'ur'},{n:'B',x:2,y:2},{n:'C',x:4,y:3,lp:'dl'},{n:'D',x:5,y:3}],eye:{n:'E',x:7,y:3},
+  q:'右圖為一平面鏡，眼睛在 E 點時，在 A、B、C、D 各點的物體，何者在平面鏡所成的像，能被 E 看到？'},
+ {n:'練習 4：眼睛在 D',src:'〈光的直進性、光的反射〉練習 4',grid:[0,8,-3,4],ar:47/71,gstyle:'solid',view:[-.5,8.6,-4.6,4.7],mirror:[2,5],
+  objs:[{n:'A',x:0,y:4,lp:'ur'},{n:'B',x:2,y:2},{n:'C',x:4,y:3,lp:'dl'},{n:'E',x:7,y:3}],eye:{n:'D',x:5,y:3},
+  q:'承上題，若眼睛在 D，在 A、B、C、E 的物體，何者在平面鏡所成的像，能被看到？'},
+ {n:'第 5 題：P 的光在哪一點反射',src:'〈光的直進性、光的反射〉第 5 題',top:true,bar:'gray',view:[-4.1,7.6,-3.5,3.7],mirror:[-4.02,7.46],
+  marks:[['a',0],['b',1.02],['c',2.03],['d',3]],objs:[{n:'P',x:4.46,y:1.34,red:true}],eye:{n:'Q',x:-1.93,y:3.18,lp:'l'},
+  q:'如右圖，平面鏡前 P 點為小燈泡，Q 點為觀察者的眼睛，則到達眼睛的反射光與平面鏡的交點為：① a　② b　③ c　④ d'},
+ {n:'複習第 9 題：甲乙丙',src:'〈聲波、面鏡複習〉第 9 題',grid:[0,13,0,5],gstyle:'dash',plain:true,view:[-.5,13.6,-4.5,5.6],mirror:[4,9],
+  objs:[{n:'甲',x:2,y:4,lp:'u'},{n:'乙',x:4,y:4,lp:'u'},{n:'丙',x:8,y:4,lp:'u'}],eye:{n:'E',lab:'E(眼睛)',x:12,y:4,lp:'u'},
+  q:'如圖所示，甲、乙、丙三點位於一平面鏡前，E 點為眼睛所在處。依光的反射定律，眼睛無法從平面鏡中看到的像是？(A) 丙　(B) 甲、乙　(C) 乙、丙　(D) 甲、乙、丙'},
  {n:'複習第 8 題：桌上的鏡子',src:'〈聲波、面鏡複習〉第 8 題（側視）',desk:true,view:[-1.3,4.3,-2,2.2],mirror:[0,3],
-  marks:[['A',0],['B',1],['C',2],['D',3]],objs:[{n:'物體',x:3.3,y:1.75}],eye:{n:'眼睛',x:-.55,y:.85},
-  q:'一觀察者觀察物體在鏡中的像，請判斷物體的光線是由哪一區域的鏡子反射至觀察者的眼中？（請填 AB、BC 或 CD）',ans:'AB'},
+  marks:[['A',0],['B',1],['C',2],['D',3]],objs:[{n:'物體',x:3.3,y:1.75}],eye:{n:'眼睛',x:-.55,y:.85,lp:'l'},
+  q:'一觀察者觀察物體在鏡中的像，請判斷物體的光線是由哪一區域的鏡子反射至觀察者的眼中？（請填 AB、BC 或 CD）'},
 ];
 const RG={i:0};let WG=800,HG=420;const cvG=$('cvG'),gG=cvG.getContext('2d');
 const optG=()=>({o:$('gImgO').checked,e:$('gImgE').checked,z:$('gZone').checked,r:$('gRay').checked,snap:$('gSnap').checked});
 function loadG(i){const p=GP[i];Object.assign(RG,{i,top:!!p.top,desk:!!p.desk,view:p.view.slice(),grid:p.grid||null,m:p.mirror.slice(),
-  marks:(p.marks||[]).map(a=>a.slice()),objs:p.objs.map(o=>({...o})),eye:{...p.eye},q:p.q,ans:p.ans,src:p.src});
+  marks:(p.marks||[]).map(a=>a.slice()),objs:p.objs.map(o=>({...o})),eye:{...p.eye},q:p.q,src:p.src,ar:p.ar||1,gstyle:p.gstyle||'solid',bar:p.bar||'hatch',plain:!!p.plain});
   $('preG').querySelectorAll('button').forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));
   if(bench==='grid')SIZE.grid();uiG();kick();}
-SIZE.grid=()=>{const v=RG.view,r=fit(cvG,clamp((v[3]-v[2])/(v[1]-v[0]),.42,.85),300,580);WG=r.W;HG=r.H;};
-function tfG(){const v=RG.view,pad=10,s=Math.min((WG-2*pad)/(v[1]-v[0]),(HG-2*pad)/(v[3]-v[2])),ox=(WG-s*(v[1]-v[0]))/2,oy=(HG-s*(v[3]-v[2]))/2;
-  return{s,X:x=>ox+(x-v[0])*s,Y:y=>RG.top?oy+(y-v[2])*s:oy+(v[3]-y)*s,ix:px=>v[0]+(px-ox)/s,iy:py=>RG.top?v[2]+(py-oy)/s:v[3]-(py-oy)/s};}
+SIZE.grid=()=>{const v=RG.view,r=fit(cvG,clamp((v[3]-v[2])*RG.ar/(v[1]-v[0]),.42,.85),300,580);WG=r.W;HG=r.H;};
+function tfG(){const v=RG.view,pad=10,sx=Math.min((WG-2*pad)/(v[1]-v[0]),(HG-2*pad)/((v[3]-v[2])*RG.ar)),sy=sx*RG.ar,ox=(WG-sx*(v[1]-v[0]))/2,oy=(HG-sy*(v[3]-v[2]))/2;
+  return{s:sx,sx,sy,X:x=>ox+(x-v[0])*sx,Y:y=>RG.top?oy+(y-v[2])*sy:oy+(v[3]-y)*sy,ix:px=>v[0]+(px-ox)/sx,iy:py=>RG.top?v[2]+(py-oy)/sy:v[3]-(py-oy)/sy};}
 function seenG(o){const E=RG.eye;if(o.y<=0||E.y<=0)return{ok:false,xr:null};const xr=(o.x*E.y+E.x*o.y)/(E.y+o.y);
   return{ok:xr>=RG.m[0]-1e-9&&xr<=RG.m[1]+1e-9,xr};}
 const fG=v=>String(Math.round(v*100)/100);
 function whereG(xr){const M=RG.marks.slice().sort((a,b)=>a[1]-b[1]);if(!M.length)return null;
   for(const[n,x]of M)if(Math.abs(x-xr)<.12)return n+' 點';
-  for(let k=0;k<M.length-1;k++)if(xr>M[k][1]&&xr<M[k+1][1])return M[k][0]+'、'+M[k+1][0]+' 之間';
+  for(let k=0;k<M.length-1;k++)if(xr>M[k][1]&&xr<M[k+1][1]){const f=(xr-M[k][1])/(M[k+1][1]-M[k][1]);
+    return M[k][0]+'、'+M[k+1][0]+' 之間'+(f<.4?`（靠近 ${M[k][0]}）`:f>.6?`（靠近 ${M[k+1][0]}）`:'（差不多在正中間）');}
   return xr<M[0][1]?M[0][0]+' 的外側':M[M.length-1][0]+' 的外側';}
-DRAW.grid=()=>{const g=gG,W=WG,H=HG,{s,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[0],m1=RG.m[1],y0=Y(0),up=RG.top?1:-1;
+// 標籤位置：dr 右下（預設）、ur 右上、dl 左下、u 正上方、l 左邊
+function lblG(g,txt,x,y,lp,col,size){const o={dr:[9,20,'left'],ur:[9,-10,'left'],dl:[-9,20,'right'],u:[0,-12,'center'],l:[-12,6,'right']}[lp||'dr'];
+  text(g,txt,x+o[0],y+o[1],{col,size,bold:true,align:o[2],bg:C.panel});}
+// 鏡子：畫成有斜線的長條，放在鏡子後面那一側（反射面就是 y＝0 那條線）
+function barG(g,x0,x1,y0,back,thick,gray){const y1=y0+back*thick,top=Math.min(y0,y1);g.save();
+  g.fillStyle=gray?C.line:C.panel;g.fillRect(x0,top,x1-x0,thick);g.beginPath();g.rect(x0,top,x1-x0,thick);g.clip();
+  g.strokeStyle=C.ink;g.lineWidth=1.2;g.beginPath();for(let x=x0-thick*2;x<x1+thick;x+=thick*.7){g.moveTo(x,top+thick);g.lineTo(x+thick,top);}g.stroke();g.restore();
+  g.strokeStyle=C.ink;g.lineWidth=2;g.strokeRect(x0,top,x1-x0,thick);line(g,x0,y0,x1,y0,C.ink,3);}
+function dotG(g,x,y,col){g.fillStyle=col;g.beginPath();g.arc(x,y,5.5,0,TAU);g.fill();g.strokeStyle=C.accent;g.lineWidth=2;g.beginPath();g.arc(x,y,10,0,TAU);g.stroke();}
+DRAW.grid=()=>{const g=gG,W=WG,H=HG,{sx,sy,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[0],m1=RG.m[1],y0=Y(0),back=RG.top?-1:1;
   g.clearRect(0,0,W,H);g.fillStyle=C.panel;g.fillRect(0,0,W,H);
-  // 鏡子後面
-  g.fillStyle=C.grid;g.globalAlpha=.6;if(RG.top)g.fillRect(0,0,W,y0);else g.fillRect(0,y0,W,H-y0);g.globalAlpha=1;
   if(RG.desk){g.fillStyle=C.line;g.fillRect(0,y0,W,H-y0);text(g,'桌面',W-12,H-12,{col:C.muted,size:13,bold:true,align:'right'});}
-  else{text(g,'鏡子後面',10,RG.top?18:H-10,{col:C.muted,size:12});text(g,'鏡子前面',10,RG.top?H-10:18,{col:C.muted,size:12});}
-  // 方格
-  if(RG.grid){const[a,b,c,d]=RG.grid;g.strokeStyle=C.line;g.lineWidth=1;g.beginPath();
-    for(let x=a;x<=b+1e-9;x++){g.moveTo(X(x),Y(c));g.lineTo(X(x),Y(d));}for(let y=c;y<=d+1e-9;y++){g.moveTo(X(a),Y(y));g.lineTo(X(b),Y(y));}g.stroke();}
-  line(g,0,y0,W,y0,C.muted,1,[2,5]);
+  else if(!RG.grid){g.fillStyle=C.grid;g.globalAlpha=.5;if(RG.top)g.fillRect(0,0,W,y0);else g.fillRect(0,y0,W,H-y0);g.globalAlpha=1;}
+  // 方格：和原圖一樣的實線或虛線
+  if(RG.grid){const[a,b,c,d]=RG.grid;g.strokeStyle=C.ink;g.globalAlpha=.75;g.lineWidth=1.3;if(RG.gstyle==='dash')g.setLineDash([7,5]);g.beginPath();
+    for(let x=a;x<=b+1e-9;x++){g.moveTo(X(x),Y(c));g.lineTo(X(x),Y(d));}for(let y=c;y<=d+1e-9;y++){g.moveTo(X(a),Y(y));g.lineTo(X(b),Y(y));}g.stroke();g.setLineDash([]);g.globalAlpha=1;}
+  if(!RG.grid)line(g,0,y0,W,y0,C.muted,1,[2,5]);
   const Ei={x:E.x,y:-E.y};
   // 看得到的範圍：從眼睛的像經過鏡子兩端
   if(O.z&&E.y>0){const far=xm=>({x:Ei.x+(xm-Ei.x)*80,y:Ei.y+(0-Ei.y)*80});const f0=far(m0),f1=far(m1);
@@ -714,8 +723,10 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{s,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[0],m
     line(g,X(m0),y0,X(f0.x),Y(f0.y),C.green,1.6,[6,4]);line(g,X(m1),y0,X(f1.x),Y(f1.y),C.green,1.6,[6,4]);
     if(O.e){line(g,X(Ei.x),Y(Ei.y),X(m0),y0,C.green,1.4,[3,4]);line(g,X(Ei.x),Y(Ei.y),X(m1),y0,C.green,1.4,[3,4]);}}
   // 鏡子
-  mirrorSeg(g,X(m0),y0,X(m1),y0,RG.top?[0,-1]:[0,1]);
-  for(const[n,x]of RG.marks){line(g,X(x),y0-4,X(x),y0+4,C.ink,2);text(g,n,X(x),RG.desk?y0+22:y0+up*20+(RG.top?10:-2),{col:C.ink,size:15,bold:true,align:'center'});}
+  barG(g,X(m0),X(m1),y0,back,Math.max(8,Math.min(14,sy*.22)),RG.bar==='gray');
+  if(RG.grid&&!RG.plain)text(g,'平面鏡',(X(m0)+X(m1))/2,y0+back*Math.max(8,sy*.22)+back*16+(back>0?6:0),{col:C.ink,size:15,bold:true,align:'center',bg:C.panel});
+  for(const[n,x]of RG.marks){g.fillStyle=C.ink;g.beginPath();g.arc(X(x),y0-back*4,4,0,TAU);g.fill();
+    text(g,n,X(x),RG.desk?y0+22:y0-back*24+(RG.top?8:0),{col:C.ink,size:17,align:'center'});}
   // 光線
   const res=RG.objs.map(o=>({o,...seenG(o)}));
   if(O.r)for(const r of res){if(!r.ok||r.xr==null)continue;const o=r.o,R=[X(r.xr),y0];
@@ -723,19 +734,15 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{s,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[0],m
     if(O.o)line(g,R[0],R[1],X(o.x),Y(-o.y),C.ray,1.6,[7,5]);g.fillStyle=C.ray;g.beginPath();g.arc(R[0],R[1],4,0,TAU);g.fill();}
   if(O.r&&O.o)for(const r of res){if(r.ok||r.xr==null)continue;const o=r.o;   // 看不到：視線落在鏡子外
     line(g,X(E.x),Y(E.y),X(o.x),Y(-o.y),C.muted,1.2,[3,4]);text(g,'✕',X(r.xr),y0+5,{col:'#c0453b',size:15,bold:true,align:'center'});}
-  // 物體的像
-  if(O.o)for(const o of RG.objs){const x=X(o.x),y=Y(-o.y);g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,6,0,TAU);g.stroke();g.restore();
-    text(g,o.n+'′',x+9,y-7,{col:C.muted,size:13,bold:true,bg:C.panel});}
-  // 眼睛的像
-  const ang=RG.top?-Math.PI/2:Math.PI/2;
-  if(O.e&&E.y>0){const x=X(Ei.x),y=Y(Ei.y);g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,7,0,TAU);g.stroke();g.restore();
-    g.save();g.globalAlpha=.5;eyeIcon(g,x-22,y,-ang,11);g.restore();text(g,E.n+'′（眼睛的像）',x+11,y+18,{col:C.muted,size:13,bold:true,bg:C.panel});}
-  // 物體
-  for(const r of res){const o=r.o,x=X(o.x),y=Y(o.y);g.fillStyle=C.ink;g.beginPath();g.arc(x,y,5,0,TAU);g.fill();handle(g,x,y,7);
-    const mark=O.r?(r.ok?' ✓':' ✕'):'';text(g,o.n+mark,x+10,y-9,{col:O.r?(r.ok?C.green:'#c0453b'):C.ink,size:15,bold:true,bg:C.panel});}
-  // 眼睛
-  {const x=X(E.x),y=Y(E.y);eyeIcon(g,x-22,y,ang,11);handle(g,x,y,8);text(g,E.n+'（眼睛）',x+11,y-11,{col:C.ink,size:15,bold:true,bg:C.panel});}
-  handle(g,X(m0),y0,8);handle(g,X(m1),y0,8);
+  // 像（虛線圈）
+  const ghost=(x,y)=>{g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,6,0,TAU);g.stroke();g.restore();};
+  if(O.o)for(const o of RG.objs){const x=X(o.x),y=Y(-o.y);ghost(x,y);lblG(g,o.n+'′',x,y,o.lp,C.muted,14);}
+  if(O.e&&E.y>0){const x=X(Ei.x),y=Y(Ei.y);ghost(x,y);lblG(g,E.n+'′',x,y,E.lp,C.muted,14);}
+  // 物體與眼睛：黑點（外圈橘色表示可以拖）
+  for(const r of res){const o=r.o,x=X(o.x),y=Y(o.y);dotG(g,x,y,o.red?C.red:C.ink);
+    const mark=O.r?(r.ok?' ✓':' ✕'):'';lblG(g,o.n+mark,x,y,o.lp,O.r?(r.ok?C.green:'#c0453b'):(o.red?C.red:C.ink),18);}
+  {const x=X(E.x),y=Y(E.y);dotG(g,x,y,C.ink);lblG(g,E.lab||E.n,x,y,E.lp,C.ink,18);}
+  handle(g,X(m0),y0,7);handle(g,X(m1),y0,7);
   RG._res=res;};
 function uiG(){const O=optG(),E=RG.eye,res=RG.objs.map(o=>({o,...seenG(o)}));
   $('gQ').innerHTML=`<b>${RG.src}</b>　${RG.q}`;
@@ -745,7 +752,7 @@ function uiG(){const O=optG(),E=RG.eye,res=RG.objs.map(o=>({o,...seenG(o)}));
   $('gList').innerHTML=res.map(r=>{const w=r.xr==null?'':(RG.marks.length?`，視線落在 ${whereG(r.xr)}`:'');
     const t=r.xr==null?`${r.o.n}：在鏡子後面或鏡面上`:r.ok?`${r.o.n}：看得到——從 ${r.o.n}′ 連到 ${E.n} 的線穿過鏡子${w}`:`${r.o.n}：看不到——從 ${r.o.n}′ 連到 ${E.n} 的線落在鏡子外面${w}`;
     return`<li class="${r.ok?'ok':'no'}"><span>${t}</span></li>`;}).join('');
-  $('gNote').textContent=RG.ans?`講義答案：${RG.ans}`+(RG.i<GP.length&&isModifiedG()?'（你已經移動過東西，現在的畫面可能和題目不同）':''):'';}
+  $('gNote').textContent=isModifiedG()?'你已經移動過東西，畫面和講義原圖不同了；按上方題目可以回到原圖。':'這是講義原圖的位置。';}
 function isModifiedG(){const p=GP[RG.i];if(!p)return false;const same=(a,b)=>Math.abs(a-b)<1e-9;
   if(!same(p.mirror[0],RG.m[0])||!same(p.mirror[1],RG.m[1])||!same(p.eye.x,RG.eye.x)||!same(p.eye.y,RG.eye.y)||p.objs.length!==RG.objs.length)return true;
   return p.objs.some((o,k)=>!same(o.x,RG.objs[k].x)||!same(o.y,RG.objs[k].y));}
