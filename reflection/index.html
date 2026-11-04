@@ -736,10 +736,12 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{sx,sy,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[
     g.fillStyle=C.green;g.globalAlpha=.16;g.beginPath();g.moveTo(X(m0),y0);g.lineTo(X(f0.x),Y(f0.y));g.lineTo(X(f1.x),Y(f1.y));g.lineTo(X(m1),y0);g.closePath();g.fill();g.globalAlpha=1;
     line(g,X(m0),y0,X(f0.x),Y(f0.y),C.green,1.6,[6,4]);line(g,X(m1),y0,X(f1.x),Y(f1.y),C.green,1.6,[6,4]);
   }
-  // 從眼睛的像畫兩條虛線到鏡子兩端（可單獨開關）
-  if(O.el&&E.y>0){line(g,X(Ei.x),Y(Ei.y),X(m0),y0,C.ink,1.6,[6,4]);line(g,X(Ei.x),Y(Ei.y),X(m1),y0,C.ink,1.6,[6,4]);}
+
   // 鏡子
   barG(g,X(m0),X(m1),y0,back,Math.max(8,Math.min(14,sy*.22)),RG.bar==='gray');
+  // 從眼睛的像畫虛線經過鏡子兩端，一路延伸到畫面邊緣（可單獨開關）；畫在鏡子之後，線才不會被鏡子蓋住
+  if(O.el&&E.y>0)for(const mx of[m0,m1]){const fx=Ei.x+(mx-Ei.x)*80,fy=Ei.y+(0-Ei.y)*80;
+    line(g,X(Ei.x),Y(Ei.y),X(fx),Y(fy),C.ink,1.8,[7,5]);g.fillStyle=C.ink;g.beginPath();g.arc(X(mx),y0,3.5,0,TAU);g.fill();}
   if(RG.grid&&!RG.plain)text(g,'平面鏡',(X(m0)+X(m1))/2,y0+back*Math.max(8,sy*.22)+back*16+(back>0?6:0),{col:C.ink,size:15,bold:true,align:'center',bg:C.panel});
   for(const[n,x]of RG.marks){g.fillStyle=C.ink;g.beginPath();g.arc(X(x),y0-back*4,4,0,TAU);g.fill();
     text(g,n,X(x),RG.desk?y0+22:y0-back*24+(RG.top?8:0),{col:C.ink,size:17,align:'center'});}
