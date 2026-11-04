@@ -508,21 +508,49 @@ function cleanup(){SP.E=SP.E.filter(e=>e.a!==e.b&&SP.N[e.a]&&SP.N[e.b]);const us
   for(const k in SP.N)if(!used.has(k))delete SP.N[k];if(SP.vp&&!SP.N[SP.vp])SP.vp=null;if(SP.vn&&!SP.N[SP.vn])SP.vn=null;if(SP.selN&&!SP.N[SP.selN])SP.selN=null;if(!selEl())SP.sel=null;}
 function mergeN(src,dst){if(src===dst)return true;if(SP.E.some(e=>e.t!=='wire'&&((e.a===src&&e.b===dst)||(e.a===dst&&e.b===src))))return false;
   SP.E.forEach(e=>{if(e.a===src)e.a=dst;if(e.b===src)e.b=dst;});if(SP.vp===src)SP.vp=dst;if(SP.vn===src)SP.vn=dst;if(SP.tp===src)SP.tp=dst;if(SP.tn===src)SP.tn=dst;delete SP.N[src];cleanup();return true;}
-function wireHit(x,y,ex){for(const e of SP.E){if(e.t!=='wire'||e.a===ex||e.b===ex)continue;const P=scr(e.a),Q=scr(e.b);const dx=Q[0]-P[0],dy=Q[1]-P[1],L2=dx*dx+dy*dy;if(L2<1)continue;
-  const t=((x-P[0])*dx+(y-P[1])*dy)/L2;if(t<.06||t>.94)continue;const d=Math.hypot(x-P[0]-t*dx,y-P[1]-t*dy);if(d<7)return{e,t};}return null;}
+// 可以接在導線上，也可以接在元件兩端的引線上（避開中間的符號）
+function symHalf(e){const sz=SP.c&&SP.c.s||14;return e.t==='bat'?((Math.min(e.n||1,4)*2-1)*7)/2+12:e.t==='wire'?0:sz*1.5+6;}
+function wireHit(x,y,ex,sym){let best=null,bd=8;for(const e of SP.E){if(e.t==='jump'||e.a===ex||e.b===ex||!SP.N[e.a]||!SP.N[e.b])continue;const P=scr(e.a),Q=scr(e.b);const dx=Q[0]-P[0],dy=Q[1]-P[1],L2=dx*dx+dy*dy;if(L2<1)continue;
+  const L=Math.sqrt(L2),t=((x-P[0])*dx+(y-P[1])*dy)/L2;if(t*L<8||(1-t)*L<8)continue;const d=Math.hypot(x-P[0]-t*dx,y-P[1]-t*dy);if(d>=bd)continue;const inSym=e.t!=='wire'&&Math.abs(t-.5)*L<symHalf(e);if(inSym&&!sym)continue;bd=d;best={e,t,sym:inSym};}return best;}
 function splitWire(h){const e=h.e,A=SP.N[e.a],B=SP.N[e.b];let x=A.x+(B.x-A.x)*h.t,y=A.y+(B.y-A.y)*h.t;if(Math.abs(A.x-B.x)<1e-6)y=snapV(y);else if(Math.abs(A.y-B.y)<1e-6)x=snapV(x);
-  const M=addNode(x,y);addEl('wire',M,e.b);e.b=M;return M;}
+  const M=addNode(x,y);if(e.t==='wire'||h.t>=.5){addEl('wire',M,e.b);e.b=M;}else{addEl('wire',e.a,M);e.a=M;}return M;}
 function nodeAt(x,y,r=10,ex){let best=null,bd=r;for(const id in SP.N){if(id===ex)continue;const p=scr(id);const d=Math.hypot(x-p[0],y-p[1]);if(d<bd){bd=d;best=id;}}return best;}
-function tryMerge(id){if(!SP.N[id])return;const p=scr(id);const q=nodeAt(p[0],p[1],12,id);if(q){if(!mergeN(id,q)){SP.N[id].x+=.5;}return;}
-  const h=wireHit(p[0],p[1],id);if(h){const M=splitWire(h);mergeN(id,M);}}
+function tryMerge(id){if(!SP.N[id])return false;const p=scr(id);const q=nodeAt(p[0],p[1],12,id);if(q){if(!mergeN(id,q)){SP.N[id].x+=.5;return false;}return true;}
+  const h=wireHit(p[0],p[1],id);if(h){const M=splitWire(h);mergeN(id,M);return true;}return false;}
+// 元件放到導線上：兩端接好後，拿掉原本直接連在兩端之間的那段導線（等於把元件串進去）
+function hitFor(id){const p=scr(id);if(nodeAt(p[0],p[1],12,id))return{n:1};const h=wireHit(p[0],p[1],id,true);return h?{h}:null;}
+// 單獨的元件放到另一個元件的引線上（同一直線）：把它串接進去，原元件往另一邊縮短
+function insertInto(D){if(degN(D.a)!==1||degN(D.b)!==1)return false;const A=SP.N[D.a],B=SP.N[D.b];
+  for(const X of SP.E){if(X===D||X.t==='wire'||X.t==='jump')continue;const P=SP.N[X.a],Q=SP.N[X.b];if(!P||!Q)continue;const L=Math.hypot(Q.x-P.x,Q.y-P.y);if(L<.5)continue;
+    const ux=(Q.x-P.x)/L,uy=(Q.y-P.y)/L;const perp=p=>Math.abs((p.x-P.x)*uy-(p.y-P.y)*ux),along=p=>(p.x-P.x)*ux+(p.y-P.y)*uy;if(perp(A)>.2||perp(B)>.2)continue;
+    const sa=along(A),sb=along(B),s1=Math.min(sa,sb),s2=Math.max(sa,sb),len=s2-s1;if(s2<=.05||s1>=L-.05||len<.4)continue;const minX=2*symHalf(X)/SP.z+.4;let a,b,n1,n2;
+    const at=v=>{const n=addNode(P.x+ux*v,P.y+uy*v);return n;};
+    if((s1+s2)/2<L/2){a=Math.max(0,s1);b=a+len;if(L-b<minX){a=0;b=len;if(L-b<minX)continue;}
+      n1=a<.05?X.a:at(a);if(n1!==X.a)addEl('wire',X.a,n1);n2=at(b);X.a=n2;}
+    else{b=Math.min(L,s2);a=b-len;if(a<minX){b=L;a=L-len;if(a<minX)continue;}
+      n2=b>L-.05?X.b:at(b);if(n2!==X.b)addEl('wire',n2,X.b);n1=at(a);X.b=n1;}
+    const lo=sa<=sb?'a':'b',hi=lo==='a'?'b':'a';D[lo]=n1;D[hi]=n2;cleanup();return true;}return false;}
+function dropEl(e,both){if(insertInto(e))return;const A=SP.N[e.a],B=SP.N[e.b];if(!A||!B)return;const a0=[A.x,A.y],b0=[B.x,B.y];const L=Math.hypot(B.x-A.x,B.y-A.y)||1,ux=(B.x-A.x)/L,uy=(B.y-A.y)/L;
+  const axis=Math.abs(ux)<1e-6||Math.abs(uy)<1e-6;const shifts=axis?[0,-.5,.5,-1,1,-1.5,1.5,-2,2,-2.5,2.5]:[0];let ok=false;
+  for(const sh of shifts){A.x=a0[0]+ux*sh;A.y=a0[1]+uy*sh;B.x=b0[0]+ux*sh;B.y=b0[1]+uy*sh;const ha=hitFor(e.a),hb=hitFor(e.b);
+    if(!ha&&!hb){if(sh===0){ok=true;break;}continue;}if(both&&!(ha&&hb))continue;
+    const bad=(ha&&ha.h&&ha.h.sym)||(hb&&hb.h&&hb.h.sym)||(ha&&hb&&ha.h&&hb.h&&ha.h.e===hb.h.e&&ha.h.e.t!=='wire');if(!bad){ok=true;break;}}
+  if(!ok){A.x=a0[0];A.y=a0[1];B.x=b0[0];B.y=b0[1];return;}
+  const m1=tryMerge(e.a),m2=tryMerge(e.b);if(m1||m2)SP.E=SP.E.filter(w=>!(w.t==='wire'&&((w.a===e.a&&w.b===e.b)||(w.a===e.b&&w.b===e.a))));cleanup();}
 function pick(x,y){const n=nodeAt(x,y,11);if(n)return n;const h=wireHit(x,y);if(h)return splitWire(h);const [wx,wy]=wxy(x,y);return addNode(snapV(wx),snapV(wy));}
 function rotEl(e){const A=SP.N[e.a],B=SP.N[e.b],mx=(A.x+B.x)/2,my=(A.y+B.y)/2;[A,B].forEach(p=>{const dx=p.x-mx,dy=p.y-my;p.x=snapV(mx-dy);p.y=snapV(my+dx);});}
 function splitNode(id){const p=SP.N[id];const at=SP.E.filter(e=>e.a===id||e.b===id);at.slice(1).forEach(e=>{const o=SP.N[e.a===id?e.b:e.a];const d=Math.hypot(o.x-p.x,o.y-p.y)||1;
   const n=addNode(p.x+(o.x-p.x)/d*.6,p.y+(o.y-p.y)/d*.6);if(e.a===id)e.a=n;else e.b=n;});}
 function delSel(){if(SP.sel){pushHist();SP.E=SP.E.filter(e=>e.id!==SP.sel);SP.sel=null;cleanup();}else if(SP.selN){pushHist();const id=SP.selN;SP.E=SP.E.filter(e=>e.a!==id&&e.b!==id);SP.selN=null;cleanup();}else return;edSolve();edPanel();kick();}
-function freeSpot(){const [cx,cy]=wxy(WS/2,HS/2);for(let r=0;r<12;r++)for(let k=0;k<8;k++){const x=Math.round(cx+(k%4-1.5)*r*.9),y=Math.round(cy+(Math.floor(k/4)*2-1)*r*.7);
-  if(!Object.values(SP.N).some(n=>Math.abs(n.x-x)<2.6&&Math.abs(n.y-y)<1.2))return[x,y];}return[Math.round(cx),Math.round(cy)];}
-function addAt(t,x,y){pushHist();const len=t==='wire'?2:t==='jump'?2:2;const a=addNode(snapV(x-len/2),snapV(y)),b=addNode(snapV(x+len/2),snapV(y));const e=addEl(t,a,b,{lab:autoName(t)});
+function segD(px,py,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L2=dx*dx+dy*dy||1;const t=clamp(((px-ax)*dx+(py-ay)*dy)/L2,0,1);return Math.hypot(px-ax-t*dx,py-ay-t*dy);}
+function freeSpot(){const [cx,cy]=wxy(WS/2,HS/2);const clr=(x,y)=>{let m=1e9;for(let k=-1;k<=1;k+=.25){const px=x+k*1.4;for(const e of SP.E){const A=SP.N[e.a],B=SP.N[e.b];if(A&&B)m=Math.min(m,segD(px,y,A.x,A.y,B.x,B.y));}}return m;};
+  const [x0,y0]=wxy(SP.z*1.8,SP.z*1.3),[x1,y1]=wxy(WS-SP.z*1.8,HS-SP.z*1.3);let best=[Math.round(cx),Math.round(cy)],bs=-1;
+  for(let y=Math.ceil(y0);y<=y1;y++)for(let x=Math.ceil(x0);x<=x1;x++){const c=clr(x,y);const sc=Math.min(c,1.6)-Math.hypot(x-cx,y-cy)*.01;if(sc>bs){bs=sc;best=[x,y];}}return best;}
+function addAt(t,x,y,drop){pushHist();let e;
+  if(t==='vm'){// 預設形狀：直立的伏特計＋兩條往左伸出的引線，拖引線的端點去接要量的兩點
+    const a=addNode(snapV(x),snapV(y-1.5)),b=addNode(snapV(x),snapV(y+1.5)),pa=addNode(snapV(x-1.5),snapV(y-1.5)),pb=addNode(snapV(x-1.5),snapV(y+1.5));
+    e=addEl('vm',a,b,{lab:autoName('vm')});addEl('wire',pa,a);addEl('wire',b,pb);if(drop){tryMerge(pa);tryMerge(pb);cleanup();}}
+  else{const a=addNode(snapV(x-1),snapV(y)),b=addNode(snapV(x+1),snapV(y));e=addEl(t,a,b,{lab:autoName(t)});if(drop)dropEl(e);}
 SP.sel=e.id;SP.selN=null;SP.tool='sel';edSolve();edPanel();spUI();kick();}
 function edFit(){const ns=Object.values(SP.N);if(!ns.length){SP.z=54;SP.ox=WS/2;SP.oy=HS/2;return;}let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;ns.forEach(n=>{x0=Math.min(x0,n.x);x1=Math.max(x1,n.x);y0=Math.min(y0,n.y);y1=Math.max(y1,n.y);});
   SP.z=clamp(Math.min((WS-150)/Math.max(2,x1-x0),(HS-130)/Math.max(2,y1-y0)),22,66);SP.ox=WS/2-SP.z*(x0+x1)/2;SP.oy=HS/2-SP.z*(y0+y1)/2+6;}
@@ -534,6 +562,8 @@ const probeH=()=>SP.vm?[{k:'vp',col:CC.pos,lab:'+',off:[9,-9]},{k:'vn',col:CC.da
 const probePos=h=>h.drag||(SP[h.k]&&SP.N[SP[h.k]]?[scr(SP[h.k])[0]+h.off[0],scr(SP[h.k])[1]+h.off[1]]:null);
 function endHandles(e){if(!e||!SP.N[e.a]||!SP.N[e.b])return[];const P=scr(e.a),Q=scr(e.b),L=Math.hypot(Q[0]-P[0],Q[1]-P[1])||1,ux=(Q[0]-P[0])/L,uy=(Q[1]-P[1])/L,d=Math.min(18,L*.25);
   return[{end:'a',x:P[0]+ux*d,y:P[1]+uy*d},{end:'b',x:Q[0]-ux*d,y:Q[1]-uy*d}];}
+function rotBtn(e){if(!e||!e.M||!SP.N[e.a]||!SP.N[e.b]||e.t==='wire')return null;const P=scr(e.a),Q=scr(e.b),L=Math.hypot(Q[0]-P[0],Q[1]-P[1])||1;let nx=-(Q[1]-P[1])/L,ny=(Q[0]-P[0])/L;if(ny>0||(Math.abs(ny)<.01&&nx<0)){nx=-nx;ny=-ny;}
+  const d=(SP.c.s||14)+24;return[e.M[0]+nx*d+((Q[0]-P[0])/L)*d*.9,e.M[1]+ny*d+((Q[1]-P[1])/L)*d*.9];}
 function elAt(x,y){const c=SP.c;let best=null,bd=1e9;for(const e of SP.E){if(!e.L)continue;let d;
   if(e.t==='jump'){d=1e9;for(let i=0;i<=20;i++){const p=e.pt(i/20);d=Math.min(d,Math.hypot(x-p[0],y-p[1]));}}
   else{const P=c.P[e.a],Q=c.P[e.b],dx=Q[0]-P[0],dy=Q[1]-P[1],L2=dx*dx+dy*dy||1;const t=clamp(((x-P[0])*dx+(y-P[1])*dy)/L2,0,1);d=Math.hypot(x-P[0]-t*dx,y-P[1]-t*dy);
@@ -543,13 +573,14 @@ function labAt(x,y){for(const e of SP.E){const b=e.lbox;if(b&&x>=b[0]&&x<=b[2]&&
 cvS.addEventListener('pointerdown',ev=>{if(ev.button===2)return;const [x,y]=posS(ev);cvS.setPointerCapture(ev.pointerId);cvS.focus({preventScroll:true});ev.preventDefault();const snap=snapState();
   for(const h of probeH()){const p=probePos(h);if(p&&Math.hypot(x-p[0],y-p[1])<11){drg={k:'probe',h,x,y};return;}}
   if(SP.tool==='wire'){drg={k:'wire',x,y,cx:x,cy:y,snap};return;}
+  {const rb=rotBtn(selEl());if(rb&&Math.hypot(x-rb[0],y-rb[1])<13){const e=selEl();pushHist(snap);rotEl(e);dropEl(e,true);edSolve();edPanel();kick();return;}}
   for(const h of endHandles(selEl())){if(Math.hypot(x-h.x,y-h.y)<8){drg={k:'end',e:selEl(),end:h.end,x,y,snap};return;}}
   const n=nodeAt(x,y,8);if(n){drg={k:'node',id:n,x,y,snap};return;}
   const L=labAt(x,y);if(L){const o=L.e||SP.N[L.n];drg={k:'lab',L,x,y,lo:(o.lo||[0,0]).slice(),snap};return;}
   const e=elAt(x,y);if(e){drg={k:'el',e,x,y,a0:Object.assign({},SP.N[e.a]),b0:Object.assign({},SP.N[e.b]),snap};return;}
   drg={k:'pan',x,y,ox:SP.ox,oy:SP.oy};});
 cvS.addEventListener('pointermove',ev=>{const [x,y]=posS(ev);
-  if(!drg){let cur='default';if(SP.tool==='wire')cur='crosshair';else if(probeH().some(h=>{const p=probePos(h);return p&&Math.hypot(x-p[0],y-p[1])<11;})||nodeAt(x,y,8)||labAt(x,y))cur='grab';else if(elAt(x,y))cur='pointer';else cur='move';cvS.style.cursor=cur;
+  if(!drg){let cur='default';if(SP.tool==='wire')cur='crosshair';else if((()=>{const rb=rotBtn(selEl());return rb&&Math.hypot(x-rb[0],y-rb[1])<13;})())cur='pointer';else if(probeH().some(h=>{const p=probePos(h);return p&&Math.hypot(x-p[0],y-p[1])<11;})||nodeAt(x,y,8)||labAt(x,y))cur='grab';else if(elAt(x,y))cur='pointer';else cur='move';cvS.style.cursor=cur;
     if(SP.tool==='wire'){hov=[x,y];kick();}return;}
   const mv=Math.hypot(x-drg.x,y-drg.y)>4;drg.moved=drg.moved||mv;if(!drg.moved)return;const [wx,wy]=wxy(x,y);
   switch(drg.k){
@@ -568,7 +599,7 @@ function ptrUp(ev){if(!drg)return;const [x,y]=ev?posS(ev):[drg.x,drg.y];const d=
     if(d.k==='el'){SP.sel=d.e.id;SP.selN=null;if(d.e.t==='sw'||d.e.t==='jump'){pushHist(d.snap);d.e.on=!d.e.on;}}
     else if(d.k==='node'){SP.selN=d.id;SP.sel=null;}else if(d.k==='lab'){if(d.L.e){SP.sel=d.L.e.id;SP.selN=null;}else{SP.selN=d.L.n;SP.sel=null;}}
     else if(d.k==='pan'){SP.sel=null;SP.selN=null;}}
-  else{if(d.k==='end'||d.k==='node'){tryMerge(d.id);changed=true;}else if(d.k==='el'){tryMerge(d.e.a);tryMerge(d.e.b);changed=true;}else if(d.k==='lab')changed=true;}
+  else{if(d.k==='end'||d.k==='node'){tryMerge(d.id);changed=true;}else if(d.k==='el'){dropEl(d.e);changed=true;}else if(d.k==='lab')changed=true;}
   if(changed)pushHist(d.snap);edSolve();edPanel();spUI();kick();}
 cvS.addEventListener('pointerup',ptrUp);cvS.addEventListener('pointercancel',()=>ptrUp(null));
 cvS.addEventListener('pointerleave',()=>{hov=null;kick();});
@@ -578,14 +609,14 @@ document.addEventListener('keydown',ev=>{if(bench!=='sp')return;const tg=ev.targ
   if((ev.ctrlKey||ev.metaKey)&&ev.key.toLowerCase()==='z'){ev.preventDefault();undo();return;}
   if(ev.key==='Delete'||ev.key==='Backspace'){if(SP.sel||SP.selN){ev.preventDefault();delSel();}return;}
   if(ev.key==='Escape'){SP.sel=null;SP.selN=null;SP.tool='sel';edPanel();spUI();kick();return;}
-  const e=selEl();if(ev.key==='r'&&e){pushHist();rotEl(e);edSolve();kick();}else if(ev.key==='f'&&e){pushHist();[e.a,e.b]=[e.b,e.a];edSolve();edPanel();kick();}
+  const e=selEl();if(ev.key==='r'&&e){pushHist();rotEl(e);dropEl(e,true);edSolve();kick();}else if(ev.key==='f'&&e){pushHist();[e.a,e.b]=[e.b,e.a];edSolve();edPanel();kick();}
   else if(ev.key==='w'){SP.tool=SP.tool==='wire'?'sel':'wire';spUI();kick();}});
 // 工具列：點一下加在空位、拖到畫布上放在指定位置
 document.querySelectorAll('#spPal button[data-add]').forEach(btn=>{btn.addEventListener('pointerdown',ev=>{ev.preventDefault();const t=btn.dataset.add,sx=ev.clientX,sy=ev.clientY;
   const mv=e2=>{if(Math.hypot(e2.clientX-sx,e2.clientY-sy)>6){document.body.style.cursor='copy';}};
   const up=e2=>{document.removeEventListener('pointermove',mv);document.removeEventListener('pointerup',up);document.body.style.cursor='';
     const r=cvS.getBoundingClientRect();const inside=e2.clientX>=r.left&&e2.clientX<=r.right&&e2.clientY>=r.top&&e2.clientY<=r.bottom;
-    if(Math.hypot(e2.clientX-sx,e2.clientY-sy)>6&&inside){const [wx,wy]=wxy(e2.clientX-r.left,e2.clientY-r.top);addAt(t,wx,wy);}else if(Math.hypot(e2.clientX-sx,e2.clientY-sy)<=6){const [x,y]=freeSpot();addAt(t,x,y);}};
+    if(Math.hypot(e2.clientX-sx,e2.clientY-sy)>6&&inside){const [wx,wy]=wxy(e2.clientX-r.left,e2.clientY-r.top);addAt(t,wx,wy,true);}else if(Math.hypot(e2.clientX-sx,e2.clientY-sy)<=6){const [x,y]=freeSpot();addAt(t,x,y);}};
   document.addEventListener('pointermove',mv);document.addEventListener('pointerup',up);});});
 // ---------- 屬性面板 ----------
 const row=(lab,k,v,min,max,step,u,dis)=>`<div class="prow"><span>${lab}</span><input type="range" data-k="${k}" min="${min}" max="${max}" step="${step}" value="${v}"${dis?' disabled':''}><input type="number" data-k="${k}" min="0" step="${step}" value="${nf(v,3)}"${dis?' disabled':''}><span>${u}</span></div>`;
@@ -605,7 +636,7 @@ function edPanel(){const P=$('spProp');const e=selEl();let h='';
   else if(SP.selN&&SP.N[SP.selN]){const n=SP.N[SP.selN];h+=`<p class="ptype">接點 ${n.lab}（連著 ${degN(SP.selN)} 個元件）</p><div class="prow2"><span>名稱</span><input type="text" data-n="lab" value="${n.lab}"></div>`;
     h+=`<div class="pbtns">${degN(SP.selN)>1?'<button class="btn" data-act="split">拆開這個接點</button>':''}<button class="btn" data-act="del">🗑 刪除接點與相連元件</button></div><div class="pread" id="spPR"></div>`;}
   else h+=`<p class="ptype">怎麼操作</p><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動；拖黑色接點＝整個接點一起移動；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li>
-    <li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、Ctrl＋Z 復原。</li></ul>`;
+    <li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>選取元件後點旁邊的 ↻ 可以轉 90°；元件放到導線上會自動串接進去。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、Ctrl＋Z 復原。</li></ul>`;
   P.innerHTML=h;edRead();}
 function edRead(){const el=$('spPR');if(!el)return;const e=selEl();if(SP.hide){el.innerHTML='<span class="pnote">先猜再看：按「揭曉」才會顯示讀數</span>';return;}
   if(e){const L=[];const v=Math.abs(e.dV||0),i=Math.abs(e.I||0);
@@ -622,7 +653,7 @@ PP.addEventListener('input',ev=>{const t=ev.target;const e=selEl();
   if(e.broken&&k!=='lab'&&k!=='nm')e.broken=false;edSolve();if(t.type==='checkbox'||t.tagName==='SELECT')edPanel();else edRead();kick();});
 PP.addEventListener('change',()=>{if(preS){pushHist(preS);preS=null;}});
 PP.addEventListener('click',ev=>{const b=ev.target.closest('button[data-act]');if(!b)return;const a=b.dataset.act,e=selEl();pushHist(preS||snapState());preS=null;
-  if(a==='del'){SP.hist.pop();delSel();return;}if(a==='rot'&&e)rotEl(e);if(a==='flip'&&e)[e.a,e.b]=[e.b,e.a];if(a==='off'&&e)e.off=!e.off;if(a==='fix'&&e)e.broken=false;if(a==='split'&&SP.selN)splitNode(SP.selN);
+  if(a==='del'){SP.hist.pop();delSel();return;}if(a==='rot'&&e){rotEl(e);dropEl(e,true);}if(a==='flip'&&e)[e.a,e.b]=[e.b,e.a];if(a==='off'&&e)e.off=!e.off;if(a==='fix'&&e)e.broken=false;if(a==='split'&&SP.selN)splitNode(SP.selN);
   edSolve();edPanel();kick();});
 // ---------- 上方控制 ----------
 function spUI(){segSet($('spT'),SP.edited?'':SP.tpl);segSet($('spKind'),SP.kind);segSet($('spMode'),SP.mode);segSet($('spCells'),SP.cells);segSet($('spTool'),SP.tool);
@@ -649,6 +680,7 @@ function drawSp(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=SP.c,z=SP
     for(const k in SP.N){const p=c.P[k],d=degN(k);if(d===1){g.strokeStyle=CC.pos;g.lineWidth=1.6;g.fillStyle=C.panel;g.beginPath();g.arc(p[0],p[1],4.2,0,TAU);g.fill();g.stroke();}else if(d===2){g.fillStyle=C.ink;g.beginPath();g.arc(p[0],p[1],2.2,0,TAU);g.fill();}}
     if(SP.letters||SP.vm)for(const k in SP.N){const n=SP.N[k],p=c.P[k];let x=p[0]-7+(n.lo?n.lo[0]*z:0),y=p[1]-7+(n.lo?n.lo[1]*z:0);text(g,n.lab,x,y,{size:12.5,bold:true,col:C.purple,align:'right'});g.font=`700 12.5px ${FONT}`;const w=g.measureText(n.lab).width;n.lb=[x-w-3,y-13,x+3,y+3];}
     if(SP.selN&&c.P[SP.selN]){const p=c.P[SP.selN];g.strokeStyle=C.accent;g.lineWidth=2;g.setLineDash([3,3]);g.beginPath();g.arc(p[0],p[1],10,0,TAU);g.stroke();g.setLineDash([]);}
+    {const rb=rotBtn(selEl());if(rb){g.fillStyle=C.panel;g.strokeStyle=C.accent;g.lineWidth=2;g.beginPath();g.arc(rb[0],rb[1],11,0,TAU);g.fill();g.stroke();text(g,'↻',rb[0],rb[1]+1,{size:15,bold:true,col:C.accent,align:'center',base:'middle'});}}
     endHandles(selEl()).forEach(h=>{g.fillStyle=C.accent;g.beginPath();g.arc(h.x,h.y,5.5,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=1.5;g.stroke();});
     if(SP.vm){const H2=probeH(),p=probePos(H2[0]),q=probePos(H2[1]);const bx=W-122,by=H-50;g.fillStyle=C.panel;g.strokeStyle=C.ink;g.lineWidth=1.5;g.beginPath();g.roundRect(bx,by,112,40,8);g.fill();g.stroke();
       const v=SP.vp&&SP.vn&&c.V?c.V[SP.vp]-c.V[SP.vn]:0;text(g,'V',bx+14,by+25,{size:16,bold:true});text(g,SP.hide?'？':(SP.vp===SP.vn||!SP.vp||!SP.vn?'—':fV(v)),bx+102,by+26,{size:15,bold:true,col:C.blue,align:'right'});
