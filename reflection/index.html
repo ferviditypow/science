@@ -214,12 +214,19 @@
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="gImgO" checked>物體在鏡中的像</label>
         <label class="tog"><input type="checkbox" id="gImgE" checked>眼睛在鏡中的像</label>
+        <label class="tog"><input type="checkbox" id="gEL">從眼睛的像連到鏡子兩端</label>
         <label class="tog"><input type="checkbox" id="gZone">看得到的範圍</label>
-        <label class="tog"><input type="checkbox" id="gRay" checked>光線</label>
         <label class="tog"><input type="checkbox" id="gSnap" checked>對齊格點</label>
       </div>
+      <div class="toolbar">
+        <span class="tlabel">光線</span>
+        <span class="chips" id="gRays"></span>
+        <button class="btn" id="gRayAll">全部顯示</button>
+        <button class="btn" id="gRayNone">全部隱藏</button>
+        <span id="gFree" hidden><button class="btn" id="gAdd">＋ 物體</button><button class="btn" id="gDel">－ 物體</button></span>
+      </div>
       <div class="cbox"><canvas id="cvG" aria-label="平面鏡方格題，可拖曳眼睛、物體與鏡子兩端"></canvas></div>
-      <p class="hint">拖曳橘色的點：眼睛、每個物體、鏡子兩端都可以拖，改變鏡子長短和位置。打開「光線」會畫出光從物體到鏡面再進入眼睛的路徑，看不到的物體標 ✕。</p>
+      <p class="hint">拖曳橘色的點：眼睛、每個物體、鏡子兩端都可以拖，改變鏡子長短和位置。「光線」那一列可以一個一個點開或關掉：打開的點會畫出光從物體到鏡面再進入眼睛的路徑，並標 ✓ 或 ✕。</p>
     </div>
     <div class="grid2">
       <section class="panel box">
@@ -681,13 +688,20 @@ const GP=[
  {n:'複習第 8 題：桌上的鏡子',src:'〈聲波、面鏡複習〉第 8 題（側視）',desk:true,view:[-1.3,4.3,-2,2.2],mirror:[0,3],
   marks:[['A',0],['B',1],['C',2],['D',3]],objs:[{n:'物體',x:3.3,y:1.75}],eye:{n:'眼睛',x:-.55,y:.85,lp:'l'},
   q:'一觀察者觀察物體在鏡中的像，請判斷物體的光線是由哪一區域的鏡子反射至觀察者的眼中？（請填 AB、BC 或 CD）'},
+ {n:'自由擺放',free:true,src:'自由擺放',grid:[0,10,-4,4],gstyle:'solid',view:[-.5,10.6,-4.6,4.7],mirror:[3,7],
+  objs:[{n:'A',x:1,y:3},{n:'B',x:4,y:2},{n:'C',x:9,y:3}],eye:{n:'E',x:6,y:3},q:'拖曳眼睛、物體和鏡子兩端，或用「＋ 物體」多放幾個點。'},
 ];
 const RG={i:0};let WG=800,HG=420;const cvG=$('cvG'),gG=cvG.getContext('2d');
-const optG=()=>({o:$('gImgO').checked,e:$('gImgE').checked,z:$('gZone').checked,r:$('gRay').checked,snap:$('gSnap').checked});
+const optG=()=>({o:$('gImgO').checked,e:$('gImgE').checked,el:$('gEL').checked,z:$('gZone').checked,snap:$('gSnap').checked});
+const rayOn=o=>o.ray!==false;
 function loadG(i){const p=GP[i];Object.assign(RG,{i,top:!!p.top,desk:!!p.desk,view:p.view.slice(),grid:p.grid||null,m:p.mirror.slice(),
-  marks:(p.marks||[]).map(a=>a.slice()),objs:p.objs.map(o=>({...o})),eye:{...p.eye},q:p.q,src:p.src,ar:p.ar||1,gstyle:p.gstyle||'solid',bar:p.bar||'hatch',plain:!!p.plain});
+  marks:(p.marks||[]).map(a=>a.slice()),objs:p.objs.map(o=>({...o})),eye:{...p.eye},q:p.q,src:p.src,free:!!p.free,ar:p.ar||1,gstyle:p.gstyle||'solid',bar:p.bar||'hatch',plain:!!p.plain});
   $('preG').querySelectorAll('button').forEach((b,k)=>b.setAttribute('aria-pressed',String(k===i)));
+  $('gFree').hidden=!RG.free;raysG();
   if(bench==='grid')SIZE.grid();uiG();kick();}
+// 每個點的光線各自開關
+function raysG(){const box=$('gRays');box.innerHTML='';RG.objs.forEach(o=>{const b=document.createElement('button');b.className='chip';b.textContent=o.n;
+  b.setAttribute('aria-pressed',String(rayOn(o)));b.addEventListener('click',()=>{o.ray=!rayOn(o);b.setAttribute('aria-pressed',String(rayOn(o)));uiG();kick();});box.appendChild(b);});}
 SIZE.grid=()=>{const v=RG.view,r=fit(cvG,clamp((v[3]-v[2])*RG.ar/(v[1]-v[0]),.42,.85),300,580);WG=r.W;HG=r.H;};
 function tfG(){const v=RG.view,pad=10,sx=Math.min((WG-2*pad)/(v[1]-v[0]),(HG-2*pad)/((v[3]-v[2])*RG.ar)),sy=sx*RG.ar,ox=(WG-sx*(v[1]-v[0]))/2,oy=(HG-sy*(v[3]-v[2]))/2;
   return{s:sx,sx,sy,X:x=>ox+(x-v[0])*sx,Y:y=>RG.top?oy+(y-v[2])*sy:oy+(v[3]-y)*sy,ix:px=>v[0]+(px-ox)/sx,iy:py=>RG.top?v[2]+(py-oy)/sy:v[3]-(py-oy)/sy};}
@@ -721,7 +735,9 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{sx,sy,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[
   if(O.z&&E.y>0){const far=xm=>({x:Ei.x+(xm-Ei.x)*80,y:Ei.y+(0-Ei.y)*80});const f0=far(m0),f1=far(m1);
     g.fillStyle=C.green;g.globalAlpha=.16;g.beginPath();g.moveTo(X(m0),y0);g.lineTo(X(f0.x),Y(f0.y));g.lineTo(X(f1.x),Y(f1.y));g.lineTo(X(m1),y0);g.closePath();g.fill();g.globalAlpha=1;
     line(g,X(m0),y0,X(f0.x),Y(f0.y),C.green,1.6,[6,4]);line(g,X(m1),y0,X(f1.x),Y(f1.y),C.green,1.6,[6,4]);
-    if(O.e){line(g,X(Ei.x),Y(Ei.y),X(m0),y0,C.green,1.4,[3,4]);line(g,X(Ei.x),Y(Ei.y),X(m1),y0,C.green,1.4,[3,4]);}}
+  }
+  // 從眼睛的像畫兩條虛線到鏡子兩端（可單獨開關）
+  if(O.el&&E.y>0){line(g,X(Ei.x),Y(Ei.y),X(m0),y0,C.ink,1.6,[6,4]);line(g,X(Ei.x),Y(Ei.y),X(m1),y0,C.ink,1.6,[6,4]);}
   // 鏡子
   barG(g,X(m0),X(m1),y0,back,Math.max(8,Math.min(14,sy*.22)),RG.bar==='gray');
   if(RG.grid&&!RG.plain)text(g,'平面鏡',(X(m0)+X(m1))/2,y0+back*Math.max(8,sy*.22)+back*16+(back>0?6:0),{col:C.ink,size:15,bold:true,align:'center',bg:C.panel});
@@ -729,10 +745,10 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{sx,sy,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[
     text(g,n,X(x),RG.desk?y0+22:y0-back*24+(RG.top?8:0),{col:C.ink,size:17,align:'center'});}
   // 光線
   const res=RG.objs.map(o=>({o,...seenG(o)}));
-  if(O.r)for(const r of res){if(!r.ok||r.xr==null)continue;const o=r.o,R=[X(r.xr),y0];
+  for(const r of res){if(!rayOn(r.o)||!r.ok||r.xr==null)continue;const o=r.o,R=[X(r.xr),y0];
     ray(g,X(o.x),Y(o.y),R[0],R[1],C.ray,2.4);ray(g,R[0],R[1],X(E.x),Y(E.y),C.ray,2.4);
     if(O.o)line(g,R[0],R[1],X(o.x),Y(-o.y),C.ray,1.6,[7,5]);g.fillStyle=C.ray;g.beginPath();g.arc(R[0],R[1],4,0,TAU);g.fill();}
-  if(O.r&&O.o)for(const r of res){if(r.ok||r.xr==null)continue;const o=r.o;   // 看不到：視線落在鏡子外
+  if(O.o)for(const r of res){if(!rayOn(r.o)||r.ok||r.xr==null)continue;const o=r.o;   // 看不到：視線落在鏡子外
     line(g,X(E.x),Y(E.y),X(o.x),Y(-o.y),C.muted,1.2,[3,4]);text(g,'✕',X(r.xr),y0+5,{col:'#c0453b',size:15,bold:true,align:'center'});}
   // 像（虛線圈）
   const ghost=(x,y)=>{g.save();g.setLineDash([3,3]);g.strokeStyle=C.muted;g.lineWidth=1.6;g.beginPath();g.arc(x,y,6,0,TAU);g.stroke();g.restore();};
@@ -740,7 +756,7 @@ DRAW.grid=()=>{const g=gG,W=WG,H=HG,{sx,sy,X,Y}=tfG(),O=optG(),E=RG.eye,m0=RG.m[
   if(O.e&&E.y>0){const x=X(Ei.x),y=Y(Ei.y);ghost(x,y);lblG(g,E.n+'′',x,y,E.lp,C.muted,14);}
   // 物體與眼睛：黑點（外圈橘色表示可以拖）
   for(const r of res){const o=r.o,x=X(o.x),y=Y(o.y);dotG(g,x,y,o.red?C.red:C.ink);
-    const mark=O.r?(r.ok?' ✓':' ✕'):'';lblG(g,o.n+mark,x,y,o.lp,O.r?(r.ok?C.green:'#c0453b'):(o.red?C.red:C.ink),18);}
+    const on=rayOn(o),mark=on?(r.ok?' ✓':' ✕'):'';lblG(g,o.n+mark,x,y,o.lp,on?(r.ok?C.green:'#c0453b'):(o.red?C.red:C.ink),18);}
   {const x=X(E.x),y=Y(E.y);dotG(g,x,y,C.ink);lblG(g,E.lab||E.n,x,y,E.lp,C.ink,18);}
   handle(g,X(m0),y0,7);handle(g,X(m1),y0,7);
   RG._res=res;};
@@ -752,12 +768,17 @@ function uiG(){const O=optG(),E=RG.eye,res=RG.objs.map(o=>({o,...seenG(o)}));
   $('gList').innerHTML=res.map(r=>{const w=r.xr==null?'':(RG.marks.length?`，視線落在 ${whereG(r.xr)}`:'');
     const t=r.xr==null?`${r.o.n}：在鏡子後面或鏡面上`:r.ok?`${r.o.n}：看得到——從 ${r.o.n}′ 連到 ${E.n} 的線穿過鏡子${w}`:`${r.o.n}：看不到——從 ${r.o.n}′ 連到 ${E.n} 的線落在鏡子外面${w}`;
     return`<li class="${r.ok?'ok':'no'}"><span>${t}</span></li>`;}).join('');
-  $('gNote').textContent=isModifiedG()?'你已經移動過東西，畫面和講義原圖不同了；按上方題目可以回到原圖。':'這是講義原圖的位置。';}
+  $('gNote').textContent=RG.free?'':isModifiedG()?'你已經移動過東西，畫面和講義原圖不同了；按上方題目可以回到原圖。':'這是講義原圖的位置。';}
 function isModifiedG(){const p=GP[RG.i];if(!p)return false;const same=(a,b)=>Math.abs(a-b)<1e-9;
   if(!same(p.mirror[0],RG.m[0])||!same(p.mirror[1],RG.m[1])||!same(p.eye.x,RG.eye.x)||!same(p.eye.y,RG.eye.y)||p.objs.length!==RG.objs.length)return true;
   return p.objs.some((o,k)=>!same(o.x,RG.objs[k].x)||!same(o.y,RG.objs[k].y));}
 {const box=$('preG');GP.forEach((p,k)=>{const b=document.createElement('button');b.className='chip';b.textContent=p.n;b.addEventListener('click',()=>loadG(k));box.appendChild(b);});}
-['gImgO','gImgE','gZone','gRay','gSnap'].forEach(id=>$(id).addEventListener('change',()=>{uiG();kick();}));
+['gImgO','gImgE','gEL','gZone','gSnap'].forEach(id=>$(id).addEventListener('change',()=>{uiG();kick();}));
+$('gRayAll').addEventListener('click',()=>{RG.objs.forEach(o=>o.ray=true);raysG();uiG();kick();});
+$('gRayNone').addEventListener('click',()=>{RG.objs.forEach(o=>o.ray=false);raysG();uiG();kick();});
+$('gAdd').addEventListener('click',()=>{const used=new Set([...RG.objs.map(o=>o.n),RG.eye.n]);const n=[...'ABCDFGHJKLMNPQRSTUVW'].find(c=>!used.has(c))||'X';const v=RG.view;
+  RG.objs.push({n,x:Math.round((v[0]+v[1])/2),y:Math.max(1,Math.round(v[3]/2))});raysG();uiG();kick();});
+$('gDel').addEventListener('click',()=>{if(RG.objs.length>1)RG.objs.pop();raysG();uiG();kick();});
 dragger(cvG,()=>{const T=tfG(),v=RG.view,sn=x=>optG().snap?Math.round(x*2)/2:Math.round(x*100)/100,list=[];
   const fy=y=>clamp(sn(y),.25,v[3]-.1),fx=x=>clamp(sn(x),v[0]+.1,v[1]-.1);
   list.push({x:T.X(RG.m[0]),y:T.Y(0),r:22,move:(x)=>{RG.m[0]=Math.min(fx(T.ix(x)),RG.m[1]-.5);uiG();}});
