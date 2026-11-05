@@ -209,6 +209,7 @@
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="ln3" checked>節線</label>
         <label class="tog"><input type="checkbox" id="an3">腹線</label>
+        <span id="crw3"><label class="tog"><input type="checkbox" id="cr3" checked>波峰（實線）</label><label class="tog"><input type="checkbox" id="tr3" checked>波谷（虛線）</label></span>
         <span class="seg" id="ph3"><button data-v="0">同相</button><button data-v="1">反相</button></span>
       </div>
       <div class="cbox"><canvas id="cv3" aria-label="兩個點波源的干涉圖形"></canvas></div>
@@ -251,9 +252,9 @@
       </div>
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="trH">波谷（虛線）</label>
-        <label class="tog"><input type="checkbox" id="dotH" checked>交點（● 加強 ● 抵消）</label>
+        <label class="tog"><input type="checkbox" id="dotH" checked>交點（實心＝波峰遇波峰、空心＝波谷遇波谷：加強；紅＝抵消）</label>
         <label class="tog"><input type="checkbox" id="lnH">腹線與節線</label>
-        <label class="tog"><input type="checkbox" id="fdH">疊加後的波</label>
+        <label class="tog"><input type="checkbox" id="fdH">疊加後的波</label><span class="seg" id="fdmH"><button data-v="w">瞬間位移（亮＝波峰、暗＝波谷）</button><button data-v="mag">振動強弱（亮＝加強）</button></span>
         <label class="tog"><input type="checkbox" id="cuH" checked>屏幕強度曲線</label>
         <span id="freeBtnH" hidden><button class="btn" id="addH">＋ 點波源</button> <button class="btn" id="delH">－ 點波源</button></span>
       </div>
@@ -777,7 +778,7 @@ $('reset2').addEventListener('click',()=>set2({t:0,run:false,ph:0}));
 // =====================================================================
 // 3 兩波源干涉
 // =====================================================================
-const S3={kind:'water',view:'water',ln:true,an:false,anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
+const S3={kind:'water',view:'water',ln:true,an:false,cr:true,tr:true,anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
 const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;const F3=Field();let dirty3=true;
 SIZE.two=()=>{const r=fit(cv3,.52,300,540);W3=r.W;H3=r.H;fieldResize(F3,W3,H3,W3<600?4:3);dirty3=true;};
 function geo3(){const sound=S3.kind==='sound',units=sound?12:TANK,ppu=W3/units,v=sound?340:28,f=sound?S3.fS:S3.fW,lamU=v/f,lam=lamU*ppu,d=(sound?S3.dS:S3.dW)*ppu,x0=W3*.12,y0=H3/2;
@@ -797,14 +798,15 @@ function lines3(G){const N=[],A=[];const add=(arr,dl,lab)=>{if(Math.abs(dl)<G.d-
 function speaker(g,x,y,lab){g.fillStyle=C.ink;g.fillRect(x-16,y-8,9,16);g.beginPath();g.moveTo(x-7,y-8);g.lineTo(x+4,y-15);g.lineTo(x+4,y+15);g.lineTo(x-7,y+8);g.closePath();g.fill();text(g,lab,x-18,y-12,{col:'#fff',size:12,bold:true,align:'right'});}
 DRAW.two=()=>{const g=g3,G=geo3();if(dirty3){compute3();dirty3=false;}
   if(S3.view==='circles'){g.fillStyle=C.water;g.fillRect(0,0,W3,H3);const R=Math.hypot(W3,H3),off=((S3.ph/TAU)%1+1)%1;
-    [[G.s1,0,C.w1],[G.s2,S3.anti?.5:0,C.w2]].forEach(([s,sh,col])=>{for(let n=0;n*G.lam<R;n++){const rc=(n+off+sh)*G.lam,rt=rc+G.lam/2;
-      if(rc>1){g.strokeStyle=col;g.lineWidth=2;g.setLineDash([]);g.beginPath();g.arc(s[0],s[1],rc,0,TAU);g.stroke();}
-      g.strokeStyle=col;g.lineWidth=1.2;g.setLineDash([4,5]);g.beginPath();g.arc(s[0],s[1],rt,0,TAU);g.stroke();g.setLineDash([]);}});
-    text(g,'實線：波峰　虛線：波谷',W3-8,18,{col:C.ink,size:12,bold:true,align:'right',bg:C.panel});}
+    const dk=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);const cA=dk?'#5aa2ff':'#1a56c4',cB=dk?'#ff6b5e':'#d0302a';
+    [[G.s1,0,cA],[G.s2,S3.anti?.5:0,cB]].forEach(([s,sh,col])=>{for(let n=0;n*G.lam<R;n++){const rc=(n+off+sh)*G.lam,rt=rc+G.lam/2;
+      if(S3.cr&&rc>1){g.strokeStyle=col;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();g.arc(s[0],s[1],rc,0,TAU);g.stroke();}
+      if(S3.tr){g.strokeStyle=col;g.lineWidth=1.4;g.setLineDash([4,5]);g.beginPath();g.arc(s[0],s[1],rt,0,TAU);g.stroke();g.setLineDash([]);}}});
+    text(g,(S3.cr&&S3.tr?'實線：波峰　虛線：波谷':S3.cr?'實線：波峰':S3.tr?'虛線：波谷':'')+'　藍：S₁　紅：S₂',W3-8,18,{col:C.ink,size:12,bold:true,align:'right',bg:C.panel});}
   else fieldDraw(g,F3,S3.ph,S3.view==='mag'?'mag':'w');
   const L=lines3(G);
   if(S3.an)L.A.forEach(([dl,lab])=>hyper3(g,G,dl,'#ffd27a',1.6,null,lab));
-  if(S3.ln)L.N.forEach(([dl,lab])=>hyper3(g,G,dl,'#ff6b5e',2,[7,5],lab));
+  if(S3.ln){const nc=S3.view==='circles'?(matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'?'#c9a2ff':'#6b2fb3'):'#ff6b5e';L.N.forEach(([dl,lab])=>hyper3(g,G,dl,nc,2.4,[8,5],lab));}
   if(G.sound){speaker(g,G.s1[0],G.s1[1],'S₁');speaker(g,G.s2[0],G.s2[1],'S₂');}
   else[G.s1,G.s2].forEach((s,i)=>{g.fillStyle=C.ink;g.beginPath();g.arc(s[0],s[1],6,0,TAU);g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.stroke();text(g,i?'S₂':'S₁',s[0]-10,s[1]+5,{col:'#fff',size:13,bold:true,align:'right'});});
   handle(g,G.s1[0],G.s1[1]-(G.sound?0:0),5);
@@ -823,7 +825,7 @@ function gUpd3(){if(S3.kind==='sound')return;const{G,q}=probe3();
   waveGraph($('cv3g'),[{a:q.a1,phi:G.k*q.r1,col:C.w1,label:'S₁ 傳來'},{a:q.a2,phi:G.k*q.r2+(S3.anti?Math.PI:0),col:C.w2,label:'S₂ 傳來'}],S3.ph,'P 點實際');}
 function classify(dl,anti){const fr=dl-Math.floor(dl),nearInt=Math.min(fr,1-fr)<.1,nearHalf=Math.abs(fr-.5)<.1;
   if(nearInt)return anti?['no','節線（破壞性）']:['ok','腹線（建設性）'];if(nearHalf)return anti?['ok','腹線（建設性）']:['no','節線（破壞性）'];return['info','介於節線與腹線之間'];}
-function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;playTxt($('play3'),S3.run);
+function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;$('cr3').checked=S3.cr;$('tr3').checked=S3.tr;$('crw3').hidden=S3.view!=='circles';playTxt($('play3'),S3.run);
   const fi=$('f3'),di=$('d3');if(G.sound){fi.min=150;fi.max=1200;fi.step=10;fi.value=S3.fS;di.min=.5;di.max=4;di.step=.1;di.value=S3.dS;}else{fi.min=4;fi.max=20;fi.step=.5;fi.value=S3.fW;di.min=2;di.max=24;di.step=.5;di.value=S3.dW;}
   $('f3o').textContent=G.f+' Hz';$('d3o').textContent=(G.sound?f1(G.dU):f1(G.dU))+' '+G.unit;
   const L=lines3(G),nN=L.N.length;
@@ -843,7 +845,7 @@ $('d3').addEventListener('input',e=>req3(S3.kind==='sound'?{dS:+e.target.value}:
 segOn($('kind3'),v=>set3({kind:v,view:v==='sound'?'mag':'water'}));
 segOn($('view3'),v=>set3({view:v}));
 segOn($('ph3'),v=>set3({anti:v==='1'}));
-$('ln3').addEventListener('change',e=>{S3.ln=e.target.checked;kick();});
+$('ln3').addEventListener('change',e=>{S3.ln=e.target.checked;kick();});$('cr3').addEventListener('change',e=>{S3.cr=e.target.checked;kick();});$('tr3').addEventListener('change',e=>{S3.tr=e.target.checked;kick();});
 $('an3').addEventListener('change',e=>{S3.an=e.target.checked;kick();});
 $('play3').addEventListener('click',()=>{S3.run=!S3.run;playTxt($('play3'),S3.run);kick();});
 $('step3').addEventListener('click',()=>{S3.run=false;S3.ph+=Math.PI/2;playTxt($('play3'),false);gUpd3();kick();});
@@ -1097,7 +1099,7 @@ $('anim4').addEventListener('click',()=>{S4.anim=!S4.anim;S4.at=0;ui4();kick();}
 // 4 狹縫作圖（惠更斯原理，2D／3D）
 // =====================================================================
 const HX0=-25,HX1=95,HY0=-40,HY1=40;
-const H={mode:'double',view:'2d',col:'red',lam:5,d:24,a:20,n:8,L:80,ph:0,run:true,tr:false,dot:true,ln:false,fd:false,cu:true,free:[{x:0,y:-12},{x:8,y:6},{x:-4,y:18}],ver:0};
+const H={mode:'double',view:'2d',col:'red',lam:5,d:24,a:20,n:8,L:80,ph:0,run:true,tr:false,dot:true,ln:false,fd:false,fdm:'w',cu:true,free:[{x:0,y:-12},{x:8,y:6},{x:-4,y:18}],ver:0};
 const HCOL={red:['#e0402f',[1,.25,.18],0xe0402f],green:['#2e9e4f',[.3,.9,.4],0x2fbf5a],blue:['#2f6fe0',[.35,.55,1],0x3a7af0]};
 function srcH(){if(H.mode==='double')return[{x:0,y:-H.d/2},{x:0,y:H.d/2}];if(H.mode==='single'){const a=[];for(let k=0;k<H.n;k++)a.push({x:0,y:-H.a/2+H.a*(k+.5)/H.n});return a;}return H.free;}
 const cvH=$('cvH'),gH=cvH.getContext('2d');let WH=800,HH=533;const FH=Field();let dirtyH=true,normH=1,scrH=null;
@@ -1109,21 +1111,21 @@ function prepH(){const S=srcH(),k=TAU/H.lam;let mx=1e-6;for(let x=2*H.lam;x<H.L;
   // 屏幕強度
   const N=240,arr=new Float32Array(N);let im=1e-9;for(let i=0;i<N;i++){const y=HY0+(i+.5)*(HY1-HY0)/N,[re,ii]=rawH(S,k,H.L,y),v=re*re+ii*ii;arr[i]=v;if(v>im)im=v;}for(let i=0;i<N;i++)arr[i]/=im;scrH=arr;}
 function computeH(){const S=srcH(),k=TAU/H.lam,F=FH;for(let j=0;j<F.h;j++){const y=HY0+(j+.5)*F.cell/hS();for(let i=0;i<F.w;i++){const x=HX0+(i+.5)*F.cell/hS(),o=j*F.w+i;
-  if(x>H.L+.5){F.re[o]=0;F.im[o]=0;F.mask[o]=1;continue;}F.mask[o]=0;const[re,im]=fieldAtH(S,k,x,y);F.re[o]=re;F.im[o]=im;}}}
+  if(x>H.L+.5){F.re[o]=0;F.im[o]=0;F.mask[o]=1;continue;}F.mask[o]=0;const[re,im]=fieldAtH(S,k,x,y);F.re[o]=re;F.im[o]=im;F.mag[o]=clamp(Math.hypot(re,im)/.95,0,1);}}}
 const scrI=y=>{if(!scrH)return 0;const i=Math.floor((y-HY0)/(HY1-HY0)*scrH.length);return scrH[clamp(i,0,scrH.length-1)];};
 function circX(a,ra,b,rb){const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<1e-6||d>ra+rb||d<Math.abs(ra-rb))return null;const l=(ra*ra-rb*rb+d*d)/(2*d),h=Math.sqrt(Math.max(0,ra*ra-l*l)),mx=a.x+dx*l/d,my=a.y+dy*l/d;
   return[[mx+dy*h/d,my-dx*h/d],[mx-dy*h/d,my+dx*h/d]];}
-function dotsH(){const S=srcH();if(S.length!==2)return{b:[],r:[]};const[A,B]=S,f=((H.ph/TAU)%1+1)%1,lam=H.lam,R=Math.hypot(HX1-HX0,HY1-HY0),b=[],r=[],xmin=H.mode==='free'?HX0:0;
+function dotsH(){const S=srcH();if(S.length!==2)return{b:[],r:[],t:[]};const[A,B]=S,f=((H.ph/TAU)%1+1)%1,lam=H.lam,R=Math.hypot(HX1-HX0,HY1-HY0),b=[],r=[],t=[],xmin=H.mode==='free'?HX0:0;
   const ok=([x,y])=>x>=xmin&&x<=H.L&&y>HY0&&y<HY1;
   for(let n1=0;(n1+f)*lam<R;n1++)for(let n2=0;(n2+f)*lam<R;n2++){const r1=(n1+f)*lam,r2=(n2+f)*lam;
-    (circX(A,r1,B,r2)||[]).forEach(p=>ok(p)&&b.push(p));(circX(A,r1,B,r2+lam/2)||[]).forEach(p=>ok(p)&&r.push(p));(circX(A,r1+lam/2,B,r2)||[]).forEach(p=>ok(p)&&r.push(p));}
-  return{b,r};}
+    (circX(A,r1,B,r2)||[]).forEach(p=>ok(p)&&b.push(p));(circX(A,r1,B,r2+lam/2)||[]).forEach(p=>ok(p)&&r.push(p));(circX(A,r1+lam/2,B,r2)||[]).forEach(p=>ok(p)&&r.push(p));if(H.tr)(circX(A,r1+lam/2,B,r2+lam/2)||[]).forEach(p=>ok(p)&&t.push(p));}
+  return{b,r,t};}
 // 一般位置的雙曲線（焦點 A、B，r_B − r_A＝δ）
 function hyperPts(A,B,delta){const c=Math.hypot(B.x-A.x,B.y-A.y)/2,a=Math.abs(delta)/2;if(a>=c)return null;const ux=(A.x-B.x)/(2*c),uy=(A.y-B.y)/(2*c),Mx=(A.x+B.x)/2,My=(A.y+B.y)/2,sg=delta>=0?1:-1,bb=Math.sqrt(c*c-a*a),out=[];
   for(let i=0;i<=200;i++){const t=-3.2+6.4*i/200;out.push([Mx+ux*sg*a*Math.cosh(t)-uy*bb*Math.sinh(t),My+uy*sg*a*Math.cosh(t)+ux*bb*Math.sinh(t)]);}return out;}
 DRAW.huy=()=>{if(H.view==='3d'){draw3H();return;}if(dirtyH){prepH();if(H.fd)computeH();dirtyH=false;uiH();}
   const g=gH,s=hS(),S=srcH(),f=((H.ph/TAU)%1+1)%1,lam=H.lam,free=H.mode==='free',cc=HCOL[H.col][0];g.clearRect(0,0,WH,HH);
-  if(H.fd)fieldDraw(g,FH,H.ph,'w');else{g.fillStyle=C.panel;g.fillRect(0,0,WH,HH);}
+  if(H.fd)fieldDraw(g,FH,H.ph,H.fdm);else{g.fillStyle=C.panel;g.fillRect(0,0,WH,HH);}
   const ac=H.fd?'rgba(255,255,255,.8)':cc;
   // 入射平面波
   if(!free){g.strokeStyle=ac;g.lineWidth=1.3;for(let m=1;;m++){const x=(f-m)*lam;if(x<HX0)break;g.beginPath();g.moveTo(hx(x),hy(-14));g.lineTo(hx(x),hy(14));g.stroke();}
@@ -1133,7 +1135,7 @@ DRAW.huy=()=>{if(H.view==='3d'){draw3H();return;}if(dirtyH){prepH();if(H.fd)comp
   S.forEach(p=>{for(let n=0;(n+f)*lam<Rm;n++){const r=(n+f)*lam;if(r<.05)continue;g.strokeStyle=ac;g.lineWidth=H.mode==='single'?1:1.4;g.globalAlpha=H.mode==='single'?.75:1;g.setLineDash([]);g.beginPath();g.arc(hx(p.x),hy(p.y),r*s,free?0:-Math.PI/2,free?TAU:Math.PI/2);g.stroke();
       if(H.tr){const rt=r+lam/2;g.lineWidth=1;g.globalAlpha=.6;g.setLineDash([4,4]);g.beginPath();g.arc(hx(p.x),hy(p.y),rt*s,free?0:-Math.PI/2,free?TAU:Math.PI/2);g.stroke();g.setLineDash([]);}g.globalAlpha=1;}});
   if(H.ln&&S.length===2){const[A,B]=S,D=Math.hypot(B.x-A.x,B.y-A.y);for(let m=-20;m<=20;m++){[[m*lam,'#16202a'],[(m+.5)*lam,'#e0402f']].forEach(([dl,col])=>{if(Math.abs(dl)>=D)return;const P=hyperPts(A,B,dl);if(!P)return;g.strokeStyle=H.fd?(col==='#16202a'?'#ffd27a':'#ff7468'):col;g.lineWidth=1.3;g.setLineDash(col==='#16202a'?[]:[6,4]);g.beginPath();P.forEach(([x,y],i)=>i?g.lineTo(hx(x),hy(y)):g.moveTo(hx(x),hy(y)));g.stroke();g.setLineDash([]);});}}
-  if(H.dot){const D=dotsH();g.fillStyle=H.fd?'#ffd27a':'#16202a';D.b.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});g.fillStyle='#e0402f';D.r.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});}
+  if(H.dot){const D=dotsH();g.fillStyle=H.fd?'#ffd27a':'#16202a';D.b.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});g.fillStyle='#e0402f';D.r.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),2.8,0,TAU);g.fill();});g.strokeStyle=H.fd?'#ffd27a':'#16202a';g.lineWidth=1.6;D.t.forEach(([x,y])=>{g.beginPath();g.arc(hx(x),hy(y),3.4,0,TAU);g.stroke();});}
   g.restore();
   // 擋板
   if(!free){g.fillStyle=H.fd?'#2b3138':C.ink;const gaps=H.mode==='double'?[[-H.d/2-.7,-H.d/2+.7],[H.d/2-.7,H.d/2+.7]]:[[-H.a/2,H.a/2]];let y0=HY0;gaps.forEach(([a,b])=>{g.fillRect(hx(-.5),hy(y0),s,hy(a)-hy(y0));y0=b;});g.fillRect(hx(-.5),hy(y0),s,hy(HY1)-hy(y0));
@@ -1151,11 +1153,11 @@ DRAW.huy=()=>{if(H.view==='3d'){draw3H();return;}if(dirtyH){prepH();if(H.fd)comp
 };
 TICK.huy=dt=>{if(H.run)H.ph+=dt*TAU*.45;return H.run||(H.view==='3d'&&!!HZ.ren);};
 function uiH(){segSet($('modeH'),H.mode);segSet($('viewH'),H.view);segSet($('colH'),H.col);playTxt($('playH'),H.run);
-  ['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').checked=H[k]);
+  ['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').checked=H[k]);segSet($('fdmH'),H.fdm);$('fdmH').hidden=!H.fd||H.view==='3d';
   $('dHw').hidden=H.mode!=='double';$('aHw').hidden=H.mode!=='single';$('nHw').hidden=H.mode!=='single';$('freeBtnH').hidden=H.mode!=='free';
   $('lamHo').textContent=f1(H.lam);$('lamH').value=H.lam;$('dHo').textContent=f1(H.d);$('dH').value=H.d;$('aHo').textContent=f1(H.a);$('aH').value=H.a;$('nHo').textContent=H.n+' 個';$('nH').value=H.n;$('LHo').textContent=Math.round(H.L);$('LH').value=H.L;
   $('cvH').hidden=H.view==='3d';$('cvH3').hidden=H.view!=='3d';$('h3tip').hidden=H.view!=='3d';
-  $('hintH').textContent=H.mode==='double'?'仿課本畫法：每條縫當成一個點光源，實線是波峰、虛線是波谷。拖曳 S₁ 或 S₂ 改變縫距，拖曳屏幕下方的橘點改變屏幕距離。（長度單位任意）':H.mode==='single'?'縫上每一點都是新的點波源（惠更斯原理）。把「縫上點波源數」調多，屏幕上的圖樣越接近單狹縫繞射；拖曳任一個點波源可以改變縫寬。':'沒有擋板：點波源可以放在任何地方、拖到任何位置，最多 6 個；兩個時會畫出交點。';
+  $('hintH').textContent=H.mode==='double'?'仿課本畫法：每條縫當成一個點光源，實線是波峰、虛線是波谷。波峰遇波峰、波谷遇波谷都是加強（振動最劇烈，連起來就是腹線，打到屏幕是亮紋）；「瞬間位移」的底色只是這一瞬間的高低：加強處此刻若是波谷就顯示成暗色，下半週期就變亮。改成「振動強弱」看時間平均的亮暗。拖曳 S₁ 或 S₂ 改變縫距，拖曳屏幕下方的橘點改變屏幕距離。（長度單位任意）':H.mode==='single'?'縫上每一點都是新的點波源（惠更斯原理）。把「縫上點波源數」調多，屏幕上的圖樣越接近單狹縫繞射；拖曳任一個點波源可以改變縫寬。':'沒有擋板：點波源可以放在任何地方、拖到任何位置，最多 6 個；兩個時會畫出交點。';
   const S=srcH(),L=[];
   if(H.mode==='double'){const dy=H.L*H.lam/H.d;$('rHbig').innerHTML=`亮紋間距 Δy ≈ <span class="mono">${f1(dy)}</span>`;$('rHf').innerHTML=`Δy ≈ Lλ／d＝${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.d)}＝${f1(dy)}（d 比 L 小很多時才準）`;
     L.push(['info','忽略狹縫寬度，把兩條縫看成 <b>2 個點光源</b>；它們的波互相干涉。']);
@@ -1171,7 +1173,7 @@ UI.huy=uiH;
 function setH(o){Object.assign(H,o);H.ver++;dirtyH=true;uiH();kick();}
 segOn($('modeH'),v=>setH(v==='single'?{mode:v,lam:4,a:20,n:8}:v==='double'?{mode:v,lam:5,d:24}:{mode:v,lam:6}));segOn($('colH'),v=>setH({col:v}));
 segOn($('viewH'),v=>{H.view=v;uiH();if(v==='3d')init3H().then(()=>{resize3H();kick();});else{SIZE.huy();}kick();});
-['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').addEventListener('change',e=>setH({[k]:e.target.checked})));
+['tr','dot','ln','fd','cu'].forEach(k=>$(k+'H').addEventListener('change',e=>setH({[k]:e.target.checked})));segOn($('fdmH'),v=>setH({fdm:v}));
 [['lamH','lam'],['dH','d'],['aH','a'],['nH','n'],['LH','L']].forEach(([id,k])=>$(id).addEventListener('input',e=>setH({[k]:+e.target.value})));
 $('playH').addEventListener('click',()=>{H.run=!H.run;uiH();kick();});
 $('stepH').addEventListener('click',()=>{H.run=false;H.ph+=Math.PI/2;uiH();kick();});
@@ -1238,7 +1240,7 @@ function draw3H(){const R=HZ;if(!R.ren||R.lost)return;const THREE=R.THREE,S=srcH
   if(!free)for(let m=1;;m++){const x=(f-m)*lam;if(x<HX0)break;if(n<MAXS){seg(lp,n,x,-14,x,14);n++;}}
   R.lg.setDrawRange(0,n*2);R.lg.attributes.position.needsUpdate=true;R.tg.setDrawRange(0,nt*2);R.tg.attributes.position.needsUpdate=true;
   // 交點
-  const D=H.dot?dotsH():{b:[],r:[]},M=new THREE.Matrix4();[[R.dB,D.b],[R.dR,D.r]].forEach(([im,arr])=>{const c=Math.min(arr.length,4000);for(let i=0;i<c;i++){M.makeTranslation(arr[i][0],lift+.3,arr[i][1]);im.setMatrixAt(i,M);}im.count=c;im.instanceMatrix.needsUpdate=true;});
+  const D=H.dot?dotsH():{b:[],r:[],t:[]},M=new THREE.Matrix4();[[R.dB,D.b.concat(D.t)],[R.dR,D.r]].forEach(([im,arr])=>{const c=Math.min(arr.length,4000);for(let i=0;i<c;i++){M.makeTranslation(arr[i][0],lift+.3,arr[i][1]);im.setMatrixAt(i,M);}im.count=c;im.instanceMatrix.needsUpdate=true;});
   R.ctl.update();R.ren.render(R.scene,R.cam);}
 
 // =====================================================================
