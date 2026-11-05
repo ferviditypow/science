@@ -168,8 +168,12 @@
   <section class="bench" id="b-huyg" hidden>
     <div class="panel">
       <div class="toolbar">
-        <button class="btn primary" id="playG">❚❚ 暫停</button><button class="btn" id="stepG">▸ 下一步 Δt</button><button class="btn" id="resetG">⟲ 重來</button>
+        <button class="btn primary" id="playG">❚❚ 暫停</button><button class="btn" id="backG">◂ 上一格</button><button class="btn" id="stepG">下一格 ▸</button><button class="btn" id="resetG">⟲ 重來</button>
         <span class="seg" id="modeG"><button data-v="plane">直線波前進</button><button data-v="circ">圓形波</button><button data-v="slit">通過狹縫</button><button data-v="edge">擋板邊緣</button><button data-v="refl">反射</button><button data-v="refr">折射</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">播放速度</span><span class="seg" id="spdG"><button data-v="0.0625">1/16</button><button data-v="0.125">1/8</button><button data-v="0.25">1/4</button><button data-v="0.5">1/2</button><button data-v="1">1 倍</button><button data-v="2">2 倍</button></span>
+        <span class="tlabel">每一格</span><span class="seg" id="fgG"><button data-v="0.0625">1/16 Δt</button><button data-v="0.125">1/8 Δt</button><button data-v="0.25">1/4 Δt</button><button data-v="0.5">1/2 Δt</button><button data-v="1">1 Δt</button></span>
       </div>
       <div class="toolbar">
         <label class="slider"><span class="tlabel">波前上的點波源</span><input type="range" id="NG" min="3" max="25" step="1" value="9"><output id="NGo"></output></label>
@@ -179,7 +183,7 @@
         <label class="tog"><input type="checkbox" id="wlG" checked>子波</label><label class="tog"><input type="checkbox" id="envG" checked>包絡線（新的波前）</label><label class="tog"><input type="checkbox" id="trG" checked>之前的波前</label>
       </div>
       <div class="cbox"><canvas id="cvG" aria-label="惠更斯作圖：波前上的點波源與子波"></canvas></div>
-      <p class="hint">惠更斯原理：波前上的每一點都可以看成新的點波源，向前發出子波；經過一段時間 Δt，所有子波的包絡線（公切線）就是新的波前。按「下一步 Δt」一步一步看。</p>
+      <p class="hint">惠更斯原理：波前上的每一點都可以看成新的點波源，向前發出子波；經過一段時間 Δt，所有子波的包絡線（公切線）就是新的波前。按「下一格 ▸」（或鍵盤 →）一格一格看，「每一格」可選 1/16～1 Δt；空白鍵播放／暫停。</p>
     </div>
     <div class="grid2">
       <section class="panel box"><p class="big" id="rGbig"></p><div class="formula2" id="rGf"></div><ul class="checks" id="rGc"></ul></section>
@@ -760,7 +764,7 @@ PRE1.forEach(([n,o])=>{const b=document.createElement('button');b.className='chi
 // 惠更斯作圖：波前上每一點都是新的點波源，子波的包絡線是新的波前
 // =====================================================================
 const nfG=(x,dp=2)=>(Math.round(x*10**dp)/10**dp).toString();
-const HG={mode:'plane',N:9,a:.3,i:35,n:1.5,t:0,run:true,stop:null,wl:true,env:true,trail:true};
+const HG={spd:.5,fg:.25,mode:'plane',N:9,a:.3,i:35,n:1.5,t:0,run:true,stop:null,wl:true,env:true,trail:true};
 const cvG=$('cvG'),gG=cvG.getContext('2d');let WG=800,HG2=420;
 SIZE.huyg=()=>{const r=fit(cvG,.5,320,520);WG=r.W;HG2=r.H;};
 function geoG(){const W=WG,H=HG2,v=Math.max(34,Math.min(W,H)*.11),dt=1;const xb=W*.42,yc=H*.5,i=clamp(HG.i,10,75)*D2R;
@@ -821,16 +825,16 @@ function drawG(){const g=gG,o=geoG(),W=o.W,H=o.H,m=HG.mode,t=HG.t;g.fillStyle=C.
     arrow(g,x-o.d[0]*L,y-o.d[1]*L,x,y,C.purple,2.2);
     if(mirror){arrow(g,x,y,x+o.d[0]*L,y-o.d[1]*L,C.green,2.2);text(g,`入射角 ${Math.round(HG.i)}°`,x-o.d[0]*L*.55-8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.purple,align:'right',bg:C.panel});text(g,`反射角 ${Math.round(HG.i)}°`,x+o.d[0]*L*.55+8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.green,bg:C.panel});}
     else{arrow(g,x,y,x+Math.sin(o.r)*L,y+Math.cos(o.r)*L,C.green,2.2);text(g,`入射角 ${Math.round(HG.i)}°`,x-o.d[0]*L*.55-8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.purple,align:'right',bg:C.panel});text(g,`折射角 ${nfG(o.r/D2R,1)}°`,x+Math.sin(o.r)*L*.55+8,y+Math.cos(o.r)*L*.6,{size:12,bold:true,col:C.green,bg:C.panel});}}
-  text(g,W<600?'紅：波前　藍：點波源與子波':'紅：波前（子波的包絡線）　藍點：新的點波源　藍弧：子波',W-8,18,{size:12,bold:true,align:'right',bg:C.panel});}
+  text(g,`t ＝ ${nfG(HG.t/o.dt,3)} Δt`,10,H-10,{size:13,bold:true,bg:C.panel});text(g,W<600?'紅：波前　藍：點波源與子波':'紅：波前（子波的包絡線）　藍點：新的點波源　藍弧：子波',W-8,18,{size:12,bold:true,align:'right',bg:C.panel});}
 function drawFrontG(g,o,F,w,t){const m=HG.mode,W=o.W,H=o.H;g.save();if(m==='slit'||m==='edge'){g.beginPath();g.rect(t>o.tb?o.xb:0,0,t>o.tb?W:o.xb,H);g.clip();}
   if(m==='refr'){F.lines.forEach((L,k)=>{g.save();g.beginPath();k?g.rect(0,o.ym,W,H):g.rect(0,0,W,o.ym);g.clip();poly(g,L,C.ray,w);g.restore();});}
   else if(m==='refl'){F.lines.forEach(L=>{g.save();g.beginPath();g.rect(0,0,W,o.ym);g.clip();poly(g,L,C.ray,w);g.restore();});}
   else F.lines.forEach(L=>poly(g,L,C.ray,w));g.restore();}
 function poly(g,L,col,w){if(L.length<2)return;g.strokeStyle=col;g.lineWidth=w;g.setLineDash([]);g.beginPath();g.moveTo(L[0][0],L[0][1]);for(let k=1;k<L.length;k++)g.lineTo(L[k][0],L[k][1]);g.stroke();}
 function tEndG(){const o=geoG();if(HG.mode==='refl'||HG.mode==='refr')return o.th(o.xm1)+3;if(HG.mode==='circ')return(Math.hypot(o.W,o.H)*.8-o.R0)/o.v;return(o.W-o.x0)/o.v-.3;}
-TICK.huyg=dt=>{if(!HG.run)return false;HG.t+=dt*.55;if(HG.stop!==null&&HG.t>=HG.stop){HG.t=HG.stop;HG.stop=null;HG.run=false;uiG();}if(HG.t>tEndG())HG.t=0;return HG.run;};
+TICK.huyg=dt=>{if(!HG.run)return false;HG.t+=dt*1.1*HG.spd;if(HG.stop!==null&&HG.t>=HG.stop){HG.t=HG.stop;HG.stop=null;HG.run=false;uiG();}if(HG.t>tEndG())HG.t=0;return HG.run;};
 DRAW.huyg=()=>{drawG();};
-function uiG(){segSet($('modeG'),HG.mode);playTxt($('playG'),HG.run);$('NG').value=HG.N;$('NGo').textContent=HG.N+' 個';$('aGw').hidden=HG.mode!=='slit';$('aG').value=HG.a;$('aGo').textContent=Math.round(HG.a*100)+'%';
+function uiG(){segSet($('modeG'),HG.mode);segSet($('spdG'),String(HG.spd));segSet($('fgG'),String(HG.fg));playTxt($('playG'),HG.run);$('NG').value=HG.N;$('NGo').textContent=HG.N+' 個';$('aGw').hidden=HG.mode!=='slit';$('aG').value=HG.a;$('aGo').textContent=Math.round(HG.a*100)+'%';
   $('iGw').hidden=!(HG.mode==='refl'||HG.mode==='refr');$('iG').value=HG.i;$('iGo').textContent=HG.i+'°';$('nGw').hidden=HG.mode!=='refr';$('nG').value=HG.n;$('nGo').textContent=nfG(HG.n,2);
   $('wlG').checked=HG.wl;$('envG').checked=HG.env;$('trG').checked=HG.trail;
   const T={plane:['直線前進：波前上每一點都發出子波','每個點同時發出半圓形的子波，經過 Δt 後所有子波的包絡線（公切線）就是新的波前——又是一條直線，所以直線波一直直線前進。'],
@@ -843,7 +847,10 @@ function uiG(){segSet($('modeG'),HG.mode);playTxt($('playG'),HG.run);$('NG').val
   const o=geoG();$('rGc').innerHTML=HG.mode==='refr'?`<li class="info"><span>sin ${HG.i}° ／ sin ${nfG(o.r/D2R,1)}° ＝ ${nfG(Math.sin(HG.i*D2R)/Math.sin(o.r),2)} ＝ n</span></li>`:HG.mode==='refl'?`<li class="info"><span>入射角 ${HG.i}° ＝ 反射角 ${HG.i}°</span></li>`:'';}
 segOn($('modeG'),v=>{HG.mode=v;HG.t=0;HG.stop=null;HG.run=true;hideStory();uiG();kick();});
 $('playG').addEventListener('click',()=>{HG.run=!HG.run;HG.stop=null;uiG();kick();});
-$('stepG').addEventListener('click',()=>{const o=geoG();HG.stop=Math.floor(HG.t/o.dt+1e-6)*o.dt+o.dt;HG.run=true;uiG();kick();});
+function frameG(k){const o=geoG(),d=HG.fg*o.dt;HG.run=false;HG.stop=null;let t=Math.round(HG.t/d+1e-6)*d+k*d;const E=tEndG();if(t>E)t=0;if(t<0)t=Math.floor(E/d)*d;HG.t=t;uiG();kick();}
+$('stepG').addEventListener('click',()=>frameG(1));$('backG').addEventListener('click',()=>frameG(-1));
+segOn($('spdG'),v=>{HG.spd=+v;uiG();});segOn($('fgG'),v=>{HG.fg=+v;uiG();});
+document.addEventListener('keydown',ev=>{if(bench!=='huyg'||/INPUT|TEXTAREA|SELECT/.test(ev.target.tagName))return;if(ev.key==='ArrowRight'){ev.preventDefault();frameG(1);}else if(ev.key==='ArrowLeft'){ev.preventDefault();frameG(-1);}else if(ev.key===' '){ev.preventDefault();HG.run=!HG.run;HG.stop=null;uiG();kick();}});
 $('resetG').addEventListener('click',()=>{HG.t=0;HG.stop=null;HG.run=false;uiG();kick();});
 [['NG','N',v=>Math.round(v)],['aG','a',v=>v],['iG','i',v=>Math.round(v)],['nG','n',v=>v]].forEach(([id,k,f])=>$(id).addEventListener('input',()=>{HG[k]=f(+$(id).value);uiG();kick();}));
 [['wlG','wl'],['envG','env'],['trG','trail']].forEach(([id,k])=>$(id).addEventListener('change',()=>{HG[k]=$(id).checked;kick();}));
