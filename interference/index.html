@@ -209,7 +209,7 @@
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="ln3" checked>節線</label>
         <label class="tog"><input type="checkbox" id="an3">腹線</label>
-        <span id="crw3"><label class="tog"><input type="checkbox" id="cr3" checked>波峰（實線）</label><label class="tog"><input type="checkbox" id="tr3" checked>波谷（虛線）</label></span>
+        <span id="crw3"><span class="tlabel" style="color:#1a56c4">S₁（藍）</span><label class="tog"><input type="checkbox" id="cr3a" checked>波峰</label><label class="tog"><input type="checkbox" id="tr3a" checked>波谷</label><span class="tlabel" style="color:#d0302a">S₂（紅）</span><label class="tog"><input type="checkbox" id="cr3b" checked>波峰</label><label class="tog"><input type="checkbox" id="tr3b" checked>波谷</label></span>
         <span class="seg" id="ph3"><button data-v="0">同相</button><button data-v="1">反相</button></span>
       </div>
       <div class="cbox"><canvas id="cv3" aria-label="兩個點波源的干涉圖形"></canvas></div>
@@ -778,7 +778,7 @@ $('reset2').addEventListener('click',()=>set2({t:0,run:false,ph:0}));
 // =====================================================================
 // 3 兩波源干涉
 // =====================================================================
-const S3={kind:'water',view:'water',ln:true,an:false,cr:true,tr:true,anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
+const S3={kind:'water',view:'water',ln:true,an:false,cr:[true,true],tr:[true,true],anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
 const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;const F3=Field();let dirty3=true;
 SIZE.two=()=>{const r=fit(cv3,.52,300,540);W3=r.W;H3=r.H;fieldResize(F3,W3,H3,W3<600?4:3);dirty3=true;};
 function geo3(){const sound=S3.kind==='sound',units=sound?12:TANK,ppu=W3/units,v=sound?340:28,f=sound?S3.fS:S3.fW,lamU=v/f,lam=lamU*ppu,d=(sound?S3.dS:S3.dW)*ppu,x0=W3*.12,y0=H3/2;
@@ -799,10 +799,10 @@ function speaker(g,x,y,lab){g.fillStyle=C.ink;g.fillRect(x-16,y-8,9,16);g.beginP
 DRAW.two=()=>{const g=g3,G=geo3();if(dirty3){compute3();dirty3=false;}
   if(S3.view==='circles'){g.fillStyle=C.water;g.fillRect(0,0,W3,H3);const R=Math.hypot(W3,H3),off=((S3.ph/TAU)%1+1)%1;
     const dk=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);const cA=dk?'#5aa2ff':'#1a56c4',cB=dk?'#ff6b5e':'#d0302a';
-    [[G.s1,0,cA],[G.s2,S3.anti?.5:0,cB]].forEach(([s,sh,col])=>{for(let n=0;n*G.lam<R;n++){const rc=(n+off+sh)*G.lam,rt=rc+G.lam/2;
-      if(S3.cr&&rc>1){g.strokeStyle=col;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();g.arc(s[0],s[1],rc,0,TAU);g.stroke();}
-      if(S3.tr){g.strokeStyle=col;g.lineWidth=1.4;g.setLineDash([4,5]);g.beginPath();g.arc(s[0],s[1],rt,0,TAU);g.stroke();g.setLineDash([]);}}});
-    text(g,(S3.cr&&S3.tr?'實線：波峰　虛線：波谷':S3.cr?'實線：波峰':S3.tr?'虛線：波谷':'')+'　藍：S₁　紅：S₂',W3-8,18,{col:C.ink,size:12,bold:true,align:'right',bg:C.panel});}
+    [[G.s1,0,cA],[G.s2,S3.anti?.5:0,cB]].forEach(([s,sh,col],si)=>{for(let n=0;n*G.lam<R;n++){const rc=(n+off+sh)*G.lam,rt=rc+G.lam/2;
+      if(S3.cr[si]&&rc>1){g.strokeStyle=col;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();g.arc(s[0],s[1],rc,0,TAU);g.stroke();}
+      if(S3.tr[si]){g.strokeStyle=col;g.lineWidth=1.4;g.setLineDash([4,5]);g.beginPath();g.arc(s[0],s[1],rt,0,TAU);g.stroke();g.setLineDash([]);}}});
+    text(g,'實線：波峰　虛線：波谷　藍：S₁　紅：S₂',W3-8,18,{col:C.ink,size:12,bold:true,align:'right',bg:C.panel});}
   else fieldDraw(g,F3,S3.ph,S3.view==='mag'?'mag':'w');
   const L=lines3(G);
   if(S3.an)L.A.forEach(([dl,lab])=>hyper3(g,G,dl,'#ffd27a',1.6,null,lab));
@@ -825,7 +825,7 @@ function gUpd3(){if(S3.kind==='sound')return;const{G,q}=probe3();
   waveGraph($('cv3g'),[{a:q.a1,phi:G.k*q.r1,col:C.w1,label:'S₁ 傳來'},{a:q.a2,phi:G.k*q.r2+(S3.anti?Math.PI:0),col:C.w2,label:'S₂ 傳來'}],S3.ph,'P 點實際');}
 function classify(dl,anti){const fr=dl-Math.floor(dl),nearInt=Math.min(fr,1-fr)<.1,nearHalf=Math.abs(fr-.5)<.1;
   if(nearInt)return anti?['no','節線（破壞性）']:['ok','腹線（建設性）'];if(nearHalf)return anti?['ok','腹線（建設性）']:['no','節線（破壞性）'];return['info','介於節線與腹線之間'];}
-function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;$('cr3').checked=S3.cr;$('tr3').checked=S3.tr;$('crw3').hidden=S3.view!=='circles';playTxt($('play3'),S3.run);
+function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;['a','b'].forEach((k,i)=>{$('cr3'+k).checked=S3.cr[i];$('tr3'+k).checked=S3.tr[i];});$('crw3').hidden=S3.view!=='circles';playTxt($('play3'),S3.run);
   const fi=$('f3'),di=$('d3');if(G.sound){fi.min=150;fi.max=1200;fi.step=10;fi.value=S3.fS;di.min=.5;di.max=4;di.step=.1;di.value=S3.dS;}else{fi.min=4;fi.max=20;fi.step=.5;fi.value=S3.fW;di.min=2;di.max=24;di.step=.5;di.value=S3.dW;}
   $('f3o').textContent=G.f+' Hz';$('d3o').textContent=(G.sound?f1(G.dU):f1(G.dU))+' '+G.unit;
   const L=lines3(G),nN=L.N.length;
@@ -845,7 +845,7 @@ $('d3').addEventListener('input',e=>req3(S3.kind==='sound'?{dS:+e.target.value}:
 segOn($('kind3'),v=>set3({kind:v,view:v==='sound'?'mag':'water'}));
 segOn($('view3'),v=>set3({view:v}));
 segOn($('ph3'),v=>set3({anti:v==='1'}));
-$('ln3').addEventListener('change',e=>{S3.ln=e.target.checked;kick();});$('cr3').addEventListener('change',e=>{S3.cr=e.target.checked;kick();});$('tr3').addEventListener('change',e=>{S3.tr=e.target.checked;kick();});
+$('ln3').addEventListener('change',e=>{S3.ln=e.target.checked;kick();});['a','b'].forEach((k,i)=>{$('cr3'+k).addEventListener('change',e=>{S3.cr[i]=e.target.checked;kick();});$('tr3'+k).addEventListener('change',e=>{S3.tr[i]=e.target.checked;kick();});});
 $('an3').addEventListener('change',e=>{S3.an=e.target.checked;kick();});
 $('play3').addEventListener('click',()=>{S3.run=!S3.run;playTxt($('play3'),S3.run);kick();});
 $('step3').addEventListener('click',()=>{S3.run=false;S3.ph+=Math.PI/2;playTxt($('play3'),false);gUpd3();kick();});
