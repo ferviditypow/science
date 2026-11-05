@@ -60,7 +60,7 @@
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 電磁波與光（四） · <a href="../refraction/">上一頁：光的折射</a></div>
       <h1>繞射與干涉</h1>
     </div>
-    <p>拖曳橘色的點操作。六個實驗台對應講義 2-5、2-6 與 2-1：繞射、疊加原理、水波干涉、雙狹縫、薄膜干涉、光的本質之爭；最下方有隨堂練習與考古題的情境。</p>
+    <p>拖曳橘色的點操作。九個實驗台對應講義 2-5、2-6 與 2-1：自由波槽、繞射、惠更斯作圖、疊加原理、水波干涉、雙狹縫、薄膜干涉、光的本質之爭；最下方有隨堂練習與考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -68,12 +68,13 @@
     <span class="seg" id="benchSeg">
       <button data-v="tank" aria-pressed="true"><span class="n">0</span>自由波槽（2D／3D）</button>
       <button data-v="diffract" aria-pressed="false"><span class="n">1</span>繞射</button>
-      <button data-v="super" aria-pressed="false"><span class="n">2</span>疊加原理</button>
-      <button data-v="two" aria-pressed="false"><span class="n">3</span>兩波源干涉</button>
-      <button data-v="huy" aria-pressed="false"><span class="n">4</span>狹縫作圖（2D／3D）</button>
-      <button data-v="young" aria-pressed="false"><span class="n">5</span>楊氏雙狹縫</button>
-      <button data-v="film" aria-pressed="false"><span class="n">6</span>薄膜干涉</button>
-      <button data-v="nature" aria-pressed="false"><span class="n">7</span>光的本質之爭</button>
+      <button data-v="huyg" aria-pressed="false"><span class="n">2</span>惠更斯作圖</button>
+      <button data-v="super" aria-pressed="false"><span class="n">3</span>疊加原理</button>
+      <button data-v="two" aria-pressed="false"><span class="n">4</span>兩波源干涉</button>
+      <button data-v="huy" aria-pressed="false"><span class="n">5</span>狹縫作圖（2D／3D）</button>
+      <button data-v="young" aria-pressed="false"><span class="n">6</span>楊氏雙狹縫</button>
+      <button data-v="film" aria-pressed="false"><span class="n">7</span>薄膜干涉</button>
+      <button data-v="nature" aria-pressed="false"><span class="n">8</span>光的本質之爭</button>
     </span>
   </nav>
 
@@ -160,6 +161,35 @@
           <li>聲波波長 1.7 cm～17 m，與門窗相當 → 隔牆有耳；可見光約 0.0005 mm → 影子很清楚。</li>
         </ul>
       </section>
+    </div>
+  </section>
+
+  <!-- ============ 惠更斯作圖 ============ -->
+  <section class="bench" id="b-huyg" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="playG">❚❚ 暫停</button><button class="btn" id="stepG">▸ 下一步 Δt</button><button class="btn" id="resetG">⟲ 重來</button>
+        <span class="seg" id="modeG"><button data-v="plane">直線波前進</button><button data-v="circ">圓形波</button><button data-v="slit">通過狹縫</button><button data-v="edge">擋板邊緣</button><button data-v="refl">反射</button><button data-v="refr">折射</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">波前上的點波源</span><input type="range" id="NG" min="3" max="25" step="1" value="9"><output id="NGo"></output></label>
+        <label class="slider" id="aGw"><span class="tlabel">縫寬</span><input type="range" id="aG" min="0.04" max="0.6" step="0.02" value="0.3"><output id="aGo"></output></label>
+        <label class="slider" id="iGw"><span class="tlabel">入射角</span><input type="range" id="iG" min="10" max="70" step="1" value="35"><output id="iGo"></output></label>
+        <label class="slider" id="nGw"><span class="tlabel">下方折射率</span><input type="range" id="nG" min="1.1" max="2.5" step="0.05" value="1.5"><output id="nGo"></output></label>
+        <label class="tog"><input type="checkbox" id="wlG" checked>子波</label><label class="tog"><input type="checkbox" id="envG" checked>包絡線（新的波前）</label><label class="tog"><input type="checkbox" id="trG" checked>之前的波前</label>
+      </div>
+      <div class="cbox"><canvas id="cvG" aria-label="惠更斯作圖：波前上的點波源與子波"></canvas></div>
+      <p class="hint">惠更斯原理：波前上的每一點都可以看成新的點波源，向前發出子波；經過一段時間 Δt，所有子波的包絡線（公切線）就是新的波前。按「下一步 Δt」一步一步看。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="rGbig"></p><div class="formula2" id="rGf"></div><ul class="checks" id="rGc"></ul></section>
+      <section class="panel box"><h3>惠更斯原理（1678）</h3><ul>
+        <li>波前：同一時刻振動狀態相同的點連成的線（例如同一個波峰）。</li>
+        <li>波前上的每一點都是新的點波源，發出與原來波速相同的子波。</li>
+        <li>子波的包絡線（和所有子波都相切的線）就是下一時刻的新波前。</li>
+        <li>用這個方法可以解釋波的直線前進、繞射、反射（入射角＝反射角）與折射（進入慢的介質波前轉彎）。</li>
+        <li>惠更斯用它支持光的波動說，並推論光在水中比在空氣中慢。</li>
+      </ul></section>
     </div>
   </section>
 
@@ -489,7 +519,7 @@ function waveGraph(cv,parts,ph,sumLabel='合成'){if(cv._w!==cv.clientWidth||!cv
   let lx=L+4;parts.forEach(p=>{text(g,p.label,lx,H-6,{col:p.col,size:11,bold:true});lx+=g.measureText(p.label).width+14;});text(g,sumLabel,lx,H-6,{col:C.sum,size:11,bold:true});}
 
 // ================= bench switching / loop =================
-let bench='tank';const BENCHES=['tank','diffract','super','two','huy','young','film','nature'];
+let bench='tank';const BENCHES=['tank','diffract','huyg','super','two','huy','young','film','nature'];
 const SIZE={},DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='tank';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();UI[b]&&UI[b]();kick();}
@@ -726,6 +756,98 @@ dragger(cv1,()=>[{x:S1.P.fx*W1,y:S1.P.fy*H1,r:28,move:(x,y)=>{S1.P.fx=clamp(x/W1
 const PRE1=[['縫寬 ≫ 波長',{mode:'slit',a:24,f:12,h:.8}],['縫寬 ≈ 波長',{mode:'slit',a:3.5,f:8,h:.8}],['縫寬 < 波長',{mode:'slit',a:1.5,f:6,h:.8}],['擋板邊緣',{mode:'edge',f:8,h:.8,P:{fx:.78,fy:.75}}],['小障礙物（阿拉戈亮點）',{mode:'block',a:4,f:8,h:.8,P:{fx:.82,fy:.5}}]];
 PRE1.forEach(([n,o])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.addEventListener('click',()=>set1(JSON.parse(JSON.stringify(o))));$('pre1').appendChild(b);});
 
+// =====================================================================
+// 惠更斯作圖：波前上每一點都是新的點波源，子波的包絡線是新的波前
+// =====================================================================
+const nfG=(x,dp=2)=>(Math.round(x*10**dp)/10**dp).toString();
+const HG={mode:'plane',N:9,a:.3,i:35,n:1.5,t:0,run:true,stop:null,wl:true,env:true,trail:true};
+const cvG=$('cvG'),gG=cvG.getContext('2d');let WG=800,HG2=420;
+SIZE.huyg=()=>{const r=fit(cvG,.5,320,520);WG=r.W;HG2=r.H;};
+function geoG(){const W=WG,H=HG2,v=Math.max(34,Math.min(W,H)*.11),dt=1;const xb=W*.42,yc=H*.5,i=clamp(HG.i,10,75)*D2R;
+  const o={W,H,v,dt,xb,yc,i};o.x0=xb-3*v*dt;// 直線波剛好在第 3 步碰到擋板
+  o.a=HG.a*H;o.ya=yc-o.a/2;o.yb=yc+o.a/2;o.ye=H*.45;o.S=[W*.1,H*.5];o.R0=v*.5;
+  o.ym=HG.mode==='refl'?H*.8:H*.45;o.xm0=W*.06;o.xm1=W*.94;o.d=[Math.sin(i),Math.cos(i)];o.r=Math.asin(Math.sin(i)/HG.n);
+  // 入射波前：d·p＝c(t)；讓 t＝0 時剛碰到鏡面左端
+  o.c0=o.d[0]*o.xm0+o.d[1]*o.ym;o.th=x=>((o.d[0]*x+o.d[1]*o.ym)-o.c0)/v;o.tb=(xb-o.x0)/v;return o;}
+const segPts=(cx,cy,r,a0,a1,n=40)=>{const p=[];for(let k=0;k<=n;k++){const a=a0+(a1-a0)*k/n;p.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}return p;};
+// 回傳 {lines:[polyline], ctr:參考中心（決定法線朝外）}
+function frontG(o,t){const m=HG.mode,v=o.v;
+  if(m==='plane'){const x=o.x0+v*t;return{lines:[[[x,0],[x,o.H]]],ctr:null};}
+  if(m==='circ'){const R=o.R0+v*t;return{lines:[segPts(o.S[0],o.S[1],R,0,TAU,120)],ctr:o.S};}
+  if(m==='slit'||m==='edge'){if(t<=o.tb+1e-9){const x=o.x0+v*t;return{lines:[[[x,0],[x,o.H]]],ctr:null};}const r=v*(t-o.tb);
+    if(m==='slit')return{lines:[[...segPts(o.xb,o.ya,r,-Math.PI/2,0),...segPts(o.xb,o.yb,r,0,Math.PI/2)]],ctr:[o.xb,o.yc],cA:[o.xb,o.ya],cB:[o.xb,o.yb]};
+    return{lines:[[[o.xb+r,0],...segPts(o.xb,o.ye,r,0,Math.PI/2)]],ctr:[o.xb,o.ye]};}
+  // 反射、折射：入射部分＋反射（或折射）部分
+  const c=o.c0+v*t,xh=(c-o.d[1]*o.ym)/o.d[0],p=[o.d[1],-o.d[0]],L=Math.hypot(o.W,o.H)*2,out=[];
+  const xs=clamp(xh,o.xm0,o.xm1);const P0=[(c-o.d[1]*o.ym)/o.d[0],o.ym];
+  // 入射波前：在介面上方，從碰到點往右上延伸（還沒碰到的部分）
+  if(xh<o.xm0){const q=[o.xm0,o.ym],s=(c-(o.d[0]*q[0]+o.d[1]*q[1]));const b=[q[0]+o.d[0]*s,q[1]+o.d[1]*s];out.push([[b[0]-p[0]*L,b[1]-p[1]*L],[b[0]+p[0]*L,b[1]+p[1]*L]]);}
+  else out.push([P0,[P0[0]+p[0]*L,P0[1]+p[1]*L]]);
+  if(xh>o.xm0){const tt=t-o.th(o.xm0),E=[Math.min(xh,o.xm1),o.ym];
+    if(HG.mode==='refl'){const d2=[o.d[0],-o.d[1]],Q=[o.xm0+d2[0]*v*tt,o.ym+d2[1]*v*tt];out.push(xh<=o.xm1?[[xh,o.ym],Q]:[[o.xm1+d2[0]*v*(t-o.th(o.xm1)),o.ym+d2[1]*v*(t-o.th(o.xm1))],Q]);}
+    else{const v2=v/HG.n,d2=[Math.sin(o.r),Math.cos(o.r)],Q=[o.xm0+d2[0]*v2*tt,o.ym+d2[1]*v2*tt];out.push(xh<=o.xm1?[[xh,o.ym],Q]:[[o.xm1+d2[0]*v2*(t-o.th(o.xm1)),o.ym+d2[1]*v2*(t-o.th(o.xm1))],Q]);}}
+  return{lines:out,ctr:null};}
+// 在波前上平均取 N 點（只取畫面內），附法線
+function sampleG(o,F,N){const pts=[];const inb=p=>p[0]>=-2&&p[0]<=o.W+2&&p[1]>=-2&&p[1]<=o.H+2;
+  F.lines.forEach(L=>{const seg=[];for(let k=0;k+1<L.length;k++){let a=L[k],b=L[k+1];// 只保留畫面內的部分
+      const n=24;for(let j=0;j<n;j++){const p=[a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n],q=[a[0]+(b[0]-a[0])*(j+1)/n,a[1]+(b[1]-a[1])*(j+1)/n];if(inb(p)&&inb(q))seg.push([p,q]);}}
+    const len=seg.reduce((s,[p,q])=>s+Math.hypot(q[0]-p[0],q[1]-p[1]),0);if(len<1)return;const step=len/N;let acc=step/2,k=0,run=0;
+    for(const [p,q] of seg){const l=Math.hypot(q[0]-p[0],q[1]-p[1]);while(acc<=run+l&&k<N){const f=(acc-run)/l,x=p[0]+(q[0]-p[0])*f,y=p[1]+(q[1]-p[1])*f;let nx=(q[1]-p[1])/l,ny=-(q[0]-p[0])/l;
+        const ref=F.ctr?[x-F.ctr[0],y-F.ctr[1]]:[1,0];if(F.cA&&F.cB){const c=y<F.cA[1]?F.cA:y>F.cB[1]?F.cB:[F.ctr[0]-1e6,y];ref[0]=x-c[0];ref[1]=y-c[1];}
+        if(nx*ref[0]+ny*ref[1]<0){nx=-nx;ny=-ny;}pts.push([x,y,nx,ny]);k++;acc+=step;}run+=l;}});return pts;}
+function drawG(){const g=gG,o=geoG(),W=o.W,H=o.H,m=HG.mode,t=HG.t;g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  const mirror=m==='refl',refr=m==='refr';
+  if(refr){g.fillStyle=C.water;g.globalAlpha=.55;g.fillRect(0,o.ym,W,H-o.ym);g.globalAlpha=1;text(g,'快的介質（空氣）',10,20,{size:13,bold:true});text(g,`慢的介質 n＝${nfG(HG.n,2)}（波速 ÷ ${nfG(HG.n,2)}）`,10,H-10,{size:13,bold:true});line(g,0,o.ym,W,o.ym,C.muted,1.6);}
+  if(mirror){g.fillStyle=C.muted;g.fillRect(o.xm0,o.ym,o.xm1-o.xm0,6);for(let x=o.xm0;x<o.xm1;x+=10)line(g,x,o.ym+6,x-6,o.ym+14,C.muted,1);text(g,'鏡面（或反射面）',o.xm1,o.ym+28,{size:12,col:C.muted,align:'right'});}
+  if(m==='slit'||m==='edge'){g.fillStyle=C.ink;const w=7;if(m==='slit'){g.fillRect(o.xb-w/2,0,w,o.ya);g.fillRect(o.xb-w/2,o.yb,w,H-o.yb);}else g.fillRect(o.xb-w/2,o.ye,w,H-o.ye);
+    text(g,m==='slit'?'狹縫':'擋板',o.xb+8,16,{size:12,bold:true,col:C.muted});}
+  if(m==='circ'){g.fillStyle=C.accent;g.beginPath();g.arc(o.S[0],o.S[1],6,0,TAU);g.fill();text(g,'波源',o.S[0],o.S[1]+20,{size:12,align:'center',col:C.muted});}
+  // 先前的波前
+  const tk=Math.max(0,Math.ceil(t/o.dt-1e-6)*o.dt-o.dt);
+  if(HG.trail){for(let k=0;k*o.dt<tk+1e-9;k++){g.globalAlpha=.28;drawFrontG(g,o,frontG(o,k*o.dt),2,k*o.dt);g.globalAlpha=1;}}
+  // 子波
+  let srcs=[];
+  if(mirror||refr){const n=HG.N;for(let k=0;k<n;k++){const x=o.xm0+(o.xm1-o.xm0)*(k+.5)/n,th=o.th(x);srcs.push([x,o.ym,0,mirror?-1:1,th]);}
+    if(HG.wl)srcs.forEach(([x,y,nx,ny,th])=>{if(t<=th)return;const r=(refr?o.v/HG.n:o.v)*(t-th);g.strokeStyle=C.blue;g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,mirror?Math.PI:0,mirror?TAU:Math.PI);g.stroke();});
+    srcs.forEach(([x,y,nx,ny,th])=>{g.fillStyle=t>th?C.blue:C.muted;g.beginPath();g.arc(x,y,t>th?4:3,0,TAU);g.fill();});}
+  else{const F0=frontG(o,tk);srcs=sampleG(o,F0,HG.N);const r=o.v*(t-tk);
+    if(HG.wl){g.save();if(m==='slit'||m==='edge'){g.beginPath();if(tk>=o.tb-1e-9)g.rect(o.xb,0,W,H);else g.rect(0,0,o.xb,H);g.clip();}
+      srcs.forEach(([x,y,nx,ny])=>{const a=Math.atan2(ny,nx);g.strokeStyle=C.blue;g.lineWidth=1.3;g.beginPath();g.arc(x,y,r,a-Math.PI/2,a+Math.PI/2);g.stroke();});g.restore();}
+    srcs.forEach(([x,y])=>{g.fillStyle=C.blue;g.beginPath();g.arc(x,y,4,0,TAU);g.fill();});}
+  // 新的波前（包絡線）
+  if(HG.env)drawFrontG(g,o,frontG(o,t),3.2,t);
+  // 角度標示
+  if(mirror||refr){const x=W*.5,y=o.ym;line(g,x,y-H*.35,x,refr?y+H*.4:y,C.muted,1.2,[6,5]);const L=H*.26;
+    arrow(g,x-o.d[0]*L,y-o.d[1]*L,x,y,C.purple,2.2);
+    if(mirror){arrow(g,x,y,x+o.d[0]*L,y-o.d[1]*L,C.green,2.2);text(g,`入射角 ${Math.round(HG.i)}°`,x-o.d[0]*L*.55-8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.purple,align:'right',bg:C.panel});text(g,`反射角 ${Math.round(HG.i)}°`,x+o.d[0]*L*.55+8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.green,bg:C.panel});}
+    else{arrow(g,x,y,x+Math.sin(o.r)*L,y+Math.cos(o.r)*L,C.green,2.2);text(g,`入射角 ${Math.round(HG.i)}°`,x-o.d[0]*L*.55-8,y-o.d[1]*L*.55,{size:12,bold:true,col:C.purple,align:'right',bg:C.panel});text(g,`折射角 ${nfG(o.r/D2R,1)}°`,x+Math.sin(o.r)*L*.55+8,y+Math.cos(o.r)*L*.6,{size:12,bold:true,col:C.green,bg:C.panel});}}
+  text(g,W<600?'紅：波前　藍：點波源與子波':'紅：波前（子波的包絡線）　藍點：新的點波源　藍弧：子波',W-8,18,{size:12,bold:true,align:'right',bg:C.panel});}
+function drawFrontG(g,o,F,w,t){const m=HG.mode,W=o.W,H=o.H;g.save();if(m==='slit'||m==='edge'){g.beginPath();g.rect(t>o.tb?o.xb:0,0,t>o.tb?W:o.xb,H);g.clip();}
+  if(m==='refr'){F.lines.forEach((L,k)=>{g.save();g.beginPath();k?g.rect(0,o.ym,W,H):g.rect(0,0,W,o.ym);g.clip();poly(g,L,C.ray,w);g.restore();});}
+  else if(m==='refl'){F.lines.forEach(L=>{g.save();g.beginPath();g.rect(0,0,W,o.ym);g.clip();poly(g,L,C.ray,w);g.restore();});}
+  else F.lines.forEach(L=>poly(g,L,C.ray,w));g.restore();}
+function poly(g,L,col,w){if(L.length<2)return;g.strokeStyle=col;g.lineWidth=w;g.setLineDash([]);g.beginPath();g.moveTo(L[0][0],L[0][1]);for(let k=1;k<L.length;k++)g.lineTo(L[k][0],L[k][1]);g.stroke();}
+function tEndG(){const o=geoG();if(HG.mode==='refl'||HG.mode==='refr')return o.th(o.xm1)+3;if(HG.mode==='circ')return(Math.hypot(o.W,o.H)*.8-o.R0)/o.v;return(o.W-o.x0)/o.v-.3;}
+TICK.huyg=dt=>{if(!HG.run)return false;HG.t+=dt*.55;if(HG.stop!==null&&HG.t>=HG.stop){HG.t=HG.stop;HG.stop=null;HG.run=false;uiG();}if(HG.t>tEndG())HG.t=0;return HG.run;};
+DRAW.huyg=()=>{drawG();};
+function uiG(){segSet($('modeG'),HG.mode);playTxt($('playG'),HG.run);$('NG').value=HG.N;$('NGo').textContent=HG.N+' 個';$('aGw').hidden=HG.mode!=='slit';$('aG').value=HG.a;$('aGo').textContent=Math.round(HG.a*100)+'%';
+  $('iGw').hidden=!(HG.mode==='refl'||HG.mode==='refr');$('iG').value=HG.i;$('iGo').textContent=HG.i+'°';$('nGw').hidden=HG.mode!=='refr';$('nG').value=HG.n;$('nGo').textContent=nfG(HG.n,2);
+  $('wlG').checked=HG.wl;$('envG').checked=HG.env;$('trG').checked=HG.trail;
+  const T={plane:['直線前進：波前上每一點都發出子波','每個點同時發出半圓形的子波，經過 Δt 後所有子波的包絡線（公切線）就是新的波前——又是一條直線，所以直線波一直直線前進。'],
+    circ:['圓形波：子波的包絡線仍是圓','波前上每一點向外發出子波，包絡線是更大的同心圓，波前一直保持圓形向外擴散。'],
+    slit:['通過狹縫：只剩縫中的點當波源 → 繞射','擋板擋住了大部分波前，只有縫中的點能繼續發出子波；縫兩端的子波沒有鄰居可以「抵銷」側向的部分，所以波繞到擋板後方。縫越窄（點越少），越接近一個點波源，波越接近圓形。'],
+    edge:['擋板邊緣：邊緣的點發出的子波繞進陰影區','上方沒有被擋住的波前照常前進；擋板邊緣那一點發出的子波會往下彎進陰影區，所以擋板後方也有波。'],
+    refl:['反射：用惠更斯原理證明入射角＝反射角','斜射的波前不同時碰到鏡面：先碰到的點先發出子波，子波已經長大；後碰到的點子波還小。所有子波的公切線就是反射波前。子波在同一介質中速率相同，幾何上可證明入射角＝反射角。'],
+    refr:['折射：進入慢的介質，子波變小，波前轉彎','先碰到界面的點在慢的介質中發出子波，但子波長得比較慢（半徑 ÷ n）。公切線因此往法線偏折：sin 入射角 ／ sin 折射角 ＝ v₁／v₂ ＝ n。']}[HG.mode];
+  $('rGbig').textContent=T[0];$('rGf').textContent=T[1];
+  const o=geoG();$('rGc').innerHTML=HG.mode==='refr'?`<li class="info"><span>sin ${HG.i}° ／ sin ${nfG(o.r/D2R,1)}° ＝ ${nfG(Math.sin(HG.i*D2R)/Math.sin(o.r),2)} ＝ n</span></li>`:HG.mode==='refl'?`<li class="info"><span>入射角 ${HG.i}° ＝ 反射角 ${HG.i}°</span></li>`:'';}
+segOn($('modeG'),v=>{HG.mode=v;HG.t=0;HG.stop=null;HG.run=true;hideStory();uiG();kick();});
+$('playG').addEventListener('click',()=>{HG.run=!HG.run;HG.stop=null;uiG();kick();});
+$('stepG').addEventListener('click',()=>{const o=geoG();HG.stop=Math.floor(HG.t/o.dt+1e-6)*o.dt+o.dt;HG.run=true;uiG();kick();});
+$('resetG').addEventListener('click',()=>{HG.t=0;HG.stop=null;HG.run=false;uiG();kick();});
+[['NG','N',v=>Math.round(v)],['aG','a',v=>v],['iG','i',v=>Math.round(v)],['nG','n',v=>v]].forEach(([id,k,f])=>$(id).addEventListener('input',()=>{HG[k]=f(+$(id).value);uiG();kick();}));
+[['wlG','wl'],['envG','env'],['trG','trail']].forEach(([id,k])=>$(id).addEventListener('change',()=>{HG[k]=$(id).checked;kick();}));
+UI.huyg=()=>{uiG();};
 // =====================================================================
 // 2 疊加原理
 // =====================================================================
