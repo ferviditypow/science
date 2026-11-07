@@ -1,0 +1,573 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>分子與晶體結構 3D</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+.wrap{max-width:1320px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box ul{margin:4px 0 0;padding-left:1.2em;font-size:.95rem}
+.box li{margin:3px 0}
+.big{font-family:var(--f-display);font-weight:900;font-size:1.4rem;line-height:1.3;margin:0 0 6px}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.95rem}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.checks li::before{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;margin-top:1px}
+.checks li.ok::before{content:'✓';background:var(--green)}
+.checks li.no::before{content:'✕';background:#c0453b}
+.checks li.info::before{content:'i';background:var(--blue)}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+/* 分子庫 */
+.lib{display:flex;flex-direction:column;gap:6px;padding:8px 12px}
+.lib .row{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.lib .row>span.tlabel{min-width:6.5em}
+.mchip{border:1px solid var(--line);background:var(--panel);color:var(--ink);border-radius:8px;min-height:34px;padding:2px 10px;cursor:pointer;font-size:.9rem}
+.mchip:hover{border-color:var(--accent)}
+.mchip.a{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.mchip.b{background:var(--blue);color:#fff;border-color:var(--blue)}
+.mchip small{opacity:.75;margin-left:3px;font-family:var(--f-mono)}
+.view{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);border-top:1px solid var(--line)}
+@media (max-width:900px){.view{grid-template-columns:minmax(0,1fr)}}
+.v3{position:relative;min-width:0}
+.v3 canvas{display:block;width:100%;touch-action:none;outline:none}
+.v3 .ov{position:absolute;right:8px;top:8px;display:flex;gap:6px}
+.v3 .ov .btn{min-height:34px;padding:0 10px;font-size:.85rem;background:var(--panel)}
+.v3 .tag{position:absolute;left:10px;top:8px;font-size:.85rem;color:var(--muted);pointer-events:none}
+.v3 .tagB{left:auto;right:auto}
+.side{border-left:1px solid var(--line);padding:8px 12px 12px;min-width:0}
+@media (max-width:900px){.side{border-left:0;border-top:1px solid var(--line)}}
+.side canvas{display:block;width:100%}
+.ftab{width:100%;border-collapse:collapse;font-size:.92rem;margin-top:6px}
+.ftab th,.ftab td{border:1px solid var(--line);padding:4px 6px;text-align:left;vertical-align:top}
+.ftab th{font-weight:600;white-space:nowrap;background:var(--accent-soft)}
+.ftab td.f{font-family:var(--f-mono)}
+.ftab td.same{color:var(--green);font-weight:700}
+.ftab td.diff{color:#c0453b}
+.badge{display:inline-block;border-radius:999px;padding:1px 10px;font-size:.82rem;font-weight:700;color:#fff;margin-right:6px}
+.quiz{display:flex;flex-direction:column;gap:8px}
+.quiz .clue{font-size:1rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px}
+.quiz .opts{display:flex;flex-wrap:wrap;gap:6px}
+.quiz .res{font-weight:700}
+</style>
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一化學 2-1、2-2 · <a href="../combustion/">燃燒分析法</a></div>
+      <h1>分子與晶體結構 3D</h1>
+    </div>
+    <p>拖曳旋轉、滾輪或兩指縮放。實驗台 1 看分子的立體形狀、路易斯結構、實驗式／分子式／示性式與官能基，可以兩個分子並排比較；實驗台 2 看離子、共價網狀、金屬、分子四種晶體。最下方有考古題情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="mol" aria-pressed="true"><span class="n">1</span>分子結構與化學式</button>
+      <button data-v="xtal" aria-pressed="false"><span class="n">2</span>晶體結構</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 分子 ============ -->
+  <section class="bench" id="b-mol">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="seg" id="mMode"><button data-v="one">單一分子</button><button data-v="cmp">兩個並排比較</button></span>
+        <span id="mSlotW"><span class="tlabel">點分子放到</span><span class="seg" id="mSlot"><button data-v="0">左邊（黑框）</button><button data-v="1">右邊（藍框）</button></span></span>
+        <span class="tlabel">模型</span><span class="seg" id="mStyle"><button data-v="bs">球棍</button><button data-v="sf">填充</button><button data-v="st">細棍</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="mLp" checked>孤對電子</label>
+        <label class="tog"><input type="checkbox" id="mLab" checked>原子符號</label>
+        <label class="tog"><input type="checkbox" id="mAng">鍵角</label>
+        <label class="tog"><input type="checkbox" id="mFg" checked>標出官能基</label>
+        <label class="tog"><input type="checkbox" id="mRot">自動旋轉</label>
+      </div>
+      <div class="lib" id="mLib"></div>
+      <div class="view">
+        <div class="v3"><canvas id="cvM" aria-label="分子 3D 模型"></canvas><span class="tag" id="mTag"></span>
+          <div class="ov"><button class="btn" id="mReset">⟲ 視角</button><button class="btn" id="mFull">⛶ 全螢幕</button></div></div>
+        <div class="side">
+          <div class="toolbar" style="padding:0 0 6px"><span class="seg" id="lwMode"><button data-v="lewis">路易斯結構式</button><button data-v="struct">結構式</button></span><span id="lwWhich"></span></div>
+          <canvas id="cvL" aria-label="路易斯結構式"></canvas>
+          <table class="ftab" id="mTab"></table>
+        </div>
+      </div>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mBig"></p><ul class="checks" id="mC"></ul></section>
+      <section class="panel box"><h3>化學式的種類</h3><ul>
+        <li><b>實驗式</b>（簡式）：原子數的最簡整數比。離子化合物（NaCl）、共價網狀固體（C、SiO₂、SiC）、金屬（Cu）只能用實驗式表示。</li>
+        <li><b>分子式</b>：一個分子實際含有的原子數，分子式＝(實驗式)ₙ，n 是正整數（n 可以是 1）。</li>
+        <li><b>結構式</b>：畫出原子怎麼連接；平面上的結構式不代表分子真正的形狀（例：CH₄ 是四面體，四個 H 不在同一平面）。</li>
+        <li><b>示性式</b>：把官能基寫出來，例如 C₂H₅OH、CH₃OCH₃、CH₃COOH，由示性式可以看出物質的特性。</li>
+        <li><b>同分異構物</b>：分子式相同、結構不同（乙醇與甲醚、乙酸與甲酸甲酯）。<b>同素異形體</b>：同一種元素的不同單質（鑽石、石墨、C₆₀）。</li>
+        <li>點 3D 模型上的原子，可以看它連接幾個原子、有幾對孤對電子。</li>
+      </ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 晶體 ============ -->
+  <section class="bench" id="b-xtal" hidden>
+    <div class="panel">
+      <div class="toolbar"><span class="tlabel">晶體</span><span class="seg" id="xSel">
+        <button data-v="nacl">氯化鈉</button><button data-v="dia">鑽石</button><button data-v="gra">石墨</button><button data-v="grn">石墨烯</button><button data-v="c60">C₆₀</button>
+        <button data-v="sio2">石英 SiO₂</button><button data-v="sic">碳化矽 SiC</button><button data-v="cu">銅</button><button data-v="dry">乾冰 CO₂</button><button data-v="ice">冰 H₂O</button></span></div>
+      <div class="toolbar">
+        <span class="tlabel">模型</span><span class="seg" id="xStyle"><button data-v="bs">球棍</button><button data-v="sf">填充（實際大小）</button></span>
+        <span id="xNbW"><span class="tlabel">點離子看</span><span class="seg" id="xNb"><button data-v="opp">最近的異號離子</button><button data-v="same">最近的同號離子</button></span></span>
+        <label class="tog" id="xCellW"><input type="checkbox" id="xCell" checked>單位晶格</label>
+        <label class="tog" id="xEW"><input type="checkbox" id="xE" checked>可移動的電子</label>
+        <label class="tog"><input type="checkbox" id="xRot">自動旋轉</label>
+        <button class="btn primary" id="xHit">🔨 敲打／施力</button><button class="btn" id="xRe">⟲ 復原</button>
+      </div>
+      <div class="view">
+        <div class="v3"><canvas id="cvX" aria-label="晶體 3D 結構"></canvas><span class="tag" id="xTag"></span>
+          <div class="ov"><button class="btn" id="xReset">⟲ 視角</button><button class="btn" id="xFull">⛶ 全螢幕</button></div></div>
+        <div class="side"><p class="big" id="xBig" style="font-size:1.2rem"></p><table class="ftab" id="xTab"></table></div>
+      </div>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="xMsg" style="font-size:1.15rem"></p><ul class="checks" id="xC"></ul></section>
+      <section class="panel box quiz"><h3>這是哪一種晶體？</h3><div class="clue" id="qzClue"></div><div class="opts" id="qzOpts"></div><div class="res" id="qzRes"></div><div><button class="btn" id="qzNext">下一題 →</button> <span id="qzScore" style="color:var(--muted)"></span></div></section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">考古題情境 <small>標示學校、學年-學期-次別與題號；點了會切到對應的模型</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from '../vendor/three/OrbitControls.js';
+const $=id=>document.getElementById(id);
+const segSet=(el,v)=>el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));
+const segOn=(el,f)=>el.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&el.contains(b))f(b.dataset.v);});
+const checks=(el,L)=>{el.innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');};
+const C={};function readColors(){const s=getComputedStyle(document.documentElement);['bg','panel','ink','muted','line','accent','blue','green','red','purple','accent-soft'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());
+  C.dark=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);}
+readColors();
+const V=(x=0,y=0,z=0)=>new THREE.Vector3(x,y,z);
+const SUB='₀₁₂₃₄₅₆₇₈₉',SUP={'0':'⁰','1':'¹','2':'²','3':'³','4':'⁴','5':'⁵','6':'⁶','7':'⁷','8':'⁸','9':'⁹','+':'⁺','-':'⁻'};
+const fmt=s=>{if(!s)return'';const [a,b]=s.split('^');return a.replace(/\d/g,d=>SUB[d])+(b?[...b].map(c=>SUP[c]||c).join(''):'');};
+
+// ---------------- 元素資料 ----------------
+const EL={H:{c:'#f4f4f4',r:1.2,cov:.32,ve:1,m:1,def:1},C:{c:'#3d3d3d',r:1.7,cov:.76,ve:4,m:12,def:4},N:{c:'#2f5fe0',r:1.55,cov:.71,ve:5,m:14,def:3},O:{c:'#e3301f',r:1.52,cov:.66,ve:6,m:16,def:2},
+  F:{c:'#86d655',r:1.47,cov:.64,ve:7,m:19,def:1},Cl:{c:'#22b33a',r:1.75,cov:.99,ve:7,m:35.5,def:1},B:{c:'#f0a0a0',r:1.92,cov:.84,ve:3,m:10.8,def:3},Be:{c:'#b8e000',r:1.53,cov:.96,ve:2,m:9,def:2},
+  P:{c:'#ff8a00',r:1.8,cov:1.07,ve:5,m:31,def:3},S:{c:'#e8c418',r:1.8,cov:1.03,ve:6,m:32,def:2},Si:{c:'#d0b07a',r:2.1,cov:1.11,ve:4,m:28,def:4},
+  Na:{c:'#9a52e0',r:1.02,ve:1,m:23},Cu:{c:'#d0773f',r:1.28,m:63.5}};
+const elCol=e=>e==='C'&&C.dark?'#8a8f96':EL[e].c;
+
+// ---------------- 迷你 SMILES 解析 ----------------
+function parse(sm){const at=[],bd=[];let prev=null,bo=1;const st=[],ring={};let i=0;
+  const add=(a)=>{at.push(a);const k=at.length-1;if(prev!==null)bd.push([prev,k,bo]);bo=1;prev=k;};
+  while(i<sm.length){const ch=sm[i];
+    if(ch==='('){st.push(prev);i++;continue;}if(ch===')'){prev=st.pop();i++;continue;}
+    if(ch==='='){bo=2;i++;continue;}if(ch==='#'){bo=3;i++;continue;}
+    if(/\d/.test(ch)){if(ring[ch]!==undefined){bd.push([ring[ch],prev,bo,1]);delete ring[ch];bo=1;}else ring[ch]=prev;i++;continue;}
+    if(ch==='['){const j=sm.indexOf(']',i);const t=sm.slice(i+1,j);const m=t.match(/^([A-Z][a-z]?)(H(\d?))?([+-])?(\d)?$/);
+      add({el:m[1],hx:m[2]?(m[3]?+m[3]:1):0,chg:m[4]?(m[4]==='+'?1:-1)*(m[5]?+m[5]:1):0,br:true});i=j+1;continue;}
+    const two=sm.slice(i,i+2);if(two==='Cl'||two==='Br'||two==='Si'||two==='Be'){add({el:two,chg:0});i+=2;continue;}
+    add({el:ch,chg:0});i++;}
+  const bo_=k=>bd.reduce((s,b)=>s+(b[0]===k||b[1]===k?b[2]:0),0);
+  const n0=at.length;for(let k=0;k<n0;k++){const a=at[k];const h=a.br?a.hx:Math.max(0,(EL[a.el].def||0)-bo_(k));for(let q=0;q<h;q++){at.push({el:'H',chg:0});bd.push([k,at.length-1,1]);}}
+  at.forEach((a,k)=>{a.lp=Math.round((EL[a.el].ve-a.chg-bo_(k))/2);});return{at,bd};}
+
+// ---------------- 分子資料 ----------------
+const MOLS=[
+ {g:'簡單分子',id:'H2',n:'氫',s:'[H][H]',mf:'H2'},{g:'簡單分子',id:'O2',n:'氧',s:'O=O',mf:'O2'},{g:'簡單分子',id:'N2',n:'氮',s:'N#N',mf:'N2'},
+ {g:'簡單分子',id:'HF',n:'氟化氫',s:'F',mf:'HF'},{g:'簡單分子',id:'HCl',n:'氯化氫',s:'Cl',mf:'HCl'},{g:'簡單分子',id:'H2O',n:'水',s:'O',mf:'H2O',ang:104.5},
+ {g:'簡單分子',id:'NH3',n:'氨',s:'N',mf:'NH3',ang:107},{g:'簡單分子',id:'CH4',n:'甲烷',s:'C',mf:'CH4'},{g:'簡單分子',id:'CO2',n:'二氧化碳',s:'O=C=O',mf:'CO2'},
+ {g:'簡單分子',id:'HCN',n:'氰化氫',s:'C#N',mf:'HCN'},{g:'簡單分子',id:'PH3',n:'磷化氫',s:'P',mf:'PH3',ang:93.5},{g:'簡單分子',id:'OF2',n:'二氟化氧',s:'FOF',mf:'OF2',ang:103},
+ {g:'簡單分子',id:'NF3',n:'三氟化氮',s:'FN(F)F',mf:'NF3',ang:102},{g:'簡單分子',id:'CF4',n:'四氟化碳',s:'FC(F)(F)F',mf:'CF4'},{g:'簡單分子',id:'CCl4',n:'四氯化碳',s:'ClC(Cl)(Cl)Cl',mf:'CCl4'},
+ {g:'簡單分子',id:'H2O2',n:'過氧化氫',s:'OO',mf:'H2O2'},{g:'簡單分子',id:'SF2',n:'二氟化硫',s:'FSF',mf:'SF2',ang:98},{g:'簡單分子',id:'P4',n:'白磷',s:'P12P3P1P23',mf:'P4',spec:'P4'},
+ {g:'八隅體例外與離子',id:'BeF2',n:'二氟化鈹',s:'F[Be]F',mf:'BeF2'},{g:'八隅體例外與離子',id:'BF3',n:'三氟化硼',s:'FB(F)F',mf:'BF3'},
+ {g:'八隅體例外與離子',id:'PCl5',n:'五氯化磷',s:'ClP(Cl)(Cl)(Cl)Cl',mf:'PCl5'},{g:'八隅體例外與離子',id:'SF4',n:'四氟化硫',s:'FS(F)(F)F',mf:'SF4'},{g:'八隅體例外與離子',id:'SF6',n:'六氟化硫',s:'FS(F)(F)(F)(F)F',mf:'SF6'},
+ {g:'八隅體例外與離子',id:'NH4',n:'銨根離子',s:'[NH4+]',mf:'NH4^+'},{g:'八隅體例外與離子',id:'CO3',n:'碳酸根',s:'O=C([O-])[O-]',mf:'CO3^2-'},{g:'八隅體例外與離子',id:'NO3',n:'硝酸根',s:'O=[N+]([O-])[O-]',mf:'NO3^-'},
+ {g:'碳氫化合物',id:'C2H6',n:'乙烷',s:'CC'},{g:'碳氫化合物',id:'C2H4',n:'乙烯',s:'C=C'},{g:'碳氫化合物',id:'C2H2',n:'乙炔',s:'C#C'},{g:'碳氫化合物',id:'C3H8',n:'丙烷',s:'CCC'},
+ {g:'碳氫化合物',id:'nC4',n:'正丁烷',s:'CCCC',cf:'CH3CH2CH2CH3'},{g:'碳氫化合物',id:'iC4',n:'異丁烷',s:'CC(C)C',cf:'CH3CH(CH3)CH3'},
+ {g:'含官能基',id:'MeOH',n:'甲醇',s:'CO',cf:'CH3OH'},{g:'含官能基',id:'EtOH',n:'乙醇',s:'CCO',cf:'C2H5OH'},{g:'含官能基',id:'DME',n:'甲醚',s:'COC',cf:'CH3OCH3'},
+ {g:'含官能基',id:'HCHO',n:'甲醛',s:'C=O',cf:'HCHO'},{g:'含官能基',id:'MeCHO',n:'乙醛',s:'CC=O',cf:'CH3CHO'},{g:'含官能基',id:'EtCHO',n:'丙醛',s:'CCC=O',cf:'C2H5CHO'},
+ {g:'含官能基',id:'acetone',n:'丙酮',s:'CC(C)=O',cf:'CH3COCH3'},{g:'含官能基',id:'AcOH',n:'乙酸（醋酸）',s:'CC(=O)O',cf:'CH3COOH'},{g:'含官能基',id:'HCOOMe',n:'甲酸甲酯',s:'O=COC',cf:'HCOOCH3'},
+ {g:'含官能基',id:'EtOAc',n:'乙酸乙酯',s:'CC(=O)OCC',cf:'CH3COOC2H5'},{g:'含官能基',id:'MeNH2',n:'甲胺',s:'CN',cf:'CH3NH2'},
+ {g:'含官能基',id:'glu',n:'葡萄糖',s:'OCC1OC(O)C(O)C(O)C1O',spec:'ring',fgNote:'環狀的葡萄糖有 5 個羥基（−OH），環上的氧連接兩個碳；開鏈形的葡萄糖則有醛基。'}];
+const MBY={};MOLS.forEach(m=>MBY[m.id]=m);
+
+// ---------------- 立體座標 ----------------
+const deg=x=>x*Math.PI/180;
+function perp(u){const a=Math.abs(u.x)<.9?V(1,0,0):V(0,1,0);return a.sub(u.clone().multiplyScalar(a.dot(u))).normalize();}
+function bondLen(a,b,o){return (EL[a].cov+EL[b].cov)*(o===2?.87:o===3?.78:1);}
+function rootDirs(n){const s3=Math.sqrt(3);switch(n){case 1:return[V(1,0,0)];case 2:return[V(1,0,0),V(-1,0,0)];
+  case 3:return[V(1,0,0),V(-.5,s3/2,0),V(-.5,-s3/2,0)];
+  case 4:{const k=1/Math.sqrt(3);return[V(k,k,k),V(k,-k,-k),V(-k,k,-k),V(-k,-k,k)].map(v=>v.applyAxisAngle(V(0,0,1),deg(45)).applyAxisAngle(V(1,0,0),deg(-35.26)).normalize());}
+  case 5:return[V(0,1,0),V(0,-1,0),V(1,0,0),V(-.5,0,s3/2),V(-.5,0,-s3/2)];
+  case 6:return[V(1,0,0),V(-1,0,0),V(0,1,0),V(0,-1,0),V(0,0,1),V(0,0,-1)];}return[];}
+function childDirs(n,u,r){// u：指向已放好的鄰居；r：參考（與 u 垂直的方向，第一個子原子要反向）
+  const e1=r.clone().multiplyScalar(-1),e2=u.clone().cross(e1).normalize();
+  if(n===2)return[u.clone().negate()];
+  if(n===3)return[u.clone().multiplyScalar(-.5).addScaledVector(e1,Math.sqrt(3)/2),u.clone().multiplyScalar(-.5).addScaledVector(e1,-Math.sqrt(3)/2)];
+  if(n===4){const ct=1/3,st=Math.sqrt(8/9);return[0,120,240].map(p=>u.clone().multiplyScalar(-ct).addScaledVector(e1,st*Math.cos(deg(p))).addScaledVector(e2,st*Math.sin(deg(p))).normalize());}
+  return[];}
+function squeeze(dirs,target){const m=dirs.reduce((s,d)=>s.add(d),V()).normalize();let lo=0,hi=3;const ang=k=>{const a=dirs[0].clone().addScaledVector(m,k).normalize(),b=dirs[1].clone().addScaledVector(m,k).normalize();return Math.acos(a.dot(b))*180/Math.PI;};
+  if(ang(0)<target)return dirs;for(let it=0;it<40;it++){const k=(lo+hi)/2;if(ang(k)>target)lo=k;else hi=k;}return dirs.map(d=>d.clone().addScaledVector(m,lo).normalize());}
+function build(def){const {at,bd}=parse(def.s);const N=at.length,nb=at.map(()=>[]);bd.forEach(([a,b,o])=>{nb[a].push({j:b,o});nb[b].push({j:a,o});});
+  const P=new Array(N).fill(null),LP=at.map(()=>[]);const heavy=k=>at[k].el!=='H';
+  const ord=(k,list)=>list.slice().sort((x,y)=>(heavy(y)-heavy(x)));
+  if(def.spec==='P4'){const s=2.21/(2*Math.SQRT2);[V(1,1,1),V(1,-1,-1),V(-1,1,-1),V(-1,-1,1)].forEach((v,k)=>{P[k]=v.clone().multiplyScalar(s);LP[k]=[v.clone().normalize()];});}
+  else{const q=[];
+    if(def.spec==='ring'){// 椅式環
+      const cl=bd.find(b=>b[3]);const path=ringPath(nb,cl[0],cl[1]);const R=1.436;
+      path.forEach((k,i)=>{P[k]=V(R*Math.cos(deg(60*i)),(i%2?-.25:.25),R*Math.sin(deg(60*i)));});path.forEach(k=>q.push(k));}
+    else{let root=0,bs=-1;at.forEach((a,k)=>{const h=nb[k].filter(x=>heavy(x.j)).length*10+nb[k].length;if(heavy(k)&&h>bs){bs=h;root=k;}});
+      P[root]=V();const n=nb[root].length+at[root].lp;let dirs=rootDirs(n);const kids=ord(root,nb[root].map(x=>x.j));
+      if(n===4&&at[root].lp>0&&kids.length>=2){const b=squeeze(dirs.slice(0,kids.length),def.ang||(at[root].lp===2?104.5:107));dirs=b.concat(dirs.slice(kids.length));}
+      kids.forEach((j,i)=>{const o=nb[root].find(x=>x.j===j).o;P[j]=dirs[i].clone().multiplyScalar(bondLen(at[root].el,at[j].el,o));q.push(j);});
+      LP[root]=dirs.slice(kids.length,kids.length+at[root].lp);}
+    while(q.length){const x=q.shift();const placed=nb[x].filter(y=>P[y.j]),todo=ord(x,nb[x].filter(y=>!P[y.j]).map(y=>y.j));const n=nb[x].length+at[x].lp;let dirs=[];
+      if(placed.length===1){const p=placed[0].j,u=P[p].clone().sub(P[x]).normalize();const ref=nb[p].map(y=>y.j).find(j=>j!==x&&P[j]);
+        let r=ref!==undefined?P[ref].clone().sub(P[p]):perp(u);r.sub(u.clone().multiplyScalar(r.dot(u)));if(r.length()<1e-6)r=perp(u);r.normalize();dirs=childDirs(n,u,r);}
+      else if(placed.length===2&&n===4){const b1=P[placed[0].j].clone().sub(P[x]).normalize(),b2=P[placed[1].j].clone().sub(P[x]).normalize();const d=b1.clone().add(b2).negate().normalize(),w=b1.clone().cross(b2).normalize();
+        dirs=[d.clone().multiplyScalar(Math.cos(deg(54.75))).addScaledVector(w,Math.sin(deg(54.75))),d.clone().multiplyScalar(Math.cos(deg(54.75))).addScaledVector(w,-Math.sin(deg(54.75)))];
+        dirs.sort((a,b)=>Math.abs(a.y)-Math.abs(b.y));}
+      else if(placed.length===2&&n===3){dirs=[P[placed[0].j].clone().sub(P[x]).normalize().add(P[placed[1].j].clone().sub(P[x]).normalize()).negate().normalize()];}
+      todo.forEach((j,i)=>{const o=nb[x].find(y=>y.j===j).o;if(!dirs[i])return;P[j]=P[x].clone().addScaledVector(dirs[i],bondLen(at[x].el,at[j].el,o));q.push(j);});
+      LP[x]=dirs.slice(todo.length,todo.length+at[x].lp);}}
+  const c=P.reduce((s,p)=>s.add(p),V()).multiplyScalar(1/N);P.forEach(p=>p.sub(c));
+  const chg=at.reduce((s,a)=>s+a.chg,0);return Object.assign({def,at,bd,nb,P,LP,chg},analyze(def,at,bd,nb));}
+function ringPath(nb,a,b){const prev={[a]:-1},q=[a];while(q.length){const x=q.shift();for(const y of nb[x]){if(x===a&&y.j===b)continue;if(prev[y.j]===undefined){prev[y.j]=x;q.push(y.j);}}}const p=[];let k=b;while(k!==-1){p.push(k);k=prev[k];}return p;}
+
+// ---------------- 化學式與官能基 ----------------
+const gcd=(a,b)=>b?gcd(b,a%b):a;
+function analyze(def,at,bd,nb){const cnt={};at.forEach(a=>cnt[a.el]=(cnt[a.el]||0)+1);
+  let order;if(def.mf){order=[...def.mf.split('^')[0].matchAll(/([A-Z][a-z]?)/g)].map(m=>m[1]);}else order=['C','H',...Object.keys(cnt).filter(e=>e!=='C'&&e!=='H').sort()];
+  const str=f=>order.map(e=>e+(cnt[e]/f>1?cnt[e]/f:'')).join('');const g=order.reduce((s,e)=>gcd(s,cnt[e]),0);
+  const mf=def.mf||str(1),ef=def.mf&&def.mf.includes('^')?null:str(g);const mass=at.reduce((s,a)=>s+EL[a.el].m,0);
+  const ve=at.reduce((s,a)=>s+EL[a.el].ve,0)-at.reduce((s,a)=>s+a.chg,0);const bp=bd.reduce((s,b)=>s+b[2],0),lp=at.reduce((s,a)=>s+a.lp,0);
+  const oct=at.map((a,k)=>2*nb[k].reduce((s,y)=>s+y.o,0)+2*a.lp);
+  // 官能基
+  const G=[],used=new Set();const el=k=>at[k].el;
+  at.forEach((a,k)=>{if(a.el!=='C')return;const od=nb[k].find(y=>el(y.j)==='O'&&y.o===2);if(!od)return;const os=nb[k].filter(y=>el(y.j)==='O'&&y.o===1).map(y=>y.j);
+    const oh=os.find(o=>nb[o].some(y=>el(y.j)==='H')),oc=os.find(o=>nb[o].some(y=>el(y.j)==='C'&&y.j!==k));
+    if(oh!==undefined){const h=nb[oh].find(y=>el(y.j)==='H').j;G.push({n:'羧基 −COOH',t:'羧酸',a:[k,od.j,oh,h],c:'#d64545'});[od.j,oh].forEach(x=>used.add(x));}
+    else if(oc!==undefined){G.push({n:'酯基 −COO−',t:'酯',a:[k,od.j,oc],c:'#8a4fd6'});[od.j,oc].forEach(x=>used.add(x));}
+    else{const nc=nb[k].filter(y=>el(y.j)==='C').length;if(nc>=2){G.push({n:'酮基（羰基）C＝O',t:'酮',a:[k,od.j],c:'#d68a1f'});}else{const hs=nb[k].filter(y=>el(y.j)==='H').map(y=>y.j);G.push({n:'醛基 −CHO',t:'醛',a:[k,od.j,...hs.slice(0,1)],c:'#1f9ad6'});}used.add(od.j);}});
+  at.forEach((a,k)=>{if(a.el!=='O'||used.has(k))return;const hs=nb[k].filter(y=>el(y.j)==='H'),cs=nb[k].filter(y=>el(y.j)==='C');
+    if(hs.length===1&&cs.length===1)G.push({n:'羥基 −OH',t:'醇',a:[k,hs[0].j],c:'#2f9e44'});else if(cs.length===2)G.push({n:'醚基 −O−',t:'醚',a:[k],c:'#c2186b'});});
+  at.forEach((a,k)=>{if(a.el==='N'&&nb[k].some(y=>el(y.j)==='C')&&nb[k].some(y=>el(y.j)==='H'))G.push({n:'胺基 −NH₂',t:'胺',a:[k,...nb[k].filter(y=>el(y.j)==='H').map(y=>y.j)],c:'#3b5bdb'});});
+  if(def.mf)G.length=0;
+  bd.forEach(([x,y,o])=>{if(el(x)==='C'&&el(y)==='C'&&o>1)G.push({n:o===2?'碳碳雙鍵 C＝C':'碳碳參鍵 C≡C',t:o===2?'烯':'炔',a:[x,y],c:'#0b8f8f'});});
+  let cls='';const isCH=at.every(a=>a.el==='C'||a.el==='H')&&at.some(a=>a.el==='C');
+  if(G.length){const ts=[...new Set(G.map(g=>g.t))];cls=def.id==='glu'?'醣類':ts.join('、')+'類';}else if(isCH)cls='烷類（碳氫化合物）';else cls=def.mf&&def.mf.includes('^')?'多原子離子':'無機分子';
+  return{cnt,mf,ef,mass,ve,bp,lp,oct,G,cls,cf:def.cf||null};}
+// 中心原子形狀
+function shapeOf(M,k){const d=M.nb[k].length,l=M.at[k].lp;if(d<=1)return M.at.length===2?'直線形':'';
+  const T={'2,0':'直線形','3,0':'平面三角形','2,1':'角形（彎曲形）','4,0':'四面體','3,1':'三角錐形','2,2':'角形（彎曲形）','5,0':'雙三角錐形','4,1':'翹翹板形','6,0':'八面體','2,3':'直線形'};return T[d+','+l]||'';}
+function centerAtom(M){let best=0,bs=-1;M.at.forEach((a,k)=>{const s=M.nb[k].filter(y=>M.at[y.j].el!=='H').length*10+M.nb[k].length;if(a.el!=='H'&&s>bs){bs=s;best=k;}});return best;}
+
+// ---------------- 3D 共用 ----------------
+function makeView(cv){const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:false});ren.setPixelRatio(Math.min(2,devicePixelRatio));
+  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(38,1,.05,500);cam.position.set(0,0,12);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x667788,1.6));const dl=new THREE.DirectionalLight(0xffffff,1.6);dl.position.set(4,6,8);cam.add(dl);scene.add(cam);
+  const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.12;ctl.rotateSpeed=.9;
+  const root=new THREE.Group();scene.add(root);const V_={ren,scene,cam,ctl,root,cv,w:0,h:0};
+  ctl.addEventListener('change',()=>kick());return V_;}
+function sizeView(v,ratio,minH,maxH){const w=v.cv.parentElement.clientWidth;const full=document.fullscreenElement===v.cv.parentElement;const h=full?innerHeight:Math.round(Math.max(minH,Math.min(maxH,w*ratio)));
+  if(w===v.w&&h===v.h)return;v.w=w;v.h=h;v.ren.setSize(w,h,false);v.cv.style.height=h+'px';v.cam.aspect=w/h;v.cam.updateProjectionMatrix();}
+function fitCam(v,R,dir=V(0,0,1),Rh=R){const t=Math.tan(deg(v.cam.fov/2));const d=Math.max(R/t,Rh/(t*v.cam.aspect))+R*.35;v.ctl.target.set(0,0,0);v.cam.position.copy(dir.clone().normalize().multiplyScalar(d));v.cam.up.set(0,1,0);v.ctl.update();}
+function clear(g){while(g.children.length){const o=g.children.pop();o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material){(Array.isArray(x.material)?x.material:[x.material]).forEach(m=>{if(m.map)m.map.dispose();m.dispose();});}});}}
+const GEO={sph:new THREE.SphereGeometry(1,28,20),cyl:new THREE.CylinderGeometry(1,1,1,16,1)};
+const matCache={};function mat(col,op=1){const k=col+op;if(!matCache[k])matCache[k]=new THREE.MeshStandardMaterial({color:col,roughness:.45,metalness:.05,transparent:op<1,opacity:op,depthWrite:op>=1});return matCache[k];}
+function sphere(p,r,col,op=1){const m=new THREE.Mesh(GEO.sph,mat(col,op));m.position.copy(p);m.scale.setScalar(r);return m;}
+function cyl(a,b,r,col,op=1){const m=new THREE.Mesh(GEO.cyl,mat(col,op));const d=b.clone().sub(a);m.position.copy(a).addScaledVector(d,.5);m.scale.set(r,d.length(),r);m.quaternion.setFromUnitVectors(V(0,1,0),d.normalize());return m;}
+function dashLine(a,b,col){const g=new THREE.BufferGeometry().setFromPoints([a,b]);const l=new THREE.Line(g,new THREE.LineDashedMaterial({color:col,dashSize:.18,gapSize:.14,transparent:true,opacity:.85}));l.computeLineDistances();return l;}
+function label(txt,col,size=.45,bg=null){const c=document.createElement('canvas');const fs=64;const g=c.getContext('2d');g.font=`700 ${fs}px "Noto Sans TC",sans-serif`;const w=Math.ceil(g.measureText(txt).width)+(bg?28:12);c.width=w;c.height=fs+(bg?22:14);
+  const g2=c.getContext('2d');if(bg){g2.fillStyle=bg;const r=18;g2.beginPath();g2.roundRect(0,0,c.width,c.height,r);g2.fill();}g2.font=`700 ${fs}px "Noto Sans TC",sans-serif`;g2.fillStyle=col;g2.textAlign='center';g2.textBaseline='middle';g2.fillText(txt,c.width/2,c.height/2+2);
+  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;const s=new THREE.Sprite(new THREE.SpriteMaterial({map:t,depthTest:false,transparent:true}));s.scale.set(size*c.width/c.height,size,1);s.renderOrder=10;return s;}
+
+// =====================================================================
+// 1 分子
+// =====================================================================
+const MS={mode:'one',slot:0,sel:['EtOH','DME'],style:'bs',lp:true,lab:true,ang:false,fg:true,rot:false,lw:'lewis',focus:[null,null],M:[null,null]};
+let VM=null;const cache={};const getM=id=>cache[id]||(cache[id]=build(MBY[id]));
+function libUI(){const groups=[...new Set(MOLS.map(m=>m.g))];$('mLib').innerHTML=groups.map(g=>`<div class="row"><span class="tlabel">${g}</span>${MOLS.filter(m=>m.g===g).map(m=>{const M=getM(m.id);
+  const cls=MS.sel[0]===m.id?'a':(MS.mode==='cmp'&&MS.sel[1]===m.id?'b':'');return`<button class="mchip ${cls}" data-id="${m.id}">${m.n}<small>${fmt(M.mf)}</small></button>`;}).join('')}</div>`).join('');}
+$('mLib').addEventListener('click',e=>{const b=e.target.closest('.mchip');if(!b)return;hideStory();const i=MS.mode==='cmp'?+MS.slot:0;MS.sel[i]=b.dataset.id;MS.focus[i]=null;if(MS.mode==='cmp')MS.slot=i?0:1;molAll(true);});
+function molDraw3D(fit){if(!VM)return;clear(VM.root);const ids=MS.mode==='cmp'?MS.sel:[MS.sel[0]];const Ms=ids.map(getM);MS.M=Ms;
+  const R=Ms.map(M=>Math.max(...M.P.map(p=>p.length()))+.9);const off=Ms.length===2?[-(R[1]+.4),R[0]+.4]:[0];const tot=Ms.length===2?2*R[0]+2*R[1]+.6:R[0];
+  MS.picks=[];
+  Ms.forEach((M,mi)=>{const G=new THREE.Group();G.position.x=Ms.length===2?(mi?tot/2-R[1]:-tot/2+R[0]):0;
+    VM.root.add(G);const sty=MS.style;const fgAtoms=new Map();if(MS.fg)M.G.forEach(g=>g.a.forEach(k=>fgAtoms.set(k,g)));
+    M.at.forEach((a,k)=>{const r=sty==='sf'?EL[a.el].r*.95:sty==='st'?.14:(a.el==='H'?.22:Math.min(.42,EL[a.el].r*.24));const m=sphere(M.P[k],r,elCol(a.el));m.userData={mi,k};G.add(m);MS.picks.push(m);
+      if(MS.lab&&sty!=='sf'){const s=label(a.el,a.el==='H'||(a.el==='C'&&!C.dark)?'#ffffff':'#111',.32);s.position.copy(M.P[k]);if(a.el==='H'){s.material.color=new THREE.Color('#333');}G.add(s);}});
+    if(sty!=='sf')M.bd.forEach(([x,y,o])=>{const A=M.P[x],B=M.P[y];const ax=B.clone().sub(A).normalize();let w;const ref=M.nb[x].find(n=>n.j!==y)||M.nb[y].find(n=>n.j!==x);
+      if(ref){const rp=M.P[ref.j].clone().sub(A);w=rp.sub(ax.clone().multiplyScalar(rp.dot(ax)));if(w.length()<1e-4)w=perp(ax);w.normalize();}else w=perp(ax);
+      const rr=sty==='st'?.1:.085,col=C.dark?'#9aa3ad':'#9aa0a6';const half=A.clone().lerp(B,.5);
+      const offs=o===1?[0]:o===2?[-.11,.11]:[-.15,0,.15];offs.forEach(d=>{const a2=A.clone().addScaledVector(w,d),b2=B.clone().addScaledVector(w,d),h2=half.clone().addScaledVector(w,d);
+        G.add(cyl(a2,h2,o===1?(sty==='st'?.14:rr):.06,sty==='st'?elCol(M.at[x].el):col));G.add(cyl(h2,b2,o===1?(sty==='st'?.14:rr):.06,sty==='st'?elCol(M.at[y].el):col));});});
+    if(MS.lp&&sty!=='sf')M.LP.forEach((L,k)=>L.forEach(d=>{const base=M.P[k].clone().addScaledVector(d,.38);const lobe=new THREE.Mesh(GEO.sph,mat(C.dark?'#ffd166':'#f2b705',.45));lobe.position.copy(base);lobe.scale.set(.2,.2,.2);
+      const q=new THREE.Quaternion().setFromUnitVectors(V(0,1,0),d);lobe.quaternion.copy(q);lobe.scale.set(.15,.3,.15);G.add(lobe);const w=perp(d);[-1,1].forEach(s=>G.add(sphere(M.P[k].clone().addScaledVector(d,.5).addScaledVector(w,.07*s),.045,'#222')));}));
+    if(MS.fg&&sty!=='sf'){const seenG=new Set();M.G.forEach(g=>{g.a.forEach(k=>G.add(sphere(M.P[k],(M.at[k].el==='H'?.42:.62),g.c,.22)));const c=g.a.reduce((s,k)=>s.add(M.P[k]),V()).multiplyScalar(1/g.a.length);
+      if(seenG.has(g.n))return;seenG.add(g.n);const out=c.clone().normalize();const s=label(g.n,'#fff',.36,g.c);s.position.copy(c.clone().addScaledVector(out.lengthSq()>0?out:V(0,1,0),1.1));G.add(s);});}
+    // 鍵角
+    const f=MS.focus[mi]!==null?MS.focus[mi]:centerAtom(M);
+    if(MS.ang&&M.nb[f].length>=2){const ns=M.nb[f].map(y=>y.j);const seen=[];for(let i=0;i<ns.length;i++)for(let j=i+1;j<ns.length;j++){const a=M.P[ns[i]].clone().sub(M.P[f]).normalize(),b=M.P[ns[j]].clone().sub(M.P[f]).normalize();
+      const an=Math.acos(Math.max(-1,Math.min(1,a.dot(b))))*180/Math.PI;if(an>178&&seen.includes('180'))continue;const key=Math.round(an*2)/2;if(ns.length>4&&seen.filter(s=>s===String(key)).length>=1)continue;seen.push(String(key));
+      const pts=[];for(let t=0;t<=16;t++)pts.push(M.P[f].clone().addScaledVector(a.clone().lerp(b,t/16).normalize(),.55));const geo=new THREE.BufferGeometry().setFromPoints(pts);G.add(new THREE.Line(geo,new THREE.LineBasicMaterial({color:0xe8590c,depthTest:false})));
+      let mid=a.clone().add(b);if(mid.length()<1e-3)mid=perp(a);const s=label(nfa(an)+'°','#e8590c',.3,C.dark?'#1b2228':'#ffffff');s.position.copy(M.P[f].clone().addScaledVector(mid.normalize(),.95));G.add(s);}}
+    if(MS.focus[mi]!==null){G.add(sphere(M.P[f],(MS.style==='sf'?EL[M.at[f].el].r*.95:.5)+.08,'#ff8c1a',.3));}
+    if(Ms.length===2){const s=label(MBY[ids[mi]].n,mi?'#2f6fd6':(C.dark?'#e6e6e6':'#222'),.42);s.position.set(0,-R[mi]+.2,0);G.add(s);}});
+  if(fit)fitCam(VM,Math.max(...R),Ms.length===1&&Ms[0].def.spec==='ring'?V(.25,1,.9):V(0,0,1),tot/2);kick();}
+const nfa=x=>Math.abs(x-Math.round(x))<.05?String(Math.round(x)):x.toFixed(1);
+// 路易斯
+function lewisLayout(M){const N=M.at.length,pos=new Array(N).fill(null),lpd=M.at.map(()=>[]);
+  if(M.def.spec){// 由立體投影
+    const n=M.def.spec==='ring'?V(0,1,0):V(1,.6,.3).normalize();const u=perp(n),w=n.clone().cross(u);const sc=M.def.spec==='ring'?1.05:1.2;M.P.forEach((p,k)=>pos[k]=[p.dot(u)*sc,-p.dot(w)*sc]);
+    M.LP.forEach((L,k)=>L.forEach(d=>{const x=d.dot(u),y=-d.dot(w);const l=Math.hypot(x,y)||1;lpd[k].push([x/l,y/l]);}));return{pos,lpd};}
+  const D4=[[1,0],[0,1],[-1,0],[0,-1]],D8=[[1,0],[-1,0],[0,-1],[0,1],[.71,-.71],[-.71,.71],[-.71,-.71],[.71,.71]];
+  const root=centerAtom(M);pos[root]=[0,0];const q=[root];const free=(p)=>pos.every(o=>!o||Math.hypot(o[0]-p[0],o[1]-p[1])>.75);
+  while(q.length){const x=q.shift();const dom=M.nb[x].length+M.at[x].lp;const DS=dom>4?D8:D4;const used=[];
+    const par=M.nb[x].find(y=>pos[y.j]&&q.indexOf(y.j)<0&&y.j!==x&&pos[y.j]&&!(M.nb[x].length===0));
+    const placed=M.nb[x].filter(y=>pos[y.j]);placed.forEach(y=>{const v=[pos[y.j][0]-pos[x][0],pos[y.j][1]-pos[x][1]];let bi=0,bd=-9;DS.forEach((d,i)=>{const s=d[0]*v[0]+d[1]*v[1];if(s>bd){bd=s;bi=i;}});used.push(bi);});
+    const kids=M.nb[x].filter(y=>!pos[y.j]).map(y=>y.j).sort((a,b)=>(M.at[b].el!=='H')-(M.at[a].el!=='H'));
+    kids.forEach((j,ci)=>{let pref=DS.map((d,i)=>i);if(used.length===1&&ci===0&&M.at[j].el!=='H'){const op=DS.findIndex(d=>Math.abs(d[0]+DS[used[0]][0])<.01&&Math.abs(d[1]+DS[used[0]][1])<.01);if(op>=0)pref=[op,...pref.filter(i=>i!==op)];}
+      const L=M.at[j].el==='H'||M.at[x].el==='H'?1:1.45;let ok=false;
+      out:for(const sc of [1,1.7])for(const i of pref){if(used.includes(i))continue;const p=[pos[x][0]+DS[i][0]*L*sc,pos[x][1]+DS[i][1]*L*sc];if(free(p)){pos[j]=p;used.push(i);ok=true;break out;}}
+      if(!ok){const i=pref.find(i=>!used.includes(i))??0;pos[j]=[pos[x][0]+DS[i][0]*L*2.2,pos[x][1]+DS[i][1]*L*2.2];used.push(i);}q.push(j);});
+    let need=M.at[x].lp;for(let i=0;i<DS.length&&need>0;i++){if(used.includes(i))continue;lpd[x].push(DS[i]);used.push(i);need--;}}
+  return{pos,lpd};}
+function drawLewis(){const cv=$('cvL'),w=cv.parentElement.clientWidth-24;const M=MS.M[MS.mode==='cmp'?(MS.lwI||0):0];if(!M)return;const L=M._lw||(M._lw=lewisLayout(M));
+  let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;L.pos.forEach(p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});
+  const pad=.9;const sw=(x1-x0+2*pad),shh=(y1-y0+2*pad);const s=Math.min(w/sw,360/shh,62);const h=Math.max(150,shh*s);
+  const d=devicePixelRatio||1;cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const X=p=>w/2+(p[0]-(x0+x1)/2)*s,Y=p=>h/2+(p[1]-(y0+y1)/2)*s;const fs=Math.max(13,Math.min(22,s*.42));
+  const hideH=k=>M.def.spec==='ring'&&M.at[k].el==='H'&&M.nb[k].some(y=>M.at[y.j].el==='C'&&Math.hypot(L.pos[k][0]-L.pos[y.j][0],L.pos[k][1]-L.pos[y.j][1])<.75);
+  g.strokeStyle=C.ink;g.lineCap='round';
+  M.bd.forEach(([a,b,o])=>{if(hideH(a)||hideH(b))return;const A=[X(L.pos[a]),Y(L.pos[a])],B=[X(L.pos[b]),Y(L.pos[b])];const dx=B[0]-A[0],dy=B[1]-A[1],l=Math.hypot(dx,dy);const ux=dx/l,uy=dy/l,nx=-uy,ny=ux;const sh=fs*.62;
+    const offs=o===1?[0]:o===2?[-3.2,3.2]:[-5,0,5];g.lineWidth=2;offs.forEach(k=>{g.beginPath();g.moveTo(A[0]+ux*sh+nx*k,A[1]+uy*sh+ny*k);g.lineTo(B[0]-ux*sh+nx*k,B[1]-uy*sh+ny*k);g.stroke();});});
+  g.font=`700 ${fs}px "Noto Sans TC",sans-serif`;g.textAlign='center';g.textBaseline='middle';
+    M.at.forEach((a,k)=>{if(hideH(k))return;const x=X(L.pos[k]),y=Y(L.pos[k]);g.fillStyle=C.panel;g.beginPath();g.arc(x,y,fs*.55,0,7);g.fill();g.fillStyle=a.el==='H'?C.ink:(a.el==='C'?C.ink:elCol(a.el));if(a.el==='O'||a.el==='N'||a.el==='Cl'||a.el==='F')g.fillStyle=a.el==='Cl'?'#16903a':a.el==='F'?'#4e9a2a':elCol(a.el);g.fillText(a.el,x,y+1);
+    if(MS.lw==='lewis')L.lpd[k].forEach(dv=>{const r=fs*.78,nx=-dv[1],ny=dv[0];g.fillStyle=C.accent;[-1,1].forEach(sg=>{g.beginPath();g.arc(x+dv[0]*r+nx*sg*fs*.2,y+dv[1]*r+ny*sg*fs*.2,Math.max(2.2,fs*.11),0,7);g.fill();});});});
+  if(M.chg){g.strokeStyle=C.ink;g.lineWidth=2;const bx0=X([x0,0])-fs*1.4,bx1=X([x1,0])+fs*1.4,by0=Y([0,y0])-fs*1.3,by1=Y([0,y1])+fs*1.3;
+    [[bx0,1],[bx1,-1]].forEach(([bx,sg])=>{g.beginPath();g.moveTo(bx+sg*8,by0);g.lineTo(bx,by0);g.lineTo(bx,by1);g.lineTo(bx+sg*8,by1);g.stroke();});
+    g.fillStyle=C.ink;g.font=`700 ${fs*.8}px "Noto Sans TC"`;g.fillText((Math.abs(M.chg)>1?Math.abs(M.chg):'')+(M.chg>0?'+':'−'),bx1+fs*.6,by0+fs*.2);}
+  if(M.def.spec==='ring'){g.fillStyle=C.muted;g.font='12px "Noto Sans TC"';g.textAlign='left';g.fillText('由立體模型投影（環狀葡萄糖）',6,h-8);}}
+function tabHTML(){const Ms=MS.M.slice(0,MS.mode==='cmp'?2:1);const rows=[['名稱',M=>M.def.n],['類別',M=>M.cls],['分子式',M=>fmt(M.mf),'f',M=>M.mf],['實驗式',M=>M.ef?fmt(M.ef):'—（離子）','f',M=>M.ef],
+   ['示性式',M=>M.cf?fmt(M.cf):'—','f',M=>M.cf],['分子量',M=>(Math.round(M.mass*10)/10)+'','f',M=>Math.round(M.mass*10)],['官能基',M=>M.G.length?[...new Set(M.G.filter(g=>!/碳碳/.test(g.n)).map(g=>g.n))].join('、')||'—':'—'],
+   ['中心原子形狀',M=>shapeOf(M,centerAtom(M))||'—'],['價電子總數',M=>M.ve+''],['鍵結電子對',M=>M.bp+''],['孤對電子',M=>M.lp+' 對'],['八隅體',M=>octText(M)]];
+  return rows.map(([n,f,cl,key])=>{let tds=Ms.map(M=>`<td class="${cl||''}">${f(M)}</td>`).join('');
+    if(Ms.length===2&&key){const same=key(Ms[0])===key(Ms[1])&&key(Ms[0])!=null;tds=Ms.map(M=>`<td class="${cl||''} ${same?'same':'diff'}">${f(M)}</td>`).join('');}return`<tr><th>${n}</th>${tds}</tr>`;}).join('');}
+function octText(M){const bad=[];M.at.forEach((a,k)=>{const need=a.el==='H'?2:8;if(M.oct[k]!==need)bad.push(`${a.el} 周圍 ${M.oct[k]} 個電子`);});return bad.length?'✕ '+[...new Set(bad)].join('、'):'✓ 都符合（H 為 2 個）';}
+function molText(){const Ms=MS.M;const ck=[];let big;
+  if(MS.mode==='cmp'&&Ms[1]){const [a,b]=Ms;if(a.def.id===b.def.id)big='兩邊是同一種分子';
+    else if(a.mf===b.mf)big=`${a.def.n}與${b.def.n}：分子式都是 ${fmt(a.mf)}，結構不同 → 互為同分異構物`;
+    else if(a.ef&&a.ef===b.ef)big=`${a.def.n}與${b.def.n}：實驗式都是 ${fmt(a.ef)}，但分子式不同 → 不是同分異構物`;
+    else big=`${a.def.n}（${fmt(a.mf)}）與 ${b.def.n}（${fmt(b.mf)}）`;
+    if(a.ef&&a.ef===b.ef){ck.push(['info','實驗式相同 → 各元素的質量百分組成相同，等重量時含的原子總數也相同。']);}
+    if(a.mf===b.mf&&a.def.id!==b.def.id){ck.push(['ok','分子式相同 → 分子量相同；但原子排列（結構式、示性式）不同，物理、化學性質不同。']);ck.push(['no','「同素異形體」是同一種元素的不同單質（如鑽石、石墨），不能用在化合物。']);}
+    if(a.ef===b.ef&&a.mf!==b.mf)ck.push(['no','實驗式相同不代表是同分異構物：分子式不同、分子量不同，同溫同壓下的蒸氣密度也不同。']);
+    $('mBig').textContent=big;checks($('mC'),ck);return;}
+  const M=Ms[0],k=MS.focus[0]!==null?MS.focus[0]:centerAtom(M);const a=M.at[k];
+  big=`${M.def.n} ${fmt(M.mf)}`+(shapeOf(M,centerAtom(M))?`：${shapeOf(M,centerAtom(M))}`:'');
+  ck.push(['info',`${MS.focus[0]!==null?'選取的':'中心'}原子 ${a.el}：連接 ${M.nb[k].length} 個原子、${a.lp} 對孤對電子，周圍共 ${M.oct[k]} 個電子${a.el==='H'?'':M.oct[k]===8?'（符合八隅體）':'（不符合八隅體）'}。`]);
+  if(M.def.fgNote)ck.push(['info',M.def.fgNote]);
+  if(M.def.id==='CH4')ck.push(['info','平面的結構式畫成十字，但真正的形狀是四面體：四個 H 不在同一平面，鍵角 109.5°。']);
+  if(['BF3','BeF2'].includes(M.def.id))ck.push(['no','中心原子周圍不到 8 個電子（缺電子），不符合八隅體。']);
+  if(['PCl5','SF6','SF4'].includes(M.def.id))ck.push(['no','中心原子周圍超過 8 個電子（擴張八隅體），第三週期以後的元素才可能出現。']);
+  if(M.chg)ck.push(['info',`這是離子，路易斯結構要加中括號並標電荷；價電子總數要${M.chg<0?'加上':'減去'} ${Math.abs(M.chg)}。`]);
+  if(['CO3','NO3'].includes(M.def.id))ck.push(['info','實際上三個 N（C）−O 鍵一樣長（共振）；這裡畫的是其中一種路易斯結構。']);
+  if(M.G.length&&!M.def.fgNote)ck.push(['info','官能基：'+[...new Set(M.G.map(g=>g.n))].join('、')+'。']);
+  $('mBig').textContent=big;checks($('mC'),ck);}
+function molAll(fit){libUI();segSet($('mMode'),MS.mode);segSet($('mSlot'),MS.slot);segSet($('mStyle'),MS.style);segSet($('lwMode'),MS.lw);$('mSlotW').hidden=MS.mode!=='cmp';
+  ['lp','lab','ang','fg','rot'].forEach(k=>$('m'+k[0].toUpperCase()+k.slice(1)).checked=MS[k]);
+  molDraw3D(fit);if(MS.mode==='cmp'){$('lwWhich').innerHTML=`<span class="seg" id="lwI"><button data-v="0">左</button><button data-v="1">右</button></span>`;segSet($('lwI'),MS.lwI||0);segOn($('lwI'),v=>{MS.lwI=+v;molAll();});}else $('lwWhich').innerHTML='';
+  drawLewis();$('mTab').innerHTML=tabHTML();molText();$('mTag').textContent=MS.mode==='cmp'?'左：黑框　右：藍框':'';}
+segOn($('mMode'),v=>{MS.mode=v;MS.slot=1;molAll(true);});segOn($('mSlot'),v=>{MS.slot=+v;molAll();});segOn($('mStyle'),v=>{MS.style=v;molAll();});segOn($('lwMode'),v=>{MS.lw=v;drawLewis();});
+['Lp','Lab','Ang','Fg','Rot'].forEach(k=>$('m'+k).addEventListener('change',e=>{MS[k.toLowerCase()]=e.target.checked;molAll();}));
+$('mReset').addEventListener('click',()=>molDraw3D(true));
+// 點選原子
+function picker(v,getList,onPick){let down=null;v.cv.addEventListener('pointerdown',e=>{down=[e.clientX,e.clientY];});v.cv.addEventListener('pointerup',e=>{if(!down||Math.hypot(e.clientX-down[0],e.clientY-down[1])>5)return;
+  const r=v.cv.getBoundingClientRect();const m=new THREE.Vector2((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);const rc=new THREE.Raycaster();rc.setFromCamera(m,v.cam);const hit=rc.intersectObjects(getList(),false)[0];onPick(hit?hit.object:null);});}
+
+// =====================================================================
+// 2 晶體
+// =====================================================================
+const XS={id:'nacl',style:'bs',nb:'opp',cell:true,e:true,rot:false,pick:null,hit:0,hitOn:false,ph:0};let VX=null,XD=null;
+const XINFO={
+ nacl:{n:'氯化鈉 NaCl',t:'離子晶體',tc:'#c0453b',p:'Na⁺、Cl⁻',f:'離子鍵（正負離子間的靜電引力）',mp:'801 °C',el:'固態 ✕；熔融態、水溶液 ○（離子可以移動）',duc:'✕ 硬而脆，敲擊會碎裂',fm:'NaCl 是實驗式（沒有「NaCl 分子」）',nb:'每個 Na⁺ 周圍有 6 個 Cl⁻；最近的 Na⁺ 有 12 個（Cl⁻ 亦同）'},
+ dia:{n:'鑽石 C',t:'共價網狀固體',tc:'#2f6fd6',p:'C 原子',f:'共價鍵（每個 C 連 4 個 C，正四面體）',mp:'約 3550 °C',el:'✕',duc:'✕ 天然物質中最硬',fm:'C 是實驗式',nb:'每個 C 以共價鍵連接 4 個 C'},
+ gra:{n:'石墨 C',t:'共價網狀固體（層狀）',tc:'#2f6fd6',p:'C 原子',f:'層內共價鍵（每個 C 連 3 個 C，正六邊形）；層與層之間只有微弱的作用力',mp:'約 3650 °C（昇華）',el:'○ 每個 C 剩一個可在層內移動的電子',duc:'質軟、層與層容易滑動（鉛筆芯、潤滑劑）',fm:'C 是實驗式',nb:'每個 C 以共價鍵連接 3 個 C'},
+ grn:{n:'石墨烯 C',t:'共價網狀（單層）',tc:'#2f6fd6',p:'C 原子',f:'共價鍵（每個 C 連 3 個 C）',mp:'很高',el:'○ 導電性極佳',duc:'很強韌、可彎曲',fm:'C 是實驗式',nb:'每個 C 以共價鍵連接 3 個 C；就是一層石墨'},
+ c60:{n:'C₆₀（富勒烯）',t:'分子晶體（分子物質）',tc:'#2b8a3e',p:'C₆₀ 分子',f:'分子內共價鍵；分子與分子之間只有分子間作用力',mp:'低（數百 °C 就昇華）',el:'✕（固態）',duc:'✕',fm:'C₆₀ 是分子式',nb:'每個 C 連 3 個 C；由 12 個五邊形、20 個六邊形組成的球'},
+ sio2:{n:'石英 SiO₂',t:'共價網狀固體',tc:'#2f6fd6',p:'Si、O 原子',f:'共價鍵（每個 Si 連 4 個 O，每個 O 連 2 個 Si）',mp:'約 1700 °C',el:'✕',duc:'✕ 硬',fm:'SiO₂ 是實驗式（不是分子，和 CO₂ 不同）',nb:'每個 Si 連 4 個 O；每個 O 連 2 個 Si；Si 都是單鍵'},
+ sic:{n:'碳化矽 SiC（金剛砂）',t:'共價網狀固體',tc:'#2f6fd6',p:'Si、C 原子',f:'共價鍵（結構和鑽石相同，Si、C 交錯）',mp:'約 2700 °C（分解）',el:'✕',duc:'✕ 非常硬（研磨材料）',fm:'SiC 是實驗式',nb:'每個 Si 連 4 個 C，每個 C 連 4 個 Si'},
+ cu:{n:'銅 Cu',t:'金屬晶體',tc:'#d0773f',p:'銅陽離子＋自由移動的價電子（電子海）',f:'金屬鍵（陽離子與電子海之間的靜電引力，沒有方向性）',mp:'1085 °C',el:'○ 固態、液態都可導電；溫度升高導電度下降',duc:'○ 原子層可以滑動，有延性、展性',fm:'Cu 是實驗式',nb:'每個原子周圍最近的原子有 12 個（面心立方）'},
+ dry:{n:'乾冰 CO₂',t:'分子晶體',tc:'#2b8a3e',p:'CO₂ 分子',f:'分子內共價鍵（O＝C＝O）；分子之間是微弱的分子間作用力',mp:'−78.5 °C 直接昇華（不破壞共價鍵）',el:'✕',duc:'✕',fm:'CO₂ 是分子式',nb:'每個 CO₂ 分子是直線形，排列在面心立方的位置'},
+ ice:{n:'冰 H₂O',t:'分子晶體',tc:'#2b8a3e',p:'H₂O 分子',f:'分子內共價鍵；分子之間以分子間作用力（氫鍵）規則排列',mp:'0 °C',el:'✕（純水幾乎不導電）',duc:'✕',fm:'H₂O 是分子式',nb:'每個水分子以分子間作用力和 4 個水分子相連（虛線）；不是共價網狀'}};
+function xBuild(id){const A=[],B=[],W=[];let cell=null,R;const add=(el,p,o={})=>{A.push(Object.assign({el,p},o));return A.length-1;};
+  const bondNear=(dmin,dmax,filter)=>{for(let i=0;i<A.length;i++)for(let j=i+1;j<A.length;j++){const d=A[i].p.distanceTo(A[j].p);if(d>dmin&&d<dmax&&(!filter||filter(A[i],A[j])))B.push([i,j]);}};
+  if(id==='nacl'){const d=2.82,n=2;for(let i=0;i<=n;i++)for(let j=0;j<=n;j++)for(let k=0;k<=n;k++)add((i+j+k)%2?'Cl':'Na',V(i,j,k).multiplyScalar(d).subScalar(n*d/2),{ion:(i+j+k)%2?-1:1});cell=[V(-d,-d,-d),V(d,d,d)];R=n*d*.95;}
+  else if(id==='dia'||id==='sic'||id==='sio2'||id==='ice'){const a=id==='dia'?3.57:id==='sic'?4.36:id==='sio2'?7.16:6.35,n=id==='sio2'||id==='ice'?1:2;const F=[[0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]],q=[.25,.25,.25];const pts=[];
+    for(let i=-1;i<=n;i++)for(let j=-1;j<=n;j++)for(let k=-1;k<=n;k++)F.forEach(f=>{[[0,0,0],q].forEach((b,s)=>{const p=V(i+f[0]+b[0],j+f[1]+b[1],k+f[2]+b[2]).multiplyScalar(a);if(p.x>-1e-3&&p.y>-1e-3&&p.z>-1e-3&&p.x<n*a+1e-3&&p.y<n*a+1e-3&&p.z<n*a+1e-3)pts.push({p,s});});});
+    const c=V(n*a/2,n*a/2,n*a/2);pts.forEach(o=>o.p.sub(c));const dnn=a*Math.sqrt(3)/4;
+    if(id==='dia'||id==='sic'){pts.forEach(o=>add(id==='sic'&&o.s?'C':id==='sic'?'Si':'C',o.p));bondNear(dnn*.9,dnn*1.1);}
+    else if(id==='sio2'){pts.forEach(o=>add('Si',o.p));const nSi=A.length;for(let i=0;i<nSi;i++)for(let j=i+1;j<nSi;j++){const d=A[i].p.distanceTo(A[j].p);if(Math.abs(d-dnn)<.1){const m=add('O',A[i].p.clone().lerp(A[j].p,.5));B.push([i,m],[j,m]);}}}
+    else{const Vs=[[1,1,1],[1,-1,-1],[-1,1,-1],[-1,-1,1]].map(v=>V(...v).normalize());pts.forEach(o=>{const i=add('O',o.p,{w:1});const don=o.s?[2,3].map(t=>Vs[t].clone().negate()):[0,1].map(t=>Vs[t]);
+        don.forEach(v=>{const h=add('H',o.p.clone().addScaledVector(v,.96));B.push([i,h]);});});
+      for(let i=0;i<A.length;i++){if(A[i].el!=='H')continue;for(let j=0;j<A.length;j++){if(A[j].el!=='O')continue;const d=A[i].p.distanceTo(A[j].p);if(d>1.5&&d<2.0)W.push([i,j]);}}}
+    cell=[V(-n*a/2,-n*a/2,-n*a/2),V(n*a/2,n*a/2,n*a/2)];if(id==='sio2'||id==='ice'||id==='dia'||id==='sic')cell=[V(-n*a/2,-n*a/2,-n*a/2),V(-n*a/2+a,-n*a/2+a,-n*a/2+a)];R=n*a*.95;}
+  else if(id==='gra'||id==='grn'){const cc=1.42,a1=V(Math.sqrt(3)*cc,0,0),a2=V(Math.sqrt(3)*cc/2,0,1.5*cc),bs=[V(0,0,0),V(Math.sqrt(3)*cc/2,0,cc/2)];const L=id==='gra'?3:1,rad=id==='gra'?6.5:9;
+    for(let l=0;l<L;l++){const sh=l%2?V(Math.sqrt(3)*cc/2,0,cc/2):V();const y=(l-(L-1)/2)*3.35;const first=A.length;
+      for(let i=-9;i<=9;i++)for(let j=-9;j<=9;j++)bs.forEach(b=>{const p=a1.clone().multiplyScalar(i).addScaledVector(a2,j).add(b).add(sh);p.y=y;if(Math.hypot(p.x,p.z)<rad)add('C',p,{layer:l});});
+      for(let i=first;i<A.length;i++)for(let j=i+1;j<A.length;j++)if(Math.abs(A[i].p.distanceTo(A[j].p)-cc)<.05)B.push([i,j]);}R=rad+1;}
+  else if(id==='c60'){const ph=(1+Math.sqrt(5))/2;const base=[[0,1,3*ph],[1,2+ph,2*ph],[ph,2,2*ph+1]];const perms=v=>[[v[0],v[1],v[2]],[v[1],v[2],v[0]],[v[2],v[0],v[1]]];const set=[];
+    base.forEach(b=>perms(b).forEach(p=>{for(let s0 of [1,-1])for(let s1 of [1,-1])for(let s2 of [1,-1]){const q=V(p[0]*s0,p[1]*s1,p[2]*s2);if(!set.some(o=>o.distanceTo(q)<1e-6))set.push(q);}}));
+    set.forEach(p=>add('C',p.multiplyScalar(.71)));bondNear(1.3,1.5);R=4.6;}
+  else if(id==='cu'){const a=3.61,n=2;const F=[[0,0,0],[.5,.5,0],[.5,0,.5],[0,.5,.5]];for(let i=0;i<=n;i++)for(let j=0;j<=n;j++)for(let k=0;k<=n;k++)F.forEach(f=>{const p=V(i+f[0],j+f[1],k+f[2]);if(p.x<=n+1e-6&&p.y<=n+1e-6&&p.z<=n+1e-6)add('Cu',p.multiplyScalar(a).subScalar(n*a/2));});cell=[V(-a,-a,-a),V(0,0,0)];R=n*a*.95;}
+  else if(id==='dry'){const a=5.62;const F=[];for(let i=0;i<=1;i++)for(let j=0;j<=1;j++)for(let k=0;k<=1;k++)F.push([i,j,k]);F.push([.5,.5,0],[.5,.5,1],[.5,0,.5],[.5,1,.5],[0,.5,.5],[1,.5,.5]);
+    F.forEach(f=>{const p=V(...f).multiplyScalar(a).subScalar(a/2);const h=[Math.round(f[0]*2)%2,Math.round(f[1]*2)%2,Math.round(f[2]*2)%2].join('');const ax={'000':[1,1,1],'110':[1,-1,-1],'101':[-1,1,-1],'011':[-1,-1,1]}[h];const u=V(...ax).normalize();
+      const c=add('C',p,{mol:1});const o1=add('O',p.clone().addScaledVector(u,1.16)),o2=add('O',p.clone().addScaledVector(u,-1.16));B.push([c,o1,2],[c,o2,2]);});cell=[V(-a/2,-a/2,-a/2),V(a/2,a/2,a/2)];R=a*.95;}
+  return{A,B,W,cell,R};}
+function xDraw(fit){if(!VX)return;XS.rep=null;clear(VX.root);XD=xBuild(XS.id);const D=XD,I=XINFO[XS.id],sf=XS.style==='sf';const G=new THREE.Group();VX.root.add(G);XS.G=G;XS.picks=[];
+  const cut=XS.id==='nacl'||XS.id==='cu'?0:null;XS.top=D.A.map(a=>a.p.y>.1);
+  D.A.forEach((a,k)=>{let r,col=elCol(a.el);if(a.el==='Na'){r=sf?1.02:.3;col='#9a52e0';}else if(a.el==='Cl'&&XS.id==='nacl'){r=sf?1.81:.5;}else if(a.el==='Cu'){r=sf?1.28:.55;}else r=sf?EL[a.el].r*.6:(a.el==='H'?.2:a.el==='O'&&XS.id==='sio2'?.32:.3);
+    const m=sphere(a.p,r,col);m.userData={k};G.add(m);XS.picks.push(m);a.m=m;});
+  if(!sf){const col=C.dark?'#9aa3ad':'#8f969e';D.B.forEach(([i,j,o])=>{const A=D.A[i].p,B=D.A[j].p;if(o===2){const w=perp(B.clone().sub(A).normalize());[-.09,.09].forEach(d=>G.add(cyl(A.clone().addScaledVector(w,d),B.clone().addScaledVector(w,d),.055,col)));}else{const c=cyl(A,B,.09,col);G.add(c);(D.A[i].bm||(D.A[i].bm=[])).push(c);}});
+    D.W.forEach(([i,j])=>G.add(dashLine(D.A[i].p,D.A[j].p,C.dark?'#7fb3ff':'#2f6fd6')));
+    if(XS.id==='nacl'){const d=2.82;for(let i=0;i<D.A.length;i++)for(let j=i+1;j<D.A.length;j++)if(Math.abs(D.A[i].p.distanceTo(D.A[j].p)-d)<.05){const l=new THREE.Line(new THREE.BufferGeometry().setFromPoints([D.A[i].p,D.A[j].p]),new THREE.LineBasicMaterial({color:C.dark?0x55606b:0xc2c7cc}));l.userData.grid=1;G.add(l);}}
+    if(XS.id==='gra'){for(let l=0;l<2;l++){const y=(l-.5)*3.35;const s=label('層間：微弱作用力',C.dark?'#ffd166':'#b35c00',.42);s.position.set(0,y+1.1,-8.2);G.add(s);}}}
+  if(XS.cell&&D.cell){const [a,b]=D.cell;const box=new THREE.Box3(a,b);const h=new THREE.Box3Helper(box,new THREE.Color(C.dark?0xffb347:0xe8590c));G.add(h);}
+  // 電子海
+  XS.el=null;if(XS.e&&(XS.id==='cu'||XS.id==='gra'||XS.id==='grn')){const n=XS.id==='cu'?160:220;const pos=new Float32Array(n*3);const vel=[];const R=D.R;
+    for(let i=0;i<n;i++){let p;if(XS.id==='cu')p=V((Math.random()-.5)*2*3.61,(Math.random()-.5)*2*3.61,(Math.random()-.5)*2*3.61);else{const a=D.A[Math.floor(Math.random()*D.A.length)];p=a.p.clone().add(V((Math.random()-.5)*.8,0,(Math.random()-.5)*.8));}
+      pos.set([p.x,p.y,p.z],i*3);vel.push(V(Math.random()-.5,XS.id==='cu'?Math.random()-.5:0,Math.random()-.5).normalize().multiplyScalar(1.5+Math.random()));}
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pos,3));const pm=new THREE.PointsMaterial({color:C.dark?0x7fd3ff:0x1c7ed6,size:.22,transparent:true,opacity:.9});const pts=new THREE.Points(geo,pm);G.add(pts);XS.el={pts,vel,R};}
+  XS.hitOn=false;XS.hit=0;XS.pick=XS.id==='nacl'?D.A.findIndex(a=>a.p.length()<1e-3):null;xHighlight();
+  if(fit)fitCam(VX,D.R,V(.9,.55,1));xText();kick();}
+function xHighlight(){const D=XD;if(!D)return;if(XS.hl){XS.hl.forEach(o=>XS.G.remove(o));}XS.hl=[];if(XS.pick===null||XS.pick<0)return;const a=D.A[XS.pick];let ns=[];
+  if(XS.id==='nacl'){const d=XS.nb==='opp'?2.82:2.82*Math.SQRT2;ns=D.A.map((b,i)=>i).filter(i=>Math.abs(D.A[i].p.distanceTo(a.p)-d)<.05);}
+  else if(XS.id==='cu'){ns=D.A.map((b,i)=>i).filter(i=>Math.abs(D.A[i].p.distanceTo(a.p)-3.61/Math.SQRT2)<.05);}
+  else ns=D.B.filter(b=>b[0]===XS.pick||b[1]===XS.pick).map(b=>b[0]===XS.pick?b[1]:b[0]);
+  const add=o=>{XS.G.add(o);XS.hl.push(o);};const rr=XS.style==='sf'?2.1:.75;add(sphere(a.p,rr*(a.el==='Na'?.8:1),'#ff8c1a',.35));ns.forEach(i=>{add(sphere(D.A[i].p,rr*.8,'#2f9e44',.3));add(dashLine(a.p,D.A[i].p,'#ff8c1a'));});
+  XS.pickInfo=`選取的 ${a.el==='Na'?'Na⁺':a.el==='Cl'&&XS.id==='nacl'?'Cl⁻':a.el}：${XS.id==='nacl'?(XS.nb==='opp'?'最近的異號離子':'最近的同號離子'):XS.id==='cu'?'最近的原子':'以共價鍵相連的原子'} ${ns.length} 個${ns.length&&XS.id!=='nacl'&&XS.id!=='cu'?'（邊緣的原子有些鄰居在畫面外）':''}`;}
+function xText(){const I=XINFO[XS.id];$('xBig').innerHTML=`<span class="badge" style="background:${I.tc}">${I.t}</span>${I.n}`;
+  $('xTab').innerHTML=[['組成粒子',I.p],['粒子間的作用力',I.f],['熔點',I.mp],['導電性',I.el],['延展性／硬度',I.duc],['化學式',I.fm],['結構特徵',I.nb]].map(([a,b])=>`<tr><th>${a}</th><td>${b}</td></tr>`).join('');
+  $('xNbW').hidden=XS.id!=='nacl';$('xEW').hidden=!['cu','gra','grn'].includes(XS.id);$('xCellW').hidden=!XD||!XD.cell;$('xHit').hidden=!['nacl','cu','gra'].includes(XS.id);$('xRe').hidden=$('xHit').hidden;
+  $('xHit').textContent=XS.id==='gra'?'↔ 推動上層':'🔨 敲打／施力';
+  segSet($('xSel'),XS.id);segSet($('xStyle'),XS.style);segSet($('xNb'),XS.nb);$('xCell').checked=XS.cell;$('xE').checked=XS.e;$('xRot').checked=XS.rot;
+  const msg={nacl:XS.hit>=1?'同號離子對齊 → 互相排斥 → 晶體碎裂：離子晶體沒有延展性':'點任一個離子，看它周圍最近的異號、同號離子各有幾個',cu:XS.hit>=1?'原子層滑動後，電子海仍把陽離子黏在一起 → 金屬有延性、展性':'按「敲打」看原子層滑動；藍點是可以自由移動的價電子（電子海）',
+    gra:'層與層之間只有微弱的作用力，容易滑動；層內每個 C 只用 3 個電子形成共價鍵，剩下的電子可以移動 → 石墨能導電',grn:'石墨烯就是一層石墨，藍點是可以在層內移動的電子',dia:'每個 C 都以四面體方式連接 4 個 C，整塊晶體是一個巨大的共價網狀結構',
+    c60:'C₆₀ 是一個「分子」：60 個 C 組成足球形；和鑽石、石墨互為同素異形體',sio2:'Si（米色）連 4 個 O（紅色）；SiO₂ 是共價網狀，和 CO₂ 分子完全不同',sic:'結構和鑽石一樣，只是 Si、C 交錯排列',dry:'每個 CO₂ 是獨立的分子；昇華時只要克服分子間作用力，不破壞 C＝O 共價鍵',ice:'實線是 O−H 共價鍵（分子內），虛線是分子間作用力（氫鍵）；熔化只破壞分子間作用力'}[XS.id];
+  $('xMsg').textContent=msg;const ck=[];if(XS.pickInfo&&XS.pick!==null)ck.push(['info',XS.pickInfo]);
+  ({nacl:[['no','「NaCl 分子」不存在：NaCl 是實驗式，表示 Na⁺：Cl⁻＝1：1。']],dia:[['info','鑽石、石墨、石墨烯、C₆₀ 都只由碳組成 → 同素異形體（不是同分異構物）。']],gra:[['info','鑽石每個 C 連 4 個 C；石墨每個 C 連 3 個 C。']],
+   c60:[['no','C₆₀ 不是共價網狀固體，是分子物質；有固定的分子式 C₆₀。']],sio2:[['no','常見錯誤：「SiO₂ 中一個 Si 連兩個 O，為分子」——其實每個 Si 連 4 個 O。']],cu:[['info','金屬鍵是陽離子與自由電子之間的引力；溫度升高，陽離子振動加劇，導電度下降。']],
+   dry:[['info','乾冰、冰都是分子晶體；共價網狀固體熔化時才需要破壞共價鍵。']],ice:[['no','冰不是共價網狀晶體，而是分子晶體。']],sic:[],grn:[]}[XS.id]||[]).forEach(x=>ck.push(x));checks($('xC'),ck);}
+segOn($('xSel'),v=>{XS.id=v;hideStory();xDraw(true);});segOn($('xStyle'),v=>{XS.style=v;xDraw();});segOn($('xNb'),v=>{XS.nb=v;xHighlight();xText();kick();});
+$('xCell').addEventListener('change',e=>{XS.cell=e.target.checked;xDraw();});$('xE').addEventListener('change',e=>{XS.e=e.target.checked;xDraw();});$('xRot').addEventListener('change',e=>{XS.rot=e.target.checked;kick();});
+$('xHit').addEventListener('click',()=>{if(XS.id==='gra'){XS.slide=!XS.slide;kick();return;}XS.hitOn=true;XS.hit=0;XS.pick=null;XS.rep=null;XS.G.children.forEach(o=>{if(o.userData.grid)o.visible=false;});xHighlight();kick();});
+$('xRe').addEventListener('click',()=>{XS.slide=false;xDraw();});$('xReset').addEventListener('click',()=>fitCam(VX,XD.R,V(.9,.55,1)));
+function xTick(dt){let more=XS.rot||XS.hitOn||XS.slide||!!XS.el;const D=XD;if(!D)return more;
+  if(XS.el){const p=XS.el.pts.geometry.attributes.position;for(let i=0;i<XS.el.vel.length;i++){const v=XS.el.vel[i];if(Math.random()<.04)v.add(V(Math.random()-.5,XS.id==='cu'?Math.random()-.5:0,Math.random()-.5).multiplyScalar(1.2)).setLength(1.5+Math.random());
+    let x=p.getX(i)+v.x*dt,y=p.getY(i)+v.y*dt,z=p.getZ(i)+v.z*dt;const lim=XS.id==='cu'?3.61:D.R-1;if(Math.abs(x)>lim){v.x*=-1;x=Math.sign(x)*lim;}if(Math.abs(z)>lim){v.z*=-1;z=Math.sign(z)*lim;}if(XS.id==='cu'&&Math.abs(y)>lim){v.y*=-1;y=Math.sign(y)*lim;}
+    if(XS.id!=='cu'&&Math.hypot(x,z)>D.R-1.2){v.x*=-1;v.z*=-1;}p.setXYZ(i,x,y+(XS.top&&XS.id==='cu'&&y>.1?0:0),z);}p.needsUpdate=true;}
+  if(XS.hitOn){XS.hit=Math.min(2,XS.hit+dt*.7);const s=Math.min(1,XS.hit),e=s<.5?2*s*s:1-2*(1-s)*(1-s);
+    if(XS.id==='nacl'){const sh=V(2.82*e,XS.hit>1?(XS.hit-1)*3:0,0);D.A.forEach((a,k)=>{if(XS.top[k])a.m.position.copy(a.p).add(sh);});
+      if(XS.hit>=1&&!XS.rep){XS.rep=[];D.A.forEach((a,i)=>{if(!XS.top[i]||a.p.y>4)return;D.A.forEach((b,j)=>{if(XS.top[j]||b.p.y<-1.5)return;if(a.el===b.el&&Math.abs(a.p.x+2.82-b.p.x)<.05&&Math.abs(a.p.z-b.p.z)<.05){const l=dashLine(b.p,a.p.clone().add(V(2.82,0,0)),'#ff2d2d');XS.G.add(l);XS.rep.push(l);}});});xText();}
+      if(XS.rep)XS.rep.forEach(l=>{l.position.y=XS.hit>1?(XS.hit-1)*1.5:0;});}
+    else if(XS.id==='cu'){const sh=V(3.61/2*e,0,3.61/2*e);D.A.forEach((a,k)=>{if(XS.top[k])a.m.position.copy(a.p).add(sh);});if(XS.hit>=1)xText();}
+    if(XS.hit>=2){XS.hitOn=false;}}
+  else if(XS.rep&&!XS.hitOn&&XS.id!=='nacl'){XS.rep=null;}
+  if(XS.slide&&XS.id==='gra'){XS.ph+=dt;const off=Math.sin(XS.ph*1.2)*1.6;D.A.forEach(a=>{if(a.layer===2)a.m.position.set(a.p.x+off,a.p.y,a.p.z);});XS.G.children.forEach(o=>{if(o.userData.L2)o.position.x=off;});}
+  return more;}
+// 晶體的鍵也要跟著動：重建簡單作法——敲打時隱藏上半部的鍵
+function quiz(){const Q=[['熔點約 800 °C，固態不導電，熔融態或溶於水後可導電，敲擊會碎裂','ion'],['熔點極高、非常堅硬，固態不導電，也不溶於水','cov'],['常溫常壓下是氣體，固態與液態都不導電','mol'],['有金屬光澤，固態就能導電、導熱，可以敲成薄片、拉成細絲','met'],
+  ['具有共價鍵，可以導電，熔點約 3650 °C，層與層之間容易滑動','cov'],['在 −78 °C 就直接昇華成氣體','mol'],['只由碳原子組成，熔點不高，可溶於某些有機溶劑','mol'],['熔點約 1700 °C，非常硬，每個矽原子連接 4 個氧原子','cov'],['易溶於水，但水溶液不導電','mol'],['同時具有離子鍵與共價鍵，熔融態可導電（例如 NH₄Cl、NaOH）','ion'],['價電子不屬於某一個原子，而在整個晶體中自由移動','met'],['熔化時需要破壞共價鍵，熔點、沸點都很高','cov']];
+  const T={ion:'離子晶體',cov:'共價網狀固體',mol:'分子晶體（分子物質）',met:'金屬晶體'};let cur=null,sc=[0,0];
+  const next=()=>{cur=Q[Math.floor(Math.random()*Q.length)];$('qzClue').textContent=cur[0];$('qzRes').textContent='';$('qzOpts').innerHTML=Object.entries(T).map(([k,v])=>`<button class="btn" data-k="${k}">${v}</button>`).join('');};
+  $('qzOpts').addEventListener('click',e=>{const b=e.target.closest('button');if(!b||$('qzRes').textContent)return;const ok=b.dataset.k===cur[1];sc[1]++;if(ok)sc[0]++;$('qzRes').textContent=ok?'✓ 正確':'✕ 答案是：'+T[cur[1]];$('qzRes').style.color=ok?'var(--green)':'#c0453b';$('qzScore').textContent=`答對 ${sc[0]}／${sc[1]}`;});
+  $('qzNext').addEventListener('click',next);next();}
+
+// ---------------- 迴圈與切換 ----------------
+let bench='mol';const BENCHES=['mol','xtal'];
+function ensure(){if(bench==='mol'&&!VM){VM=makeView($('cvM'));picker(VM,()=>MS.picks||[],o=>{if(!o){MS.focus=[null,null];}else{const {mi,k}=o.userData;MS.focus[mi]=MS.focus[mi]===k?null:k;}molDraw3D();molText();});resize();molAll(true);}
+  if(bench==='xtal'&&!VX){VX=makeView($('cvX'));picker(VX,()=>XS.picks||[],o=>{XS.pick=o?o.userData.k:null;xHighlight();xText();kick();});resize();xDraw(true);}}
+function resize(){if(VM&&bench==='mol')sizeView(VM,.85,360,680);if(VX&&bench==='xtal')sizeView(VX,.85,360,680);if(bench==='mol'&&MS.M[0])drawLewis();kick();}
+function setBench(b,noHash){if(!BENCHES.includes(b))b='mol';bench=b;segSet($('benchSeg'),b);BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);ensure();resize();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lt=0;function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(t){raf=0;const dt=lt?Math.min(.05,(t-lt)/1000):0;lt=t;let more=false;
+  try{if(bench==='mol'&&VM){if(MS.rot){VM.root.rotation.y+=dt*.5;more=true;}VM.ctl.update();VM.ren.setClearColor(C.panel);VM.ren.render(VM.scene,VM.cam);}
+    if(bench==='xtal'&&VX){if(XS.rot){VX.root.rotation.y+=dt*.3;}more=xTick(dt)||more;VX.ctl.update();VX.ren.setClearColor(C.panel);VX.ren.render(VX.scene,VX.cam);}}catch(e){console.error(e);}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more)lt=0;}
+new ResizeObserver(()=>resize()).observe(document.querySelector('.wrap'));
+[['mFull','cvM'],['xFull','cvX']].forEach(([b,c])=>$(b).addEventListener('click',()=>{const el=$(c).parentElement;if(document.fullscreenElement)document.exitFullscreen();else el.requestFullscreen&&el.requestFullscreen();}));
+document.addEventListener('fullscreenchange',()=>{if(VM)VM.w=0;if(VX)VX.w=0;setTimeout(resize,60);});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();if(VM){Object.values(cache).forEach(M=>M._lw=null);molAll();}if(VX)xDraw();});
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
+function hideStory(){$('story').hidden=true;}
+$('storyX').addEventListener('click',hideStory);$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+
+// ---------------- 考古題情境 ----------------
+const one=(id,p={})=>()=>{MS.mode='one';MS.sel[0]=id;MS.focus=[null,null];Object.assign(MS,p);molAll(true);};
+const cmp=(a,b,p={})=>()=>{MS.mode='cmp';MS.sel=[a,b];MS.focus=[null,null];MS.lwI=0;Object.assign(MS,p);molAll(true);};
+const xt=(id,p={})=>()=>{XS.id=id;Object.assign(XS,p);xDraw(true);if(p.pickC){XS.pick=XD.A.findIndex(a=>a.p.length()<1e-3);xHighlight();xText();}};
+const QS=[{g:'化學式、同分異構物',items:[
+  {n:'甲醚與乙醇',pg:'中一中 113-1-2 #11、中二中 113-1-2 #8',b:'mol',set:cmp('EtOH','DME'),t:'分子式都是 C₂H₆O → 同分異構物',p:'兩者分子式相同、原子排列不同：乙醇有羥基（−OH），甲醚有醚基（−O−）。\n示性式不同（C₂H₅OH、CH₃OCH₃），所以「示性式相同」是錯的；它們也不是「同素異形體」（那是指同一元素的不同單質）。'},
+  {n:'醋酸與甲酸甲酯',pg:'立人 113-1-2 #16',b:'mol',set:cmp('AcOH','HCOOMe'),t:'分子式都是 C₂H₄O₂ → 同分異構物',p:'醋酸有羧基（−COOH），甲酸甲酯有酯基（−COO−）。兩者分子式、實驗式（CH₂O）都相同，但性質不同（醋酸溶於水呈酸性）。'},
+  {n:'甲醛與葡萄糖',pg:'中一中 113-2-2 #4',b:'mol',set:cmp('HCHO','glu'),t:'實驗式都是 CH₂O，但不是同分異構物',p:'實驗式相同 → 質量百分組成相同、等重量時原子總數相同。\n但分子式不同（CH₂O、C₆H₁₂O₆）、分子量不同 → 不是同分異構物，同溫同壓下蒸氣密度也不同。'},
+  {n:'醋酸與葡萄糖的實驗式',pg:'立人 113-1-2 #26、#28',b:'mol',set:cmp('AcOH','glu'),t:'實驗式 CH₂O 的物質不只一種',p:'實驗式 CH₂O、分子量 60 → 分子式 C₂H₄O₂；溶於水呈酸性 → 有羧基 → 示性式 CH₃COOH。'},
+  {n:'甲烷的結構式不代表真正形狀',pg:'中一中 112-2-2 #4',b:'mol',set:one('CH4',{ang:true}),t:'平面的十字結構式 ≠ 四個 H 在同一平面',p:'甲烷實際是正四面體，鍵角 109.5°。旋轉 3D 模型看看四個 H 的位置。'},
+  {n:'正丁烷與異丁烷',pg:'同分異構物補充',b:'mol',set:cmp('nC4','iC4'),t:'分子式都是 C₄H₁₀',p:'碳鏈排法不同 → 同分異構物。'},
+  {n:'化學式分類（分子式／示性式／實驗式）',pg:'中二中 114-1-2 #18、112-1-2 #18、114-2-2 #1',b:'xtal',set:xt('sio2'),t:'SiO₂、SiC、Cu、NaCl 只能用實驗式',p:'有獨立分子的物質（HCl、CO₂、C₆₀、P₄、NH₃）才有分子式；共價網狀、離子化合物、金屬沒有分子，只能用實驗式。\n切換晶體看「化學式」那一列。'}]},
+ {g:'路易斯結構、孤對電子、八隅體',items:[
+  {n:'孤電子對數量比較',pg:'中一中 114-1-2 #3',b:'mol',set:one('PH3'),t:'PH₃ 1、HCHO 2、BeF₂ 6、NH₄⁺ 0、H₂O₂ 4 對',p:'分別點選 PH₃、甲醛、BeF₂、NH₄⁺、H₂O₂，看右邊表格的「孤對電子」。\n由少到多：NH₄⁺（0）＜PH₃（1）＜HCHO（2）＜H₂O₂（4）＜BeF₂（6）。'},
+  {n:'中心原子有 2 對孤對電子',pg:'中一中 112-1-2 #6',b:'mol',set:one('OF2'),t:'OF₂ 的中心 O 有 2 對孤對電子',p:'HCl、HCN、HCHO 的中心原子沒有孤對電子，PH₃ 的 P 有 1 對，OF₂ 的 O 有 2 對。'},
+  {n:'哪些不符合八隅體',pg:'中二中 113-1-2 #6、113-2-2 #16',b:'mol',set:one('BF3'),t:'BF₃ 缺電子；SF₄、SF₆ 擴張；SF₂ 符合',p:'看表格的「八隅體」列：BF₃ 的 B 周圍只有 6 個電子；SF₆ 的 S 有 12 個、SF₄ 有 10 個；SF₂、NF₃、CF₄、HCN 都符合。\n（NO₂ 的價電子總數是奇數，一定不符合；本頁沒有放 NO₂。）'},
+  {n:'HF 有幾對孤對電子',pg:'中二中 114-1-2 #15',b:'mol',set:one('HF'),t:'HF 的 F 有 3 對孤對電子',p:'F 有 7 個價電子，和 H 共用一對後剩 3 對。'},
+  {n:'CO₂ 與 N₂ 的孤電子對',pg:'中二中 113-1-2 #17',b:'mol',set:cmp('CO2','N2'),t:'CO₂ 4 對、N₂ 2 對',p:'CO₂ 每個 O 有 2 對孤對電子，共 4 對；N₂ 每個 N 1 對，共 2 對。'},
+  {n:'離子的路易斯結構',pg:'中一中 113-2-2 #3、中女中 113-2-2 #3',b:'mol',set:one('CO3'),t:'多原子離子要加中括號與電荷',p:'CO₃²⁻ 的價電子總數＝4＋3×6＋2＝24；NO₃⁻ 也是 24。中心原子沒有孤對電子，有一個雙鍵。'}]},
+ {g:'晶體與化學鍵',items:[
+  {n:'NaCl 每個 Na⁺ 周圍幾個 Cl⁻',pg:'中二中 113-2-2 #10、立人 114-1-2 #15、112-1-2 #21',b:'xtal',set:xt('nacl',{nb:'opp',pickC:1}),t:'最近的異號離子 6 個，最近的同號離子 12 個',p:'點中央的離子，切換「最近的異號離子／最近的同號離子」數一數。'},
+  {n:'離子晶體受敲擊會碎裂',pg:'中二中 112-2-2 #17',b:'xtal',set:xt('nacl'),t:'同號離子對齊互相排斥',p:'按「敲打」：上半部滑動一個離子的距離後，Na⁺ 對 Na⁺、Cl⁻ 對 Cl⁻，互相排斥而碎裂。'},
+  {n:'金屬的延展性與電子海',pg:'中二中 114-2-2 #22、113-2-2 #17、113-1-2 #16',b:'xtal',set:xt('cu'),t:'原子層滑動，電子海仍黏住陽離子',p:'金屬鍵是陽離子與電子海之間的引力；移動的是價電子，不是陽離子。按「敲打」看原子層滑動。'},
+  {n:'鑽石連 4 個、石墨連 3 個',pg:'中二中 113-1-2 #17、113-2-2 #19、立人 113-1-2 #34',b:'xtal',set:xt('dia'),t:'鑽石每個 C 連 4 個 C；石墨每個 C 連 3 個 C',p:'點任一個碳原子看它的共價鍵；再切到石墨比較。鑽石不導電，石墨可以導電。'},
+  {n:'石英：一個 Si 連幾個 O',pg:'立人 114-1-2 #24、中二中 113-1-2 #17',b:'xtal',set:xt('sio2'),t:'每個 Si 連 4 個 O，每個 O 連 2 個 Si',p:'點米色的 Si 原子。SiO₂ 是共價網狀固體，SiO₂ 是實驗式；乾冰 CO₂ 才是分子。'},
+  {n:'C₆₀ 與石墨烯',pg:'中一中 114-1-2 #15、中一中 113-2-2 #16、立人 114-1-2 #25',b:'xtal',set:xt('c60'),t:'同素異形體，不是同分異構物；C₆₀ 是分子物質',p:'C₆₀ 有固定分子式，分子之間以分子間作用力結合，不是共價網狀固體。'},
+  {n:'碳化矽是三維網狀',pg:'中一中 114-1-2 #15',b:'xtal',set:xt('sic'),t:'SiC 結構和鑽石相同',p:'每個 Si 連 4 個 C，每個 C 連 4 個 Si。'},
+  {n:'乾冰昇華會破壞共價鍵嗎',pg:'中一中 113-1-2 #14、立人 113-1-2 #14',b:'xtal',set:xt('dry'),t:'不會：只克服分子間作用力',p:'C＝O 共價鍵在分子內，昇華只是分子彼此分開。鑽石、矽、石英熔化才需要破壞共價鍵。'},
+  {n:'冰是哪一種晶體',pg:'中二中 112-2-2 #18、立人 113-1-2 #13、112-1-2 #29',b:'xtal',set:xt('ice'),t:'冰是分子晶體，不是共價網狀',p:'實線 O−H 是分子內的共價鍵，虛線是分子之間的作用力（氫鍵）。'},
+  {n:'白磷 P₄',pg:'中一中 114-1-2 #15',b:'mol',set:one('P4'),t:'P₄ 是分子，每個 P 連 3 個 P、有 1 對孤對電子',p:'白磷由 P₄ 分子組成，P₄ 是分子式。'}]}];
+{const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
+  gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
+    b.addEventListener('click',()=>{setBench(it.b);it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});d.appendChild(c);box.appendChild(d);});}
+quiz();
+setBench((location.hash||'#mol').slice(1),true);
+window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+window.App={MS,XS,molAll,xDraw,getM,setBench,QS,MOLS};
+</script>
+</body>
+</html>
