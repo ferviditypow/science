@@ -7,21 +7,21 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
 <style>
-/* 燃燒分析：原子顏色 C 綠（黑色在 CuO 上看不清楚）、H 白、O 紅；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
+/* 燃燒分析：原子顏色 C 綠（黑色在 CuO 上看不清楚）、H 白、O 紅；吸收劑：過氯酸鎂＝淺藍灰、NaOH＝淺沙色（都偏淺，讓原子跳出來；原子加深色細邊）、CuO＝黑 */
 :root{
-  --c-atom:#16915a;--cu:#d0773f;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
-  --glass:#dceaf2;--glass-edge:#8fb0c2;--heat:#e8742a;--heat-soft:#fde4d0;
-  --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#5f9fdc;--mg-hi:#cfe3f8;--naoh:#9a7fd4;--naoh-hi:#e3d9f7;
+  --c-atom:#16915a;--cu:#d0773f;--cuo-cu:#7a6c62;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
+  --glass:#eef4f7;--glass-edge:#7f9fb3;--heat:#e8742a;--heat-soft:#fde4d0;
+  --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#a9c3e0;--mg-hi:#e6eff9;--naoh:#e3cf9c;--naoh-hi:#f7eed6;--at-line:#1b2530;
   --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#16915a;--h-mass:#9aa7b4;--o-mass:#e0352b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --c-atom:#3fcf87;--cu:#e08a52;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
-  --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
-  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
+  --c-atom:#3fcf87;--cu:#e08a52;--cuo-cu:#6a6058;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --glass:#18242d;--glass-edge:#5d7f93;--heat:#ff8a4c;--heat-soft:#3b2416;
+  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#2f4a68;--mg-hi:#5f7fa3;--naoh:#5c4a26;--naoh-hi:#8c7646;--at-line:#0b0f13;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --c-atom:#3fcf87;--cu:#e08a52;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
-  --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
-  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
+  --c-atom:#3fcf87;--cu:#e08a52;--cuo-cu:#6a6058;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --glass:#18242d;--glass-edge:#5d7f93;--heat:#ff8a4c;--heat-soft:#3b2416;
+  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#2f4a68;--mg-hi:#5f7fa3;--naoh:#5c4a26;--naoh-hi:#8c7646;--at-line:#0b0f13;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
 .wrap{max-width:1320px}
 .benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
@@ -48,12 +48,12 @@ body.building .slotBox{opacity:1}
 body.building .slotBox.filled{opacity:0}
 .slotBox.pick{stroke-width:4;opacity:1;animation:blink .9s infinite}
 @keyframes blink{50%{opacity:.35}}
-.atC{fill:var(--c-atom)} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
+.atC{fill:var(--c-atom);stroke:var(--at-line);stroke-width:1.1} .atH{fill:var(--h-atom);stroke:var(--at-line);stroke-width:1.1} .atO{fill:var(--o-atom);stroke:var(--at-line);stroke-width:1.1}
 #flame{transform-origin:182px 215px;transition:opacity .3s}
 body.burning #flame{animation:flick .18s infinite alternate}
 #flame2{transform-origin:410px 228px;transition:opacity .3s}
 body.heating #flame2{animation:flick .2s infinite alternate}
-.cuSpot{fill:var(--cu)}
+.latCu{fill:var(--cuo-cu)}.latCu.metal{fill:var(--cu)}.latO{fill:var(--o-atom)}
 @keyframes flick{to{transform:scale(1.06,.93)}}
 .readBox{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
 .readBox.on{stroke:var(--accent);stroke-width:2.5}
@@ -177,7 +177,7 @@ body.heating #flame2{animation:flick .2s infinite alternate}
       <rect x="84" y="127" width="472" height="46" rx="10" style="fill:var(--glass);stroke:var(--glass-edge);stroke-width:2.5;fill-opacity:.85"/>
       <rect id="cuoFill" x="336" y="132" width="148" height="36" rx="4" style="fill:url(#patCuO)" opacity="0"/>
       <rect class="slotBox" id="box-cuo" x="332" y="129" width="156" height="42" rx="6"/>
-      <g id="cuG"></g>
+      <g id="cuoLat"></g>
       <!-- 試樣舟與本生燈 -->
       <path d="M150 158 L214 158 L206 170 L158 170 Z" style="fill:var(--muted)"/>
       <ellipse id="sample" cx="182" cy="157" rx="20" ry="5" style="fill:var(--accent)"/>
@@ -236,7 +236,7 @@ body.heating #flame2{animation:flick .2s infinite alternate}
       <span><i style="background:var(--c-atom)"></i>C 碳</span>
       <span><i style="background:var(--h-atom);border:1px solid var(--h-line)"></i>H 氫</span>
       <span><i style="background:var(--o-atom)"></i>O 氧</span>
-      <span>O₂＝紅紅　CO₂＝紅綠紅　CO＝綠紅　H₂O＝紅＋兩個白</span><span><i style="background:var(--cu)"></i>Cu（CuO 失去 O 後）</span>
+      <span>O₂＝紅紅　CO₂＝紅綠紅　CO＝綠紅　H₂O＝紅＋兩個白</span><span><i style="background:var(--cuo-cu)"></i>CuO 裡的 Cu　<i style="background:var(--cu)"></i>失去 O 後的 Cu</span>
     </div>
   </section>
 
@@ -398,7 +398,8 @@ let slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};
 let sel=null;
 function drawRig(){
   const cf=$('cuoFill');
-  if(slots.cuo){cf.setAttribute('opacity','1');cf.style.fill=PAT[slots.cuo];$('cuoLbl').textContent=slots.cuo==='CuO'?'CuO（氧化銅）':PART[slots.cuo]+'（放錯了？）';}
+  $('cuoLat').style.display=slots.cuo==='CuO'?'':'none';
+  if(slots.cuo){cf.setAttribute('opacity','1');cf.style.fill=slots.cuo==='CuO'?'var(--cuo)':PAT[slots.cuo];$('cuoLbl').textContent=slots.cuo==='CuO'?'CuO（氧化銅）':PART[slots.cuo]+'（放錯了？）';}
   else{cf.setAttribute('opacity','0');$('cuoLbl').textContent=bench==='build'?'（放置區）':'（沒有 CuO）';}
   for(const [k,pk,nm] of [['jia','packJia','nameJia'],['yi','packYi','nameYi']]){
     const p=$(pk),v=slots[k];
@@ -474,8 +475,10 @@ function molG(type){const g=svg('g',{});for(const [e,x,y] of MOL[type])svg('circ
 const STEP=1/60,V=125,HOLD=0.9,PAD=0.75+HOLD,WIN=0.75+HOLD;
 const R={on:false,playing:false,spd:1,frame:.1,acc:0,hist:[],hi:-1,d:null,shown:false,els:new Map()};
 const pg=$('pg');
+const UNITS=[];{const g=$('cuoLat');for(const [r,y] of [[0,138],[2,162]])for(let c=0;c<7;c++){const x=347+c*19+(r?9:0);
+  UNITS.push({r,x,y,ox:x+9,cu:svg('circle',{cx:x,cy:y,r:4.3,class:'latCu'},g),o:svg('circle',{cx:x+9,cy:y,r:3.9,class:'latO'},g)});}}
 function cur(){return R.hist[R.hi];}
-function clearDom(){R.els.forEach(e=>e.remove());R.els.clear();$('dotsJia').replaceChildren();$('dotsYi').replaceChildren();$('cuG').replaceChildren();}
+function clearDom(){R.els.forEach(e=>e.remove());R.els.clear();$('dotsJia').replaceChildren();$('dotsYi').replaceChildren();UNITS.forEach(u=>{u.cu.classList.remove('metal');u.o.setAttribute('opacity','1');});}
 function resetRun(){R.on=false;R.playing=false;R.acc=0;R.hist=[];R.hi=-1;R.shown=false;clearDom();
   document.body.classList.remove('burning','heating');$('flame').setAttribute('opacity','.25');$('flame2').setAttribute('opacity','.25');
   $('sample').setAttribute('rx','20');$('rdJia').textContent='+0.00 g';$('rdYi').textContent='+0.00 g';$('res2').hidden=true;
@@ -515,9 +518,9 @@ function step(st){const dt=STEP;st.t+=dt;
     // 高溫 CuO：CuO 的 O 跑出來接到 CO 上 → CO2，CuO 變成 Cu
     if(p.type==='CO'&&st.slots.cuo==='CuO'&&pos.y===150&&pos.x>336){if(p.conv==null)p.conv=372+Math.random()*80;
       if(pos.x>=p.conv&&!p.grab){p.grab=true;p.hold=HOLD;
-        const x0=x+(Math.random()<.5?-1:1)*(22+Math.random()*10),y0=Math.random()<.5?138:162;
-        st.cu.push({x:x0,y:y0,age:0});st.fly.push({pid:p.id,x0,y0,k:0});
-        if(!st.said.cuo){st.said.cuo=1;st.msg='<b>CO</b> 經過高溫 <b>CuO</b>：CuO 放出一個 <b>O</b>，接到 CO 上變成 <b>CO₂</b>；CuO 少了 O，變回紅色的 <b>Cu</b>。（CuO 是氧化劑，不是催化劑）';}}}
+        let best=-1,bd=1e9;UNITS.forEach((u,i)=>{if(u.r===1||st.cu.some(c=>c.u===i))return;const dd=Math.abs(u.ox-x);if(dd<bd){bd=dd;best=i;}});
+        const U=UNITS[best];st.cu.push({u:best,age:0});st.fly.push({pid:p.id,x0:U.ox,y0:U.y,k:0});
+        if(!st.said.cuo){st.said.cuo=1;st.msg='<b>CO</b> 經過高溫 <b>CuO</b>：CuO 放出一個 <b>O</b>，接到 CO 上變成 <b>CO₂</b>；CuO 少了 O，剩下的 <b>Cu</b> 變成銅色。（CuO 是氧化劑，不是催化劑）';}}}
     const rg=regionOf(pos.x,pos.y);
     if(rg&&absorbs(st.slots[rg],p.type)){if(p.capAt==null)p.capAt=p.s+18+Math.random()*95;
       if(p.s>=p.capAt){p.dead=true;st.read[rg]+=st.per[p.type];
@@ -528,7 +531,7 @@ function step(st){const dt=STEP;st.t+=dt;
     if(p.s>=LEN){p.dead=true;if(p.prod)st.esc[p.type]++;}
   }
   for(const f of st.fly){f.k+=dt/(HOLD*.75);if(f.k>=1){const p=st.parts.find(q=>q.id===f.pid);if(p)p.type='CO2';f.done=true;
-    if(!st.said.cu2){st.said.cu2=1;st.msg='CO 拿到 CuO 的 O，變成 <b>CO₂</b>。紅色的 Cu 會被一直通入的 O₂ 再氧化回黑色的 CuO，所以 CuO 可以一直用。';}}}
+    if(!st.said.cu2){st.said.cu2=1;st.msg='CO 拿到 CuO 的 O，變成 <b>CO₂</b>。變成銅色的 Cu 會被一直通入的 O₂ 再氧化回 CuO，所以 CuO 可以一直用。';}}}
   st.fly=st.fly.filter(f=>!f.done);
   for(const c of st.cu)c.age+=dt;st.cu=st.cu.filter(c=>c.age<6);
   st.parts=st.parts.filter(p=>!p.dead);
@@ -547,10 +550,9 @@ function render(){const st=cur();if(!st)return;
     const p=st.parts.find(q=>q.id===f.pid);if(!p)continue;const {x,y}=xyOf(p),tx=x-9.5,ty=y,e=f.k<.5?2*f.k*f.k:1-2*(1-f.k)*(1-f.k);
     c.setAttribute('cx',(f.x0+(tx-f.x0)*e).toFixed(1));c.setAttribute('cy',(f.y0+(ty-f.y0)*e-Math.sin(Math.PI*f.k)*6).toFixed(1));}
   for(const [key,g] of R.els){if(!seen.has(key)){g.remove();R.els.delete(key);}}
-  // CuO 變成 Cu 的位置
-  const cg=$('cuG');while(cg.childElementCount>st.cu.length)cg.lastChild.remove();
-  st.cu.forEach((c,i)=>{let e=cg.children[i];if(!e)e=svg('circle',{r:6,class:'cuSpot'},cg);e.setAttribute('cx',c.x.toFixed(1));e.setAttribute('cy',c.y);
-    e.setAttribute('opacity',c.age<4?'1':String(Math.max(0,(6-c.age)/2)));});
+  // CuO：Cu 和 O 分開排列；被拿走 O 的 Cu 變成銅色，之後 O 慢慢補回來
+  UNITS.forEach(u=>{u.cu.classList.remove('metal');u.o.setAttribute('opacity','1');});
+  for(const c of st.cu){const u=UNITS[c.u];if(!u)continue;if(c.age<5)u.cu.classList.add('metal');u.o.setAttribute('opacity',c.age<4?'0':String(Math.min(1,(c.age-4)/2)));}
   for(const rg of ['jia','yi']){const g=$(rg==='jia'?'dotsJia':'dotsYi'),L=st.dots[rg];while(g.childElementCount>L.length)g.lastChild.remove();
     for(let i=g.childElementCount;i<L.length;i++){const d=L[i];svg('circle',{cx:d.x,cy:d.y,r:d.c==='CO2'?3.4:3,class:d.c==='CO2'?'atC':'atO',opacity:'.9'},g);}}
   $('rdJia').textContent='+'+f2(st.read.jia)+' g';$('rdYi').textContent='+'+f2(st.read.yi)+' g';
