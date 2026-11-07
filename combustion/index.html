@@ -9,17 +9,17 @@
 <style>
 /* 燃燒分析：原子顏色 C 綠（黑色在 CuO 上看不清楚）、H 白、O 紅；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
 :root{
-  --c-atom:#16915a;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
+  --c-atom:#16915a;--cu:#d0773f;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
   --glass:#dceaf2;--glass-edge:#8fb0c2;--heat:#e8742a;--heat-soft:#fde4d0;
   --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#5f9fdc;--mg-hi:#cfe3f8;--naoh:#9a7fd4;--naoh-hi:#e3d9f7;
   --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#16915a;--h-mass:#9aa7b4;--o-mass:#e0352b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --c-atom:#3fcf87;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#3fcf87;--cu:#e08a52;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --c-atom:#3fcf87;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#3fcf87;--cu:#e08a52;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
@@ -51,6 +51,9 @@ body.building .slotBox.filled{opacity:0}
 .atC{fill:var(--c-atom)} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
 #flame{transform-origin:182px 215px;transition:opacity .3s}
 body.burning #flame{animation:flick .18s infinite alternate}
+#flame2{transform-origin:410px 228px;transition:opacity .3s}
+body.heating #flame2{animation:flick .2s infinite alternate}
+.cuSpot{fill:var(--cu)}
 @keyframes flick{to{transform:scale(1.06,.93)}}
 .readBox{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
 .readBox.on{stroke:var(--accent);stroke-width:2.5}
@@ -168,12 +171,13 @@ body.burning #flame{animation:flick .18s infinite alternate}
       <text x="14" y="132" class="t-m">O₂</text>
       <line x1="16" y1="150" x2="80" y2="150" style="stroke:var(--muted);stroke-width:3" marker-end="url(#arr)"/>
       <!-- 高溫爐 -->
-      <rect x="318" y="100" width="184" height="100" rx="8" style="fill:var(--heat-soft);stroke:var(--heat);stroke-width:2"/>
+      <rect x="318" y="100" width="184" height="88" rx="8" style="fill:var(--heat-soft);stroke:var(--heat);stroke-width:2"/>
       <text x="410" y="92" text-anchor="middle" class="t-m" style="fill:var(--heat)">高溫</text>
       <!-- 燃燒管 -->
       <rect x="84" y="127" width="472" height="46" rx="10" style="fill:var(--glass);stroke:var(--glass-edge);stroke-width:2.5;fill-opacity:.85"/>
       <rect id="cuoFill" x="336" y="132" width="148" height="36" rx="4" style="fill:url(#patCuO)" opacity="0"/>
       <rect class="slotBox" id="box-cuo" x="332" y="129" width="156" height="42" rx="6"/>
+      <g id="cuG"></g>
       <!-- 試樣舟與本生燈 -->
       <path d="M150 158 L214 158 L206 170 L158 170 Z" style="fill:var(--muted)"/>
       <ellipse id="sample" cx="182" cy="157" rx="20" ry="5" style="fill:var(--accent)"/>
@@ -181,8 +185,12 @@ body.burning #flame{animation:flick .18s infinite alternate}
       <path id="flame" d="M182 178 C168 196 170 212 182 222 C194 212 196 196 182 178Z" style="fill:var(--flame)" opacity=".25"/>
       <path d="M182 196 C176 204 177 212 182 216 C187 212 188 204 182 196Z" style="fill:var(--flame-in)" opacity=".5"/>
       <path d="M170 224 L194 224 L198 278 L166 278 Z" style="fill:var(--muted)" opacity=".8"/>
-      <text x="182" y="300" text-anchor="middle" class="t-s">本生燈</text>
-      <text id="cuoLbl" x="410" y="226" text-anchor="middle" class="t-s">（放置區）</text>
+      <text x="182" y="312" text-anchor="middle" class="t-s">本生燈</text>
+      <text id="cuoLbl" x="410" y="121" text-anchor="middle" class="t-s">（放置區）</text>
+      <path id="flame2" d="M410 190 C396 208 398 224 410 234 C422 224 424 208 410 190Z" style="fill:var(--flame)" opacity=".25"/>
+      <path d="M410 208 C404 216 405 224 410 228 C415 224 416 216 410 208Z" style="fill:var(--flame-in)" opacity=".5"/>
+      <path d="M398 236 L422 236 L426 290 L394 290 Z" style="fill:var(--muted)" opacity=".8"/>
+      <text x="410" y="312" text-anchor="middle" class="t-s">本生燈</text>
       <!-- 連接管 -->
       <line x1="556" y1="150" x2="606" y2="150" class="gEdge" stroke-width="13"/><line x1="554" y1="150" x2="608" y2="150" class="gIn" stroke-width="8"/>
       <line x1="714" y1="150" x2="766" y2="150" class="gEdge" stroke-width="13"/><line x1="712" y1="150" x2="768" y2="150" class="gIn" stroke-width="8"/>
@@ -220,7 +228,7 @@ body.burning #flame{animation:flick .18s infinite alternate}
       <!-- 氣體分子 -->
       <g id="pg"></g>
       <!-- 點選區 -->
-      <rect class="hit" data-slot="cuo" x="318" y="96" width="184" height="140"/>
+      <rect class="hit" data-slot="cuo" x="318" y="96" width="184" height="96"/>
       <rect class="hit" data-slot="jia" x="590" y="40" width="140" height="300"/>
       <rect class="hit" data-slot="yi" x="750" y="40" width="140" height="300"/>
     </svg>
@@ -228,7 +236,7 @@ body.burning #flame{animation:flick .18s infinite alternate}
       <span><i style="background:var(--c-atom)"></i>C 碳</span>
       <span><i style="background:var(--h-atom);border:1px solid var(--h-line)"></i>H 氫</span>
       <span><i style="background:var(--o-atom)"></i>O 氧</span>
-      <span>O₂＝紅紅　CO₂＝紅綠紅　CO＝綠紅　H₂O＝紅＋兩個白</span>
+      <span>O₂＝紅紅　CO₂＝紅綠紅　CO＝綠紅　H₂O＝紅＋兩個白</span><span><i style="background:var(--cu)"></i>Cu（CuO 失去 O 後）</span>
     </div>
   </section>
 
@@ -275,6 +283,18 @@ body.burning #flame{animation:flick .18s infinite alternate}
           <button class="btn" id="pause2" disabled>❚❚ 暫停</button>
           <button class="btn" id="reset2">↺ 重來</button>
         </span>
+      </div>
+      <div class="toolbar">
+        <span class="grp">
+          <button class="btn" id="prev2" disabled>◀ 上一格</button>
+          <button class="btn" id="next2" disabled>下一格 ▶</button>
+        </span>
+        <span class="tlabel">每格</span>
+        <span class="seg" id="frm2"><button data-v=".03">0.03 s</button><button data-v=".1" aria-pressed="true">0.1 s</button><button data-v=".25">0.25 s</button></span>
+        <output id="tm2">t = 0.00 s</output>
+        <span class="hint">鍵盤：← → 一格、空白鍵 暫停／繼續</span>
+      </div>
+      <div class="toolbar">
         <span class="tlabel">速度</span>
         <span class="seg" id="spd2"><button data-v=".12">超慢</button><button data-v=".25">很慢</button><button data-v=".5">慢</button><button data-v="1" aria-pressed="true">正常</button><button data-v="1.8">快</button></span>
       </div>
@@ -450,104 +470,144 @@ const MOL={
 };
 const RAD={C:5.4,O:5.2,H:3.5};
 function molG(type){const g=svg('g',{});for(const [e,x,y] of MOL[type])svg('circle',{cx:x,cy:y,r:RAD[e],class:'at'+e},g);return g;}
-const R={coT:[],on:false,paused:false,t:0,spd:1,parts:[],queue:[],emitEnd:0,nextO2:0,read:{jia:0,yi:0},esc:{CO:0,CO2:0,H2O:0},caught:{jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}},per:{H2O:0,CO2:0},done:false,d:null,said:{}};
+// 狀態式模擬：每一步 STEP 秒，每一步存一份快照，可以前一格、後一格
+const STEP=1/60,V=125,HOLD=0.9,PAD=0.75+HOLD,WIN=0.75+HOLD;
+const R={on:false,playing:false,spd:1,frame:.1,acc:0,hist:[],hi:-1,d:null,shown:false,els:new Map()};
 const pg=$('pg');
-function resetRun(){R.on=false;R.done=false;R.paused=false;R.parts.forEach(p=>p.g.remove());R.parts=[];R.queue=[];R.read={jia:0,yi:0};
-  R.esc={CO:0,CO2:0,H2O:0};R.caught={jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}};R.said={};
-  $('dotsJia').replaceChildren();$('dotsYi').replaceChildren();document.body.classList.remove('burning');$('flame').setAttribute('opacity','.25');
-  $('sample').setAttribute('rx','20');showRead();$('res2').hidden=true;$('run2').disabled=false;$('pause2').disabled=true;$('pause2').textContent='❚❚ 暫停';
+function cur(){return R.hist[R.hi];}
+function clearDom(){R.els.forEach(e=>e.remove());R.els.clear();$('dotsJia').replaceChildren();$('dotsYi').replaceChildren();$('cuG').replaceChildren();}
+function resetRun(){R.on=false;R.playing=false;R.acc=0;R.hist=[];R.hi=-1;R.shown=false;clearDom();
+  document.body.classList.remove('burning','heating');$('flame').setAttribute('opacity','.25');$('flame2').setAttribute('opacity','.25');
+  $('sample').setAttribute('rx','20');$('rdJia').textContent='+0.00 g';$('rdYi').textContent='+0.00 g';$('res2').hidden=true;
+  $('run2').textContent='▶ 點火燃燒';ui2();$('tm2').textContent='t = 0.00 s';
   status2('按「點火燃燒」。試樣裡的 C、H 燒成 CO₂、H₂O，跟著氧氣往右流。');}
-function status2(h){$('status2').innerHTML=h;}
-function showRead(){$('rdJia').textContent='+'+f2(R.read.jia)+' g';$('rdYi').textContent='+'+f2(R.read.yi)+' g';}
+function status2(h){if($('status2').innerHTML!==h)$('status2').innerHTML=h;}
+function ui2(){const has=R.hi>=0;$('pause2').disabled=!has;$('pause2').textContent=R.playing?'❚❚ 暫停':'▶ 繼續';
+  $('prev2').disabled=!has||R.hi<=0;$('next2').disabled=!has||(R.hi>=R.hist.length-1&&ended(cur()));}
+function ended(st){return st&&st.fin&&!st.parts.length&&!st.fly.length;}
 function startRun(){resetRun();const d=curDS();R.d=d;const s=solve(d);
   let x=s.z[0],y=s.z[1];if(y%2){x*=2;y*=2;}
   const per=x+y/2,units=Math.max(2,Math.min(8,Math.round(26/per)));
   const list=[];for(let u=0;u<units;u++){for(let i=0;i<x;i++)list.push('C');for(let i=0;i<y/2;i++)list.push('H2O');}
   for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
-  let ci=0,tt=0.6;const gap=4.4/list.length,PAD=0.75;R.coT=[];R.queue=[];
+  const hasCuO=slots.cuo==='CuO';
+  let ci=0,tt=0.6;const gap=4.4/list.length,queue=[],coT=[];
   for(const t of list){const type=t==='C'?((ci++)%3===2?'CO':'CO2'):'H2O';
-    if(type==='CO'){tt+=PAD;R.queue.push({type,at:tt});R.coT.push(tt);tt+=PAD;}else{R.queue.push({type,at:tt});tt+=gap;}}
+    if(type==='CO'){tt+=PAD;queue.push({type,at:tt});coT.push(tt);tt+=PAD;}else{queue.push({type,at:tt});tt+=gap;}}
   const nC=list.filter(t=>t==='C').length,nW=list.length-nC;
-  R.per={CO2:d.co2/nC,H2O:d.h2o/nW};R.total=list.length;R.emitEnd=R.queue[R.queue.length-1].at;R.nextO2=0;R.t=0;R.on=true;
-  document.body.classList.add('burning');$('flame').setAttribute('opacity','1');$('run2').disabled=true;$('pause2').disabled=false;
-  status2('點火！試樣燃燒，<b>C → CO₂</b>、<b>H → H₂O</b>。通入的 O₂ 一部分被用掉，多的會一路流出去。');kick();}
-function spawn(type,s,off){const g=molG(type);pg.appendChild(g);const p={type,s,off:off??(Math.random()*2-1),g,capAt:null,conv:null,dying:0,prod:type!=='O2'};R.parts.push(p);return p;}
-function setType(p,type){p.type=type;const g=molG(type);p.g.replaceWith(g);p.g=g;}
+  const st={t:0,nid:1,slots:{...slots},parts:[],queue,coT,emitEnd:queue[queue.length-1].at,nextO2:0,total:list.length,
+    per:{CO2:d.co2/nC,H2O:d.h2o/nW},read:{jia:0,yi:0},esc:{CO:0,CO2:0,H2O:0},dots:{jia:[],yi:[]},cu:[],fly:[],said:{},fin:false,
+    msg:'點火！試樣燃燒，<b>C → CO₂</b>、<b>H → H₂O</b>。'+(hasCuO?'下方的本生燈一直加熱 CuO。':'')+'通入的 O₂ 一部分被用掉，多的會一路流出去。'};
+  R.hist=[st];R.hi=0;R.on=true;R.playing=true;$('run2').textContent='▶ 從頭再燒';render();ui2();kick();}
+function spawn(st,type,s,off){const p={id:st.nid++,type,s,off:off??(Math.random()*2-1),capAt:null,conv:null,hold:0,dying:0,prod:type!=='O2'};st.parts.push(p);return p;}
 function regionOf(x,y){if(y<=176)return null;return x<740?'jia':'yi';}
 function absorbs(part,type){if(part==='Mg')return type==='H2O';if(part==='NaOH')return type==='H2O'||type==='CO2';return false;}
-function tickRun(dt){if(!R.on||R.paused)return false;const sp=R.spd;R.t+=dt*sp;
-  // 氧氣流
-  if(R.t>=R.nextO2&&R.t<R.emitEnd+3){const meet=R.nextO2+S_BOAT/125;if(!R.coT.some(tc=>Math.abs(meet-tc)<0.75))spawn('O2',0);R.nextO2+=0.32;}
-  while(R.queue.length&&R.queue[0].at<=R.t){const q=R.queue.shift();spawn(q.type,S_BOAT+Math.random()*10);}
-  $('sample').setAttribute('rx',String(3+17*R.queue.length/R.total));
-  const v=125*sp;
-  for(const p of R.parts){
-    if(p.dying){p.dying-=dt*sp*3;p.g.setAttribute('opacity',String(Math.max(0,p.dying)));if(p.dying<=0)p.dead=true;continue;}
-    const s0=p.s;p.s+=v*dt;
-    // 氧氣在試樣處被消耗
-    if(p.type==='O2'&&s0<S_BOAT&&p.s>=S_BOAT&&R.queue.length&&Math.random()<.55){p.dying=1;continue;}
-    const pos=posAt(p.s);
-    // 高溫 CuO：CO → CO2
-    if(p.type==='CO'&&slots.cuo==='CuO'&&pos.y===150&&pos.x>336){if(p.conv==null)p.conv=345+Math.random()*120;
-      if(pos.x>=p.conv){setType(p,'CO2');
-        if(!R.said.cuo){R.said.cuo=1;status2('沒燒完全的 <b>CO</b> 經過高溫 <b>CuO</b>，被氧化成 <b>CO₂</b>（CuO 是氧化劑，不是催化劑）。');}}}
+function xyOf(p){const pos=posAt(p.s),w=pos.y===150&&pos.x<556?14:4.5;return {x:pos.x-pos.dy*p.off*w,y:pos.y+pos.dx*p.off*w,pos};}
+function step(st){const dt=STEP;st.t+=dt;
+  if(st.t>=st.nextO2&&st.t<st.emitEnd+3){const meet=st.nextO2+S_BOAT/V;if(!st.coT.some(tc=>Math.abs(meet-tc)<WIN))spawn(st,'O2',0);st.nextO2+=0.32;}
+  while(st.queue.length&&st.queue[0].at<=st.t){const q=st.queue.shift();spawn(st,q.type,S_BOAT+Math.random()*10,q.type==='CO'?0:undefined);}
+  for(const p of st.parts){
+    if(p.dying){p.dying-=dt*3;if(p.dying<=0)p.dead=true;continue;}
+    if(p.hold>0){p.hold-=dt;continue;}
+    const s0=p.s;p.s+=V*dt;
+    if(p.type==='O2'&&s0<S_BOAT&&p.s>=S_BOAT&&st.queue.length&&Math.random()<.55){p.dying=1;continue;}
+    const {x,y,pos}=xyOf(p);
+    // 高溫 CuO：CuO 的 O 跑出來接到 CO 上 → CO2，CuO 變成 Cu
+    if(p.type==='CO'&&st.slots.cuo==='CuO'&&pos.y===150&&pos.x>336){if(p.conv==null)p.conv=372+Math.random()*80;
+      if(pos.x>=p.conv&&!p.grab){p.grab=true;p.hold=HOLD;
+        const x0=x+(Math.random()<.5?-1:1)*(22+Math.random()*10),y0=Math.random()<.5?138:162;
+        st.cu.push({x:x0,y:y0,age:0});st.fly.push({pid:p.id,x0,y0,k:0});
+        if(!st.said.cuo){st.said.cuo=1;st.msg='<b>CO</b> 經過高溫 <b>CuO</b>：CuO 放出一個 <b>O</b>，接到 CO 上變成 <b>CO₂</b>；CuO 少了 O，變回紅色的 <b>Cu</b>。（CuO 是氧化劑，不是催化劑）';}}}
     const rg=regionOf(pos.x,pos.y);
-    if(rg&&absorbs(slots[rg],p.type)){if(p.capAt==null)p.capAt=p.s+18+Math.random()*95;
-      if(p.s>=p.capAt){capture(p,rg,pos);continue;}}
-    if(p.s>=LEN){p.dead=true;p.g.remove();if(p.prod)R.esc[p.type]++;continue;}
-    const w=pos.y===150&&pos.x<556?14:4.5;
-    p.g.setAttribute('transform',`translate(${(pos.x-pos.dy*p.off*w).toFixed(1)},${(pos.y+pos.dx*p.off*w).toFixed(1)})`);
+    if(rg&&absorbs(st.slots[rg],p.type)){if(p.capAt==null)p.capAt=p.s+18+Math.random()*95;
+      if(p.s>=p.capAt){p.dead=true;st.read[rg]+=st.per[p.type];
+        st.dots[rg].push({x:+(pos.x+(Math.random()*2-1)*6).toFixed(1),y:+(pos.y+(Math.random()*2-1)*6).toFixed(1),c:p.type});
+        const k=rg+p.type;if(!st.said[k]){st.said[k]=1;const nm=rg==='jia'?'甲管':'乙管',ab=PART[st.slots[rg]];
+          st.msg=p.type==='H2O'?`${nm}的<b>${ab}</b>吸收了 <b>H₂O</b>。`+(st.slots[rg]==='NaOH'?'（NaOH 也會吸水！）':'所有的 H 最後都在這裡。'):`${nm}的<b>${ab}</b>吸收了 <b>CO₂</b>，所有燒成 CO₂ 的 C 都在這裡。`;}
+        continue;}}
+    if(p.s>=LEN){p.dead=true;if(p.prod)st.esc[p.type]++;}
   }
-  R.parts=R.parts.filter(p=>{if(p.dead){p.g.remove();return false;}return true;});
-  showRead();
-  const live=R.parts.some(p=>p.prod);
-  if(!R.queue.length){document.body.classList.remove('burning');$('flame').setAttribute('opacity','.25');}
-  if(!R.queue.length&&!live&&!R.done){R.done=true;finish();}
-  if(R.done&&!R.parts.length){R.on=false;return false;}
-  return true;}
-function capture(p,rg,pos){p.dead=true;p.g.remove();
-  const kind=p.type;R.caught[rg][kind]++;R.read[rg]+=R.per[kind];
-  const dots=$(rg==='jia'?'dotsJia':'dotsYi');
-  const cx=pos.x+(Math.random()*2-1)*6,cy=pos.y+(Math.random()*2-1)*6;
-  svg('circle',{cx:cx.toFixed(1),cy:cy.toFixed(1),r:kind==='CO2'?3.4:3,class:kind==='CO2'?'atC':'atO',opacity:'.9'},dots);
-  const k=rg+kind;if(!R.said[k]){R.said[k]=1;
-    const nm=rg==='jia'?'甲管':'乙管',ab=PART[slots[rg]];
-    status2(kind==='H2O'?`${nm}的<b>${ab}</b>吸收了 <b>H₂O</b>。`+(slots[rg]==='NaOH'?'（NaOH 也會吸水！）':'所有的 H 最後都在這裡。'):`${nm}的<b>${ab}</b>吸收了 <b>CO₂</b>，所有燒成 CO₂ 的 C 都在這裡。`);}}
-function finish(){const d=R.d,s=solve(d);
-  const wH2O=(slots.jia==='Mg'?R.read.jia:0)+(slots.yi==='Mg'?R.read.yi:0);
-  const wCO2=(slots.jia==='NaOH'?R.read.jia:0)+(slots.yi==='NaOH'?R.read.yi:0);
-  const hasMg=Object.values(slots).includes('Mg')&&slots.cuo!=='Mg',hasNa=Object.values(slots).includes('NaOH')&&slots.cuo!=='NaOH';
+  for(const f of st.fly){f.k+=dt/(HOLD*.75);if(f.k>=1){const p=st.parts.find(q=>q.id===f.pid);if(p)p.type='CO2';f.done=true;
+    if(!st.said.cu2){st.said.cu2=1;st.msg='CO 拿到 CuO 的 O，變成 <b>CO₂</b>。紅色的 Cu 會被一直通入的 O₂ 再氧化回黑色的 CuO，所以 CuO 可以一直用。';}}}
+  st.fly=st.fly.filter(f=>!f.done);
+  for(const c of st.cu)c.age+=dt;st.cu=st.cu.filter(c=>c.age<6);
+  st.parts=st.parts.filter(p=>!p.dead);
+  if(!st.queue.length&&!st.parts.some(p=>p.prod)&&!st.fin){st.fin=true;}
+}
+function forward(){const st=cur();if(!st)return false;
+  if(R.hi<R.hist.length-1){R.hi++;return true;}
+  if(ended(st))return false;
+  const n=structuredClone(st);step(n);R.hist.push(n);R.hi++;return true;}
+function render(){const st=cur();if(!st)return;
+  const seen=new Set();
+  for(const p of st.parts){const key='p'+p.id;seen.add(key);let g=R.els.get(key);
+    if(!g||g.dataset.t!==p.type){const ng=molG(p.type);ng.dataset.t=p.type;if(g)g.replaceWith(ng);else pg.appendChild(ng);g=ng;R.els.set(key,g);}
+    const {x,y}=xyOf(p);g.setAttribute('transform',`translate(${x.toFixed(1)},${y.toFixed(1)})`);g.setAttribute('opacity',p.dying?String(Math.max(0,p.dying)):'1');}
+  for(const f of st.fly){const key='f'+f.pid;seen.add(key);let c=R.els.get(key);if(!c){c=svg('circle',{r:RAD.O,class:'atO'},pg);R.els.set(key,c);}
+    const p=st.parts.find(q=>q.id===f.pid);if(!p)continue;const {x,y}=xyOf(p),tx=x-9.5,ty=y,e=f.k<.5?2*f.k*f.k:1-2*(1-f.k)*(1-f.k);
+    c.setAttribute('cx',(f.x0+(tx-f.x0)*e).toFixed(1));c.setAttribute('cy',(f.y0+(ty-f.y0)*e-Math.sin(Math.PI*f.k)*6).toFixed(1));}
+  for(const [key,g] of R.els){if(!seen.has(key)){g.remove();R.els.delete(key);}}
+  // CuO 變成 Cu 的位置
+  const cg=$('cuG');while(cg.childElementCount>st.cu.length)cg.lastChild.remove();
+  st.cu.forEach((c,i)=>{let e=cg.children[i];if(!e)e=svg('circle',{r:6,class:'cuSpot'},cg);e.setAttribute('cx',c.x.toFixed(1));e.setAttribute('cy',c.y);
+    e.setAttribute('opacity',c.age<4?'1':String(Math.max(0,(6-c.age)/2)));});
+  for(const rg of ['jia','yi']){const g=$(rg==='jia'?'dotsJia':'dotsYi'),L=st.dots[rg];while(g.childElementCount>L.length)g.lastChild.remove();
+    for(let i=g.childElementCount;i<L.length;i++){const d=L[i];svg('circle',{cx:d.x,cy:d.y,r:d.c==='CO2'?3.4:3,class:d.c==='CO2'?'atC':'atO',opacity:'.9'},g);}}
+  $('rdJia').textContent='+'+f2(st.read.jia)+' g';$('rdYi').textContent='+'+f2(st.read.yi)+' g';
+  $('sample').setAttribute('rx',String(3+17*st.queue.length/st.total));
+  const burning=st.queue.length>0;$('flame').setAttribute('opacity',burning?'1':'.25');
+  const heating=st.slots.cuo==='CuO'&&!ended(st);$('flame2').setAttribute('opacity',heating?'1':'.25');
+  document.body.classList.toggle('burning',burning&&R.playing);document.body.classList.toggle('heating',heating&&R.playing);
+  $('tm2').textContent='t = '+st.t.toFixed(2)+' s';
+  if(st.fin&&!R.shown){R.shown=true;finish(st);}else if(!st.fin&&R.shown){R.shown=false;$('res2').hidden=true;}
+  status2(st.fin?(R.good?'燃燒完成。<b>看兩支管子增加的重量</b>，下面有計算結果。':'燃燒完成，但這個裝置有問題，下面比較了算出來的結果。'):st.msg);}
+function tickRun(dt){if(!R.on||!R.playing)return false;R.acc+=dt*R.spd;let n=0;
+  while(R.acc>=STEP&&n<40){R.acc-=STEP;n++;if(!forward()){R.playing=false;R.acc=0;break;}}
+  render();ui2();return R.playing;}
+function stepFrames(dir){if(R.hi<0)return;R.playing=false;R.acc=0;const k=Math.max(1,Math.round(R.frame/STEP));
+  for(let i=0;i<k;i++){if(dir>0){if(!forward())break;}else{if(R.hi>0)R.hi--;else break;}}
+  render();ui2();}
+function finish(st){const d=R.d,s=solve(d),sl=st.slots;
+  const wH2O=(sl.jia==='Mg'?st.read.jia:0)+(sl.yi==='Mg'?st.read.yi:0);
+  const wCO2=(sl.jia==='NaOH'?st.read.jia:0)+(sl.yi==='NaOH'?st.read.yi:0);
+  const vals=Object.entries(sl).filter(([k])=>k!=='cuo').map(([,v])=>v);
+  const hasMg=vals.includes('Mg'),hasNa=vals.includes('NaOH');
   const C2=wCO2*12/44,H2=wH2O*2/18,O2=d.w-C2-H2;
   const row=(lab,a,b)=>{const diff=b-a,cls=Math.abs(diff)<0.005?'same':diff>0?'up':'down',t=Math.abs(diff)<0.005?'✓ 相同':diff>0?'偏高':'偏低';return `<tr><td>${lab}</td><td>${f2(a)} g</td><td>${f2(b)} g</td><td class="${cls}">${t}</td></tr>`;};
-  const good=Math.abs(C2-s.C)<0.005&&Math.abs(H2-s.H)<0.005;
+  const good=R.good=Math.abs(C2-s.C)<0.005&&Math.abs(H2-s.H)<0.005;
   const why=[];
-  if(slots.cuo!=='CuO'&&R.esc.CO)why.push(`沒有高溫 CuO：有 ${R.esc.CO} 個 <b>CO</b> 沒被氧化，NaOH 吸不到，直接跑掉 → <b>C 偏低</b>；O 是用減的，所以 <b>O 偏高</b>。`);
-  if(slots.jia==='NaOH')why.push('NaOH 放在前面，<b>把水也吸走了</b> → 後面的過氯酸鎂幾乎吸不到水，<b>H 偏低</b>；NaOH 增重裡混了水，被當成 CO₂ 計算 → <b>C 偏高</b>。');
+  if(sl.cuo!=='CuO'&&st.esc.CO)why.push(`沒有高溫 CuO：有 ${st.esc.CO} 個 <b>CO</b> 沒被氧化，NaOH 吸不到，直接跑掉 → <b>C 偏低</b>；O 是用減的，所以 <b>O 偏高</b>。`);
+  if(sl.jia==='NaOH')why.push('NaOH 放在前面，<b>把水也吸走了</b> → 後面的過氯酸鎂幾乎吸不到水，<b>H 偏低</b>；NaOH 增重裡混了水，被當成 CO₂ 計算 → <b>C 偏高</b>。');
   if(!hasMg)why.push('沒有過氯酸鎂管，無法量水的重量。');
   if(!hasNa)why.push('沒有 NaOH 管，CO₂ 全部跑掉，無法量碳。');
-  if(R.esc.H2O&&slots.jia!=='NaOH')why.push(`有 ${R.esc.H2O} 個 H₂O 沒被吸收就排出去了。`);
-  const ab=k=>slots[k]?PARTF[slots[k]]:'空管';
+  if(st.esc.H2O&&sl.jia!=='NaOH')why.push(`有 ${st.esc.H2O} 個 H₂O 沒被吸收就排出去了。`);
+  const ab=k=>sl[k]?PARTF[sl[k]]:'空管';
   $('res2').innerHTML=`<div class="res"><div>
     <h3 style="margin:0 0 8px">吸收管增加的重量</h3>
     <table><tr><th>管子</th><th>裝的東西</th><th>增重</th></tr>
-    <tr><td>甲管</td><td>${ab('jia')}</td><td class="mono">+${f2(R.read.jia)} g</td></tr>
-    <tr><td>乙管</td><td>${ab('yi')}</td><td class="mono">+${f2(R.read.yi)} g</td></tr></table>
+    <tr><td>甲管</td><td>${ab('jia')}</td><td class="mono">+${f2(st.read.jia)} g</td></tr>
+    <tr><td>乙管</td><td>${ab('yi')}</td><td class="mono">+${f2(st.read.yi)} g</td></tr></table>
     <p class="hint" style="margin-top:8px">試樣 ${fmt(d.w)} g。計算時把「過氯酸鎂增重」當作水，「NaOH 增重」當作 CO₂。</p></div>
     <div><h3 style="margin:0 0 8px">照這組讀數算出的元素重量</h3>
     <table><tr><th>元素</th><th>正確</th><th>這次算出</th><th></th></tr>
     ${row('C（＝CO₂ × 12/44）',s.C,C2)}${row('H（＝H₂O × 2/18）',s.H,H2)}${row('O（＝試樣 − C − H）',s.O,O2)}</table>
     <p style="margin:10px 0 0;font-size:1.02rem">${good?'<b class="same">裝置正確，算出的 C、H、O 都對。</b>所有的 C 都進了 NaOH 管、所有的 H 都進了過氯酸鎂管；O 一部分來自通入的 O₂，所以只能用「試樣重 − C − H」求。<br>→ 到實驗台 3 一步一步算實驗式。':why.join('<br>')}</p></div></div>`;
-  $('res2').hidden=false;$('pause2').disabled=true;$('run2').disabled=false;$('run2').textContent='▶ 再燒一次';
-  status2(good?'燃燒完成。<b>看兩支管子增加的重量</b>，下面有計算結果。':'燃燒完成，但這個裝置有問題，下面比較了算出來的結果。');}
+  $('res2').hidden=false;}
 function setScen(v){segSet($('scen2'),v);
   if(v==='ok')slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};else if(v==='swap')slots={cuo:'CuO',jia:'NaOH',yi:'Mg'};else if(v==='nocuo')slots={cuo:null,jia:'Mg',yi:'NaOH'};else if(v==='mine')slots={...built};
-  drawRig();resetRun();$('run2').textContent='▶ 點火燃燒';}
+  drawRig();resetRun();}
 let built={cuo:'CuO',jia:'Mg',yi:'NaOH'};
 segOn($('scen2'),setScen);
 segOn($('spd2'),v=>{R.spd=+v;segSet($('spd2'),v);});
+segOn($('frm2'),v=>{R.frame=+v;segSet($('frm2'),v);});
 $('run2').addEventListener('click',startRun);
-$('pause2').addEventListener('click',()=>{R.paused=!R.paused;$('pause2').textContent=R.paused?'▶ 繼續':'❚❚ 暫停';document.body.classList.toggle('burning',!R.paused&&R.queue.length>0);kick();});
-$('reset2').addEventListener('click',()=>{resetRun();$('run2').textContent='▶ 點火燃燒';});
+$('pause2').addEventListener('click',()=>{if(R.hi<0)return;if(!R.playing&&ended(cur())&&R.hi>=R.hist.length-1)return;R.playing=!R.playing;R.acc=0;render();ui2();kick();});
+$('reset2').addEventListener('click',resetRun);
+$('prev2').addEventListener('click',()=>stepFrames(-1));
+$('next2').addEventListener('click',()=>stepFrames(1));
+document.addEventListener('keydown',e=>{if(bench!=='burn'||e.target.closest('input,select,textarea'))return;
+  if(e.key==='ArrowRight'){e.preventDefault();stepFrames(1);}else if(e.key==='ArrowLeft'){e.preventDefault();stepFrames(-1);}
+  else if(e.key===' '){e.preventDefault();if(R.hi<0)startRun();else $('pause2').click();}});
 
 // ================= 3 計算 =================
 let dsIdx=1,dsCur=DS[1],stepN=0,STEPS=[];
@@ -653,7 +713,7 @@ function setBench(b,noHash){if(!BENCHES.includes(b))b='build';
   $('rigPanel').hidden=!(b==='build'||b==='burn');document.body.classList.toggle('building',b==='build');
   if(b!=='build')sel=null;
   if(b==='burn'){const v=['ok','swap','nocuo'].find(k=>JSON.stringify(slots)===JSON.stringify({ok:{cuo:'CuO',jia:'Mg',yi:'NaOH'},swap:{cuo:'CuO',jia:'NaOH',yi:'Mg'},nocuo:{cuo:null,jia:'Mg',yi:'NaOH'}}[k]))||'mine';segSet($('scen2'),v);}
-  if(b!=='burn'&&R.on){resetRun();$('run2').textContent='▶ 點火燃燒';}
+  if(b!=='burn'&&R.on)resetRun();
   drawRig();
   if(!noHash)history.replaceState(null,'','#'+b);}
 segOn($('benchSeg'),v=>{hideStory();setBench(v);});
