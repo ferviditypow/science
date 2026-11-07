@@ -9,17 +9,17 @@
 <style>
 /* 燃燒分析：原子顏色照 CPK（C 黑、H 白、O 紅）；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
 :root{
-  --c-atom:#2a2a2a;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
+  --c-atom:#2a2a2a;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
   --glass:#dceaf2;--glass-edge:#8fb0c2;--heat:#e8742a;--heat-soft:#fde4d0;
   --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#cfe2f7;--mg-hi:#ffffff;--naoh:#e5dcf5;--naoh-hi:#ffffff;
   --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#3a3f45;--h-mass:#9aa7b4;--o-mass:#e0352b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --c-atom:#a4adb5;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#a4adb5;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#25405e;--mg-hi:#6f93bb;--naoh:#3a2f57;--naoh-hi:#8a77b8;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --c-atom:#a4adb5;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#a4adb5;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#25405e;--mg-hi:#6f93bb;--naoh:#3a2f57;--naoh-hi:#8a77b8;
   --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
@@ -48,7 +48,7 @@ body.building .slotBox{opacity:1}
 body.building .slotBox.filled{opacity:0}
 .slotBox.pick{stroke-width:4;opacity:1;animation:blink .9s infinite}
 @keyframes blink{50%{opacity:.35}}
-.atC{fill:var(--c-atom)} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
+.atC{fill:var(--c-atom);stroke:var(--c-ring);stroke-width:2} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
 .cuoFlash{animation:flash .5s}
 @keyframes flash{0%{filter:brightness(2.4)}100%{filter:none}}
 #flame{transform-origin:182px 215px;transition:opacity .3s}
