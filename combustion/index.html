@@ -48,7 +48,7 @@ body.building .slotBox{opacity:1}
 body.building .slotBox.filled{opacity:0}
 .slotBox.pick{stroke-width:4;opacity:1;animation:blink .9s infinite}
 @keyframes blink{50%{opacity:.35}}
-.atC{fill:var(--c-atom);stroke:var(--c-ring);stroke-width:2} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
+.atC{fill:var(--c-atom)} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
 #flame{transform-origin:182px 215px;transition:opacity .3s}
 body.burning #flame{animation:flick .18s infinite alternate}
 @keyframes flick{to{transform:scale(1.06,.93)}}
@@ -450,7 +450,7 @@ const MOL={
 };
 const RAD={C:5.4,O:5.2,H:3.5};
 function molG(type){const g=svg('g',{});for(const [e,x,y] of MOL[type])svg('circle',{cx:x,cy:y,r:RAD[e],class:'at'+e},g);return g;}
-const R={on:false,paused:false,t:0,spd:1,parts:[],queue:[],emitEnd:0,nextO2:0,read:{jia:0,yi:0},esc:{CO:0,CO2:0,H2O:0},caught:{jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}},per:{H2O:0,CO2:0},done:false,d:null,said:{}};
+const R={coT:[],on:false,paused:false,t:0,spd:1,parts:[],queue:[],emitEnd:0,nextO2:0,read:{jia:0,yi:0},esc:{CO:0,CO2:0,H2O:0},caught:{jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}},per:{H2O:0,CO2:0},done:false,d:null,said:{}};
 const pg=$('pg');
 function resetRun(){R.on=false;R.done=false;R.paused=false;R.parts.forEach(p=>p.g.remove());R.parts=[];R.queue=[];R.read={jia:0,yi:0};
   R.esc={CO:0,CO2:0,H2O:0};R.caught={jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}};R.said={};
@@ -464,7 +464,9 @@ function startRun(){resetRun();const d=curDS();R.d=d;const s=solve(d);
   const per=x+y/2,units=Math.max(2,Math.min(8,Math.round(26/per)));
   const list=[];for(let u=0;u<units;u++){for(let i=0;i<x;i++)list.push('C');for(let i=0;i<y/2;i++)list.push('H2O');}
   for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
-  let ci=0;R.queue=list.map((t,i)=>({type:t==='C'?((ci++)%3===2?'CO':'CO2'):'H2O',at:0.6+i*(5.2/list.length)}));
+  let ci=0,tt=0.6;const gap=4.4/list.length,PAD=0.75;R.coT=[];R.queue=[];
+  for(const t of list){const type=t==='C'?((ci++)%3===2?'CO':'CO2'):'H2O';
+    if(type==='CO'){tt+=PAD;R.queue.push({type,at:tt});R.coT.push(tt);tt+=PAD;}else{R.queue.push({type,at:tt});tt+=gap;}}
   const nC=list.filter(t=>t==='C').length,nW=list.length-nC;
   R.per={CO2:d.co2/nC,H2O:d.h2o/nW};R.total=list.length;R.emitEnd=R.queue[R.queue.length-1].at;R.nextO2=0;R.t=0;R.on=true;
   document.body.classList.add('burning');$('flame').setAttribute('opacity','1');$('run2').disabled=true;$('pause2').disabled=false;
@@ -475,13 +477,13 @@ function regionOf(x,y){if(y<=176)return null;return x<740?'jia':'yi';}
 function absorbs(part,type){if(part==='Mg')return type==='H2O';if(part==='NaOH')return type==='H2O'||type==='CO2';return false;}
 function tickRun(dt){if(!R.on||R.paused)return false;const sp=R.spd;R.t+=dt*sp;
   // 氧氣流
-  if(R.t>=R.nextO2&&R.t<R.emitEnd+3){spawn('O2',0);R.nextO2+=0.32;}
+  if(R.t>=R.nextO2&&R.t<R.emitEnd+3){const meet=R.nextO2+S_BOAT/125;if(!R.coT.some(tc=>Math.abs(meet-tc)<0.75))spawn('O2',0);R.nextO2+=0.32;}
   while(R.queue.length&&R.queue[0].at<=R.t){const q=R.queue.shift();spawn(q.type,S_BOAT+Math.random()*10);}
   $('sample').setAttribute('rx',String(3+17*R.queue.length/R.total));
   const v=125*sp;
   for(const p of R.parts){
     if(p.dying){p.dying-=dt*sp*3;p.g.setAttribute('opacity',String(Math.max(0,p.dying)));if(p.dying<=0)p.dead=true;continue;}
-    const s0=p.s;p.s+=v*dt*(p.type==='O2'?1.05:1);
+    const s0=p.s;p.s+=v*dt;
     // 氧氣在試樣處被消耗
     if(p.type==='O2'&&s0<S_BOAT&&p.s>=S_BOAT&&R.queue.length&&Math.random()<.55){p.dying=1;continue;}
     const pos=posAt(p.s);
