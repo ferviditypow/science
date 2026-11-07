@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>燃燒分析法</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+/* 燃燒分析：原子顏色照 CPK（C 黑、H 白、O 紅）；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
+:root{
+  --c-atom:#2a2a2a;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
+  --glass:#dceaf2;--glass-edge:#8fb0c2;--heat:#e8742a;--heat-soft:#fde4d0;
+  --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#cfe2f7;--mg-hi:#ffffff;--naoh:#e5dcf5;--naoh-hi:#ffffff;
+  --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#3a3f45;--h-mass:#9aa7b4;--o-mass:#e0352b}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --c-atom:#a4adb5;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
+  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#25405e;--mg-hi:#6f93bb;--naoh:#3a2f57;--naoh-hi:#8a77b8;
+  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
+:root[data-theme="dark"]{
+  --c-atom:#a4adb5;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
+  --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#25405e;--mg-hi:#6f93bb;--naoh:#3a2f57;--naoh-hi:#8a77b8;
+  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
+.wrap{max-width:1320px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+sub{font-size:.72em;line-height:0}
+
+/* 裝置圖 */
+#rigPanel{padding:8px 10px 4px}
+#rig{display:block;width:100%;height:auto;max-height:62vh;user-select:none;-webkit-user-select:none;touch-action:manipulation}
+#rig text{font-family:var(--f-body);fill:var(--ink)}
+#rig .t-s{font-size:15px;fill:var(--muted)}
+#rig .t-m{font-size:19px;font-weight:700}
+#rig .t-l{font-size:30px;font-weight:900;font-family:var(--f-display)}
+#rig .t-n{font-family:var(--f-mono);font-size:21px;font-weight:600;font-variant-numeric:tabular-nums}
+.gEdge{fill:none;stroke:var(--glass-edge);stroke-linecap:butt}
+.gIn{fill:none;stroke:var(--glass);stroke-linecap:butt}
+.hit{fill:transparent;stroke:none}
+body.building .hit{cursor:pointer}
+body.building .hit:hover{fill:var(--accent);fill-opacity:.08}
+.slotBox{fill:none;stroke:var(--accent);stroke-width:2.5;stroke-dasharray:7 6;opacity:0}
+body.building .slotBox{opacity:1}
+body.building .slotBox.filled{opacity:0}
+.slotBox.pick{stroke-width:4;opacity:1;animation:blink .9s infinite}
+@keyframes blink{50%{opacity:.35}}
+.atC{fill:var(--c-atom)} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
+.cuoFlash{animation:flash .5s}
+@keyframes flash{0%{filter:brightness(2.4)}100%{filter:none}}
+#flame{transform-origin:182px 215px;transition:opacity .3s}
+body.burning #flame{animation:flick .18s infinite alternate}
+@keyframes flick{to{transform:scale(1.06,.93)}}
+.readBox{fill:var(--panel);stroke:var(--line);stroke-width:1.5}
+.readBox.on{stroke:var(--accent);stroke-width:2.5}
+
+/* 零件盤 */
+.tray{display:flex;flex-wrap:wrap;gap:10px}
+.part{display:inline-flex;align-items:center;gap:10px;min-height:52px;padding:6px 16px 6px 8px;border:2px solid var(--line);border-radius:10px;background:var(--panel);cursor:grab;font-weight:700;font-size:1rem;color:var(--ink);touch-action:none}
+.part .sw{width:34px;height:34px;border-radius:7px;border:1px solid var(--line)}
+.part small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.part[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.part.used{opacity:.4}
+.sw-CuO{background:radial-gradient(circle at 30% 30%,var(--cuo-hi) 18%,transparent 20%) 0 0/9px 9px,var(--cuo)}
+.sw-Mg{background:radial-gradient(circle at 30% 30%,var(--mg-hi) 18%,transparent 20%) 0 0/9px 9px,var(--mg)}
+.sw-NaOH{background:radial-gradient(circle at 30% 30%,var(--naoh-hi) 18%,transparent 20%) 0 0/9px 9px,var(--naoh)}
+.ghost{position:fixed;left:0;top:0;pointer-events:none;z-index:50;padding:6px 12px;border-radius:8px;background:var(--ink);color:var(--panel);font-weight:700;font-size:.95rem}
+.fb{font-size:1.05rem;line-height:1.7}
+.fb.ok{border-left-color:var(--green)}
+.fb.bad{border-left-color:var(--red)}
+.fb b.ok{color:var(--green)} .fb b.bad{color:var(--red)}
+
+/* 燃燒 */
+.status{font-size:1.05rem;min-height:1.7em;margin:0;padding:0 12px 10px}
+.status b{color:var(--accent)}
+.res{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:12px}
+@media (max-width:860px){.res{grid-template-columns:minmax(0,1fr)}}
+.res table{width:100%;font-size:1rem}
+.res td,.res th{text-align:center}
+.res td:first-child,.res th:first-child{text-align:left}
+.up{color:var(--red);font-weight:700}.down{color:var(--blue);font-weight:700}.same{color:var(--green);font-weight:700}
+.dsrow{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+
+/* 計算 */
+.calc{display:grid;grid-template-columns:minmax(0,.85fr) minmax(0,1.4fr);gap:12px;align-items:start}
+@media (max-width:900px){.calc{grid-template-columns:minmax(0,1fr)}}
+.given{font-size:1.08rem;line-height:1.75}
+.given .ask{margin:0 0 10px}
+.given dl{grid-template-columns:auto auto;justify-content:start;gap:4px 18px;font-size:1.1rem}
+.given dd{text-align:left;font-weight:600}
+.src{font-size:.82rem;color:var(--muted)}
+.bar{display:flex;height:44px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--grid);margin-top:10px}
+.bar>div{display:grid;place-items:center;color:#fff;font-weight:700;font-family:var(--f-mono);font-size:.95rem;transition:flex-grow .5s;flex:0 0 auto;width:0;overflow:hidden;white-space:nowrap}
+.bar .bC{background:var(--c-mass)} .bar .bH{background:var(--h-mass)} .bar .bO{background:var(--o-mass)} .bar .bR{background:transparent;color:var(--muted);flex:1 1 auto;width:auto}
+.steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;counter-reset:st}
+.steps li{display:grid;grid-template-columns:2.2em minmax(0,1fr);gap:4px 10px;padding:10px 14px;border:1px solid var(--line);border-radius:10px;background:var(--panel);font-size:1.18rem;line-height:1.9;counter-increment:st}
+.steps li::before{content:counter(st);grid-row:span 2;width:1.9em;height:1.9em;border-radius:50%;background:var(--ink);color:var(--panel);display:grid;place-items:center;font-family:var(--f-mono);font-weight:600;font-size:.95rem;margin-top:.15em}
+.steps li .h{font-weight:700;font-size:1rem;color:var(--muted)}
+.steps li .m{font-family:var(--f-mono);font-variant-numeric:tabular-nums;overflow-x:auto}
+.steps li.final{border:2px solid var(--accent);background:var(--accent-soft)}
+.steps li.final .m{font-size:1.35rem;font-weight:700;color:var(--accent)}
+.steps li.new{animation:rise .35s ease-out}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}}
+.frac{display:inline-flex;flex-direction:column;vertical-align:middle;text-align:center;font-size:.82em;line-height:1.25;margin:0 2px}
+.frac>span:first-child{border-bottom:1.5px solid currentColor;padding:0 4px}
+.cC{color:var(--c-mass);font-weight:700}.cH{color:var(--muted);font-weight:700}.cO{color:var(--o-mass);font-weight:700}
+.navrow{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:10px 0 0}
+.navrow .btn{min-height:46px;font-size:1rem}
+.prog{font-family:var(--f-mono);color:var(--muted)}
+
+/* 考點快問 */
+.quiz{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,380px),1fr));gap:12px}
+.qc{display:flex;flex-direction:column;gap:8px;text-align:left;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--panel);cursor:pointer;font:inherit;color:var(--ink);min-height:120px}
+.qc:hover{border-color:var(--accent)}
+.qc .s{font-size:1.12rem;line-height:1.65;font-weight:500}
+.qc .a{display:none;font-size:.98rem;line-height:1.65;color:var(--muted);border-top:1px dashed var(--line);padding-top:8px}
+.qc .mk{font-family:var(--f-display);font-weight:900;font-size:1.5rem;margin-right:6px;vertical-align:-2px}
+.qc .mk.o{color:var(--green)} .qc .mk.x{color:var(--red)}
+.qc.open .a{display:block}
+.qc .tag{font-size:.78rem;color:var(--muted)}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+@media (prefers-reduced-motion:reduce){.steps li.new{animation:none}body.burning #flame{animation:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一化學 · 2-2 化學式</div>
+      <h1>燃燒分析法</h1>
+    </div>
+    <p>只含碳、氫、氧的化合物燒完，C 全部變成 CO₂、H 全部變成 H₂O。分別秤兩支吸收管增加的重量，就能推回 C、H、O 各有多重，再算出實驗式與分子式。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="build" aria-pressed="true"><span class="n">1</span>組裝裝置</button>
+      <button data-v="burn" aria-pressed="false"><span class="n">2</span>燃燒：原子去哪了</button>
+      <button data-v="calc" aria-pressed="false"><span class="n">3</span>算實驗式與分子式</button>
+      <button data-v="quiz" aria-pressed="false"><span class="n">4</span>考點快問</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+  </section>
+
+  <!-- ===================== 裝置圖（實驗台 1、2 共用） ===================== -->
+  <section class="panel" id="rigPanel">
+    <svg id="rig" viewBox="0 0 1000 392" role="img" aria-label="燃燒分析裝置：氧氣、試樣、高溫氧化銅、甲管、乙管">
+      <defs>
+        <pattern id="patCuO" width="9" height="9" patternUnits="userSpaceOnUse"><rect width="9" height="9" style="fill:var(--cuo)"/><circle cx="2.5" cy="2.5" r="1.5" style="fill:var(--cuo-hi)"/><circle cx="7" cy="6.6" r="1.2" style="fill:var(--cuo-hi)"/></pattern>
+        <pattern id="patMg" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" style="fill:var(--mg)"/><circle cx="2" cy="2" r="1.5" style="fill:var(--mg-hi)"/><circle cx="6" cy="6" r="1.3" style="fill:var(--mg-hi)"/></pattern>
+        <pattern id="patNaOH" width="8" height="8" patternUnits="userSpaceOnUse"><rect width="8" height="8" style="fill:var(--naoh)"/><circle cx="2" cy="2" r="1.5" style="fill:var(--naoh-hi)"/><circle cx="6" cy="6" r="1.3" style="fill:var(--naoh-hi)"/></pattern>
+        <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" style="fill:var(--muted)"/></marker>
+      </defs>
+      <!-- 氧氣入口 -->
+      <text x="14" y="132" class="t-m">O₂</text>
+      <line x1="16" y1="150" x2="80" y2="150" style="stroke:var(--muted);stroke-width:3" marker-end="url(#arr)"/>
+      <!-- 高溫爐 -->
+      <rect x="318" y="100" width="184" height="100" rx="8" style="fill:var(--heat-soft);stroke:var(--heat);stroke-width:2"/>
+      <text x="410" y="92" text-anchor="middle" class="t-m" style="fill:var(--heat)">高溫</text>
+      <!-- 燃燒管 -->
+      <rect x="84" y="127" width="472" height="46" rx="10" style="fill:var(--glass);stroke:var(--glass-edge);stroke-width:2.5;fill-opacity:.85"/>
+      <rect id="cuoFill" x="336" y="132" width="148" height="36" rx="4" style="fill:url(#patCuO)" opacity="0"/>
+      <rect class="slotBox" id="box-cuo" x="332" y="129" width="156" height="42" rx="6"/>
+      <!-- 試樣舟與本生燈 -->
+      <path d="M150 158 L214 158 L206 170 L158 170 Z" style="fill:var(--muted)"/>
+      <ellipse id="sample" cx="182" cy="157" rx="20" ry="5" style="fill:var(--accent)"/>
+      <text x="182" y="116" text-anchor="middle" class="t-s">試樣</text>
+      <path id="flame" d="M182 178 C168 196 170 212 182 222 C194 212 196 196 182 178Z" style="fill:var(--flame)" opacity=".25"/>
+      <path d="M182 196 C176 204 177 212 182 216 C187 212 188 204 182 196Z" style="fill:var(--flame-in)" opacity=".5"/>
+      <path d="M170 224 L194 224 L198 278 L166 278 Z" style="fill:var(--muted)" opacity=".8"/>
+      <text x="182" y="300" text-anchor="middle" class="t-s">本生燈</text>
+      <text id="cuoLbl" x="410" y="226" text-anchor="middle" class="t-s">（放置區）</text>
+      <!-- 連接管 -->
+      <line x1="556" y1="150" x2="606" y2="150" class="gEdge" stroke-width="13"/><line x1="554" y1="150" x2="608" y2="150" class="gIn" stroke-width="8"/>
+      <line x1="714" y1="150" x2="766" y2="150" class="gEdge" stroke-width="13"/><line x1="712" y1="150" x2="768" y2="150" class="gIn" stroke-width="8"/>
+      <line x1="874" y1="150" x2="950" y2="150" class="gEdge" stroke-width="13"/><line x1="872" y1="150" x2="952" y2="150" class="gIn" stroke-width="8"/>
+      <line x1="952" y1="150" x2="992" y2="150" style="stroke:var(--muted);stroke-width:3" marker-end="url(#arr)"/>
+      <text x="996" y="132" text-anchor="end" class="t-s">排出</text>
+      <!-- U 型管 甲 -->
+      <g id="uJia">
+        <path d="M620 118 V280 A40 40 0 0 0 700 280 V118" class="gEdge" stroke-width="30"/>
+        <path d="M620 117 V280 A40 40 0 0 0 700 280 V117" class="gIn" stroke-width="24"/>
+        <path id="packJia" d="M620 178 V280 A40 40 0 0 0 700 280 V178" fill="none" stroke-width="20" opacity="0"/>
+        <rect x="605" y="108" width="30" height="12" rx="2" style="fill:var(--muted)"/><rect x="685" y="108" width="30" height="12" rx="2" style="fill:var(--muted)"/>
+        <g id="dotsJia"></g>
+      </g>
+      <text x="660" y="62" text-anchor="middle" class="t-l">甲</text>
+      <text id="nameJia" x="660" y="94" text-anchor="middle" class="t-s"></text>
+      <rect class="slotBox" id="box-jia" x="596" y="104" width="128" height="238" rx="10"/>
+      <!-- U 型管 乙 -->
+      <g id="uYi">
+        <path d="M780 118 V280 A40 40 0 0 0 860 280 V118" class="gEdge" stroke-width="30"/>
+        <path d="M780 117 V280 A40 40 0 0 0 860 280 V117" class="gIn" stroke-width="24"/>
+        <path id="packYi" d="M780 178 V280 A40 40 0 0 0 860 280 V178" fill="none" stroke-width="20" opacity="0"/>
+        <rect x="765" y="108" width="30" height="12" rx="2" style="fill:var(--muted)"/><rect x="845" y="108" width="30" height="12" rx="2" style="fill:var(--muted)"/>
+        <g id="dotsYi"></g>
+      </g>
+      <text x="820" y="62" text-anchor="middle" class="t-l">乙</text>
+      <text id="nameYi" x="820" y="94" text-anchor="middle" class="t-s"></text>
+      <rect class="slotBox" id="box-yi" x="756" y="104" width="128" height="238" rx="10"/>
+      <!-- 增重讀數 -->
+      <rect class="readBox" id="rbJia" x="606" y="350" width="108" height="36" rx="7"/>
+      <text id="rdJia" x="660" y="376" text-anchor="middle" class="t-n">+0.00 g</text>
+      <rect class="readBox" id="rbYi" x="766" y="350" width="108" height="36" rx="7"/>
+      <text id="rdYi" x="820" y="376" text-anchor="middle" class="t-n">+0.00 g</text>
+      <text x="540" y="374" text-anchor="end" class="t-s">吸收管增加的重量 →</text>
+      <!-- 氣體分子 -->
+      <g id="pg"></g>
+      <!-- 點選區 -->
+      <rect class="hit" data-slot="cuo" x="318" y="96" width="184" height="140"/>
+      <rect class="hit" data-slot="jia" x="590" y="40" width="140" height="300"/>
+      <rect class="hit" data-slot="yi" x="750" y="40" width="140" height="300"/>
+    </svg>
+    <div class="key" style="padding:2px 6px 6px">
+      <span><i style="background:var(--c-atom)"></i>C 碳</span>
+      <span><i style="background:var(--h-atom);border:1px solid var(--h-line)"></i>H 氫</span>
+      <span><i style="background:var(--o-atom)"></i>O 氧</span>
+      <span>O₂＝紅紅　CO₂＝紅黑紅　CO＝黑紅　H₂O＝紅＋兩個白</span>
+    </div>
+  </section>
+
+  <!-- ===================== 1 組裝 ===================== -->
+  <section class="bench" id="b-build">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">零件</span>
+        <div class="tray" id="tray">
+          <button class="part" data-p="CuO" aria-pressed="false"><span class="sw sw-CuO"></span><span>CuO<small>氧化銅（黑色粉末）</small></span></button>
+          <button class="part" data-p="Mg" aria-pressed="false"><span class="sw sw-Mg"></span><span>Mg(ClO<sub>4</sub>)<sub>2</sub><small>過氯酸鎂：吸水</small></span></button>
+          <button class="part" data-p="NaOH" aria-pressed="false"><span class="sw sw-NaOH"></span><span>NaOH<small>氫氧化鈉：吸 CO₂（也會吸水）</small></span></button>
+        </div>
+      </div>
+      <div class="toolbar">
+        <span class="hint">點一個零件，再點裝置上的位置（也可以直接拖過去）；點已經放好的位置可以拿回來。</span>
+        <span class="grp" style="margin-left:auto">
+          <button class="btn primary" id="check1">檢查</button>
+          <button class="btn" id="clear1">清空</button>
+          <button class="btn" id="answer1">直接擺好</button>
+        </span>
+      </div>
+    </div>
+    <div class="panel verdict fb" id="fb1">三個零件各有固定位置：一個放在高溫爐裡的燃燒管內，兩個裝進 U 型管。想想看氣體依序會經過哪裡。</div>
+  </section>
+
+  <!-- ===================== 2 燃燒 ===================== -->
+  <section class="bench" id="b-burn" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">裝置</span>
+        <span class="seg" id="scen2">
+          <button data-v="ok" aria-pressed="true">正確裝置</button>
+          <button data-v="swap" aria-pressed="false">甲乙對調</button>
+          <button data-v="nocuo" aria-pressed="false">拿掉 CuO</button>
+          <button data-v="mine" aria-pressed="false">照實驗台 1 的擺法</button>
+        </span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">試樣</span>
+        <select id="ds2" aria-label="試樣"></select>
+        <span class="grp">
+          <button class="btn primary" id="run2">▶ 點火燃燒</button>
+          <button class="btn" id="pause2" disabled>❚❚ 暫停</button>
+          <button class="btn" id="reset2">↺ 重來</button>
+        </span>
+        <span class="tlabel">速度</span>
+        <span class="seg" id="spd2"><button data-v=".45">慢</button><button data-v="1" aria-pressed="true">正常</button><button data-v="1.8">快</button></span>
+      </div>
+      <p class="status" id="status2">按「點火燃燒」。試樣裡的 C、H 燒成 CO₂、H₂O，跟著氧氣往右流。</p>
+    </div>
+    <div class="panel card" id="res2" hidden></div>
+  </section>
+
+  <!-- ===================== 3 計算 ===================== -->
+  <section class="bench" id="b-calc" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">題目</span>
+        <div class="chips" id="dsChips"></div>
+        <button class="btn" id="rand3">🎲 隨機出題</button>
+      </div>
+    </div>
+    <div class="calc">
+      <div class="panel card given" id="given3"></div>
+      <div class="panel card">
+        <ol class="steps" id="steps3"></ol>
+        <div class="navrow">
+          <button class="btn" id="prev3">← 上一步</button>
+          <button class="btn primary" id="next3">下一步 →</button>
+          <button class="btn" id="all3">全部顯示</button>
+          <span class="prog" id="prog3"></span>
+          <span class="hint" style="margin-left:auto">鍵盤：空白鍵或 → 下一步、← 上一步</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== 4 考點快問 ===================== -->
+  <section class="bench" id="b-quiz" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="hint">每張卡是一句考卷上出現過的敘述，先讓學生判斷對錯，再點卡片翻出答案。</span>
+        <span class="grp" style="margin-left:auto"><button class="btn" id="openAll4">全部翻開</button><button class="btn" id="closeAll4">全部蓋回</button></span>
+      </div>
+    </div>
+    <div class="quiz" id="quiz4"></div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">考古題情境 <small>中一中、中二中、中女中第二次段考</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>
+
+<script>
+// ================= common =================
+const $=id=>document.getElementById(id);
+const NS='http://www.w3.org/2000/svg';
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+function svg(tag,attrs,parent){const e=document.createElementNS(NS,tag);for(const k in attrs)e.setAttribute(k,attrs[k]);if(parent)parent.appendChild(e);return e;}
+const fmt=(v,d=4)=>String(parseFloat((+v).toFixed(d)));
+const f2=v=>(+v).toFixed(2);
+const chem=s=>s.replace(/(\d+)/g,'<sub>$1</sub>');
+const frac=(a,b)=>`<span class="frac"><span>${a}</span><span>${b}</span></span>`;
+const PART={CuO:'CuO 氧化銅',Mg:'過氯酸鎂',NaOH:'氫氧化鈉'};
+const PARTF={CuO:'CuO',Mg:'Mg(ClO₄)₂',NaOH:'NaOH'};
+const PAT={CuO:'url(#patCuO)',Mg:'url(#patMg)',NaOH:'url(#patNaOH)'};
+
+// ================= 題目資料 =================
+function parseF(f){const o={C:0,H:0,O:0};f.replace(/([A-Z][a-z]?)(\d*)/g,(m,e,n)=>{o[e]=(o[e]||0)+(n?+n:1);});return o;}
+function fstr(c,h,o){const p=(e,n)=>n?e+(n>1?n:''):'';return p('C',c)+p('H',h)+p('O',o);}
+const DS=[
+ {tag:'南一講義 範例',w:0.78,h2o:0.54,co2:2.64,M:78,
+  ask:'某含碳、氫兩元素的化合物 0.78 克，完全燃燒後得到 2.64 克 CO₂ 與 0.54 克水。已知分子量為 78，求實驗式與分子式。',mtxt:'分子量為 78',name:'苯'},
+ {tag:'中一中 114-2-2 第 6 題',w:2.2,h2o:0.9,co2:3.3,M:176,
+  ask:'燃燒維生素 C 試樣 2.2 g，產物通過 Mg(ClO₄)₂，重量增加 0.9 g；再通過 NaOH，重量增加 3.3 g。維生素 C 的實驗式為何？',mtxt:'（延伸）維生素 C 的分子量為 176',name:'維生素 C',ans:'(D) C₃H₄O₃'},
+ {tag:'中二中 114-2-2 第 14、15 題',w:7.12,h2o:3.60,co2:10.56,range:[170,180],
+  ask:'含 C、H、O 的有機化合物 7.12 克，完全燃燒後，過氯酸鎂吸收管增重 3.60 克，氫氧化鈉吸收管增重 10.56 克。求實驗式；若分子量介於 170～180，求分子式。',mtxt:'分子量介於 170～180',ans:'第 14 題 (E) C₃H₅O₃；第 15 題 (C) C₆H₁₀O₆'},
+ {tag:'中女中 113-2-2 第 22 題',w:4.5,h2o:2.7,co2:6.6,M:90,
+  ask:'有機試樣 4.5 克燃燒後，甲管（過氯酸鎂）增重 2.7 克，乙管（NaOH）增重 6.6 克。同溫同壓下，此化合物氣體的體積是等重一氧化氮（NO）的 1/3 倍。',
+  mtxt:'同溫同壓、重量相同時，氣體體積與分子量成反比。體積是 NO 的 1/3，分子量就是 NO 的 3 倍：3 × 30 ＝ 90',ans:'簡式 CH₂O，分子式 C₃H₆O₃（(B) C₄H₁₀O₂ 錯）'},
+];
+const POOL=[['乙醇','C2H6O'],['甲醇','CH4O'],['乙酸','C2H4O2'],['葡萄糖','C6H12O6'],['丙酮','C3H6O'],['乙酸乙酯','C4H8O2'],['乳酸','C3H6O3'],['甘油','C3H8O3'],['苯','C6H6'],['乙烯','C2H4'],['丙烷','C3H8'],['維生素 C','C6H8O6'],['甲醛','CH2O'],['二甲醚','C2H6O'],['丁酸','C4H8O2'],['乙炔','C2H2'],['草酸','C2H2O4']];
+let lastRand=-1;
+function randDS(){let i;do{i=Math.floor(Math.random()*POOL.length);}while(i===lastRand);lastRand=i;
+  const [name,f]=POOL[i],a=parseF(f),M=12*a.C+a.H+16*a.O,t=[0.01,0.02,0.05][Math.floor(Math.random()*3)];
+  const w=+(M*t).toFixed(2),co2=+(44*a.C*t).toFixed(2),h2o=+(9*a.H*t).toFixed(2);
+  const kind=a.O?'含碳、氫、氧':'只含碳、氫';
+  return {tag:'隨機出題',rand:true,w,h2o,co2,M,name,f,
+    ask:`某${kind}的化合物 ${fmt(w)} 克完全燃燒，過氯酸鎂管增重 ${fmt(h2o)} 克，NaOH 管增重 ${fmt(co2)} 克。已知分子量為 ${M}，求實驗式與分子式。`,mtxt:`分子量為 ${M}`};}
+
+function solve(d){
+  const C=d.co2*12/44,H=d.h2o*2/18;let O=d.w-C-H;if(Math.abs(O)<0.005)O=0;
+  const n=[C/12,H/1,O/16],nz=n.filter(v=>v>1e-9),m=Math.min(...nz),r=n.map(v=>v/m);
+  let k=1;for(;k<=8;k++){if(r.every(v=>Math.abs(v*k-Math.round(v*k))<0.05))break;}if(k>8)k=1;
+  const z=r.map(v=>Math.round(v*k)),emp=fstr(z[0],z[1],z[2]),EM=12*z[0]+z[1]+16*z[2];
+  let mult=null,Mv=null;
+  if(d.M){mult=Math.round(d.M/EM);Mv=d.M;}
+  else if(d.range){for(let j=1;j<20;j++){if(EM*j>=d.range[0]&&EM*j<=d.range[1]){mult=j;Mv=EM*j;break;}}}
+  const mol=mult?fstr(z[0]*mult,z[1]*mult,z[2]*mult):null;
+  return {C,H,O,n,m,r,k,z,emp,EM,mult,Mv,mol};}
+
+// ================= 裝置狀態 =================
+let slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};
+let sel=null;
+function drawRig(){
+  const cf=$('cuoFill');
+  if(slots.cuo){cf.setAttribute('opacity','1');cf.style.fill=PAT[slots.cuo];$('cuoLbl').textContent=slots.cuo==='CuO'?'CuO（氧化銅）':PART[slots.cuo]+'（放錯了？）';}
+  else{cf.setAttribute('opacity','0');$('cuoLbl').textContent=bench==='build'?'（放置區）':'（沒有 CuO）';}
+  for(const [k,pk,nm] of [['jia','packJia','nameJia'],['yi','packYi','nameYi']]){
+    const p=$(pk),v=slots[k];
+    if(v){p.setAttribute('opacity','1');p.style.stroke=PAT[v];$(nm).textContent=PARTF[v]+'　'+PART[v];}
+    else{p.setAttribute('opacity','0');$(nm).textContent=bench==='build'?'（放置區）':'（空管）';}
+  }
+  for(const k of ['cuo','jia','yi'])$('box-'+k).classList.toggle('filled',!!slots[k]);
+  document.querySelectorAll('#tray .part').forEach(b=>{const used=Object.values(slots).includes(b.dataset.p);b.classList.toggle('used',used);b.setAttribute('aria-pressed',String(sel===b.dataset.p));});
+  document.querySelectorAll('.slotBox').forEach(b=>b.classList.toggle('pick',!!sel&&bench==='build'&&!b.classList.contains('filled')));
+}
+function place(slot,part){
+  for(const k in slots)if(slots[k]===part)slots[k]=null;
+  slots[slot]=part;sel=null;drawRig();resetRun();
+}
+function slotClick(slot){
+  if(bench!=='build')return;
+  if(sel)place(slot,sel);
+  else if(slots[slot]){sel=slots[slot];slots[slot]=null;drawRig();}
+}
+document.querySelectorAll('#rig .hit').forEach(h=>h.addEventListener('click',()=>slotClick(h.dataset.slot)));
+// 零件：點選或拖曳
+let drag=null;
+document.querySelectorAll('#tray .part').forEach(b=>{
+  b.addEventListener('pointerdown',e=>{drag={p:b.dataset.p,x:e.clientX,y:e.clientY,moved:false,g:null};});
+});
+window.addEventListener('pointermove',e=>{if(!drag)return;
+  if(!drag.moved&&Math.hypot(e.clientX-drag.x,e.clientY-drag.y)>8){drag.moved=true;drag.g=document.createElement('div');drag.g.className='ghost';drag.g.textContent=PARTF[drag.p];document.body.appendChild(drag.g);}
+  if(drag.g)drag.g.style.transform=`translate(${e.clientX+12}px,${e.clientY+8}px)`;});
+window.addEventListener('pointerup',e=>{if(!drag)return;const d=drag;drag=null;
+  if(d.g){d.g.remove();const el=document.elementFromPoint(e.clientX,e.clientY);const h=el&&el.closest&&el.closest('.hit');if(h&&bench==='build')place(h.dataset.slot,d.p);}
+  else{sel=sel===d.p?null:d.p;drawRig();}});
+
+$('clear1').addEventListener('click',()=>{slots={cuo:null,jia:null,yi:null};sel=null;drawRig();fb1('三個零件各有固定位置：一個放在高溫爐裡的燃燒管內，兩個裝進 U 型管。想想看氣體依序會經過哪裡。','');});
+$('answer1').addEventListener('click',()=>{slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};sel=null;drawRig();check1();});
+$('check1').addEventListener('click',check1);
+function fb1(html,cls){const f=$('fb1');f.innerHTML=html;f.className='panel verdict fb '+cls;}
+function check1(){
+  const s=slots,msg=[];
+  const empty=['cuo','jia','yi'].filter(k=>!s[k]);
+  if(empty.length){fb1(`還有 ${empty.length} 個位置是空的：${empty.map(k=>({cuo:'高溫爐',jia:'甲管',yi:'乙管'})[k]).join('、')}。`,'');return;}
+  let ok=true;
+  if(s.cuo!=='CuO'){ok=false;msg.push('<b class="bad">✕ 高溫爐：</b>要放 CuO。它在高溫下把沒燒完全的 C、CO、H₂ 氧化成 CO₂ 和 H₂O，所以要放在燃燒管裡、吸收管前面。');}
+  if(s.jia==='NaOH'&&s.yi==='Mg'){ok=false;msg.push('<b class="bad">✕ 甲、乙放反了：</b>NaOH 除了吸 CO₂ 也會吸水。放在前面會把水和 CO₂ 一起吸走，後面的過氯酸鎂就吸不到水，H 會算成 0。');}
+  else if(s.cuo==='CuO'){
+    if(s.jia!=='Mg'){ok=false;msg.push('<b class="bad">✕ 甲管：</b>先放過氯酸鎂，只吸水。');}
+    if(s.yi!=='NaOH'){ok=false;msg.push('<b class="bad">✕ 乙管：</b>後放 NaOH，吸 CO₂。');}
+  }
+  if(ok)fb1('<b class="ok">✓ 正確！</b>氣體先經過高溫 CuO，確保 C、H 完全燒成 CO₂、H₂O；接著甲管的<b>過氯酸鎂吸水</b>，乙管的 <b>NaOH 吸 CO₂</b>。順序不能對調，因為 NaOH 也會吸水。<br>→ 到實驗台 2 點火看看。','ok');
+  else fb1(msg.join('<br>')+'<br><span class="hint">到實驗台 2 選「照實驗台 1 的擺法」，可以看看這樣擺會發生什麼事。</span>','bad');
+}
+
+// ================= 2 燃燒動畫 =================
+// 氣體路徑（SVG 座標）
+const PTS=(()=>{const p=[[28,150],[620,150],[620,280]];
+  for(let i=1;i<=14;i++){const a=Math.PI-Math.PI*i/14;p.push([660+40*Math.cos(a),280+40*Math.sin(a)]);}
+  p.push([700,150],[780,150],[780,280]);
+  for(let i=1;i<=14;i++){const a=Math.PI-Math.PI*i/14;p.push([820+40*Math.cos(a),280+40*Math.sin(a)]);}
+  p.push([860,150],[985,150]);return p;})();
+const SEG=[];let LEN=0;
+for(let i=0;i<PTS.length-1;i++){const [x1,y1]=PTS[i],[x2,y2]=PTS[i+1],l=Math.hypot(x2-x1,y2-y1);SEG.push({x1,y1,dx:(x2-x1)/l,dy:(y2-y1)/l,s0:LEN,l});LEN+=l;}
+function posAt(s){let lo=0,hi=SEG.length-1;while(lo<hi){const m=(lo+hi+1)>>1;if(SEG[m].s0<=s)lo=m;else hi=m-1;}
+  const g=SEG[lo],u=Math.min(s-g.s0,g.l);return {x:g.x1+g.dx*u,y:g.y1+g.dy*u,dx:g.dx,dy:g.dy};}
+const S_BOAT=182-28;
+const MOL={
+  O2:[['O',-4.6,0],['O',4.6,0]],
+  CO2:[['O',-9.5,0],['C',0,0],['O',9.5,0]],
+  CO:[['C',-4.8,0],['O',4.8,0]],
+  H2O:[['H',-6.2,5.2],['H',6.2,5.2],['O',0,0]],
+};
+const RAD={C:5.4,O:5.2,H:3.5};
+function molG(type){const g=svg('g',{});for(const [e,x,y] of MOL[type])svg('circle',{cx:x,cy:y,r:RAD[e],class:'at'+e},g);return g;}
+const R={on:false,paused:false,t:0,spd:1,parts:[],queue:[],emitEnd:0,nextO2:0,read:{jia:0,yi:0},esc:{CO:0,CO2:0,H2O:0},caught:{jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}},per:{H2O:0,CO2:0},done:false,d:null,said:{}};
+const pg=$('pg');
+function resetRun(){R.on=false;R.done=false;R.paused=false;R.parts.forEach(p=>p.g.remove());R.parts=[];R.queue=[];R.read={jia:0,yi:0};
+  R.esc={CO:0,CO2:0,H2O:0};R.caught={jia:{H2O:0,CO2:0},yi:{H2O:0,CO2:0}};R.said={};
+  $('dotsJia').replaceChildren();$('dotsYi').replaceChildren();document.body.classList.remove('burning');$('flame').setAttribute('opacity','.25');
+  $('sample').setAttribute('rx','20');showRead();$('res2').hidden=true;$('run2').disabled=false;$('pause2').disabled=true;$('pause2').textContent='❚❚ 暫停';
+  status2('按「點火燃燒」。試樣裡的 C、H 燒成 CO₂、H₂O，跟著氧氣往右流。');}
+function status2(h){$('status2').innerHTML=h;}
+function showRead(){$('rdJia').textContent='+'+f2(R.read.jia)+' g';$('rdYi').textContent='+'+f2(R.read.yi)+' g';}
+function startRun(){resetRun();const d=curDS();R.d=d;const s=solve(d);
+  let x=s.z[0],y=s.z[1];if(y%2){x*=2;y*=2;}
+  const per=x+y/2,units=Math.max(2,Math.min(8,Math.round(26/per)));
+  const list=[];for(let u=0;u<units;u++){for(let i=0;i<x;i++)list.push('C');for(let i=0;i<y/2;i++)list.push('H2O');}
+  for(let i=list.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[list[i],list[j]]=[list[j],list[i]];}
+  let ci=0;R.queue=list.map((t,i)=>({type:t==='C'?((ci++)%3===2?'CO':'CO2'):'H2O',at:0.6+i*(5.2/list.length)}));
+  const nC=list.filter(t=>t==='C').length,nW=list.length-nC;
+  R.per={CO2:d.co2/nC,H2O:d.h2o/nW};R.total=list.length;R.emitEnd=R.queue[R.queue.length-1].at;R.nextO2=0;R.t=0;R.on=true;
+  document.body.classList.add('burning');$('flame').setAttribute('opacity','1');$('run2').disabled=true;$('pause2').disabled=false;
+  status2('點火！試樣燃燒，<b>C → CO₂</b>、<b>H → H₂O</b>。通入的 O₂ 一部分被用掉，多的會一路流出去。');kick();}
+function spawn(type,s,off){const g=molG(type);pg.appendChild(g);const p={type,s,off:off??(Math.random()*2-1),g,capAt:null,conv:null,dying:0,prod:type!=='O2'};R.parts.push(p);return p;}
+function setType(p,type){p.type=type;const g=molG(type);p.g.replaceWith(g);p.g=g;}
+function regionOf(x,y){if(y<=176)return null;return x<740?'jia':'yi';}
+function absorbs(part,type){if(part==='Mg')return type==='H2O';if(part==='NaOH')return type==='H2O'||type==='CO2';return false;}
+function tickRun(dt){if(!R.on||R.paused)return false;const sp=R.spd;R.t+=dt*sp;
+  // 氧氣流
+  if(R.t>=R.nextO2&&R.t<R.emitEnd+3){spawn('O2',0);R.nextO2+=0.32;}
+  while(R.queue.length&&R.queue[0].at<=R.t){const q=R.queue.shift();spawn(q.type,S_BOAT+Math.random()*10);}
+  $('sample').setAttribute('rx',String(3+17*R.queue.length/R.total));
+  const v=125*sp;
+  for(const p of R.parts){
+    if(p.dying){p.dying-=dt*sp*3;p.g.setAttribute('opacity',String(Math.max(0,p.dying)));if(p.dying<=0)p.dead=true;continue;}
+    const s0=p.s;p.s+=v*dt*(p.type==='O2'?1.05:1);
+    // 氧氣在試樣處被消耗
+    if(p.type==='O2'&&s0<S_BOAT&&p.s>=S_BOAT&&R.queue.length&&Math.random()<.55){p.dying=1;continue;}
+    const pos=posAt(p.s);
+    // 高溫 CuO：CO → CO2
+    if(p.type==='CO'&&slots.cuo==='CuO'&&pos.y===150&&pos.x>336){if(p.conv==null)p.conv=345+Math.random()*120;
+      if(pos.x>=p.conv){setType(p,'CO2');const cf=$('cuoFill');cf.classList.remove('cuoFlash');void cf.getBBox();cf.classList.add('cuoFlash');
+        if(!R.said.cuo){R.said.cuo=1;status2('沒燒完全的 <b>CO</b> 經過高溫 <b>CuO</b>，被氧化成 <b>CO₂</b>（CuO 是氧化劑，不是催化劑）。');}}}
+    const rg=regionOf(pos.x,pos.y);
+    if(rg&&absorbs(slots[rg],p.type)){if(p.capAt==null)p.capAt=p.s+18+Math.random()*95;
+      if(p.s>=p.capAt){capture(p,rg,pos);continue;}}
+    if(p.s>=LEN){p.dead=true;p.g.remove();if(p.prod)R.esc[p.type]++;continue;}
+    const w=pos.y===150&&pos.x<556?14:4.5;
+    p.g.setAttribute('transform',`translate(${(pos.x-pos.dy*p.off*w).toFixed(1)},${(pos.y+pos.dx*p.off*w).toFixed(1)})`);
+  }
+  R.parts=R.parts.filter(p=>{if(p.dead){p.g.remove();return false;}return true;});
+  showRead();
+  const live=R.parts.some(p=>p.prod);
+  if(!R.queue.length){document.body.classList.remove('burning');$('flame').setAttribute('opacity','.25');}
+  if(!R.queue.length&&!live&&!R.done){R.done=true;finish();}
+  if(R.done&&!R.parts.length){R.on=false;return false;}
+  return true;}
+function capture(p,rg,pos){p.dead=true;p.g.remove();
+  const kind=p.type;R.caught[rg][kind]++;R.read[rg]+=R.per[kind];
+  const dots=$(rg==='jia'?'dotsJia':'dotsYi');
+  const cx=pos.x+(Math.random()*2-1)*6,cy=pos.y+(Math.random()*2-1)*6;
+  svg('circle',{cx:cx.toFixed(1),cy:cy.toFixed(1),r:kind==='CO2'?3.4:3,class:kind==='CO2'?'atC':'atO',opacity:'.9'},dots);
+  const k=rg+kind;if(!R.said[k]){R.said[k]=1;
+    const nm=rg==='jia'?'甲管':'乙管',ab=PART[slots[rg]];
+    status2(kind==='H2O'?`${nm}的<b>${ab}</b>吸收了 <b>H₂O</b>。`+(slots[rg]==='NaOH'?'（NaOH 也會吸水！）':'所有的 H 最後都在這裡。'):`${nm}的<b>${ab}</b>吸收了 <b>CO₂</b>，所有燒成 CO₂ 的 C 都在這裡。`);}}
+function finish(){const d=R.d,s=solve(d);
+  const wH2O=(slots.jia==='Mg'?R.read.jia:0)+(slots.yi==='Mg'?R.read.yi:0);
+  const wCO2=(slots.jia==='NaOH'?R.read.jia:0)+(slots.yi==='NaOH'?R.read.yi:0);
+  const hasMg=Object.values(slots).includes('Mg')&&slots.cuo!=='Mg',hasNa=Object.values(slots).includes('NaOH')&&slots.cuo!=='NaOH';
+  const C2=wCO2*12/44,H2=wH2O*2/18,O2=d.w-C2-H2;
+  const row=(lab,a,b)=>{const diff=b-a,cls=Math.abs(diff)<0.005?'same':diff>0?'up':'down',t=Math.abs(diff)<0.005?'✓ 相同':diff>0?'偏高':'偏低';return `<tr><td>${lab}</td><td>${f2(a)} g</td><td>${f2(b)} g</td><td class="${cls}">${t}</td></tr>`;};
+  const good=Math.abs(C2-s.C)<0.005&&Math.abs(H2-s.H)<0.005;
+  const why=[];
+  if(slots.cuo!=='CuO'&&R.esc.CO)why.push(`沒有高溫 CuO：有 ${R.esc.CO} 個 <b>CO</b> 沒被氧化，NaOH 吸不到，直接跑掉 → <b>C 偏低</b>；O 是用減的，所以 <b>O 偏高</b>。`);
+  if(slots.jia==='NaOH')why.push('NaOH 放在前面，<b>把水也吸走了</b> → 後面的過氯酸鎂幾乎吸不到水，<b>H 偏低</b>；NaOH 增重裡混了水，被當成 CO₂ 計算 → <b>C 偏高</b>。');
+  if(!hasMg)why.push('沒有過氯酸鎂管，無法量水的重量。');
+  if(!hasNa)why.push('沒有 NaOH 管，CO₂ 全部跑掉，無法量碳。');
+  if(R.esc.H2O&&slots.jia!=='NaOH')why.push(`有 ${R.esc.H2O} 個 H₂O 沒被吸收就排出去了。`);
+  const ab=k=>slots[k]?PARTF[slots[k]]:'空管';
+  $('res2').innerHTML=`<div class="res"><div>
+    <h3 style="margin:0 0 8px">吸收管增加的重量</h3>
+    <table><tr><th>管子</th><th>裝的東西</th><th>增重</th></tr>
+    <tr><td>甲管</td><td>${ab('jia')}</td><td class="mono">+${f2(R.read.jia)} g</td></tr>
+    <tr><td>乙管</td><td>${ab('yi')}</td><td class="mono">+${f2(R.read.yi)} g</td></tr></table>
+    <p class="hint" style="margin-top:8px">試樣 ${fmt(d.w)} g。計算時把「過氯酸鎂增重」當作水，「NaOH 增重」當作 CO₂。</p></div>
+    <div><h3 style="margin:0 0 8px">照這組讀數算出的元素重量</h3>
+    <table><tr><th>元素</th><th>正確</th><th>這次算出</th><th></th></tr>
+    ${row('C（＝CO₂ × 12/44）',s.C,C2)}${row('H（＝H₂O × 2/18）',s.H,H2)}${row('O（＝試樣 − C − H）',s.O,O2)}</table>
+    <p style="margin:10px 0 0;font-size:1.02rem">${good?'<b class="same">裝置正確，算出的 C、H、O 都對。</b>所有的 C 都進了 NaOH 管、所有的 H 都進了過氯酸鎂管；O 一部分來自通入的 O₂，所以只能用「試樣重 − C − H」求。<br>→ 到實驗台 3 一步一步算實驗式。':why.join('<br>')}</p></div></div>`;
+  $('res2').hidden=false;$('pause2').disabled=true;$('run2').disabled=false;$('run2').textContent='▶ 再燒一次';
+  status2(good?'燃燒完成。<b>看兩支管子增加的重量</b>，下面有計算結果。':'燃燒完成，但這個裝置有問題，下面比較了算出來的結果。');}
+function setScen(v){segSet($('scen2'),v);
+  if(v==='ok')slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};else if(v==='swap')slots={cuo:'CuO',jia:'NaOH',yi:'Mg'};else if(v==='nocuo')slots={cuo:null,jia:'Mg',yi:'NaOH'};else if(v==='mine')slots={...built};
+  drawRig();resetRun();$('run2').textContent='▶ 點火燃燒';}
+let built={cuo:'CuO',jia:'Mg',yi:'NaOH'};
+segOn($('scen2'),setScen);
+segOn($('spd2'),v=>{R.spd=+v;segSet($('spd2'),v);});
+$('run2').addEventListener('click',startRun);
+$('pause2').addEventListener('click',()=>{R.paused=!R.paused;$('pause2').textContent=R.paused?'▶ 繼續':'❚❚ 暫停';document.body.classList.toggle('burning',!R.paused&&R.queue.length>0);kick();});
+$('reset2').addEventListener('click',()=>{resetRun();$('run2').textContent='▶ 點火燃燒';});
+
+// ================= 3 計算 =================
+let dsIdx=1,dsCur=DS[1],stepN=0,STEPS=[];
+function curDS(){return dsCur;}
+function fillDSselect(){const s=$('ds2');s.innerHTML='';DS.forEach((d,i)=>{const o=document.createElement('option');o.value=i;o.textContent=`${d.tag}（${fmt(d.w)} g）`;s.appendChild(o);});
+  if(dsCur.rand){const o=document.createElement('option');o.value='r';o.textContent=`隨機出題（${fmt(dsCur.w)} g）`;s.appendChild(o);}
+  s.value=dsCur.rand?'r':String(dsIdx);}
+$('ds2').addEventListener('change',e=>{if(e.target.value!=='r'){setDS(+e.target.value);}resetRun();});
+function chips3(){const c=$('dsChips');c.innerHTML='';DS.forEach((d,i)=>{const b=document.createElement('button');b.className='chip';b.textContent=d.tag;b.setAttribute('aria-pressed',String(!dsCur.rand&&i===dsIdx));b.addEventListener('click',()=>setDS(i));c.appendChild(b);});}
+function setDS(i){dsIdx=i;dsCur=DS[i];afterDS();}
+$('rand3').addEventListener('click',()=>{dsCur=randDS();afterDS();});
+function afterDS(){chips3();fillDSselect();buildSteps();stepN=1;render3(true);resetRun();}
+function buildSteps(){const d=dsCur,s=solve(d);const st=[];
+  st.push({h:'碳的重量：CO₂ 裡的 C 全部來自試樣',m:`W<sub>C</sub> ＝ ${fmt(d.co2)} × ${frac(12,44)} ＝ <b class="cC">${fmt(s.C)} g</b>`,bar:1});
+  st.push({h:'氫的重量：H₂O 裡的 H 全部來自試樣',m:`W<sub>H</sub> ＝ ${fmt(d.h2o)} × ${frac(2,18)} ＝ <b class="cH">${fmt(s.H)} g</b>`,bar:2});
+  st.push({h:'氧的重量：用減的（產物裡的 O 有一部分來自通入的 O₂）',m:`W<sub>O</sub> ＝ ${fmt(d.w)} − ${fmt(s.C)} − ${fmt(s.H)} ＝ <b class="cO">${fmt(s.O)} g</b>`+(s.O===0?'　→ 不含氧':''),bar:3});
+  const hasO=s.O>0;
+  st.push({h:'原子數比＝重量 ÷ 原子量',m:`C : H${hasO?' : O':''} ＝ ${frac(fmt(s.C),12)} : ${frac(fmt(s.H),1)}${hasO?' : '+frac(fmt(s.O),16):''} ＝ ${fmt(s.n[0])} : ${fmt(s.n[1])}${hasO?' : '+fmt(s.n[2]):''}`});
+  const rr=s.r.map(v=>fmt(v,2));
+  let m5=`同除以最小的 ${fmt(s.m)}：　${rr[0]} : ${rr[1]}${hasO?' : '+rr[2]:''}`;
+  if(s.k>1)m5+=`<br>不是整數 → 同乘 ${s.k}：　${s.z[0]} : ${s.z[1]}${hasO?' : '+s.z[2]:''}`;
+  st.push({h:'化成最簡單整數比',m:m5});
+  st.push({h:'實驗式（簡式）',m:`${chem(s.emp)}　<span style="font-size:.8em;color:var(--muted);font-weight:500">式量 ＝ ${s.EM}</span>`,final:true});
+  if(s.mult){let m7;
+    if(d.range){m7=`${d.mtxt}：　(${chem(s.emp)})<sub>n</sub> ＝ ${s.EM}n<br>n ＝ ${s.mult} 時 ${s.EM} × ${s.mult} ＝ ${s.Mv} ✓`;}
+    else m7=`${d.mtxt}<br>n ＝ ${frac(s.Mv,s.EM)} ＝ ${s.mult}`;
+    st.push({h:'分子量 ÷ 式量 ＝ n',m:m7});
+    st.push({h:'分子式 ＝（實驗式）× n',m:(s.mult===1?`n ＝ 1，分子式就是實驗式：${chem(s.mol)}`:`(${chem(s.emp)})<sub>${s.mult}</sub> ＝ ${chem(s.mol)}`)+(d.name?`　<span style="font-size:.75em;color:var(--muted);font-weight:500">${d.name}</span>`:''),final:true});}
+  STEPS=st;
+  const g=$('given3');
+  g.innerHTML=`<p class="src">${d.tag}</p><p class="ask">${d.ask}</p>
+   <dl><dt>試樣重</dt><dd class="mono">${fmt(d.w)} g</dd><dt>過氯酸鎂增重（H₂O）</dt><dd class="mono">${fmt(d.h2o)} g</dd><dt>NaOH 增重（CO₂）</dt><dd class="mono">${fmt(d.co2)} g</dd></dl>
+   <div class="bar" id="bar3"><div class="bC" id="bC"></div><div class="bH" id="bH"></div><div class="bO" id="bO"></div><div class="bR" id="bR">試樣 ${fmt(d.w)} g</div></div>
+   <p class="hint" style="margin-top:6px" id="ans3"></p>`;}
+function render3(newOne){const ol=$('steps3');ol.innerHTML='';
+  STEPS.slice(0,stepN).forEach((s,i)=>{const li=document.createElement('li');if(s.final)li.classList.add('final');if(newOne&&i===stepN-1)li.classList.add('new');
+    li.innerHTML=`<span class="h">${s.h}</span><span class="m">${s.m}</span>`;ol.appendChild(li);});
+  $('prog3').textContent=`${stepN} / ${STEPS.length}`;$('prev3').disabled=stepN<=1;$('next3').disabled=stepN>=STEPS.length;
+  const d=dsCur,s=solve(d),b=Math.max(...STEPS.slice(0,stepN).map(x=>x.bar||0));
+  const pct=v=>(v/d.w*100);
+  const set=(id,on,v,lab)=>{const e=$(id);if(on&&v>0.0001){e.style.width=pct(v)+'%';e.textContent=pct(v)>=9?lab:'';}else{e.style.width='0';e.textContent='';}};
+  set('bC',b>=1,s.C,'C '+fmt(s.C,3));set('bH',b>=2,s.H,'H '+fmt(s.H,3));set('bO',b>=3,s.O,'O '+fmt(s.O,3));
+  $('bR').textContent=b>=3?'':`試樣 ${fmt(d.w)} g`;
+  $('ans3').innerHTML=stepN>=STEPS.length?(d.ans?'原題答案：'+d.ans:(d.rand?`答案：${d.name} ${chem(d.f)}`:'')):'';}
+$('next3').addEventListener('click',()=>{if(stepN<STEPS.length){stepN++;render3(true);}});
+$('prev3').addEventListener('click',()=>{if(stepN>1){stepN--;render3(false);}});
+$('all3').addEventListener('click',()=>{stepN=STEPS.length;render3(false);});
+document.addEventListener('keydown',e=>{if(bench!=='calc'||e.target.closest('input,select,textarea'))return;
+  if(e.key===' '||e.key==='ArrowRight'||e.key==='PageDown'){e.preventDefault();$('next3').click();}
+  else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();$('prev3').click();}});
+
+// ================= 4 考點快問 =================
+const QZ=[
+ ['甲管裝過氯酸鎂吸收水、乙管裝 NaOH 吸收 CO₂，兩管的順序不能對調。',1,'NaOH 除了吸 CO₂ 也會吸水。若放在前面，水和 CO₂ 都被它吸走，就分不出 H 和 C 各有多少。','中一中 112-2-2、中女中 113-2-2'],
+ ['裝置中的 CuO 是燃燒反應的催化劑。',0,'CuO 是<b>氧化劑</b>：在高溫下把沒燒完全的 C、CO、H₂ 氧化成 CO₂、H₂O，確保全部被吸收管吸到。','中一中 112-2-2 (E)、中一中 110-2-2'],
+ ['高溫氧化銅的目的，是防止燃燒不完全的碳、一氧化碳或氫氣通過。',1,'CO 不會被 NaOH 吸收，若直接跑掉，C 會算少。','中女中 113-2-2 (C)'],
+ ['實驗前後要分別秤 CuO、過氯酸鎂及 NaOH 的重量，才能推算 C、H、O 的重量。',0,'只要秤<b>試樣</b>和<b>兩支吸收管</b>的增重。CuO 只負責氧化，O 是用「試樣重 − C − H」減出來的。','中一中 110-2-2 (E)'],
+ ['此實驗通入純氧反應，所以無法分析試樣中氧的含量。',0,'產物裡的 O 有一部分來自通入的 O₂，確實不能從 CO₂、H₂O 直接推回試樣的 O；但可以用「試樣重 − W<sub>C</sub> − W<sub>H</sub>」求出來，所以<b>還是能分析</b>。','中女中 113-2-2 (D)，原卷答案 (A)(B)(C)'],
+ ['由燃燒分析的結果，可以直接求得化合物的分子式。',0,'燃燒分析只得到原子數的<b>最簡比（實驗式）</b>，還要知道分子量才能求分子式。','中女中 113-2-2 (E)'],
+ ['甲醛（HCHO）與葡萄糖（C₆H₁₂O₆）的 C、H、O 重量百分組成相同，只用燃燒分析分辨不出來。',1,'兩者實驗式都是 CH₂O，燒等重的試樣，兩支吸收管增重一樣。要分辨必須另外測分子量。','中一中 113-2-2 第 4 題'],
+ ['若試樣只含 C 和 H，則試樣重 ＝ W<sub>C</sub> ＋ W<sub>H</sub>。',1,'不含氧時 W<sub>O</sub> ＝ 0，例如南一範例 0.78 g ＝ 0.72 g ＋ 0.06 g。','南一講義 範例'],
+];
+{const box=$('quiz4');QZ.forEach(([s,ok,a,src])=>{const b=document.createElement('button');b.className='qc';
+  b.innerHTML=`<span class="s">${s}</span><span class="a"><span class="mk ${ok?'o':'x'}">${ok?'○':'✕'}</span>${a}<br><span class="tag">${src}</span></span>`;
+  b.addEventListener('click',()=>b.classList.toggle('open'));box.appendChild(b);});}
+$('openAll4').addEventListener('click',()=>document.querySelectorAll('.qc').forEach(b=>b.classList.add('open')));
+$('closeAll4').addEventListener('click',()=>document.querySelectorAll('.qc').forEach(b=>b.classList.remove('open')));
+
+// ================= 考古題情境 =================
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;}
+function hideStory(){$('story').hidden=true;}
+$('storyX').addEventListener('click',hideStory);
+const QS=[
+ {g:'裝置與觀念',items:[
+  {n:'甲乙丙丁各放什麼',pg:'中一中 110-2-2 第 23 題',b:'build',set:()=>{slots={cuo:null,jia:null,yi:null};drawRig();},t:'',p:''},
+  {n:'甲管裝什麼？CuO 的作用',pg:'中一中 112-2-2 第 3 題',b:'build',set:()=>{slots={cuo:null,jia:null,yi:null};drawRig();},t:'中一中 112-2-2 第 3 題',p:''},
+  {n:'哪些敘述正確（CuO、氧、分子式）',pg:'中女中 113-2-2 第 21 題',b:'quiz',set:()=>{},t:'中女中 113-2-2 第 21 題　答案 (A)(B)(C)',p:''},
+  {n:'甲乙對調會怎樣',pg:'延伸',b:'burn',set:()=>setScen('swap'),t:'甲、乙兩管對調',p:'先讓學生預測：H、C、O 哪個偏高、哪個偏低？再按「點火燃燒」。'},
+  {n:'少了 CuO 會怎樣',pg:'延伸',b:'burn',set:()=>setScen('nocuo'),t:'拿掉高溫 CuO',p:'先讓學生預測：C、O 誰偏高、誰偏低？再按「點火燃燒」。'},
+ ]},
+ {g:'計算',items:[
+  {n:'0.78 g 求 CH 與 C₆H₆',pg:'南一講義 範例',b:'calc',set:()=>setDS(0),t:'南一講義 範例',p:'只含 C、H 的化合物：O 減出來是 0。'},
+  {n:'維生素 C 2.2 g 求實驗式',pg:'中一中 114-2-2 第 6 題',b:'calc',set:()=>setDS(1),t:'中一中 114-2-2 第 6 題　答案 (D) C₃H₄O₃',p:'原子數比 0.075 : 0.1 : 0.075 → 1 : 1.33 : 1，要再同乘 3。'},
+  {n:'7.12 g 求實驗式、分子式',pg:'中二中 114-2-2 第 14、15 題',b:'calc',set:()=>setDS(2),t:'中二中 114-2-2 第 14、15 題　答案 (E)、(C)',p:'實驗式 C₃H₅O₃（式量 89），89 × 2 ＝ 178 落在 170～180，分子式 C₆H₁₀O₆。'},
+  {n:'4.5 g＋與 NO 比體積求分子量',pg:'中女中 113-2-2 第 22 題',b:'calc',set:()=>setDS(3),t:'中女中 113-2-2 第 22 題　答案 (A)(C)(D)(E)',p:'簡式 CH₂O、含碳 40%（(A)(C) 對）。分子量 90 → C₃H₆O₃，所以 (B) C₄H₁₀O₂ 錯。\n(D)(E)：實驗式都是 CH₂O，等重的葡萄糖、乙酸與它，耗氧量相同、原子數也相同。'},
+ ]}];
+// 填入兩題裝置題的說明
+QS[0].items[0].t='中一中 110-2-2 第 23 題　答案 (A)(B)';
+QS[0].items[0].p='題目：燃燒分析裝置的甲、乙、丙、丁處各放什麼？丙、丁兩支吸收管，一支填過氯酸鎂（吸水）、一支填氫氧化鈉（吸 CO₂）；氧化銅使燃燒完全。\n原題圖中甲是試樣、乙是氧化銅、丙丁是兩支吸收管。請學生上台把三個零件擺上去，再按「檢查」。\n(A) 氧化銅放乙處 ○　(B) 氧化銅促使完全燃燒 ○\n(C)(D) ✕：過氯酸鎂要在前（丙）、NaOH 在後（丁）。\n(E) ✕：只需要秤兩支吸收管，不用秤 CuO。';
+QS[0].items[1].t='中一中 112-2-2 第 3 題　答案 (C)';QS[0].items[1].p='題目：甲管裝什麼、吸收什麼？CuO 是不是催化劑？\n答案：甲管裝過氯酸鎂吸收水蒸氣（(C) 對）。CuO 是氧化劑，不是催化劑（(E) 錯）。\n擺好後到實驗台 2 點火，看 CO 經過 CuO 變成 CO₂。';
+QS[0].items[2].p='(A) 甲管裝無水過氯酸鎂吸水 ○\n(B) 乙管裝 NaOH 吸 CO₂ ○\n(C) 高溫氧化銅防止燃燒不完全的 C、CO、H₂ 通過 ○\n(D) 通入純氧，故無法分析試樣中氧的含量 ✕（可以用減的求出）\n(E) 可直接求得分子式 ✕（只得實驗式）\n翻開下面的卡片逐題討論。';
+{const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
+  gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
+    b.addEventListener('click',()=>{setBench(it.b);it.set();if(it.b==='calc'){stepN=1;render3(false);}showStory(it.t,it.p);window.scrollTo({top:$('benchSeg').getBoundingClientRect().top+scrollY-10,behavior:'smooth'});});c.appendChild(b);});
+  d.appendChild(c);box.appendChild(d);});}
+
+// ================= 實驗台切換 =================
+let bench='build';
+const BENCHES=['build','burn','calc','quiz'];
+function setBench(b,noHash){if(!BENCHES.includes(b))b='build';
+  if(bench==='build'&&b!=='build')built={...slots};
+  bench=b;segSet($('benchSeg'),b);BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);
+  $('rigPanel').hidden=!(b==='build'||b==='burn');document.body.classList.toggle('building',b==='build');
+  if(b!=='build')sel=null;
+  if(b==='burn'){const v=['ok','swap','nocuo'].find(k=>JSON.stringify(slots)===JSON.stringify({ok:{cuo:'CuO',jia:'Mg',yi:'NaOH'},swap:{cuo:'CuO',jia:'NaOH',yi:'Mg'},nocuo:{cuo:null,jia:'Mg',yi:'NaOH'}}[k]))||'mine';segSet($('scen2'),v);}
+  if(b!=='burn'&&R.on){resetRun();$('run2').textContent='▶ 點火燃燒';}
+  drawRig();
+  if(!noHash)history.replaceState(null,'','#'+b);}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;const more=tickRun(dt);
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more&&!raf)lastT=0;}
+
+// ================= start =================
+slots={cuo:null,jia:null,yi:null};
+afterDS();
+setBench((location.hash||'#build').slice(1),true);
+if(bench!=='build'){slots={cuo:'CuO',jia:'Mg',yi:'NaOH'};built={...slots};setBench(bench,true);}
+window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
+</script>
+</body>
+</html>
