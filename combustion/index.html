@@ -7,22 +7,22 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
 <style>
-/* 燃燒分析：原子顏色照 CPK（C 黑、H 白、O 紅）；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
+/* 燃燒分析：原子顏色 C 綠（黑色在 CuO 上看不清楚）、H 白、O 紅；吸收劑：過氯酸鎂＝藍、NaOH＝紫、CuO＝黑 */
 :root{
-  --c-atom:#2a2a2a;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
+  --c-atom:#16915a;--c-ring:#ffffff;--h-atom:#ffffff;--h-line:#8593a1;--o-atom:#e0352b;
   --glass:#dceaf2;--glass-edge:#8fb0c2;--heat:#e8742a;--heat-soft:#fde4d0;
   --cuo:#2d2a28;--cuo-hi:#5f5751;--mg:#5f9fdc;--mg-hi:#cfe3f8;--naoh:#9a7fd4;--naoh-hi:#e3d9f7;
-  --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#3a3f45;--h-mass:#9aa7b4;--o-mass:#e0352b}
+  --flame:#f59e0b;--flame-in:#3b82f6;--c-mass:#16915a;--h-mass:#9aa7b4;--o-mass:#e0352b}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
-  --c-atom:#a4adb5;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#3fcf87;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
-  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
+  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}}
 :root[data-theme="dark"]{
-  --c-atom:#a4adb5;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
+  --c-atom:#3fcf87;--c-ring:#0e1318;--h-atom:#f5f7f9;--h-line:#6b7785;--o-atom:#ff6a5c;
   --glass:#1b2a35;--glass-edge:#4f6f82;--heat:#ff8a4c;--heat-soft:#3b2416;
   --cuo:#0b0a09;--cuo-hi:#3d3834;--mg:#3d77b8;--mg-hi:#9cc2ea;--naoh:#7457b8;--naoh-hi:#c1aeec;
-  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#a4adb5;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
+  --flame:#fbbf24;--flame-in:#60a5fa;--c-mass:#2fae6e;--h-mass:#5d6a77;--o-mass:#ff6a5c;color-scheme:dark}
 .wrap{max-width:1320px}
 .benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
 .benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
@@ -49,8 +49,6 @@ body.building .slotBox.filled{opacity:0}
 .slotBox.pick{stroke-width:4;opacity:1;animation:blink .9s infinite}
 @keyframes blink{50%{opacity:.35}}
 .atC{fill:var(--c-atom);stroke:var(--c-ring);stroke-width:2} .atH{fill:var(--h-atom);stroke:var(--h-line);stroke-width:1.2} .atO{fill:var(--o-atom)}
-.cuoFlash{animation:flash .5s}
-@keyframes flash{0%{filter:brightness(2.4)}100%{filter:none}}
 #flame{transform-origin:182px 215px;transition:opacity .3s}
 body.burning #flame{animation:flick .18s infinite alternate}
 @keyframes flick{to{transform:scale(1.06,.93)}}
@@ -230,7 +228,7 @@ body.burning #flame{animation:flick .18s infinite alternate}
       <span><i style="background:var(--c-atom)"></i>C 碳</span>
       <span><i style="background:var(--h-atom);border:1px solid var(--h-line)"></i>H 氫</span>
       <span><i style="background:var(--o-atom)"></i>O 氧</span>
-      <span>O₂＝紅紅　CO₂＝紅黑紅　CO＝黑紅　H₂O＝紅＋兩個白</span>
+      <span>O₂＝紅紅　CO₂＝紅綠紅　CO＝綠紅　H₂O＝紅＋兩個白</span>
     </div>
   </section>
 
@@ -489,7 +487,7 @@ function tickRun(dt){if(!R.on||R.paused)return false;const sp=R.spd;R.t+=dt*sp;
     const pos=posAt(p.s);
     // 高溫 CuO：CO → CO2
     if(p.type==='CO'&&slots.cuo==='CuO'&&pos.y===150&&pos.x>336){if(p.conv==null)p.conv=345+Math.random()*120;
-      if(pos.x>=p.conv){setType(p,'CO2');const cf=$('cuoFill');cf.classList.remove('cuoFlash');void cf.getBBox();cf.classList.add('cuoFlash');
+      if(pos.x>=p.conv){setType(p,'CO2');
         if(!R.said.cuo){R.said.cuo=1;status2('沒燒完全的 <b>CO</b> 經過高溫 <b>CuO</b>，被氧化成 <b>CO₂</b>（CuO 是氧化劑，不是催化劑）。');}}}
     const rg=regionOf(pos.x,pos.y);
     if(rg&&absorbs(slots[rg],p.type)){if(p.capAt==null)p.capAt=p.s+18+Math.random()*95;
