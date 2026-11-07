@@ -111,7 +111,7 @@
         <div class="v3"><canvas id="cvM" aria-label="分子 3D 模型"></canvas><span class="tag" id="mTag"></span>
           <div class="ov"><button class="btn" id="mReset">⟲ 視角</button><button class="btn" id="mFull">⛶ 全螢幕</button></div></div>
         <div class="side">
-          <div class="toolbar" style="padding:0 0 6px"><span class="seg" id="lwMode"><button data-v="lewis">路易斯結構式</button><button data-v="struct">結構式</button></span><span id="lwWhich"></span></div>
+          <div class="toolbar" style="padding:0 0 6px"><span class="seg" id="lwMode"><button data-v="lewis">路易斯結構式</button><button data-v="struct">結構式</button></span><label class="tog"><input type="checkbox" id="lwFg" checked>框出官能基</label><span id="lwWhich"></span></div>
           <canvas id="cvL" aria-label="路易斯結構式"></canvas>
           <table class="ftab" id="mTab"></table>
         </div>
@@ -312,7 +312,7 @@ function label(txt,col,size=.45,bg=null){const c=document.createElement('canvas'
 // =====================================================================
 // 1 分子
 // =====================================================================
-const MS={mode:'one',slot:0,sel:['EtOH','DME'],style:'bs',lp:true,lab:true,ang:false,fg:true,rot:false,lw:'lewis',focus:[null,null],M:[null,null]};
+const MS={mode:'one',slot:0,sel:['EtOH','DME'],style:'bs',lp:true,lab:true,ang:false,fg:true,rot:false,lw:'lewis',lwFg:true,focus:[null,null],M:[null,null]};
 let VM=null;const cache={};const getM=id=>cache[id]||(cache[id]=build(MBY[id]));
 function libUI(){const groups=[...new Set(MOLS.map(m=>m.g))];$('mLib').innerHTML=groups.map(g=>`<div class="row"><span class="tlabel">${g}</span>${MOLS.filter(m=>m.g===g).map(m=>{const M=getM(m.id);
   const cls=MS.sel[0]===m.id?'a':(MS.mode==='cmp'&&MS.sel[1]===m.id?'b':'');return`<button class="mchip ${cls}" data-id="${m.id}">${m.n}<small>${fmt(M.mf)}</small></button>`;}).join('')}</div>`).join('');}
@@ -344,7 +344,32 @@ function molDraw3D(fit){if(!VM)return;clear(VM.root);const ids=MS.mode==='cmp'?M
   if(fit)fitCam(VM,Math.max(...R),Ms.length===1&&Ms[0].def.spec==='ring'?V(.25,1,.9):V(0,0,1),tot/2);kick();}
 const nfa=x=>Math.abs(x-Math.round(x))<.05?String(Math.round(x)):x.toFixed(1);
 // 路易斯
-function lewisLayout(M){const N=M.at.length,pos=new Array(N).fill(null),lpd=M.at.map(()=>[]);
+// 有機分子：主鏈水平、官能基放右邊
+function orgLayout(M){const at=M.at,nb=M.nb,N=at.length;const heavy=k=>at[k].el!=='H';
+  const isDO=k=>at[k].el==='O'&&nb[k].length===1&&nb[k][0].o===2;// 末端的 =O 當分支
+  const cand=at.map((a,k)=>k).filter(k=>heavy(k)&&!isDO(k));if(!cand.length)return null;
+  const cn=k=>nb[k].map(y=>y.j).filter(j=>cand.includes(j));
+  const nE=cand.reduce((s,k)=>s+cn(k).length,0)/2;if(nE!==cand.length-1)return null;// 有環就不用
+  const path=(a,b)=>{const pr={[a]:-1},q=[a];while(q.length){const x=q.shift();cn(x).forEach(j=>{if(pr[j]===undefined){pr[j]=x;q.push(j);}});}const P=[];let k=b;while(k!==-1&&k!==undefined){P.unshift(k);k=pr[k];}return P;};
+  const inG=new Set();M.G.forEach(g=>g.a.forEach(k=>inG.add(k)));
+  let best=null,bs=-1e9;cand.forEach(a=>cand.forEach(b=>{const P=path(a,b);let sc=P.length*1000;P.forEach((k,i)=>{if(inG.has(k))sc+=10*i;});
+    const e=P[P.length-1];if(at[e].el==='O'&&nb[e].some(y=>at[y.j].el==='H'))sc+=5;if(sc>bs){bs=sc;best=P;}}));
+  const pos=new Array(N).fill(null),lpd=at.map(()=>[]),used=at.map(()=>[]);const SP=1.8,HL=.95,BL=1.45;
+  const U=[0,-1],D=[0,1],Lf=[-1,0],R=[1,0];const same=(a,b)=>a[0]===b[0]&&a[1]===b[1];
+  best.forEach((k,i)=>{pos[k]=[i*SP,0];if(i>0)used[k].push(Lf);if(i<best.length-1)used[k].push(R);});
+  const free=p=>pos.every(o=>!o||Math.hypot(o[0]-p[0],o[1]-p[1])>.7);
+  const place=(x,slotsH,slotsX)=>{const kids=nb[x].filter(y=>!pos[y.j]).map(y=>y.j).sort((a,b)=>heavy(b)-heavy(a));const branch=[];
+    kids.forEach(j=>{const sl=heavy(j)?slotsX:slotsH;const L=heavy(j)?BL:HL;let ok=false;
+      for(const sc of [1,1.6])for(const d of sl){if(ok)break;if(used[x].some(u=>same(u,d)))continue;const p=[pos[x][0]+d[0]*L*sc,pos[x][1]+d[1]*L*sc];if(free(p)){pos[j]=p;used[x].push(d);used[j].push([-d[0],-d[1]]);ok=true;if(heavy(j))branch.push([j,d]);}}
+      if(!ok){const d=sl.find(d=>!used[x].some(u=>same(u,d)))||sl[0];pos[j]=[pos[x][0]+d[0]*L*2,pos[x][1]+d[1]*L*2];used[x].push(d);used[j].push([-d[0],-d[1]]);if(heavy(j))branch.push([j,d]);}});
+    return branch;};
+  const q=[];best.forEach((k,i)=>{const first=i===0,last=i===best.length-1;
+    const sH=first&&last?[Lf,R,U,D]:first?[Lf,U,D]:last?[R,U,D]:[U,D];const sX=first&&last?[U,R,D,Lf]:first?[U,D,Lf]:last?[U,D,R]:[U,D];
+    place(k,sH,sX).forEach(b=>q.push(b));});
+  while(q.length){const [x,d]=q.shift();const p1=[d[1],d[0]],p2=[-d[1],-d[0]];const sl=[d,p2,p1].map(v=>[v[0]||0,v[1]||0]);place(x,sl,sl).forEach(b=>q.push(b));}
+  at.forEach((a,k)=>{let n=a.lp;for(const d of [U,D,Lf,R]){if(n<=0)break;if(used[k].some(u=>same(u,d)))continue;lpd[k].push(d);used[k].push(d);n--;}});
+  if(pos.some(p=>!p))return null;return{pos,lpd};}
+function lewisLayout(M){if(!M.def.mf&&!M.def.spec){const r=orgLayout(M);if(r)return r;}const N=M.at.length,pos=new Array(N).fill(null),lpd=M.at.map(()=>[]);
   if(M.def.spec){// 由立體投影
     const n=M.def.spec==='ring'?V(0,1,0):V(1,.6,.3).normalize();const u=perp(n),w=n.clone().cross(u);const sc=M.def.spec==='ring'?1.05:1.2;M.P.forEach((p,k)=>pos[k]=[p.dot(u)*sc,-p.dot(w)*sc]);
     M.LP.forEach((L,k)=>L.forEach(d=>{const x=d.dot(u),y=-d.dot(w);const l=Math.hypot(x,y)||1;lpd[k].push([x/l,y/l]);}));return{pos,lpd};}
@@ -362,19 +387,22 @@ function lewisLayout(M){const N=M.at.length,pos=new Array(N).fill(null),lpd=M.at
   return{pos,lpd};}
 function drawLewis(){const cv=$('cvL'),w=cv.parentElement.clientWidth-24;const M=MS.M[MS.mode==='cmp'?(MS.lwI||0):0];if(!M)return;const L=M._lw||(M._lw=lewisLayout(M));
   let x0=1e9,x1=-1e9,y0=1e9,y1=-1e9;L.pos.forEach(p=>{x0=Math.min(x0,p[0]);x1=Math.max(x1,p[0]);y0=Math.min(y0,p[1]);y1=Math.max(y1,p[1]);});
-  const pad=.9;const sw=(x1-x0+2*pad),shh=(y1-y0+2*pad);const s=Math.min(w/sw,360/shh,62);const h=Math.max(150,shh*s);
+  const fgOn=MS.lwFg&&M.G.length>0;const pad=.9;const sw=(x1-x0+2*pad),shh=(y1-y0+2*pad+(fgOn?.9:0));const s=Math.min(w/sw,360/shh,62);const h=Math.max(150,shh*s);
   const d=devicePixelRatio||1;cv.width=w*d;cv.height=h*d;cv.style.height=h+'px';const g=cv.getContext('2d');g.setTransform(d,0,0,d,0,0);g.fillStyle=C.panel;g.fillRect(0,0,w,h);
-  const X=p=>w/2+(p[0]-(x0+x1)/2)*s,Y=p=>h/2+(p[1]-(y0+y1)/2)*s;const fs=Math.max(13,Math.min(22,s*.42));
+  const X=p=>w/2+(p[0]-(x0+x1)/2)*s,Y=p=>h/2+(p[1]-(y0+y1)/2)*s-(fgOn?.45*s:0);const fs=Math.max(13,Math.min(22,s*.42));
   const hideH=k=>M.def.spec==='ring'&&M.at[k].el==='H'&&M.nb[k].some(y=>M.at[y.j].el==='C'&&Math.hypot(L.pos[k][0]-L.pos[y.j][0],L.pos[k][1]-L.pos[y.j][1])<.75);
+  if(fgOn){const seen=new Set();M.G.forEach(gr=>{const ks=gr.a.filter(k=>!hideH(k));if(!ks.length)return;let a0=1e9,a1=-1e9,b0=1e9,b1=-1e9;ks.forEach(k=>{const x=X(L.pos[k]),y=Y(L.pos[k]);a0=Math.min(a0,x);a1=Math.max(a1,x);b0=Math.min(b0,y);b1=Math.max(b1,y);});
+    const m=fs*.95;g.fillStyle=gr.c+'22';g.strokeStyle=gr.c;g.lineWidth=1.6;g.setLineDash([5,4]);g.beginPath();g.roundRect(a0-m,b0-m,a1-a0+2*m,b1-b0+2*m,10);g.fill();g.stroke();g.setLineDash([]);
+    if(!seen.has(gr.n+Math.round(b1))){seen.add(gr.n+Math.round(b1));g.fillStyle=gr.c;g.font=`700 ${Math.max(12,fs*.62)}px "Noto Sans TC",sans-serif`;g.textAlign='center';g.textBaseline='top';g.fillText(gr.n,(a0+a1)/2,b1+m+3);}});}
   g.strokeStyle=C.ink;g.lineCap='round';
   M.bd.forEach(([a,b,o])=>{if(hideH(a)||hideH(b))return;const A=[X(L.pos[a]),Y(L.pos[a])],B=[X(L.pos[b]),Y(L.pos[b])];const dx=B[0]-A[0],dy=B[1]-A[1],l=Math.hypot(dx,dy);const ux=dx/l,uy=dy/l,nx=-uy,ny=ux;const sh=fs*.62;
     const offs=o===1?[0]:o===2?[-3.2,3.2]:[-5,0,5];g.lineWidth=2;offs.forEach(k=>{g.beginPath();g.moveTo(A[0]+ux*sh+nx*k,A[1]+uy*sh+ny*k);g.lineTo(B[0]-ux*sh+nx*k,B[1]-uy*sh+ny*k);g.stroke();});});
   g.font=`700 ${fs}px "Noto Sans TC",sans-serif`;g.textAlign='center';g.textBaseline='middle';
-    M.at.forEach((a,k)=>{if(hideH(k))return;const x=X(L.pos[k]),y=Y(L.pos[k]);g.fillStyle=C.panel;g.beginPath();g.arc(x,y,fs*.55,0,7);g.fill();g.fillStyle=a.el==='H'?C.ink:(a.el==='C'?C.ink:elCol(a.el));if(a.el==='O'||a.el==='N'||a.el==='Cl'||a.el==='F')g.fillStyle=a.el==='Cl'?'#16903a':a.el==='F'?'#4e9a2a':elCol(a.el);g.fillText(a.el,x,y+1);
-    if(MS.lw==='lewis')L.lpd[k].forEach(dv=>{const r=fs*.78,nx=-dv[1],ny=dv[0];g.fillStyle=C.accent;[-1,1].forEach(sg=>{g.beginPath();g.arc(x+dv[0]*r+nx*sg*fs*.2,y+dv[1]*r+ny*sg*fs*.2,Math.max(2.2,fs*.11),0,7);g.fill();});});});
+    M.at.forEach((a,k)=>{if(hideH(k))return;const x=X(L.pos[k]),y=Y(L.pos[k]);g.fillStyle=C.panel;g.beginPath();g.arc(x,y,fs*.55,0,7);g.fill();g.fillStyle=C.ink;g.fillText(a.el,x,y+1);
+    if(MS.lw==='lewis')L.lpd[k].forEach(dv=>{const r=fs*.78,nx=-dv[1],ny=dv[0];g.fillStyle=C.ink;[-1,1].forEach(sg=>{g.beginPath();g.arc(x+dv[0]*r+nx*sg*fs*.2,y+dv[1]*r+ny*sg*fs*.2,Math.max(2.2,fs*.11),0,7);g.fill();});});});
   if(M.chg){g.strokeStyle=C.ink;g.lineWidth=2;const bx0=X([x0,0])-fs*1.4,bx1=X([x1,0])+fs*1.4,by0=Y([0,y0])-fs*1.3,by1=Y([0,y1])+fs*1.3;
     [[bx0,1],[bx1,-1]].forEach(([bx,sg])=>{g.beginPath();g.moveTo(bx+sg*8,by0);g.lineTo(bx,by0);g.lineTo(bx,by1);g.lineTo(bx+sg*8,by1);g.stroke();});
-    g.fillStyle=C.ink;g.font=`700 ${fs*.8}px "Noto Sans TC"`;g.fillText((Math.abs(M.chg)>1?Math.abs(M.chg):'')+(M.chg>0?'+':'−'),bx1+fs*.6,by0+fs*.2);}
+    g.fillStyle=C.ink;g.font=`700 ${fs*.8}px "Noto Sans TC",sans-serif`;g.fillText((Math.abs(M.chg)>1?Math.abs(M.chg):'')+(M.chg>0?'+':'−'),bx1+fs*.6,by0+fs*.2);}
   if(M.def.spec==='ring'){g.fillStyle=C.muted;g.font='12px "Noto Sans TC"';g.textAlign='left';g.fillText('由立體模型投影（環狀葡萄糖）',6,h-8);}}
 function tabHTML(){const Ms=MS.M.slice(0,MS.mode==='cmp'?2:1);const rows=[['名稱',M=>M.def.n],['類別',M=>M.cls],['分子式',M=>fmt(M.mf),'f',M=>M.mf],['實驗式',M=>M.ef?fmt(M.ef):'—（離子）','f',M=>M.ef],
    ['示性式',M=>M.cf?fmt(M.cf):'—','f',M=>M.cf],['分子量',M=>(Math.round(M.mass*10)/10)+'','f',M=>Math.round(M.mass*10)],['官能基',M=>M.G.length?[...new Set(M.G.filter(g=>!/碳碳/.test(g.n)).map(g=>g.n))].join('、')||'—':'—'],
@@ -406,7 +434,7 @@ function molAll(fit){libUI();segSet($('mMode'),MS.mode);segSet($('mSlot'),MS.slo
   ['lp','lab','ang','fg','rot'].forEach(k=>$('m'+k[0].toUpperCase()+k.slice(1)).checked=MS[k]);
   molDraw3D(fit);if(MS.mode==='cmp'){$('lwWhich').innerHTML=`<span class="seg" id="lwI"><button data-v="0">左</button><button data-v="1">右</button></span>`;segSet($('lwI'),MS.lwI||0);segOn($('lwI'),v=>{MS.lwI=+v;molAll();});}else $('lwWhich').innerHTML='';
   drawLewis();$('mTab').innerHTML=tabHTML();molText();$('mTag').textContent=MS.mode==='cmp'?'左：黑框　右：藍框':'';}
-segOn($('mMode'),v=>{MS.mode=v;MS.slot=1;molAll(true);});segOn($('mSlot'),v=>{MS.slot=+v;molAll();});segOn($('mStyle'),v=>{MS.style=v;molAll();});segOn($('lwMode'),v=>{MS.lw=v;drawLewis();});
+segOn($('mMode'),v=>{MS.mode=v;MS.slot=1;molAll(true);});segOn($('mSlot'),v=>{MS.slot=+v;molAll();});segOn($('mStyle'),v=>{MS.style=v;molAll();});segOn($('lwMode'),v=>{MS.lw=v;drawLewis();});$('lwFg').addEventListener('change',e=>{MS.lwFg=e.target.checked;drawLewis();});
 ['Lp','Lab','Ang','Fg','Rot'].forEach(k=>$('m'+k).addEventListener('change',e=>{MS[k.toLowerCase()]=e.target.checked;molAll();}));
 $('mReset').addEventListener('click',()=>molDraw3D(true));
 // 點選原子
