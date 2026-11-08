@@ -110,7 +110,14 @@
           <span class="seg" id="hDim"><button data-v="2" aria-pressed="true">2D 剖面</button><button data-v="3" aria-pressed="false">3D 立體</button></span>
           <button class="btn primary" id="hPlay">⏸ 暫停</button>
           <button class="btn" id="hStep">下一步 ▸</button>
-          <span class="seg"><button class="btn" style="border:0" onclick="hZoom(1.3)" aria-label="放大">＋</button><button class="btn" style="border:0" onclick="hZoom(1/1.3)" aria-label="縮小">－</button><button class="btn" style="border:0" onclick="hZoom(0)" aria-label="回復">⟲</button></span>
+          <label class="tog" style="font-weight:700"><input type="checkbox" id="hLung" checked> 🫁 顯示肺臟</label>
+        </div>
+        <div class="toolbar" style="padding-top:0">
+          <span class="tlabel">縮放、移動</span>
+          <span class="seg"><button class="btn" style="border:0" onclick="hZoom(1.3)" aria-label="放大">＋</button><button class="btn" style="border:0" onclick="hZoom(1/1.3)" aria-label="縮小">－</button></span>
+          <span class="seg"><button class="btn" style="border:0" onclick="hPan(-1,0)" aria-label="往左">←</button><button class="btn" style="border:0" onclick="hPan(0,-1)" aria-label="往上">↑</button><button class="btn" style="border:0" onclick="hPan(0,1)" aria-label="往下">↓</button><button class="btn" style="border:0" onclick="hPan(1,0)" aria-label="往右">→</button></span>
+          <button class="btn" onclick="hZoom(0)">⟲ 回復</button>
+          <span class="hint">2D：滾輪或雙指縮放，直接拖曳畫面移動</span>
           <span class="seg" id="hSpeed"><button data-v="8" aria-pressed="false">很慢</button><button data-v="3.2" aria-pressed="true">慢</button><button data-v="0.83" aria-pressed="false">真實 72 次/分</button></span>
         </div>
         <div id="h2wrap" class="cbox"><canvas id="cvHeart"></canvas></div>
@@ -119,7 +126,6 @@
           <span class="tlabel">標示</span>
           <span class="seg" id="hLab"><button data-v="name" aria-pressed="true">名稱</button><button data-v="code" aria-pressed="false">代號</button><button data-v="none" aria-pressed="false">不標（考自己）</button></span>
           <span class="seg" id="hMode"><button data-v="2" aria-pressed="true">課本兩步</button><button data-v="3" aria-pressed="false">分三步</button></span>
-          <label class="tog"><input type="checkbox" id="hLung" checked> 肺臟</label>
           <label class="tog" id="hTintL"><input type="checkbox" id="hTint" checked> 血液上色（關掉＝考卷樣式）</label>
           <label class="tog"><input type="checkbox" id="hSnd"> 🔊 心音</label>
         </div>
@@ -517,15 +523,16 @@ function hMkView(){const lung=HS.lung;const w0=lung?640:340,h0=lung?350:334,OX=l
   const s=B.s*HZ.k,ox=cx+(B.ox+OX*B.s-cx)*HZ.k+HZ.dx,oy=cy+(B.oy+OY*B.s-cy)*HZ.k+HZ.dy;
   return{s,ox,oy,X:x=>ox+x*s,Y:y=>oy+y*s,inv:(x,y)=>[(x-ox)/s,(y-oy)/s],base:B,OX,OY};}
 SIZE.heart=()=>{({W:hW,H:hH}=fit($('cvHeart'),HS.lung?.62:.9,320,640));hView=hMkView();window.H3&&window.H3.resize();};
-function hZoomAt(f,sx,sy){const k2=clamp(HZ.k*f,1,6);const V=hMkView();const[mx,my]=V.inv(sx,sy);const B=V.base,cx=hW/2,cy=hH/2;
-  HZ.k=k2;const s2=B.s*k2;HZ.dx=sx-(cx+(B.ox+V.OX*B.s-cx)*k2)-mx*s2;HZ.dy=sy-(cy+(B.oy+V.OY*B.s-cy)*k2)-my*s2;if(k2===1){HZ.dx=0;HZ.dy=0;}hView=hMkView();kick();}
+function hZoomAt(f,sx,sy){const k2=clamp(HZ.k*f,.6,6);const V=hMkView();const[mx,my]=V.inv(sx,sy);const B=V.base,cx=hW/2,cy=hH/2;
+  HZ.k=k2;const s2=B.s*k2;HZ.dx=sx-(cx+(B.ox+V.OX*B.s-cx)*k2)-mx*s2;HZ.dy=sy-(cy+(B.oy+V.OY*B.s-cy)*k2)-my*s2;hView=hMkView();kick();}
+window.hPan=(dx,dy)=>{if(HS.dim==='3'){window.H3&&window.H3.pan(dx,dy);return;}HZ.dx+=dx*hW*.12;HZ.dy+=dy*hH*.12;hView=hMkView();kick();};
 window.hZoom=f=>{if(HS.dim==='3'){window.H3&&window.H3.zoom(f);return;}if(f===0){HZ.k=1;HZ.dx=HZ.dy=0;hView=hMkView();kick();return;}hZoomAt(f,hW/2,hH/2);};
 {const cv=$('cvHeart');const pts=new Map();let pinch=0,panFrom=null;
   cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();hZoomAt(Math.exp(-e.deltaY*.0015),e.clientX-r.left,e.clientY-r.top);},{passive:false});
   cv.addEventListener('pointerdown',e=>{pts.set(e.pointerId,[e.clientX,e.clientY]);cv.setPointerCapture(e.pointerId);if(pts.size===2){const[a,b]=[...pts.values()];pinch=Math.hypot(a[0]-b[0],a[1]-b[1]);}else panFrom=[e.clientX,e.clientY,HZ.dx,HZ.dy];});
   cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,[e.clientX,e.clientY]);const r=cv.getBoundingClientRect();
     if(pts.size===2){const[a,b]=[...pts.values()];const d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(pinch){hZoomAt(d/pinch,(a[0]+b[0])/2-r.left,(a[1]+b[1])/2-r.top);}pinch=d;}
-    else if(panFrom&&HZ.k>1){HZ.dx=panFrom[2]+e.clientX-panFrom[0];HZ.dy=panFrom[3]+e.clientY-panFrom[1];hView=hMkView();kick();}});
+    else if(panFrom){HZ.dx=panFrom[2]+e.clientX-panFrom[0];HZ.dy=panFrom[3]+e.clientY-panFrom[1];hView=hMkView();kick();}});
   const up=e=>{pts.delete(e.pointerId);if(pts.size<2)pinch=0;if(!pts.size)panFrom=null;};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);cv.style.touchAction='none';}
 let actx=null;function thump(f,dur,vol){if(!HS.snd)return;try{actx=actx||new AudioContext();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='sine';
   g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(vol,actx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+dur+.02);}catch(e){}}
@@ -813,7 +820,7 @@ async function build(){if(built)return;built=true;
   document.getElementById('h3cut').addEventListener('change',e=>{cutOn=e.target.checked;cutMesh.visible=true;kick();});
   document.getElementById('h3blood').addEventListener('change',e=>{bloodOn=e.target.checked;kick();});
   lungMat.emissive=new THREE.Color(0);
-  window.H3={resize,draw,zoom:f=>{if(!f){cam.position.set(-3.2,2.4,17.5);ctl.target.set(.3,.9,-.9);kick();return;}const t=ctl.target;cam.position.sub(t).multiplyScalar(1/f).add(t);const d=cam.position.distanceTo(t);if(d<3||d>30)cam.position.sub(t).setLength(clamp(d,3,30)).add(t);kick();},lung:on=>{lungG.visible=on;kick();}};
+  window.H3={resize,draw,zoom:f=>{if(!f){cam.position.set(-3.2,2.4,17.5);ctl.target.set(.3,.9,-.9);kick();return;}const t=ctl.target;cam.position.sub(t).multiplyScalar(1/f).add(t);const d=cam.position.distanceTo(t);if(d<3||d>30)cam.position.sub(t).setLength(clamp(d,3,30)).add(t);kick();},lung:on=>{lungG.visible=on;kick();},pan:(dx,dy)=>{const d=cam.position.distanceTo(ctl.target)*.08;const r=new THREE.Vector3().setFromMatrixColumn(cam.matrix,0),u=new THREE.Vector3().setFromMatrixColumn(cam.matrix,1);const v=r.multiplyScalar(-dx*d).add(u.multiplyScalar(dy*d));cam.position.add(v);ctl.target.add(v);kick();}};
   lungG.visible=HS.lung;
   resize();kick();
 }
