@@ -113,11 +113,12 @@
           <span class="seg" id="hSpeed"><button data-v="8" aria-pressed="false">很慢</button><button data-v="3.2" aria-pressed="true">慢</button><button data-v="0.83" aria-pressed="false">真實 72 次/分</button></span>
         </div>
         <div id="h2wrap" class="cbox"><canvas id="cvHeart"></canvas></div>
-        <div id="h3wrap" class="cbox" hidden><div class="stage3d" id="h3stage"><div class="ovl" style="left:8px;top:8px"><button class="btn" data-cam="front">正面</button><button class="btn" data-cam="side">側面</button><button class="btn" data-cam="top">上方</button></div><div class="ovl" style="right:8px;top:8px"><label class="tog" style="background:rgba(22,29,37,.8);color:#e4e9ee;border-color:#3a4652"><input type="checkbox" id="h3cut" checked> 剖開前半</label></div></div></div>
+        <div id="h3wrap" class="cbox" hidden><div class="stage3d" id="h3stage"><div class="ovl" style="left:8px;top:8px"><button class="btn" data-cam="front">正面</button><button class="btn" data-cam="side">側面</button><button class="btn" data-cam="back">背面</button><button class="btn" data-cam="top">上方</button></div><div class="ovl" style="right:8px;bottom:8px"><label class="tog" style="background:rgba(22,29,37,.8);color:#e4e9ee;border-color:#3a4652"><input type="checkbox" id="h3cut" checked> 剖開前半</label><label class="tog" style="background:rgba(22,29,37,.8);color:#e4e9ee;border-color:#3a4652"><input type="checkbox" id="h3blood" checked> 血液</label></div></div></div>
         <div class="toolbar">
           <span class="tlabel">標示</span>
           <span class="seg" id="hLab"><button data-v="name" aria-pressed="true">名稱</button><button data-v="code" aria-pressed="false">代號</button><button data-v="none" aria-pressed="false">不標（考自己）</button></span>
           <span class="seg" id="hMode"><button data-v="2" aria-pressed="true">課本兩步</button><button data-v="3" aria-pressed="false">分三步</button></span>
+          <label class="tog" id="hTintL"><input type="checkbox" id="hTint" checked> 血液上色（關掉＝考卷樣式）</label>
           <label class="tog"><input type="checkbox" id="hSnd"> 🔊 心音</label>
         </div>
         <div class="toolbar">
@@ -436,51 +437,53 @@ function mkView(W,H,w0,h0,pad=6){const s=Math.min((W-2*pad)/w0,(H-2*pad)/h0);ret
 <script>
 // ================= 1 心臟 =================
 // 心動週期 t∈[0,1)：A 心房收縮 0–0.12、V 心室收縮 0.12–0.45、D 全心舒張 0.45–1
-const HS={t:0.28,dur:3.2,play:true,mode:2,lab:'name',def:'',snd:false,dim:'2',sel:null,target:null,
-  codes:{RA:'甲',LA:'乙',RV:'丙',LV:'丁',svc:'a',ao:'b',pa:'c',pv:'d',ivc:'e'}};
+const HS={t:0.28,dur:3.2,play:true,mode:2,lab:'name',def:'',snd:false,dim:'2',sel:null,target:null,tint:true,
+  codes:{RA:'丁',RV:'丙',LA:'甲',LV:'乙',svc:'d',ao:'b',pa:'c',pv:'a',ivc:''}};
 window.HS=HS;
 const phaseOf=t=>t<.12?'A':t<.45?'V':'D';
 const bump=(t,a,b)=>t<a||t>b?0:Math.sin(Math.PI*(t-a)/(b-a));
 function hState(t){const ph=phaseOf(t);
   const ca=bump(t,0,.12),cv=bump(t,.12,.45);
-  // 房室瓣：心室收縮時關閉；動脈瓣：心室收縮時打開（稍晚）
   const av=t<.12?1:t<.14?1-(t-.12)/.02:t<.45?0:t<.5?(t-.45)/.05:1;
   const sl=t<.15?0:t<.18?(t-.15)/.03:t<.43?1:t<.46?1-(t-.43)/.03:0;
   return{ph,ca,cv,av,sl};}
 window.hState=hState;
-// 模型座標 640×560；觀察者的左邊＝心臟的右邊（和課本圖一樣）
+// 模型座標 340×340，照考卷的心臟圖（圖的左邊＝心臟的右邊）
 const HG={
-  RA:{type:'ell',c:[200,250],r:[62,58]},LA:{type:'ell',c:[452,232],r:[60,46]},
-  RV:{type:'poly',P:[[170,326],[292,320],[306,400],[276,462],[238,474],[184,412]]},
-  LV:{type:'poly',P:[[334,322],[472,318],[470,420],[424,480],[362,498],[330,420]]},
-  outer:[[118,312],[540,302],[528,424],[474,500],[372,548],[326,550],[244,506],[150,428]]};
+  outer:[[58,172],[60,150],[74,135],[96,130],[118,136],[136,150],[160,152],[190,150],[203,118],[218,96],[242,90],[262,100],[272,120],[266,150],[262,200],[260,255],[245,295],[214,322],[178,322],[142,306],[110,276],[86,238],[66,205]],
+  RA:[[70,168],[76,149],[94,142],[112,150],[120,172],[118,198],[108,214],[88,214],[74,196]],
+  RV:[[106,226],[124,218],[140,205],[148,178],[158,170],[168,182],[170,235],[174,288],[154,293],[128,277],[108,250]],
+  LV:[[186,172],[198,170],[214,188],[234,198],[246,206],[244,252],[226,282],[206,276],[194,238],[184,200]],
+  LA:[[208,122],[222,103],[246,100],[262,114],[256,146],[244,170],[232,190],[216,178],[206,150]],
+  vessels:{svc:{P:[[78,18],[78,90],[86,146]],w:26,o:0},ivc:{P:[[50,304],[60,240],[80,200]],w:24,o:0},
+    ao:{P:[[192,176],[186,150],[170,100],[140,18]],w:24,o:1},pa:{P:[[156,188],[158,160],[180,118],[228,56]],w:22,o:0},
+    pv1:{P:[[320,80],[286,95],[260,110]],w:11,o:1},pv2:{P:[[324,120],[292,124],[260,130]],w:11,o:1}},
+  holes:{RA:[[88,160,7,10,.3],[86,192,6,9,-.2]],LA:[[218,112,6,8,0],[216,134,6,8,0],[248,122,6,8,0],[246,144,6,8,0]]}};
+window.HG=HG;
 const HSEG={
-  svc:{P:[[205,26],[205,150],[203,214]],o:0,on:'VD',w:30},
-  ivc:{P:[[110,556],[110,330],[146,292],[178,270]],o:0,on:'VD',w:30},
-  tri:{P:[[202,262],[208,318],[232,402]],o:0,on:'AD',w:0},
-  pa:{P:[[232,402],[262,348],[281,300],[285,215],[292,142]],o:0,on:'V',w:30},
-  paL:{P:[[292,142],[200,128],[60,116]],o:0,on:'V',w:26},
-  paR:{P:[[292,142],[420,130],[620,118]],o:0,on:'V',w:26},
-  pv1:{P:[[636,198],[540,212],[480,226]],o:1,on:'VD',w:18},
-  pv2:{P:[[636,266],[540,256],[482,244]],o:1,on:'VD',w:18},
-  mit:{P:[[452,250],[444,306],[412,398]],o:1,on:'AD',w:0},
-  ao:{P:[[412,398],[372,348],[352,292],[344,200],[350,112],[382,62],[452,46],[516,74],[542,132]],o:1,on:'V',w:34},
-  aoD:{P:[[542,132],[554,240],[562,340],[568,556]],o:1,on:'V',w:30},
-  aoU:{P:[[402,52],[400,4]],o:1,on:'V',w:14},
-  // 異常
-  mitL:{P:[[412,398],[444,306],[452,250]],o:1,on:'V',w:0,def:'mit'},
-  triL:{P:[[232,402],[208,318],[202,262]],o:0,on:'V',w:0,def:'tri'},
-  aoL:{P:[[352,250],[352,300],[380,352],[412,398]],o:1,on:'D',w:0,def:'aov'},
-  pvL:{P:[[283,250],[281,300],[262,348],[232,402]],o:0,on:'D',w:0,def:'pv'},
-  vsd1:{P:[[410,428],[318,414],[244,428]],o:1,on:'V',w:0,def:'vsd'},
-  vsd2:{P:[[250,440],[318,432],[396,446]],o:0,on:'A',w:0,def:'vsd'}};
-const HVAL={tri:{c:[207,318],h:35,dir:1,ty:'av'},mit:{c:[446,306],h:32,dir:1,ty:'av'},
-  pul:{c:[281,304],h:17,dir:-1,ty:'sl'},aov:{c:[352,306],h:16,dir:-1,ty:'sl'}};
+  svc:{P:[[78,18],[78,90],[86,146],[94,172]],o:0,on:'VD',v:1},
+  ivc:{P:[[50,304],[60,240],[80,200],[94,184]],o:0,on:'VD',v:1},
+  tri:{P:[[94,178],[113,219],[138,252]],o:0,on:'AD',v:.8},
+  pa:{P:[[138,252],[154,205],[158,165],[180,118],[228,56]],o:0,on:'V',v:1.2},
+  pv1:{P:[[320,80],[286,95],[260,110],[236,140]],o:1,on:'VD',v:1},
+  pv2:{P:[[324,120],[292,124],[260,130],[236,144]],o:1,on:'VD',v:1},
+  mit:{P:[[236,142],[226,192],[216,236]],o:1,on:'AD',v:.8},
+  ao:{P:[[216,236],[198,200],[188,160],[170,100],[140,18]],o:1,on:'V',v:1.2},
+  mitL:{P:[[216,236],[226,192],[236,142]],o:1,on:'V',def:'mit',v:.6},
+  triL:{P:[[138,252],[113,219],[94,178]],o:0,on:'V',def:'tri',v:.6},
+  aoL:{P:[[186,140],[189,166],[205,215]],o:1,on:'D',def:'aov',v:.6},
+  pvL:{P:[[160,140],[157,170],[146,220]],o:0,on:'D',def:'pv',v:.6},
+  vsd1:{P:[[212,250],[186,248],[150,252]],o:1,on:'V',def:'vsd',v:.6},
+  vsd2:{P:[[150,262],[186,260],[210,262]],o:0,on:'A',def:'vsd',v:.6}};
+// 瓣膜：c 中心、h 半寬、a 瓣環方向、n 下游方向
+const HVAL={tri:{c:[113,219],h:13,a:.37,n:[.35,.94],ty:'av'},mit:{c:[226,191],h:15,a:.6,n:[-.4,.92],ty:'av'},
+  pul:{c:[157,168],h:10,a:.08,n:[.1,-1],ty:'sl'},aov:{c:[189,164],h:11,a:-.25,n:[-.3,-.95],ty:'sl'}};
+window.HVAL=HVAL;
 const HNAME={RA:'右心房',LA:'左心房',RV:'右心室',LV:'左心室',svc:'上大靜脈',ivc:'下大靜脈',pa:'肺動脈',pv:'肺靜脈',ao:'主動脈'};
 const HINFO={
   RA:'<b>右心房</b>：接收上、下大靜脈流回來的<b>缺氧血</b>（來自全身）——體循環的終點。心房收縮時把血液擠進右心室。',
   RV:'<b>右心室</b>：收縮時把缺氧血壓進<b>肺動脈</b>送到肺——肺循環的起點。',
-  LA:'<b>左心房</b>：接收<b>肺靜脈</b>流回來的<b>充氧血</b>——肺循環的終點。',
+  LA:'<b>左心房</b>：接收<b>肺靜脈</b>流回來的<b>充氧血</b>——肺循環的終點。圖中的小圓圈是肺靜脈的開口。',
   LV:'<b>左心室</b>：管壁最厚、最有力，收縮時把充氧血壓進<b>主動脈</b>送往全身——體循環的起點。',
   svc:'<b>上大靜脈</b>：收集頭部、手臂的缺氧血，流回右心房（手臂靜脈注射的藥物走這條）。',
   ivc:'<b>下大靜脈</b>：收集軀幹、內臟、腿部的缺氧血，流回右心房。',
@@ -491,19 +494,16 @@ const HINFO={
   mit:'<b>左邊的房室瓣</b>（二尖瓣）：在左心房與左心室之間。心室收縮時關閉，防止血液倒流回心房。',
   pul:'<b>肺動脈瓣</b>：在右心室與肺動脈之間。心臟舒張時關閉，防止血液由肺動脈倒流回心室。',
   aov:'<b>主動脈瓣</b>：在左心室與主動脈之間。心臟舒張時關閉，防止血液由主動脈倒流回心室。'};
-const HDEF={mit:'mit',tri:'tri',aov:'aov',pv:'pul'};
-// 粒子
+const HDEF={mit:'mit',tri:'tri',aov:'aov',pv:'pul'};window.HDEF=HDEF;
 const HP={};
-function hInitParticles(){for(const k in HSEG){const s=HSEG[k];const L=plen(s.P);const n=Math.max(3,Math.round(L/(s.w?16:22)));HP[k]=Array.from({length:n},(_,i)=>({s:(i+rnd(i*7+k.length))*L/n,j:(rnd(i*3+k.charCodeAt(0))-.5)}));s.L=L;}}
-hInitParticles();
+for(const k in HSEG){const s=HSEG[k];s.L=plen(s.P);const n=Math.max(3,Math.round(s.L/13));HP[k]=Array.from({length:n},(_,i)=>({s:(i+rnd(i*7+k.length))*s.L/n,j:(rnd(i*3+k.charCodeAt(0))-.5)}));}
 const hOn=(k,ph)=>{const s=HSEG[k];if(s.def&&s.def!==HS.def)return false;return s.on.includes(ph);};
 window.hSegOn=hOn;window.HSEG=HSEG;
 let hView=null,hW=0,hH=0;
-SIZE.heart=()=>{({W:hW,H:hH}=fit($('cvHeart'),.86,340,620));hView=mkView(hW,hH,660,560);window.H3&&window.H3.resize();};
-// 聲音
+SIZE.heart=()=>{({W:hW,H:hH}=fit($('cvHeart'),.9,340,640));hView=mkView(hW,hH,340,334);window.H3&&window.H3.resize();};
 let actx=null;function thump(f,dur,vol){if(!HS.snd)return;try{actx=actx||new AudioContext();const o=actx.createOscillator(),g=actx.createGain();o.frequency.value=f;o.type='sine';
   g.gain.setValueAtTime(0,actx.currentTime);g.gain.linearRampToValueAtTime(vol,actx.currentTime+.01);g.gain.exponentialRampToValueAtTime(.001,actx.currentTime+dur);o.connect(g).connect(actx.destination);o.start();o.stop(actx.currentTime+dur+.02);}catch(e){}}
-let hFlash={k:'',t:0};
+let hFlash={k:'',t:0};window.hFlashGet=()=>hFlash;
 TICK.heart=dt=>{const t0=HS.t;
   if(HS.play||HS.target!==null){HS.t+=dt/HS.dur;
     if(HS.target!==null){const tg=HS.target;const passed=(t0<=tg&&HS.t>=tg)||(t0>tg&&HS.t>=1+tg);if(passed){HS.t=tg;HS.target=null;}}
@@ -512,65 +512,65 @@ TICK.heart=dt=>{const t0=HS.t;
     if(cross(.12)){thump(55,.18,.9);hFlash={k:'lub',t:1};}
     if(cross(.45)){thump(80,.12,.7);hFlash={k:'dub',t:1};}
     const st=hState(HS.t);
-    for(const k in HSEG){if(!hOn(k,st.ph))continue;const s=HSEG[k];let v=s.w?120:95;if(k==='tri'||k==='mit')v=st.ph==='A'?150:60;if(s.def)v=70;
+    for(const k in HSEG){if(!hOn(k,st.ph))continue;const s=HSEG[k];let v=s.v*60;if(k==='tri'||k==='mit')v=st.ph==='A'?80:30;
       HP[k].forEach(p=>{p.s+=v*dt*(3.2/HS.dur)*.5;if(p.s>s.L)p.s-=s.L;});}
   }
   hFlash.t=Math.max(0,hFlash.t-dt*1.6);
   hUI();return HS.play||HS.target!==null||hFlash.t>0||HS.dim==='3';};
-function hBlood(k){const o=HSEG[k]?HSEG[k].o:(k==='LA'||k==='LV')?1:0;return o?C.oxy:C.deoxy;}
+const cenOf=P=>[P.reduce((a,p)=>a+p[0],0)/P.length,P.reduce((a,p)=>a+p[1],0)/P.length];
+const scaleP=(P,f,c)=>{c=c||cenOf(P);return P.map(([x,y])=>[c[0]+(x-c[0])*f,c[1]+(y-c[1])*f]);};
+function hShapes(st){return{RA:scaleP(HG.RA,1-.16*st.ca),LA:scaleP(HG.LA,1-.16*st.ca),RV:scaleP(HG.RV,1-.2*st.cv,[150,250]),LV:scaleP(HG.LV,1-.2*st.cv,[218,240]),outer:scaleP(HG.outer,1-.035*st.cv,[170,250])};}
+window.hShapes=hShapes;
+function hValveTips(k,st){const v=HVAL[k];const open=v.ty==='av'?st.av:st.sl;const leak=HDEF[HS.def]===k;const a=Math.max(open,leak?.3:0)*1.2;
+  const ux=Math.cos(v.a),uy=Math.sin(v.a);return[-1,1].map(sd=>{const hx=v.c[0]+sd*v.h*ux,hy=v.c[1]+sd*v.h*uy;let vx=v.c[0]-hx,vy=v.c[1]-hy;
+    const rot=s=>[vx*Math.cos(s*a)-vy*Math.sin(s*a),vx*Math.sin(s*a)+vy*Math.cos(s*a)];let r=rot(1);if(r[0]*v.n[0]+r[1]*v.n[1]<0)r=rot(-1);
+    return{h:[hx,hy],t:[hx+r[0]*1.05,hy+r[1]*1.05],leak};});}
+window.hValveTips=hValveTips;
 DRAW.heart=()=>{if(HS.dim==='3'){window.H3&&window.H3.draw();return;}
-  const g=$('cvHeart').getContext('2d');g.clearRect(0,0,hW,hH);const V=hView;if(!V)return;const st=hState(HS.t);
-  g.save();g.translate(V.ox,V.oy);g.scale(V.s,V.s);
-  const tube=(k,col)=>{const s=HSEG[k];if(!s.w)return;g.lineCap='round';g.lineJoin='round';smooth(g,s.P);g.strokeStyle=C.muscle2;g.lineWidth=s.w+5;g.stroke();smooth(g,s.P);g.strokeStyle=col||hBlood(k);g.globalAlpha=.55;g.lineWidth=s.w;g.stroke();g.globalAlpha=1;};
-  // 後方：降主動脈、肺靜脈
-  ['aoD','pv1','pv2'].forEach(k=>tube(k));
-  // 心肌外形
-  const sc=(P,c,f)=>P.map(([x,y])=>[c[0]+(x-c[0])*f,c[1]+(y-c[1])*f]);
-  const outer=sc(HG.outer,[330,420],1-.045*st.cv);
-  smooth(g,outer,true);g.fillStyle=C.muscle;g.fill();g.strokeStyle=C.muscle2;g.lineWidth=3;g.stroke();
-  const ell=(o,f)=>{g.beginPath();g.ellipse(o.c[0],o.c[1],o.r[0]*f,o.r[1]*f,0,0,TAU);};
-  ['RA','LA'].forEach(k=>{ell(HG[k],1.22-.08*st.ca);g.fillStyle=C.muscle;g.fill();g.strokeStyle=C.muscle2;g.lineWidth=3;g.stroke();});
-  const cen=P=>[P.reduce((a,p)=>a+p[0],0)/P.length,P.reduce((a,p)=>a+p[1],0)/P.length];
+  const g=$('cvHeart').getContext('2d');g.clearRect(0,0,hW,hH);const V=hView;if(!V)return;const st=hState(HS.t);const S=hShapes(st);
+  const WALL='#c4c4c4',LINE='#2f2f2f';const dark=document.documentElement.dataset.theme==='dark'||matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light';
+  const wall=dark?'#6f747a':WALL,line2=dark?'#e2e5e8':LINE,lum=dark?'#1d2329':'#ffffff';
+  const tint=(o,a=.22)=>HS.tint?(o?C.oxy:C.deoxy):null;
+  g.save();g.translate(V.ox,V.oy);g.scale(V.s,V.s);g.lineJoin='round';g.lineCap='round';const lw=1.6;
+  const vessel=k=>{const v=HG.vessels[k];const sel=HS.sel===k||(HS.sel==='pv'&&k.startsWith('pv'));
+    smooth(g,v.P);g.strokeStyle=line2;g.lineWidth=v.w+lw*2;g.stroke();smooth(g,v.P);g.strokeStyle=lum;g.lineWidth=v.w;g.stroke();
+    if(HS.tint){smooth(g,v.P);g.strokeStyle=v.o?C.oxy:C.deoxy;g.globalAlpha=.22;g.lineWidth=v.w;g.stroke();g.globalAlpha=1;}
+    if(sel){smooth(g,v.P);g.strokeStyle=C.accent;g.globalAlpha=.35;g.lineWidth=v.w+8;g.stroke();g.globalAlpha=1;}
+    const end=k==='pa'?[v.P[v.P.length-1],v.P[v.P.length-2]]:[v.P[0],v.P[1]];const[a,b]=end;const ang=Math.atan2(b[1]-a[1],b[0]-a[0]);g.strokeStyle=line2;g.lineWidth=lw;g.beginPath();g.ellipse(a[0],a[1],v.w*.18,v.w/2,ang,0,TAU);g.stroke();};
+  // 後方血管
+  ['pv1','pv2','ao','ivc','svc'].forEach(vessel);
+  // 心壁
+  smooth(g,S.outer,true);g.fillStyle=wall;g.fill();g.strokeStyle=line2;g.lineWidth=lw;g.stroke();
   const vsd=HS.def==='vsd';
-  const cav={RA:()=>ell(HG.RA,1-.2*st.ca),LA:()=>ell(HG.LA,1-.2*st.ca),
-    RV:()=>smooth(g,sc(HG.RV.P,cen(HG.RV.P),1-.3*st.cv),true),LV:()=>smooth(g,sc(HG.LV.P,cen(HG.LV.P),1-.3*st.cv),true)};
-  for(const k in cav){cav[k]();let col=hBlood(k);if(vsd&&(k==='RV'||k==='LV'))col=C.mix;if(HS.def==='mit'&&k==='LA')col=C.oxy;g.fillStyle=col;g.globalAlpha=.42;g.fill();g.globalAlpha=1;
-    g.strokeStyle=HS.sel===k?C.accent:C.muscle2;g.lineWidth=HS.sel===k?4:1.5;g.stroke();}
-  if(vsd){g.fillStyle=C.panel;g.globalAlpha=.9;g.beginPath();g.ellipse(318,425,12,16,0,0,TAU);g.fill();g.globalAlpha=1;g.strokeStyle=C.red;g.setLineDash([4,3]);g.lineWidth=2;g.stroke();g.setLineDash([]);}
-  // 前方血管
-  ['paL','paR','svc','ivc','ao','aoU','pa'].forEach(k=>tube(k));
-  if(HS.sel&&HSEG[HS.sel]){const s=HSEG[HS.sel];smooth(g,s.P);g.strokeStyle=C.accent;g.lineWidth=(s.w||10)+9;g.globalAlpha=.35;g.stroke();g.globalAlpha=1;
-    if(HS.sel==='pa'){['paL','paR'].forEach(k=>{smooth(g,HSEG[k].P);g.strokeStyle=C.accent;g.lineWidth=35;g.globalAlpha=.35;g.stroke();g.globalAlpha=1;});}
-    if(HS.sel==='pv'){['pv1','pv2'].forEach(k=>{smooth(g,HSEG[k].P);g.strokeStyle=C.accent;g.lineWidth=27;g.globalAlpha=.35;g.stroke();g.globalAlpha=1;});}}
-  if(HS.sel==='pv'||HS.sel==='ao'){const k=HS.sel==='ao'?'aoD':null;if(k){smooth(g,HSEG[k].P);g.strokeStyle=C.accent;g.lineWidth=39;g.globalAlpha=.35;g.stroke();g.globalAlpha=1;}}
+  for(const k of['RA','RV','LA','LV']){smooth(g,S[k],true);g.fillStyle=lum;g.fill();
+    if(HS.tint){let c=(k==='LA'||k==='LV')?C.oxy:C.deoxy;if(vsd&&(k==='RV'||k==='LV'))c=C.mix;g.fillStyle=c;g.globalAlpha=.2;g.fill();g.globalAlpha=1;}
+    g.strokeStyle=HS.sel===k?C.accent:line2;g.lineWidth=HS.sel===k?3.5:lw;g.stroke();}
+  for(const k in HG.holes)HG.holes[k].forEach(([x,y,rx,ry,a])=>{const c=cenOf(HG[k]),f=1-.16*st.ca;g.beginPath();g.ellipse(c[0]+(x-c[0])*f,c[1]+(y-c[1])*f,rx,ry,a,0,TAU);g.strokeStyle=line2;g.lineWidth=lw;g.stroke();});
+  if(vsd){g.fillStyle=lum;g.beginPath();g.ellipse(181,256,13,9,0,0,TAU);g.fill();g.strokeStyle=C.red;g.setLineDash([3,2]);g.lineWidth=1.6;g.stroke();g.setLineDash([]);}
+  // 前方：肺動脈（跨過主動脈）
+  vessel('pa');
   // 瓣膜
-  for(const k in HVAL){const v=HVAL[k];const open=v.ty==='av'?st.av:st.sl;const leak=HDEF[HS.def]===k;
-    const shut=leak?.32:0;const ang=(Math.max(open,shut))*1.15;const hl=HS.sel===k;
-    [-1,1].forEach(sd=>{const hx=v.c[0]+sd*v.h,hy=v.c[1];const L=v.h*1.05;const tx=hx-sd*L*Math.cos(ang),ty=hy+v.dir*L*Math.sin(ang);
-      g.strokeStyle=hl?C.accent:(leak?C.red:'#fff8e8');g.lineWidth=hl?7:5.5;g.lineCap='round';g.beginPath();g.moveTo(hx,hy);g.lineTo(tx,ty);g.stroke();
-      g.strokeStyle=C.muscle2;g.lineWidth=1.2;g.stroke();});}
+  for(const k in HVAL){const tips=hValveTips(k,st);const hl=HS.sel===k;tips.forEach(f=>{g.strokeStyle=hl?C.accent:f.leak?C.red:line2;g.lineWidth=hl?4:2.6;g.beginPath();g.moveTo(...f.h);g.lineTo(...f.t);g.stroke();});}
   // 粒子
   for(const k in HSEG){const s=HSEG[k];if(s.def&&s.def!==HS.def)continue;const col=s.o?C.oxy:C.deoxy;
-    HP[k].forEach(p=>{const[x,y,a]=pat(s.P,p.s);const off=p.j*(s.w?s.w*.55:16);circ(g,x-Math.sin(a)*off,y+Math.cos(a)*off,s.w?4:4.6,col,'rgba(255,255,255,.75)',1);});}
-  // 流向箭頭（黃色）
-  for(const k in HSEG){if(!hOn(k,st.ph))continue;const s=HSEG[k];const n=k==='ao'?3:1;for(let i=0;i<n;i++){const f=(i+1)/(n+1);const[x,y,a]=pat(s.P,s.L*f);
-    g.save();g.translate(x,y);g.rotate(a);g.fillStyle=s.def?C.red:'#f5c400';g.strokeStyle='rgba(0,0,0,.45)';g.lineWidth=1;g.beginPath();g.moveTo(14,0);g.lineTo(-8,-10);g.lineTo(-3,0);g.lineTo(-8,10);g.closePath();g.fill();g.stroke();g.restore();}}
-  // 心肌收縮的綠色箭頭（和課本一樣）
-  const squeeze=(cx,cy,k,amt)=>{if(amt<.05)return;g.globalAlpha=Math.min(1,amt*1.6);[[-1,0],[1,0]].forEach(([dx])=>{const x1=cx+dx*k,x0=cx+dx*(k+26);arrow(g,x0,cy,x1,cy,C.green,5,13);});g.globalAlpha=1;};
-  squeeze(237,410,82,st.cv);squeeze(405,420,92,st.cv);squeeze(200,250,86,st.ca);squeeze(452,232,82,st.ca);
+    HP[k].forEach(p=>{const[x,y,a]=pat(s.P,p.s);const off=p.j*7;circ(g,x-Math.sin(a)*off,y+Math.cos(a)*off,2.6,col,'rgba(255,255,255,.85)',.8);});}
+  // 流向箭頭
+  for(const k in HSEG){if(!hOn(k,st.ph))continue;const s=HSEG[k];const n=k==='ao'||k==='pa'?2:1;for(let i=0;i<n;i++){const f=(i+1)/(n+1);const[x,y,a]=pat(s.P,s.L*f);
+    g.save();g.translate(x,y);g.rotate(a);g.fillStyle=s.def?C.red:(s.o?C.oxy:C.deoxy);g.strokeStyle='#fff';g.lineWidth=1.2;g.beginPath();g.moveTo(9,0);g.lineTo(-5,-6.5);g.lineTo(-2,0);g.lineTo(-5,6.5);g.closePath();g.fill();g.stroke();g.restore();}}
+  // 心肌收縮箭頭
+  const sq=(x,y,ang,amt)=>{if(amt<.05)return;g.globalAlpha=Math.min(1,amt*1.6);const dx=Math.cos(ang),dy=Math.sin(ang);arrow(g,x+dx*16,y+dy*16,x,y,C.green,3,8);g.globalAlpha=1;};
+  sq(112,282,2.4,st.cv);sq(255,262,.2,st.cv);sq(62,175,3.14,st.ca);sq(268,112,0,st.ca);
   g.restore();
   // 標籤
-  const L={RA:[200,252],LA:[452,234],RV:[240,414],LV:[402,420],svc:[205,92],ivc:[110,520],pa:[150,120],pv:[600,232],ao:[452,44]};
+  const L={RA:[103,174],RV:[142,252],LA:[232,128],LV:[220,232],svc:[50,40],ao:[118,26],pa:[236,40],pv:[318,64],ivc:[32,296]};
   for(const k in L){const[x,y]=L[k];let s=HS.lab==='name'?HNAME[k]:HS.lab==='code'?HS.codes[k]:'';if(HS.lab==='none'&&HS.sel===k)s=HNAME[k];if(!s)continue;
-    const big=HS.lab==='code';text(g,s,V.X(x),V.Y(y),{size:big?17:13,bold:true,align:'center',base:'middle',col:'#fff',bg:HS.sel===k?C.accent:'rgba(20,24,30,.78)'});}
-  if(HS.lab==='name'){const sm=(s,x,y,al='center')=>text(g,s,V.X(x),V.Y(y),{size:11,col:C.muted,align:al});
-    sm('往右肺',60,104,'left');sm('往左肺',620,104,'right');sm('來自頭部、手臂',214,16,'left');sm('來自軀幹、腿',122,548,'left');sm('往全身',580,540,'right');sm('來自肺',640,186,'right');}
+    const code=HS.lab==='code'&&!(HS.lab==='none');text(g,s,V.X(x),V.Y(y),{size:code?18:12.5,bold:true,align:'center',base:'middle',col:code?line2:'#fff',bg:code?null:(HS.sel===k?C.accent:'rgba(20,24,30,.78)')});}
   if(hFlash.t>0){text(g,hFlash.k==='lub'?'咚（第一心音：房室瓣關閉）':'噠（第二心音：動脈瓣關閉）',hW/2,hH-12,{size:15,bold:true,align:'center',col:C.accent,bg:C.panel});}
 };
 function hPhaseName(ph){if(ph==='V')return'心室收縮';if(ph==='A')return HS.mode===3?'心房收縮':'心臟舒張';return HS.mode===3?'全心舒張':'心臟舒張';}
 let hLastKey='';
 function hUI(){const st=hState(HS.t);const key=st.ph+HS.mode+HS.def+HS.lab+(st.av>.5)+(st.sl>.5);if(key===hLastKey)return;hLastKey=key;
-  const ph=st.ph;$('hPhase').textContent=hPhaseName(ph)+(ph==='V'?'（課本：心臟收縮）':'');
+  const ph=st.ph;$('hPhase').textContent=hPhaseName(ph)+(ph==='V'?'（課本：心臟收縮）':ph==='A'&&HS.mode===2?'（末段：心房收縮）':'');
   const on=(b,a,z)=>b?`<td class="on">${a}</td>`:`<td class="off">${z}</td>`;
   const flow=ph==='V'?'心室 → 動脈<br>右心室 → 肺動脈；左心室 → 主動脈':ph==='A'?'心房 → 心室（心房最後再擠一下）':'靜脈 → 心房 → 心室<br>上、下大靜脈 → 右心房；肺靜脈 → 左心房';
   $('hTbl').innerHTML=`<tr><th>心房</th>${on(ph==='A','收縮','舒張')}</tr><tr><th>心室</th>${on(ph==='V','收縮','舒張')}</tr>
@@ -588,12 +588,11 @@ function hUI(){const st=hState(HS.t);const key=st.ph+HS.mode+HS.def+HS.lab+(st.a
     vsd:['no','心室中隔缺損：左右心室相通，<b>充氧血與缺氧血混在一起</b>（紫色），送往全身的血含氧量降低 → 容易缺氧、頭暈，不適合劇烈運動。']};
   if(HS.def)L.unshift(D[HS.def]);checks($('hChecks'),L);}
 function hPick(x,y){const[mx,my]=hView.inv(x,y);
-  for(const k in HVAL){const v=HVAL[k];if(Math.hypot(mx-v.c[0],my-v.c[1]-8*v.dir)<v.h*.9&&Math.abs(my-v.c[1])<24)return k;}
-  for(const k of['RA','LA']){const o=HG[k];if(((mx-o.c[0])/o.r[0])**2+((my-o.c[1])/o.r[1])**2<1)return k;}
-  for(const k of['RV','LV'])if(inPoly(HG[k].P,mx,my))return k;
-  const vs={svc:['svc'],ivc:['ivc'],pa:['pa','paL','paR'],pv:['pv1','pv2'],ao:['ao','aoD','aoU']};
-  for(const k in vs)for(const s of vs[k])if(pdist(HSEG[s].P,mx,my)<(HSEG[s].w||20)*.6+6)return k;return null;}
-function hSelect(k){HS.sel=k;$('hInfo').innerHTML=k?HINFO[k]+(k in HNAME&&HS.lab!=='name'?`（${HS.lab==='code'&&HS.codes[k]?'代號 '+HS.codes[k]+'，':''}${HNAME[k]}）`:''):'點畫面上的腔室或血管，看它的名稱與功能。';kick();}
+  for(const k in HVAL){const v=HVAL[k];if(Math.hypot(mx-v.c[0],my-v.c[1])<v.h+3)return k;}
+  for(const k of['RA','RV','LA','LV'])if(inPoly(HG[k],mx,my))return k;
+  const vs={svc:['svc'],ivc:['ivc'],pa:['pa'],pv:['pv1','pv2'],ao:['ao']};
+  for(const k in vs)for(const s of vs[k])if(pdist(HG.vessels[s].P,mx,my)<HG.vessels[s].w*.6+3)return k;return null;}
+function hSelect(k){HS.sel=k;$('hInfo').innerHTML=k?HINFO[k]+(k in HNAME&&HS.lab!=='name'?`（${HS.lab==='code'&&HS.codes[k]?'代號 '+HS.codes[k]+'，':''}${HNAME[k]}）`:''):'點畫面上的腔室、血管或瓣膜，看它的名稱與功能。';kick();}
 window.hSelect=hSelect;window.HINFO=HINFO;window.HNAME=HNAME;
 onTap($('cvHeart'),(x,y)=>hSelect(hPick(x,y)));
 function hSetPlay(p){HS.play=p;$('hPlay').textContent=p?'⏸ 暫停':'▶ 播放';if(p)HS.target=null;kick();}
@@ -603,113 +602,160 @@ segOn($('hSpeed'),v=>{HS.dur=+v;segSet($('hSpeed'),v);});
 segOn($('hLab'),v=>{HS.lab=v;segSet($('hLab'),v);hLastKey='';hSelect(HS.sel);});
 segOn($('hMode'),v=>{HS.mode=+v;segSet($('hMode'),v);hLastKey='';kick();});
 $('hSnd').addEventListener('change',e=>{HS.snd=e.target.checked;if(HS.snd){try{actx=actx||new AudioContext();actx.resume();}catch(_){}}});
+$('hTint').addEventListener('change',e=>{HS.tint=e.target.checked;kick();});
 $('hDef').addEventListener('change',e=>{HS.def=e.target.value;hLastKey='';kick();});
-segOn($('hDim'),v=>{HS.dim=v;segSet($('hDim'),v);$('h2wrap').hidden=v!=='2';$('h3wrap').hidden=v!=='3';
+segOn($('hDim'),v=>{HS.dim=v;segSet($('hDim'),v);$('h2wrap').hidden=v!=='2';$('h3wrap').hidden=v!=='3';$('hTintL').hidden=v!=='2';
   if(v==='3'){if(window.H3)window.H3.resize();else window.dispatchEvent(new Event('need3d'));}kick();});
 UI.heart=()=>{hLastKey='';hUI();};
 function hSet(p){Object.assign(HS,p);if(p.def!==undefined)$('hDef').value=p.def;segSet($('hLab'),HS.lab);segSet($('hMode'),HS.mode);segSet($('hSpeed'),HS.dur);
   if(p.t!==undefined){HS.play=false;$('hPlay').textContent='▶ 播放';HS.target=null;}hLastKey='';hSelect(p.sel===undefined?null:p.sel);kick();}
 </script>
 <script type="module">
-// ================= 1 心臟 3D =================
+// ================= 1 心臟 3D：寫實剖面 =================
 let built=false;
 async function build(){if(built)return;built=true;
   const THREE=await import('three');const {OrbitControls}=await import('../vendor/three/OrbitControls.js');
+  const HS=window.HS,HG=window.HG,HSEG=window.HSEG,HVAL=window.HVAL;
   const stage=document.getElementById('h3stage');
-  const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));ren.localClippingEnabled=true;
+  const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));
+  ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.outputColorSpace=THREE.SRGBColorSpace;
   stage.prepend(ren.domElement);
-  const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(38,1,.1,100);cam.position.set(0,.2,9);
-  const ctl=new OrbitControls(cam,ren.domElement);ctl.target.set(0,.1,0);ctl.enableDamping=true;ctl.minDistance=4;ctl.maxDistance=18;
-  ctl.addEventListener('change',()=>kick());
-  scene.add(new THREE.HemisphereLight(0xffffff,0x443333,1.1));const dl=new THREE.DirectionalLight(0xffffff,1.4);dl.position.set(3,5,6);scene.add(dl);
-  const col=k=>new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue('--'+k).trim());
-  const OXY=new THREE.Color('#e0362e'),DEO=new THREE.Color('#3d63c8'),MIX=new THREE.Color('#9a4fb0');
-  const cut=new THREE.Plane(new THREE.Vector3(0,0,-1),.32);let cutOn=true;
-  // 心肌外殼
-  const shellMat=new THREE.MeshStandardMaterial({color:0xe39a8a,roughness:.6,transparent:true,opacity:.42,side:THREE.DoubleSide,clippingPlanes:[cut],depthWrite:false});
-  const mkE=(r,c,mat)=>{const m=new THREE.Mesh(new THREE.SphereGeometry(1,40,28),mat);m.scale.set(...r);m.position.set(...c);m.userData.base=r.slice();scene.add(m);return m;};
-  const shV=mkE([1.5,1.3,1.08],[0.08,-0.72,0.18],shellMat);shV.rotation.z=.32;
-  const shRA=mkE([0.78,0.74,0.68],[-1.05,0.55,0.15],shellMat),shLA=mkE([0.76,0.6,0.64],[0.8,0.75,-0.45],shellMat);
-  // 腔室（血液）
-  const CH={RA:{c:[-1.05,0.55,0.15],r:[.6,.58,.52],o:0},LA:{c:[0.8,0.75,-0.45],r:[.58,.44,.5],o:1},
-    RV:{c:[-0.5,-0.78,0.45],r:[.7,.82,.42],o:0,rz:.2},LV:{c:[0.55,-0.78,-0.05],r:[.62,.98,.6],o:1,rz:.35}};
-  for(const k in CH){const d=CH[k];const mat=new THREE.MeshStandardMaterial({color:d.o?OXY:DEO,transparent:true,opacity:.55,roughness:.4,emissive:0x000000});
-    d.m=mkE(d.r,d.c,mat);if(d.rz)d.m.rotation.z=d.rz;d.m.userData.key=k;}
-  // 血管曲線
-  const V=a=>new THREE.Vector3(...a);
-  const S={
-    svc:{p:[[-1.1,2.7,0],[-1.1,1.6,.05],[-1.07,1.0,.12]],o:0,on:'VD',r:.2},
-    ivc:{p:[[-1.0,-2.7,-.35],[-1.05,-1.2,-.2],[-1.05,0,.05]],o:0,on:'VD',r:.2},
-    tri:{p:[[-1.05,.45,.2],[-.85,-.05,.35],[-.5,-.8,.45]],o:0,on:'AD'},
-    pa:{p:[[-.5,-.8,.45],[-.2,-.1,.68],[0,.8,.72],[.05,1.5,.5]],o:0,on:'V',r:.2},
-    paL:{p:[[.05,1.5,.5],[-.8,1.75,.2],[-2.7,1.8,-.2]],o:0,on:'V',r:.16},
-    paR:{p:[[.05,1.5,.5],[.9,1.68,0],[2.7,1.8,-.4]],o:0,on:'V',r:.16},
-    pv1:{p:[[2.7,1.0,-.6],[1.8,.9,-.6],[1.15,.82,-.5]],o:1,on:'VD',r:.12},
-    pv2:{p:[[2.7,.35,-.6],[1.8,.52,-.55],[1.15,.66,-.5]],o:1,on:'VD',r:.12},
-    pv3:{p:[[-2.5,.9,-.85],[-.6,.95,-.95],[.42,.8,-.62]],o:1,on:'VD',r:.12},
-    mit:{p:[[.8,.7,-.45],[.7,0,-.25],[.55,-.8,-.05]],o:1,on:'AD'},
-    ao:{p:[[.55,-.8,-.05],[.35,-.1,.2],[.3,.9,.25],[.35,1.9,.15],[.8,2.4,-.3],[1.2,2.1,-.8],[1.15,1.0,-1.1]],o:1,on:'V',r:.24},
-    aoD:{p:[[1.15,1.0,-1.1],[1.0,-.8,-1.2],[.9,-2.7,-1.1]],o:1,on:'V',r:.21},
-    aoU:{p:[[.62,2.33,-.1],[.6,3.1,-.1]],o:1,on:'V',r:.09},
-    mitL:{p:[[.55,-.8,-.05],[.7,0,-.25],[.8,.7,-.45]],o:1,on:'V',def:'mit'},
-    triL:{p:[[-.5,-.8,.45],[-.85,-.05,.35],[-1.05,.45,.2]],o:0,on:'V',def:'tri'},
-    aoL:{p:[[.3,.9,.25],[.35,-.1,.2],[.55,-.8,-.05]],o:1,on:'D',def:'aov'},
-    pvL:{p:[[0,.8,.72],[-.2,-.1,.68],[-.5,-.8,.45]],o:0,on:'D',def:'pv'},
-    vsd1:{p:[[.45,-.95,0],[0,-.95,.25],[-.45,-.9,.42]],o:1,on:'V',def:'vsd'},
-    vsd2:{p:[[-.45,-.75,.42],[0,-.8,.25],[.45,-.75,0]],o:0,on:'A',def:'vsd'}};
-  const sphG=new THREE.SphereGeometry(.055,10,8);
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';stage.appendChild(svg);
+  const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(32,1,.1,100);cam.position.set(-2.5,1.9,12.2);
+  const ctl=new OrbitControls(cam,ren.domElement);ctl.target.set(.35,.75,-.6);ctl.enableDamping=true;ctl.minDistance=4;ctl.maxDistance=20;ctl.addEventListener('change',()=>kick());
+  scene.add(new THREE.HemisphereLight(0xfff2ee,0x2a0a0a,.7));
+  const key=new THREE.DirectionalLight(0xffffff,2.4);key.position.set(2.5,4,6);scene.add(key);
+  const rim=new THREE.DirectionalLight(0x9fb8ff,1.4);rim.position.set(-4,2,-5);scene.add(rim);
+  const fill=new THREE.PointLight(0xffd0c0,18,30);fill.position.set(-3,-2,5);scene.add(fill);
+  // 座標：2D 模型 → 3D
+  const M=(x,y,z=0)=>new THREE.Vector3((x-165)/60,-(y-215)/60,z);
+  // 紋理
+  function fiberTex(base,dark,light,n,ang){const c=document.createElement('canvas');c.width=c.height=512;const g=c.getContext('2d');g.fillStyle=base;g.fillRect(0,0,512,512);
+    for(let i=0;i<n;i++){const x=Math.random()*512,y=Math.random()*512,l=30+Math.random()*90,a=ang+(Math.random()-.5)*.5;g.strokeStyle=Math.random()<.5?dark:light;g.globalAlpha=.18+Math.random()*.25;g.lineWidth=1+Math.random()*3;
+      g.beginPath();g.moveTo(x,y);g.quadraticCurveTo(x+Math.cos(a)*l*.5+(Math.random()-.5)*20,y+Math.sin(a)*l*.5,x+Math.cos(a)*l,y+Math.sin(a)*l);g.stroke();}
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=THREE.SRGBColorSpace;return t;}
+  function noiseTex(){const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');const d=g.createImageData(256,256);for(let i=0;i<d.data.length;i+=4){const v=120+Math.random()*90;d.data[i]=d.data[i+1]=d.data[i+2]=v;d.data[i+3]=255;}g.putImageData(d,0,0);
+    for(let i=0;i<300;i++){g.strokeStyle=`rgba(0,0,0,${.1+Math.random()*.2})`;g.lineWidth=1+Math.random()*2;g.beginPath();const x=Math.random()*256,y=Math.random()*256;g.moveTo(x,y);g.lineTo(x+(Math.random()-.5)*60,y+(Math.random()-.5)*20);g.stroke();}
+    const t=new THREE.CanvasTexture(c);t.wrapS=t.wrapT=THREE.RepeatWrapping;return t;}
+  const cutTex=fiberTex('#b8483f','#7a1f1c','#e07a6a',2600,-.6);cutTex.repeat.set(.6,.6);
+  const innerTex=fiberTex('#8a2a2a','#4d0f12','#b85050',2200,1.3);innerTex.repeat.set(1.5,1.5);
+  const bump=noiseTex();bump.repeat.set(3,3);
+  const matOuter=new THREE.MeshPhysicalMaterial({color:0xa83a32,roughness:.42,clearcoat:.6,clearcoatRoughness:.35,bumpMap:bump,bumpScale:.6,side:THREE.DoubleSide});
+  const matCut=new THREE.MeshPhysicalMaterial({map:cutTex,roughness:.55,clearcoat:.35,bumpMap:cutTex,bumpScale:1.2,side:THREE.DoubleSide});
+  const matInner=new THREE.MeshPhysicalMaterial({map:innerTex,roughness:.5,clearcoat:.5,bumpMap:innerTex,bumpScale:1.5,side:THREE.DoubleSide});
+  const matValve=new THREE.MeshPhysicalMaterial({color:0xfff8ee,emissive:0x3a3530,roughness:.3,clearcoat:.6,side:THREE.DoubleSide});
+  const matValveRed=new THREE.MeshPhysicalMaterial({color:0xff6a55,roughness:.35,side:THREE.DoubleSide});
+  const vmat=(c)=>new THREE.MeshPhysicalMaterial({color:c,roughness:.35,clearcoat:.7,clearcoatRoughness:.25,bumpMap:bump,bumpScale:.25});
+  // 平滑封閉曲線重新取樣（3D 單位）
+  function resample(P,n){const cu=new THREE.CatmullRomCurve3(P.map(([x,y])=>M(x,y)),true,'centripetal');return cu.getSpacedPoints(n).slice(0,n).map(v=>[v.x,v.y]);}
+  const cen=P=>[P.reduce((a,p)=>a+p[0],0)/P.length,P.reduce((a,p)=>a+p[1],0)/P.length];
+  // 由截面向後（sg=-1）或向前（+1）長出圓頂
+  function loft(P,c,D,sg,rings=16,noise=0){const n=P.length;const pos=[],uv=[],idx=[];
+    for(let k=0;k<=rings;k++){const th=k/rings*Math.PI/2;const f=Math.cos(th),z=sg*D*Math.sin(th);for(let i=0;i<n;i++){const[x,y]=P[i];const nz=noise?(Math.sin(i*.7+k)*.5+Math.sin(i*.23-k*.6))*noise*Math.sin(th*2):0;
+      pos.push(c[0]+(x-c[0])*f*(1+nz),c[1]+(y-c[1])*f*(1+nz),z);uv.push(i/n*4,k/rings);}}
+    for(let k=0;k<rings;k++)for(let i=0;i<n;i++){const a=k*n+i,b=k*n+(i+1)%n,c2=(k+1)*n+i,d=(k+1)*n+(i+1)%n;idx.push(a,c2,b,b,c2,d);}
+    const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;}
+  const NS=110;const OUT=resample(HG.outer,NS);const OC=cen(OUT);
+  const CAV={};for(const k of['RA','RV','LA','LV'])CAV[k]={P:resample(HG[k],64)};for(const k in CAV)CAV[k].c=cen(CAV[k].P);
+  const root=new THREE.Group();scene.add(root);
+  // 外殼（後半與前半）
+  const back=new THREE.Mesh(loft(OUT,OC,1.55,-1,20,.03),matOuter);root.add(back);
+  const front=new THREE.Mesh(loft(OUT,OC,1.25,1,20,.03),matOuter);front.visible=false;root.add(front);
+  // 腔室內壁
+  const depth={RA:.95,LA:.9,RV:1.05,LV:1.1};
+  for(const k in CAV){const d=CAV[k];const P=d.P.map(([x,y])=>[x-d.c[0],y-d.c[1]]);const m=new THREE.Mesh(loft(P,[0,0],depth[k],-1,14,.05),matInner);m.position.set(d.c[0],d.c[1],-.001);m.userData.key=k;root.add(m);d.m=m;
+    const bm=new THREE.MeshPhysicalMaterial({color:(k==='LA'||k==='LV')?0xd0201a:0x2a46b0,transparent:true,opacity:.42,roughness:.2,transmission:0,depthWrite:false});
+    const sh=new THREE.Shape(P.map(([x,y])=>new THREE.Vector2(x*.97,y*.97)));const b=new THREE.Mesh(new THREE.ShapeGeometry(sh),bm);b.position.set(d.c[0],d.c[1],-.06);root.add(b);d.b=b;}
+  // 切面（每次收縮重建）
+  let cutMesh=null,lastF='';
+  function rebuildCut(st){const fV=1-.2*st.cv,fA=1-.16*st.ca,fo=1-.035*st.cv;const key=fV.toFixed(3)+fA.toFixed(3);if(key===lastF)return;lastF=key;
+    const sc=(P,c,f)=>P.map(([x,y])=>new THREE.Vector2(c[0]+(x-c[0])*f,c[1]+(y-c[1])*f));
+    const s=new THREE.Shape(sc(OUT,OC,fo));for(const k in CAV){const d=CAV[k];const f=(k==='RA'||k==='LA')?fA:fV;s.holes.push(new THREE.Path(sc(d.P,d.c,f)));}
+    const g=new THREE.ShapeGeometry(s,2);if(cutMesh){cutMesh.geometry.dispose();cutMesh.geometry=g;}else{cutMesh=new THREE.Mesh(g,matCut);root.add(cutMesh);}}
+  // 血管
+  const VES={
+    svc:{p:[[86,150,-.42],[80,100,-.4],[78,40,-.38],[78,-10,-.36]],r:.23,c:0x3c58a8},
+    ivc:{p:[[82,205,-.45],[64,240,-.5],[54,290,-.55],[50,340,-.6]],r:.21,c:0x3c58a8},
+    ao:{p:[[194,176,-.32],[187,150,-.36],[174,105,-.42],[164,55,-.48],[172,18,-.65],[212,4,-.95],[248,26,-1.25],[262,90,-1.5],[262,200,-1.65],[256,330,-1.55]],r:.22,c:0xc63a2c},
+    aob1:{p:[[176,12,-.7],[172,-30,-.7]],r:.07,c:0xc63a2c},aob2:{p:[[198,4,-.85],[200,-38,-.85]],r:.07,c:0xc63a2c},aob3:{p:[[222,8,-1.0],[232,-30,-1.0]],r:.07,c:0xc63a2c},
+    pa:{p:[[156,190,-.16],[158,160,-.1],[180,118,-.06],[212,76,-.2],[232,60,-.5]],r:.19,c:0x4a58b8},
+    paR:{p:[[232,60,-.5],[270,62,-.8],[320,74,-1.0]],r:.14,c:0x4a58b8},paL:{p:[[214,74,-.25],[180,64,-.9],[100,66,-1.05],[20,80,-1.1]],r:.14,c:0x4a58b8},
+    pv1:{p:[[322,80,-.65],[288,96,-.62],[258,112,-.55]],r:.09,c:0xb83a32},pv2:{p:[[326,122,-.65],[292,126,-.62],[258,132,-.55]],r:.09,c:0xb83a32},
+    pv3:{p:[[20,118,-1.3],[120,112,-1.25],[220,122,-.85]],r:.09,c:0xb83a32}};
+  const KEYOF={svc:'svc',ivc:'ivc',ao:'ao',aob1:'ao',aob2:'ao',aob3:'ao',pa:'pa',paR:'pa',paL:'pa',pv1:'pv',pv2:'pv',pv3:'pv'};
   const pick=[];
-  for(const k in S){const s=S[k];s.curve=new THREE.CatmullRomCurve3(s.p.map(V));s.L=s.curve.getLength();
-    if(s.r){const tm=new THREE.Mesh(new THREE.TubeGeometry(s.curve,48,s.r,14,false),new THREE.MeshStandardMaterial({color:s.o?OXY:DEO,transparent:true,opacity:.42,roughness:.5,depthWrite:false,side:THREE.DoubleSide}));
-      tm.userData.key=k.startsWith('pa')?'pa':k.startsWith('pv')?'pv':k.startsWith('ao')?'ao':k;scene.add(tm);s.tube=tm;pick.push(tm);}
-    const n=Math.max(4,Math.round(s.L/(s.r?.18:.22)));s.n=n;
-    s.im=new THREE.InstancedMesh(sphG,new THREE.MeshStandardMaterial({color:s.o?OXY:DEO,emissive:s.o?0x441010:0x101844,roughness:.3}),n);
-    s.u=Array.from({length:n},(_,i)=>(i+Math.random()*.6)/n);s.j=Array.from({length:n},()=>[Math.random()-.5,Math.random()-.5]);scene.add(s.im);}
-  for(const k in CH)pick.push(CH[k].m);
-  // 瓣膜
-  const VAL={tri:{s:'tri',u:.5,r:.24,ty:'av'},mit:{s:'mit',u:.5,r:.22,ty:'av'},pul:{s:'pa',u:.3,r:.19,ty:'sl'},aov:{s:'ao',u:.12,r:.2,ty:'sl'}};
-  const flapMat=new THREE.MeshStandardMaterial({color:0xfff3dc,side:THREE.DoubleSide,roughness:.5});const flapRed=new THREE.MeshStandardMaterial({color:0xff5040,side:THREE.DoubleSide});
-  for(const k in VAL){const v=VAL[k];const cu=S[v.s].curve;const p=cu.getPointAt(v.u),t=cu.getTangentAt(v.u);const g=new THREE.Group();g.position.copy(p);g.lookAt(p.clone().add(t));scene.add(g);
-    v.fl=[1,-1].map(sd=>{const pv=new THREE.Group();pv.position.set(0,sd*v.r,0);const m=new THREE.Mesh(new THREE.PlaneGeometry(v.r*1.7,v.r*1.02),flapMat);m.position.set(0,-sd*v.r*.5,0);pv.add(m);g.add(pv);pv.userData.sd=sd;pv.userData.m=m;return pv;});}
-  // 標籤
-  const LBL={RA:[-1.05,.55,.75],LA:[.85,1.0,.1],RV:[-.5,-.8,.95],LV:[.75,-.9,.6],svc:[-1.1,2.3,.25],ivc:[-1.0,-2.3,0],pa:[-1.6,1.95,.1],pv:[2.2,1.25,-.55],ao:[.6,2.6,-.2]};
-  const NM=window.HNAME;const labEls={};for(const k in LBL){const d=document.createElement('div');d.className='lbl3';stage.appendChild(d);labEls[k]=d;}
+  for(const k in VES){const v=VES[k];const cu=new THREE.CatmullRomCurve3(v.p.map(([x,y,z])=>M(x,y,z)));const m=new THREE.Mesh(new THREE.TubeGeometry(cu,60,v.r,20,false),vmat(v.c));m.userData.key=KEYOF[k];root.add(m);v.m=m;pick.push(m);
+    const capM=new THREE.Mesh(new THREE.RingGeometry(v.r*.7,v.r,24),new THREE.MeshStandardMaterial({color:0x5a1010,side:THREE.DoubleSide}));const e=k==='ivc'||k==='svc'||k.startsWith('aob')||k==='paR'||k==='paL'||k.startsWith('pv')?(k.startsWith('pv')?0:1):1;
+    const pt=e?cu.getPoint(1):cu.getPoint(0),tg=e?cu.getTangent(1):cu.getTangent(0);capM.position.copy(pt);capM.lookAt(pt.clone().add(tg));root.add(capM);}
+  for(const k in CAV)pick.push(CAV[k].m);
+  // 瓣膜葉片與腱索
+  const VZ={tri:[-.04,-.62],mit:[-.04,-.6],pul:[-.04,-.32],aov:[-.06,-.38]};
+  const LEAF={};const SN=6,ZN=6;
+  for(const k in HVAL){LEAF[k]=[0,1].map(()=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array((SN+1)*(ZN+1)*3),3));const idx=[];
+    for(let i=0;i<SN;i++)for(let j=0;j<ZN;j++){const a=i*(ZN+1)+j,b=a+1,c=a+ZN+1,d=c+1;idx.push(a,c,b,b,c,d);}g.setIndex(idx);const m=new THREE.Mesh(g,matValve);m.userData.key=k;root.add(m);pick.push(m);return m;});}
+  const PAP={tri:[[128,262,-.35],[150,272,-.3]],mit:[[205,262,-.35],[230,255,-.3]]};
+  const papM=new THREE.MeshPhysicalMaterial({color:0xa83430,roughness:.5,bumpMap:innerTex,bumpScale:1});
+  const PAPT={};for(const k in PAP){PAPT[k]=PAP[k].map(([x,y,z])=>{const tip=M(x,y,z);const base=M(x+(x-HVAL[k].c[0])*.5,y+(y-HVAL[k].c[1])*.5,z-.2);
+    const len=tip.distanceTo(base);const m=new THREE.Mesh(new THREE.CylinderGeometry(.035,.11,len,12),papM);m.position.copy(tip.clone().add(base).multiplyScalar(.5));m.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),tip.clone().sub(base).normalize());root.add(m);return tip;});}
+  const chordG=new THREE.BufferGeometry();const CHN=2*2*4*2;chordG.setAttribute('position',new THREE.Float32BufferAttribute(new Float32Array(CHN*2*3),3));
+  const chords=new THREE.LineSegments(chordG,new THREE.LineBasicMaterial({color:0xf6efe4}));root.add(chords);
+  function updValves(st){const cp=chordG.attributes.position.array;let ci=0;
+    for(const k in HVAL){const tips=window.hValveTips(k,st);const[z0,z1]=VZ[k];
+      tips.forEach((f,li)=>{const m=LEAF[k][li];const leak=f.leak;m.material=leak?matValveRed:matValve;const a=m.geometry.attributes.position.array;
+        const H=M(...f.h),T=M(...f.t);const dx=T.x-H.x,dy=T.y-H.y;const nx=-dy,ny=dx;const bl=HVAL[k].ty==='av'?.12:.18;
+        for(let i=0;i<=SN;i++)for(let j=0;j<=ZN;j++){const s=i/SN,zz=z0+(z1-z0)*j/ZN;const zf=Math.sin(Math.PI*j/ZN);const b=Math.sin(Math.PI*s)*bl*(.4+.6*zf)*(li?1:-1);
+          const o=(i*(ZN+1)+j)*3;a[o]=H.x+dx*s*(.85+.15*zf)+nx*b*.2;a[o+1]=H.y+dy*s*(.85+.15*zf)+ny*b*.2;a[o+2]=zz-b*.15;}
+        m.geometry.attributes.position.needsUpdate=true;m.geometry.computeVertexNormals();
+        if(PAPT[k]){const pt=PAPT[k][li];for(let q=0;q<4;q++){const j=1+q,s=1;const o=(SN*(ZN+1)+j)*3;cp[ci++]=a[o];cp[ci++]=a[o+1];cp[ci++]=a[o+2];cp[ci++]=pt.x;cp[ci++]=pt.y;cp[ci++]=pt.z;
+          const o2=((SN-2)*(ZN+1)+j)*3;cp[ci++]=a[o2];cp[ci++]=a[o2+1];cp[ci++]=a[o2+2];cp[ci++]=pt.x;cp[ci++]=pt.y;cp[ci++]=pt.z;}}});}
+    chordG.attributes.position.needsUpdate=true;}
+  // 血球粒子（在腔室內）與流向箭頭（浮在切面前）
+  const SEG={};const cellG=new THREE.SphereGeometry(.04,8,6);cellG.scale(1,1,.45);
+  for(const k in HSEG){const s=HSEG[k];const pts3=s.P.map(([x,y])=>M(x,y,-.18));const cu=new THREE.CatmullRomCurve3(pts3);const L=cu.getLength();const n=Math.max(4,Math.round(L/.12));
+    const im=new THREE.InstancedMesh(cellG,new THREE.MeshPhysicalMaterial({color:s.o?0xd8241c:0x2f4fc0,roughness:.3,clearcoat:.6}),n);root.add(im);
+    const arrows=[0,1].map(()=>{const sh=new THREE.Shape();sh.moveTo(.2,0);sh.lineTo(-.02,.15);sh.lineTo(-.02,.06);sh.lineTo(-.18,.06);sh.lineTo(-.18,-.06);sh.lineTo(-.02,-.06);sh.lineTo(-.02,-.15);sh.closePath();
+      const m=new THREE.Mesh(new THREE.ShapeGeometry(sh),new THREE.MeshBasicMaterial({color:s.def?0xff3b30:s.o?0xff5a3c:0x4f8bff,transparent:true,opacity:.92,depthTest:false}));m.renderOrder=5;root.add(m);return m;});
+    SEG[k]={cu:new THREE.CatmullRomCurve3(s.P.map(([x,y])=>M(x,y,.06))),cuIn:cu,L,n,im,u:Array.from({length:n},(_,i)=>(i+Math.random()*.7)/n),j:Array.from({length:n},()=>[Math.random()-.5,Math.random()-.5]),arrows,au:Math.random()};}
+  // 標籤與引線
+  const LBL={RA:[100,182,-.3],RV:[140,255,-.35],LA:[232,132,-.3],LV:[218,236,-.35],svc:[79,40,-.38],ivc:[56,300,-.55],ao:[200,2,-.9],pa:[226,64,-.4],pv:[300,90,-.62]};
+  const labEls={},lines={};for(const k in LBL){const d=document.createElement('div');d.className='lbl3';stage.appendChild(d);labEls[k]=d;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('stroke','rgba(255,255,255,.75)');l.setAttribute('stroke-width','1.3');svg.appendChild(l);lines[k]=l;}
   const tmp=new THREE.Vector3(),dummy=new THREE.Object3D();
-  let W=600,H=500;
-  function resize(){W=stage.clientWidth||600;H=Math.round(Math.max(340,Math.min(620,W*.86)));stage.style.height=H+'px';ren.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();if(W<520)cam.position.setLength(Math.max(cam.position.length(),11));}
-  function draw(){const HS=window.HS;const st=window.hState(HS.t);const ph=st.ph;
+  let W=600,H=500,cutOn=true,bloodOn=true;
+  function resize(){W=stage.clientWidth||600;H=Math.round(Math.max(360,Math.min(640,W*.9)));stage.style.height=H+'px';ren.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+    if(W<520&&cam.position.length()<16)cam.position.setLength(16);}
+  let last=performance.now();
+  function draw(){const now=performance.now();const dt=Math.min(.05,(now-last)/1000);last=now;const st=window.hState(HS.t);const ph=st.ph;const moving=HS.play||HS.target!==null;
     ctl.update();
-    // 收縮
-    const sca=(m,f)=>{const b=m.userData.base;m.scale.set(b[0]*f,b[1]*f,b[2]*f);};
-    sca(CH.RA.m,1-.2*st.ca);sca(CH.LA.m,1-.2*st.ca);sca(CH.RV.m,1-.28*st.cv);sca(CH.LV.m,1-.28*st.cv);
-    sca(shRA,1-.06*st.ca);sca(shLA,1-.06*st.ca);sca(shV,1-.05*st.cv);
-    const vsd=HS.def==='vsd';CH.RV.m.material.color.copy(vsd?MIX:DEO);CH.LV.m.material.color.copy(vsd?MIX:OXY);
-    for(const k in CH)CH[k].m.material.emissive.setHex(HS.sel===k?0x553300:0);
-    shellMat.clippingPlanes=cutOn?[cut]:[];shellMat.opacity=cutOn?.42:.3;
-    for(const k in S){const s=S[k];if(s.tube)s.tube.material.emissive&&s.tube.material.emissive.setHex(HS.sel===s.tube.userData.key?0x664400:0);
-      const vis=!s.def||s.def===HS.def;s.im.visible=vis;if(!vis)continue;
-      for(let i=0;i<s.n;i++){const p=s.curve.getPointAt(s.u[i]%1);const r=(s.r||.18)*.55;dummy.position.set(p.x+s.j[i][0]*r,p.y+s.j[i][1]*r,p.z+s.j[i][0]*r*.5);dummy.updateMatrix();s.im.setMatrixAt(i,dummy.matrix);}
-      s.im.instanceMatrix.needsUpdate=true;}
-    for(const k in VAL){const v=VAL[k];const open=v.ty==='av'?st.av:st.sl;const leak={mit:'mit',tri:'tri',aov:'aov',pul:'pv'}[k]===HS.def;const a=Math.max(open,leak?.3:0)*1.2;
-      v.fl.forEach(pv=>{pv.rotation.x=-pv.userData.sd*a;pv.userData.m.material=leak?flapRed:flapMat;});}
+    rebuildCut(st);
+    const fV=1-.2*st.cv,fA=1-.16*st.ca,fo=1-.035*st.cv;
+    back.scale.set(fo,fo,1);back.position.set(OC[0]*(1-fo),OC[1]*(1-fo),0);front.scale.copy(back.scale);front.position.copy(back.position);front.visible=!cutOn;
+    for(const k in CAV){const d=CAV[k];const f=(k==='RA'||k==='LA')?fA:fV;d.m.scale.set(f,f,1);d.b.scale.set(f,f,1);d.b.visible=bloodOn;
+      let col=(k==='LA'||k==='LV')?0xd0201a:0x2a46b0;if(HS.def==='vsd'&&(k==='RV'||k==='LV'))col=0x8a3aa8;d.b.material.color.setHex(col);
+      d.m.material=HS.sel===k?selInner:matInner;}
+    for(const k in VES){const v=VES[k];v.m.material.emissive.setHex(HS.sel===v.m.userData.key?0x553000:0);}
+    updValves(st);
+    for(const k in SEG){const s=SEG[k],h=HSEG[k];const vis=!h.def||h.def===HS.def;const on=vis&&window.hSegOn(k,ph);
+      s.im.visible=vis&&bloodOn;if(moving&&on){let v=h.v*.9;if(k==='tri'||k==='mit')v=ph==='A'?1.2:.45;for(let i=0;i<s.n;i++)s.u[i]=(s.u[i]+v*dt*(3.2/HS.dur)*.5/s.L)%1;s.au=(s.au+dt*(3.2/HS.dur)*.35)%1;}
+      if(s.im.visible){for(let i=0;i<s.n;i++){const p=s.cuIn.getPointAt(s.u[i]);const q=window.pat(h.P,s.u[i]*h.L);const inside=window.inPoly(HG.outer,q[0],q[1]);dummy.position.set(p.x+s.j[i][0]*.12,p.y+s.j[i][1]*.12,p.z+s.j[i][0]*.1);dummy.rotation.set(s.j[i][0]*3,s.j[i][1]*3,0);dummy.scale.setScalar(inside?1:0);dummy.updateMatrix();s.im.setMatrixAt(i,dummy.matrix);}s.im.instanceMatrix.needsUpdate=true;}
+      s.arrows.forEach((a,i)=>{a.visible=on;if(!on)return;const u=(s.au+i*.5)%1;const p=s.cu.getPointAt(u),t=s.cu.getTangentAt(u);a.position.copy(p);a.rotation.set(0,0,Math.atan2(t.y,t.x));const sc=s.L<1?.7:1;a.scale.set(sc,sc,1);});}
     ren.render(scene,cam);
     // 標籤
-    for(const k in LBL){const el=labEls[k];let s=HS.lab==='name'?NM[k]:HS.lab==='code'?HS.codes[k]:'';if(HS.lab==='none'&&HS.sel===k)s=NM[k];
-      tmp.set(...LBL[k]).project(cam);if(!s||tmp.z>1){el.style.display='none';continue;}el.style.display='';el.textContent=s;el.style.left=((tmp.x+1)/2*W)+'px';el.style.top=((1-tmp.y)/2*H)+'px';el.style.background=HS.sel===k?'var(--accent)':'';el.style.fontSize=HS.lab==='code'?'16px':'';}
+    const R=ren.domElement.getBoundingClientRect();const cx=W/2;
+    for(const k in LBL){const el=labEls[k],ln=lines[k];let s=HS.lab==='name'?window.HNAME[k]:HS.lab==='code'?HS.codes[k]:'';if(HS.lab==='none'&&HS.sel===k)s=window.HNAME[k];
+      tmp.copy(M(...LBL[k])).project(cam);const x=(tmp.x+1)/2*W,y=(1-tmp.y)/2*H;if(!s||tmp.z>1){el.style.display='none';ln.style.display='none';continue;}
+      const off=(x<cx?-1:1)*Math.min(90,W*.12);const lx=x+off,ly=y;el.style.display='';el.textContent=s;el.style.left=lx+'px';el.style.top=ly+'px';el.style.background=HS.sel===k?'var(--accent)':'';el.style.fontSize=HS.lab==='code'?'16px':'';
+      ln.style.display='';ln.setAttribute('x1',x);ln.setAttribute('y1',y);ln.setAttribute('x2',lx-(off>0?1:-1)*20);ln.setAttribute('y2',ly);}
   }
-  // 動畫推進（由 2D 的 TICK 驅動時間；這裡推進粒子）
-  let last=performance.now();
-  function advance(){const now=performance.now();const dt=Math.min(.05,(now-last)/1000);last=now;const HS=window.HS;if(!(HS.play||HS.target!==null))return;const ph=window.hState(HS.t).ph;
-    for(const k in S){const s=S[k];if(s.def&&s.def!==HS.def)continue;if(!s.on.includes(ph))continue;let v=s.r?1.3:1.0;if(k==='tri'||k==='mit')v=ph==='A'?1.6:.6;if(s.def)v=.7;
-      for(let i=0;i<s.n;i++)s.u[i]=(s.u[i]+v*dt*(3.2/HS.dur)*.5/s.L)%1;}}
+  const selInner=matInner.clone();selInner.emissive=new THREE.Color(0x552a00);
   // 點選
   const ray=new THREE.Raycaster(),mv=new THREE.Vector2();let dn=null;
   ren.domElement.addEventListener('pointerdown',e=>{dn=[e.clientX,e.clientY];});
   ren.domElement.addEventListener('pointerup',e=>{if(!dn||Math.hypot(e.clientX-dn[0],e.clientY-dn[1])>6){dn=null;return;}dn=null;const r=ren.domElement.getBoundingClientRect();
     mv.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);ray.setFromCamera(mv,cam);const hit=ray.intersectObjects(pick,false);window.hSelect(hit.length?hit[0].object.userData.key:null);});
-  document.querySelectorAll('#h3stage [data-cam]').forEach(b=>b.addEventListener('click',()=>{const d=cam.position.length();const m={front:[0,.2,1],side:[1,.2,0],top:[0,1,.02]}[b.dataset.cam];cam.position.set(...m).setLength(d);ctl.target.set(0,.1,0);kick();}));
-  document.getElementById('h3cut').addEventListener('change',e=>{cutOn=e.target.checked;kick();});
-  window.H3={resize,draw:()=>{advance();draw();}};
+  document.querySelectorAll('#h3stage [data-cam]').forEach(b=>b.addEventListener('click',()=>{const d=cam.position.length();const m={front:[-.2,.12,1],side:[1,.15,-.1],back:[-.1,.15,-1],top:[0,1,.15]}[b.dataset.cam];cam.position.set(...m).setLength(d);ctl.target.set(.35,.75,-.6);kick();}));
+  document.getElementById('h3cut').addEventListener('change',e=>{cutOn=e.target.checked;cutMesh.visible=true;kick();});
+  document.getElementById('h3blood').addEventListener('change',e=>{bloodOn=e.target.checked;kick();});
+  window.H3={resize,draw};
   resize();kick();
 }
 window.addEventListener('need3d',build);
