@@ -170,7 +170,9 @@
       <div class="toolbar">
         <button class="btn primary" id="playG">❚❚ 暫停</button><button class="btn" id="backG">◂ 上一格</button><button class="btn" id="stepG">下一格 ▸</button><button class="btn" id="resetG">⟲ 重來</button>
         <span class="seg" id="modeG"><button data-v="plane">直線波前進</button><button data-v="circ">圓形波</button><button data-v="slit">通過狹縫</button><button data-v="edge">擋板邊緣</button><button data-v="refl">反射</button><button data-v="refr">折射</button></span>
+        <span class="seg" id="viewG"><button data-v="2d">2D 平面</button><button data-v="3d">3D 水槽</button></span>
       </div>
+      <div class="toolbar" id="g3row" hidden><span class="tlabel">視角</span><span class="seg" id="camG"><button data-v="tilt">斜上方</button><button data-v="top">正上方（同課本）</button><button data-v="side">貼近水面</button></span><label class="tog"><input type="checkbox" id="sumG">真實疊加（水面＝所有子波加起來）</label></div>
       <div class="toolbar">
         <span class="tlabel">播放速度</span><span class="seg" id="spdG"><button data-v="0.0625">1/16</button><button data-v="0.125">1/8</button><button data-v="0.25">1/4</button><button data-v="0.5">1/2</button><button data-v="1">1 倍</button><button data-v="2">2 倍</button></span>
         <span class="tlabel">每一格</span><span class="seg" id="fgG"><button data-v="0.0625">1/16 Δt</button><button data-v="0.125">1/8 Δt</button><button data-v="0.25">1/4 Δt</button><button data-v="0.5">1/2 Δt</button><button data-v="1">1 Δt</button></span>
@@ -182,7 +184,9 @@
         <label class="slider" id="nGw"><span class="tlabel">下方折射率</span><input type="range" id="nG" min="1.1" max="2.5" step="0.05" value="1.5"><output id="nGo"></output></label>
         <label class="tog"><input type="checkbox" id="wlG" checked>子波</label><label class="tog"><input type="checkbox" id="envG" checked>包絡線（新的波前）</label><label class="tog"><input type="checkbox" id="trG" checked>之前的波前</label>
       </div>
-      <div class="cbox"><canvas id="cvG" aria-label="惠更斯作圖：波前上的點波源與子波"></canvas></div>
+      <div class="cbox" style="position:relative"><canvas id="cvG" aria-label="惠更斯作圖：波前上的點波源與子波"></canvas><canvas id="cvG3" hidden aria-label="惠更斯作圖 3D 水槽"></canvas>
+        <div id="g3tip" hidden style="position:absolute;left:18px;top:14px;font-size:.8rem;color:#fff;background:rgba(0,0,0,.45);padding:3px 8px;border-radius:6px">黃球：點波源　白線：子波　紅管：新的波前（包絡線）　淡紅：之前的波前<br>拖曳旋轉、滾輪或兩指縮放</div>
+        <div id="g3t" hidden style="position:absolute;left:18px;bottom:16px;font-weight:700;color:#fff;background:rgba(0,0,0,.45);padding:2px 9px;border-radius:6px"></div></div>
       <p class="hint">惠更斯原理：波前上的每一點都可以看成新的點波源，向前發出子波；經過一段時間 Δt，所有子波的包絡線（公切線）就是新的波前。按「下一格 ▸」（或鍵盤 →）一格一格看，「每一格」可選 1/16～1 Δt；空白鍵播放／暫停。</p>
     </div>
     <div class="grid2">
@@ -764,9 +768,9 @@ PRE1.forEach(([n,o])=>{const b=document.createElement('button');b.className='chi
 // 惠更斯作圖：波前上每一點都是新的點波源，子波的包絡線是新的波前
 // =====================================================================
 const nfG=(x,dp=2)=>(Math.round(x*10**dp)/10**dp).toString();
-const HG={spd:.5,fg:.25,mode:'plane',N:9,a:.3,i:35,n:1.5,t:0,run:true,stop:null,wl:true,env:true,trail:true};
+const HG={spd:.5,fg:.25,mode:'plane',N:9,a:.3,i:35,n:1.5,t:0,run:true,stop:null,wl:true,env:true,trail:true,view:'2d',cam:'tilt',sum:false};
 const cvG=$('cvG'),gG=cvG.getContext('2d');let WG=800,HG2=420;
-SIZE.huyg=()=>{const r=fit(cvG,.5,320,520);WG=r.W;HG2=r.H;};
+SIZE.huyg=()=>{if(HG.view==='3d'){WG=GVW;HG2=GVH;resize3G();return;}const r=fit(cvG,.5,320,520);WG=r.W;HG2=r.H;};
 function geoG(){const W=WG,H=HG2,v=Math.max(34,Math.min(W,H)*.11),dt=1;const xb=W*.42,yc=H*.5,i=clamp(HG.i,10,75)*D2R;
   const o={W,H,v,dt,xb,yc,i};o.x0=xb-3*v*dt;// 直線波剛好在第 3 步碰到擋板
   o.a=HG.a*H;o.ya=yc-o.a/2;o.yb=yc+o.a/2;o.ye=H*.45;o.S=[W*.1,H*.5];o.R0=v*.5;
@@ -832,11 +836,11 @@ function drawFrontG(g,o,F,w,t){const m=HG.mode,W=o.W,H=o.H;g.save();if(m==='slit
   else F.lines.forEach(L=>poly(g,L,C.ray,w));g.restore();}
 function poly(g,L,col,w){if(L.length<2)return;g.strokeStyle=col;g.lineWidth=w;g.setLineDash([]);g.beginPath();g.moveTo(L[0][0],L[0][1]);for(let k=1;k<L.length;k++)g.lineTo(L[k][0],L[k][1]);g.stroke();}
 function tEndG(){const o=geoG();if(HG.mode==='refl'||HG.mode==='refr')return o.th(o.xm1)+3;if(HG.mode==='circ')return(Math.hypot(o.W,o.H)*.8-o.R0)/o.v;return(o.W-o.x0)/o.v-.3;}
-TICK.huyg=dt=>{if(!HG.run)return false;HG.t+=dt*1.1*HG.spd;if(HG.stop!==null&&HG.t>=HG.stop){HG.t=HG.stop;HG.stop=null;HG.run=false;uiG();}if(HG.t>tEndG())HG.t=0;return HG.run;};
-DRAW.huyg=()=>{drawG();};
+TICK.huyg=dt=>{if(!HG.run)return HG.view==='3d'&&!!G3.ren;HG.t+=dt*1.1*HG.spd;if(HG.stop!==null&&HG.t>=HG.stop){HG.t=HG.stop;HG.stop=null;HG.run=false;uiG();}if(HG.t>tEndG())HG.t=0;return HG.run||(HG.view==='3d'&&!!G3.ren);};
+DRAW.huyg=()=>{if(HG.view==='3d'){draw3G();return;}drawG();};
 function uiG(){segSet($('modeG'),HG.mode);segSet($('spdG'),String(HG.spd));segSet($('fgG'),String(HG.fg));playTxt($('playG'),HG.run);$('NG').value=HG.N;$('NGo').textContent=HG.N+' 個';$('aGw').hidden=HG.mode!=='slit';$('aG').value=HG.a;$('aGo').textContent=Math.round(HG.a*100)+'%';
   $('iGw').hidden=!(HG.mode==='refl'||HG.mode==='refr');$('iG').value=HG.i;$('iGo').textContent=HG.i+'°';$('nGw').hidden=HG.mode!=='refr';$('nG').value=HG.n;$('nGo').textContent=nfG(HG.n,2);
-  $('wlG').checked=HG.wl;$('envG').checked=HG.env;$('trG').checked=HG.trail;
+  $('wlG').checked=HG.wl;$('envG').checked=HG.env;$('trG').checked=HG.trail;segSet($('viewG'),HG.view);segSet($('camG'),HG.cam);$('sumG').checked=HG.sum;const d3=HG.view==='3d';$('g3row').hidden=!d3;$('cvG').hidden=d3;$('cvG3').hidden=!d3;$('g3tip').hidden=!d3;$('g3t').hidden=!d3;
   const T={plane:['直線前進：波前上每一點都發出子波','每個點同時發出半圓形的子波，經過 Δt 後所有子波的包絡線（公切線）就是新的波前——又是一條直線，所以直線波一直直線前進。'],
     circ:['圓形波：子波的包絡線仍是圓','波前上每一點向外發出子波，包絡線是更大的同心圓，波前一直保持圓形向外擴散。'],
     slit:['通過狹縫：只剩縫中的點當波源 → 繞射','擋板擋住了大部分波前，只有縫中的點能繼續發出子波；縫兩端的子波沒有鄰居可以「抵銷」側向的部分，所以波繞到擋板後方。縫越窄（點越少），越接近一個點波源，波越接近圓形。'],
@@ -855,6 +859,93 @@ $('resetG').addEventListener('click',()=>{HG.t=0;HG.stop=null;HG.run=false;uiG()
 [['NG','N',v=>Math.round(v)],['aG','a',v=>v],['iG','i',v=>Math.round(v)],['nG','n',v=>v]].forEach(([id,k,f])=>$(id).addEventListener('input',()=>{HG[k]=f(+$(id).value);uiG();kick();}));
 [['wlG','wl'],['envG','env'],['trG','trail']].forEach(([id,k])=>$(id).addEventListener('change',()=>{HG[k]=$(id).checked;kick();}));
 UI.huyg=()=>{uiG();};
+segOn($('viewG'),v=>{HG.view=v;uiG();if(v==='3d')init3G().then(()=>{SIZE.huyg();kick();});SIZE.huyg();kick();});
+segOn($('camG'),v=>{setCamG(v);segSet($('camG'),v);});$('sumG').addEventListener('change',e=>{HG.sum=e.target.checked;kick();});
+// ---------- 2 惠更斯作圖：3D 水槽 ----------
+const G3={ren:null,loading:false,key:'',mkey:''};const GVW=1000,GVH=560,GK=.01,GNX=200,GNZ=112,GD=1.6,GA=.16,GSG=12,GSP=GVW/GNX;
+async function init3G(){if(G3.ren||G3.loading)return;G3.loading=true;const T=await import('three');const{OrbitControls}=await import('../vendor/three/OrbitControls.js');G3.T=T;
+  const cv=$('cvG3');const ren=new T.WebGLRenderer({canvas:cv,antialias:true,alpha:true});ren.setPixelRatio(DPR());
+  cv.addEventListener('webglcontextlost',e=>{e.preventDefault();G3.lost=true;});cv.addEventListener('webglcontextrestored',()=>{G3.lost=false;G3.key='';kick();});
+  const scene=new T.Scene(),cam=new T.PerspectiveCamera(38,1,.05,100);const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.1;ctl.maxPolarAngle=Math.PI*.62;ctl.minDistance=2.5;ctl.maxDistance=30;ctl.addEventListener('change',kick);
+  scene.add(new T.HemisphereLight(0xdff6ff,0x0b3a4f,1.6));const sun=new T.DirectionalLight(0xffffff,2.2);sun.position.set(-4,10,6);scene.add(sun);const rim=new T.DirectionalLight(0x9fe8ff,.8);rim.position.set(6,3,-8);scene.add(rim);
+  const LX=GVW*GK,LZ=GVH*GK;const sg=new T.PlaneGeometry(LX,LZ,GNX,GNZ);sg.rotateX(-Math.PI/2);sg.setAttribute('color',new T.BufferAttribute(new Float32Array(sg.attributes.position.count*3),3));
+  const surf=new T.Mesh(sg,new T.MeshPhongMaterial({vertexColors:true,shininess:110,specular:0xa8e6ff,transparent:true,opacity:.94,side:T.DoubleSide}));surf.renderOrder=2;scene.add(surf);
+  const wallMat=new T.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:.62,side:T.DoubleSide,depthWrite:false,shininess:30});
+  const mkWall=n=>{const g=new T.BufferGeometry();g.setAttribute('position',new T.BufferAttribute(new Float32Array((n+1)*6),3));g.setAttribute('color',new T.BufferAttribute(new Float32Array((n+1)*6),3));const idx=[];for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+2,a+1,a+3);}g.setIndex(idx);const m=new T.Mesh(g,wallMat);m.renderOrder=3;scene.add(m);return g;};
+  const walls=[{g:mkWall(GNX),n:GNX,ij:u=>[u,GNZ]},{g:mkWall(GNX),n:GNX,ij:u=>[u,0]},{g:mkWall(GNZ),n:GNZ,ij:u=>[0,u]},{g:mkWall(GNZ),n:GNZ,ij:u=>[GNX,u]}];
+  const pg=new T.BufferGeometry();pg.setAttribute('position',new T.BufferAttribute(new Float32Array((GNX+1)*3),3));const prof=new T.Line(pg,new T.LineBasicMaterial({color:0xffffff}));prof.renderOrder=4;scene.add(prof);
+  const misc=new T.Group(),dyn=new T.Group();scene.add(misc);scene.add(dyn);
+  const srcI=new T.InstancedMesh(new T.SphereGeometry(.055,14,10),new T.MeshPhongMaterial({color:0xffd23f,emissive:0x664400,shininess:60}),80);srcI.renderOrder=6;scene.add(srcI);
+  Object.assign(G3,{ren,scene,cam,ctl,sg,walls,prof,misc,dyn,srcI,LX,LZ,H:new Float32Array((GNX+1)*(GNZ+1)),D:new Float32Array((GNX+1)*(GNZ+1))});
+  setCamG(HG.cam||'tilt');G3.loading=false;resize3G();}
+function resize3G(){if(!G3.ren)return;const cv=$('cvG3');const w=Math.max(200,cv.parentElement.clientWidth-20),h=clamp(Math.round(w*.58),320,640);G3.ren.setSize(w,h,false);cv.style.width='100%';cv.style.height=h+'px';G3.cam.aspect=w/h;G3.cam.updateProjectionMatrix();G3.key='';kick();}
+function setCamG(v){HG.cam=v;if(!G3.ren)return;const P={tilt:[[0,6.4,8.4],[0,-.5,.3]],top:[[0,8.9,.01],[0,0,0]],side:[[-2.6,.95,6.9],[0,-.25,0]]}[v];G3.cam.position.set(...P[0]);G3.ctl.target.set(...P[1]);G3.cam.up.set(0,1,0);G3.ctl.update();kick();}
+const wX=px=>px*GK-GVW*GK/2,wZ=py=>py*GK-GVH*GK/2;
+function clearG(g){while(g.children.length){const o=g.children.pop();o.traverse(x=>{if(x.geometry)x.geometry.dispose();if(x.material){if(x.material.map)x.material.map.dispose();x.material.dispose();}});}}
+function depthG(o,py){return HG.mode==='refr'&&py>o.ym?GD/(HG.n*HG.n):GD;}
+function clipG(o,li,x,y,t){const m=HG.mode;if(m==='slit'||m==='edge')return t>o.tb?x>=o.xb:x<=o.xb;if(m==='refr')return li===0?y<=o.ym:y>=o.ym;if(m==='refl')return y<=o.ym;return true;}
+function densG(L,st){const out=[];for(let k=0;k+1<L.length;k++){const a=L[k],b=L[k+1],n=Math.max(1,Math.ceil(Math.hypot(b[0]-a[0],b[1]-a[1])/st));for(let j=0;j<n;j++)out.push([a[0]+(b[0]-a[0])*j/n,a[1]+(b[1]-a[1])*j/n]);}if(L.length)out.push(L[L.length-1]);return out;}
+// 子波環：加到高度
+function ringG(H,sx,sy,nx,ny,r,s,clip){const sg=GSG,rr=Math.max(r,sg),amp=GA*s/(1.813*Math.sqrt(2*rr*sg)),R=r+3*sg;
+  const i0=Math.max(0,Math.floor((sx-R)/GSP)),i1=Math.min(GNX,Math.ceil((sx+R)/GSP)),j0=Math.max(0,Math.floor((sy-R)/GSP)),j1=Math.min(GNZ,Math.ceil((sy+R)/GSP));
+  for(let j=j0;j<=j1;j++){const py=j*GSP,dy=py-sy;for(let i=i0;i<=i1;i++){const px=i*GSP,dx=px-sx,d=Math.sqrt(dx*dx+dy*dy),u=d-r;if(u>3*sg||u<-3*sg)continue;if(clip&&!clip(px,py))continue;
+    let ob=1;if(d>1e-6){const c=(dx*nx+dy*ny)/d;ob=(1+c)/2;}H[j*(GNX+1)+i]+=amp*ob*Math.exp(-u*u/(2*sg*sg));}}}
+// 沿折線的脊（幾何畫法）
+function ridgeG(o,F,t,only){const D=G3.D;D.fill(1e9);const sg=GSG,R=3*sg;
+  F.lines.forEach((L,li)=>{if(only!==undefined&&li!==only)return;const P=densG(L,10);for(let k=0;k+1<P.length;k++){const a=P[k],b=P[k+1];
+    const i0=Math.max(0,Math.floor((Math.min(a[0],b[0])-R)/GSP)),i1=Math.min(GNX,Math.ceil((Math.max(a[0],b[0])+R)/GSP)),j0=Math.max(0,Math.floor((Math.min(a[1],b[1])-R)/GSP)),j1=Math.min(GNZ,Math.ceil((Math.max(a[1],b[1])+R)/GSP));
+    if(i0>i1||j0>j1)continue;const ex=b[0]-a[0],ey=b[1]-a[1],l2=ex*ex+ey*ey||1;
+    for(let j=j0;j<=j1;j++)for(let i=i0;i<=i1;i++){const px=i*GSP,py=j*GSP;let f=((px-a[0])*ex+(py-a[1])*ey)/l2;f=f<0?0:f>1?1:f;const d=Math.hypot(px-a[0]-f*ex,py-a[1]-f*ey);const n=j*(GNX+1)+i;if(d<D[n]&&clipG(o,li,px,py,t))D[n]=d;}}});
+  const H=G3.H;for(let n=0;n<H.length;n++)if(D[n]<1e8)H[n]+=GA*Math.exp(-D[n]*D[n]/(2*sg*sg));}
+function heightsG(o){const H=G3.H;H.fill(0);const t=HG.t,m=HG.mode,v=o.v;
+  if(!HG.sum){ridgeG(o,frontG(o,t),t);return;}
+  if(m==='refl'||m==='refr'){ridgeG(o,frontG(o,t),t,0);const s=5,v2=m==='refr'?v/HG.n:v,ny=m==='refr'?1:-1;
+    for(let x=o.xm0+s/2;x<o.xm1;x+=s){const th=o.th(x);if(t<=th)continue;ringG(H,x,o.ym,0,ny,v2*(t-th),s,m==='refr'?(px,py)=>py>=o.ym:(px,py)=>py<=o.ym);}return;}
+  if((m==='slit'||m==='edge')&&t>o.tb){const s=4,ya=m==='slit'?o.ya:0,yb=m==='slit'?o.yb:o.ye;for(let y=ya+s/2;y<yb;y+=s)ringG(H,o.xb,y,1,0,v*(t-o.tb),s,(px,py)=>px>=o.xb);return;}
+  const tk=Math.max(0,Math.ceil(t/o.dt-1e-6)*o.dt-o.dt),F0=frontG(o,tk);const len=m==='circ'?TAU*(o.R0+v*tk):GVH;const M=Math.round(clamp(len/4,40,1200));const pts=sampleG(o,F0,M);const s=len/M;
+  const clip=(m==='slit'||m==='edge')?(px,py)=>px<=o.xb:null;pts.forEach(([x,y,nx,ny])=>ringG(H,x,y,nx,ny,v*(t-tk),s,clip));}
+function hAtG(px,py){const i=clamp(Math.round(px/GSP),0,GNX),j=clamp(Math.round(py/GSP),0,GNZ);return G3.H[j*(GNX+1)+i];}
+function buildMiscG(o){const T=G3.T,g=G3.misc;clearG(g);const m=HG.mode,LX=G3.LX,LZ=G3.LZ;
+  const box=(x0,x1,y0,y1,z0,z1,col)=>{const b=new T.Mesh(new T.BoxGeometry(x1-x0,y1-y0,z1-z0),new T.MeshLambertMaterial({color:col}));b.position.set((x0+x1)/2,(y0+y1)/2,(z0+z1)/2);g.add(b);return b;};
+  box(-LX/2,LX/2,-GD-.18,-GD,-LZ/2,LZ/2,0x1d4a52);
+  const lab=(txt,x,y,z,sz=.3)=>{const s=sprite3(T,txt,sz);s.position.set(x,y,z);g.add(s);};
+  if(m==='refr'){const d2=GD/(HG.n*HG.n);box(-LX/2,LX/2,-GD,-d2,wZ(o.ym),LZ/2,0xc9b27a);lab('深水：波速 v',-LX/2+1.3,.55,wZ(o.ym)-1.2);lab(`淺水：波速 v ÷ ${nfG(HG.n,2)}`,-LX/2+1.7,.55,wZ(o.ym)+1.0);}
+  else box(-LX/2,LX/2,-GD,-GD+.001,-LZ/2,LZ/2,0x2e6f78);
+  if(m==='slit'){box(wX(o.xb)-.05,wX(o.xb)+.05,-GD,.35,-LZ/2,wZ(o.ya),0x7c8693);box(wX(o.xb)-.05,wX(o.xb)+.05,-GD,.35,wZ(o.yb),LZ/2,0x7c8693);lab('狹縫',wX(o.xb),.75,-LZ/2+.3);}
+  if(m==='edge'){box(wX(o.xb)-.05,wX(o.xb)+.05,-GD,.35,wZ(o.ye),LZ/2,0x7c8693);lab('擋板',wX(o.xb),.75,wZ(o.ye)+.4);}
+  if(m==='refl'){box(-LX/2,LX/2,-GD,.25,wZ(o.ym),LZ/2,0x7c8693);lab('反射面（牆）',LX/2-1.3,.6,wZ(o.ym)+.3);}
+  if(m==='refl'||m==='refr'){const x=wX(o.W/2),z=wZ(o.ym),y=.42,L=2.0;const di=new T.Vector3(o.d[0],0,o.d[1]);
+    const ln=new T.Line(new T.BufferGeometry().setFromPoints([new T.Vector3(x,y,z-1.8),new T.Vector3(x,y,m==='refr'?z+1.8:z)]),new T.LineDashedMaterial({color:0xffffff,dashSize:.1,gapSize:.08}));ln.computeLineDistances();g.add(ln);
+    g.add(new T.ArrowHelper(di,new T.Vector3(x,y,z).addScaledVector(di,-L),L,0xb06cff,.22,.13));
+    const d2=m==='refl'?new T.Vector3(o.d[0],0,-o.d[1]):new T.Vector3(Math.sin(o.r),0,Math.cos(o.r));g.add(new T.ArrowHelper(d2,new T.Vector3(x,y,z),L,0x3ccf6e,.22,.13));
+    lab(`入射角 ${Math.round(HG.i)}°`,x-o.d[0]*1.2-.9,y+.25,z-o.d[1]*1.2,.24);lab(m==='refl'?`反射角 ${Math.round(HG.i)}°`:`折射角 ${nfG(o.r/D2R,1)}°`,x+d2.x*1.2+.9,y+.25,z+d2.z*1.2,.24);}
+  if(m==='circ'){const s=new T.Mesh(new T.SphereGeometry(.11,16,12),new T.MeshPhongMaterial({color:0xff8a57,emissive:0x552200}));s.position.set(wX(o.S[0]),.05,wZ(o.S[1]));g.add(s);lab('波源',wX(o.S[0]),.5,wZ(o.S[1]));}}
+function draw3G(){if(!G3.ren||G3.lost)return;const T=G3.T,o=geoG(),t=HG.t,m=HG.mode;
+  const mk=[m,HG.n,HG.a,HG.i].join();if(mk!==G3.mkey){G3.mkey=mk;buildMiscG(o);G3.key='';}
+  const key=[mk,t,HG.sum,HG.wl,HG.env,HG.trail,HG.N].join();
+  if(key!==G3.key){G3.key=key;heightsG(o);const H=G3.H,pos=G3.sg.attributes.position,col=G3.sg.attributes.color;const deep=new T.Color(0x0b6c93),light=new T.Color(0xc4f1ff),c=new T.Color();
+    for(let n=0;n<H.length;n++){pos.setY(n,H[n]);const j=Math.floor(n/(GNX+1));const sh=m==='refr'&&j*GSP>o.ym?.18:0;c.lerpColors(deep,light,clamp(.28+sh+H[n]/GA*.55,0,1));col.setXYZ(n,c.r,c.g,c.b);}
+    pos.needsUpdate=true;col.needsUpdate=true;G3.sg.computeVertexNormals();
+    const top=new T.Color(0x58c4e2),bot=new T.Color(0x07405c);
+    G3.walls.forEach(W=>{const p=W.g.attributes.position,cc=W.g.attributes.color;for(let u=0;u<=W.n;u++){const [i,j]=W.ij(u),px=i*GSP,py=j*GSP,x=wX(px),z=wZ(py),y=H[j*(GNX+1)+i];
+      p.setXYZ(u*2,x,y,z);p.setXYZ(u*2+1,x,-depthG(o,py),z);cc.setXYZ(u*2,top.r,top.g,top.b);cc.setXYZ(u*2+1,bot.r,bot.g,bot.b);}p.needsUpdate=true;cc.needsUpdate=true;W.g.computeVertexNormals();W.g.computeBoundingSphere();});
+    const pp=G3.prof.geometry.attributes.position;for(let i=0;i<=GNX;i++)pp.setXYZ(i,wX(i*GSP),H[GNZ*(GNX+1)+i],G3.LZ/2+.005);pp.needsUpdate=true;
+    // 動態物件
+    clearG(G3.dyn);const tk=Math.max(0,Math.ceil(t/o.dt-1e-6)*o.dt-o.dt);const P3=(px,py,dy=.012)=>new T.Vector3(wX(px),hAtG(px,py)+dy,wZ(py));
+    const inTank=(x,y)=>x>=0&&x<=GVW&&y>=0&&y<=GVH;
+    const segsToLines=(runs,color,op)=>{const arr=[];runs.forEach(r=>{for(let k=0;k+1<r.length;k++)arr.push(r[k],r[k+1]);});if(!arr.length)return;const g=new T.BufferGeometry().setFromPoints(arr);const l=new T.LineSegments(g,new T.LineBasicMaterial({color,transparent:op<1,opacity:op,depthTest:true}));l.renderOrder=5;G3.dyn.add(l);};
+    const runsOf=(F,tt,dy)=>{const out=[];F.lines.forEach((L,li)=>{let cur=[];densG(L,6).forEach(p=>{if(inTank(p[0],p[1])&&clipG(o,li,p[0],p[1],tt))cur.push(P3(p[0],p[1],dy));else{if(cur.length>1)out.push(cur);cur=[];}});if(cur.length>1)out.push(cur);});return out;};
+    if(HG.trail){const R=[];for(let k=0;k*o.dt<tk+1e-9;k++)runsOf(frontG(o,k*o.dt),k*o.dt,.006).forEach(r=>R.push(r));segsToLines(R,0xff9a7a,.55);}
+    let srcs=[];const arcs=[];
+    if(m==='refl'||m==='refr'){for(let k=0;k<HG.N;k++){const x=o.xm0+(o.xm1-o.xm0)*(k+.5)/HG.N,th=o.th(x);srcs.push([x,o.ym,t>th]);if(t>th){const r=(m==='refr'?o.v/HG.n:o.v)*(t-th);arcs.push([x,o.ym,r,m==='refl'?Math.PI:0,m==='refl'?TAU:Math.PI]);}}}
+    else{const pts=sampleG(o,frontG(o,tk),HG.N),r=o.v*(t-tk);pts.forEach(([x,y,nx,ny])=>{srcs.push([x,y,true]);const a=Math.atan2(ny,nx);arcs.push([x,y,r,a-Math.PI/2,a+Math.PI/2]);});}
+    if(HG.wl){const R=[];arcs.forEach(([x,y,r,a0,a1])=>{if(r<1)return;let cur=[];const n=Math.max(8,Math.ceil(r*(a1-a0)/6));for(let k=0;k<=n;k++){const a=a0+(a1-a0)*k/n,px=x+r*Math.cos(a),py=y+r*Math.sin(a);
+        const ok=inTank(px,py)&&((m==='slit'||m==='edge')?(tk>=o.tb-1e-9?px>=o.xb:px<=o.xb):true);if(ok)cur.push(P3(px,py,.015));else{if(cur.length>1)R.push(cur);cur=[];}}if(cur.length>1)R.push(cur);});segsToLines(R,0xffffff,.95);}
+    const mtx=new T.Matrix4();let c2=0;srcs.forEach(([x,y,on])=>{if(c2>=80||!inTank(x,y))return;mtx.makeScale(on?1:.7,on?1:.7,on?1:.7);mtx.setPosition(wX(x),hAtG(x,y)+.03,wZ(y));G3.srcI.setMatrixAt(c2++,mtx);});G3.srcI.count=c2;G3.srcI.instanceMatrix.needsUpdate=true;
+    if(HG.env){runsOf(frontG(o,t),t,.03).forEach(r=>{if(r.length<2)return;const path=new T.CurvePath();for(let k=0;k+1<r.length;k++)path.add(new T.LineCurve3(r[k],r[k+1]));const tube=new T.Mesh(new T.TubeGeometry(path,Math.max(2,r.length*2),.032,6,false),new T.MeshPhongMaterial({color:0xff4a2a,emissive:0x501000}));tube.renderOrder=7;G3.dyn.add(tube);});}
+    $('g3t').textContent=`t ＝ ${nfG(t/o.dt,3)} Δt`;}
+  G3.ctl.update();G3.ren.render(G3.scene,G3.cam);}
+
 // =====================================================================
 // 2 疊加原理
 // =====================================================================
