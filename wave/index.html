@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js" data-nav="waves"></script>
 <style></style>
 <title>水波橫波動畫</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -14,7 +15,7 @@
 :root{--water:#2d7fa3;--water2:#9fd1e4;--surface:#0d5574;--crest:#d9480f;--trough:#6a4fb3;--buoy:#ffffff;--hot:#e0225b;--arrow:#1f8a4c;}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--water:#1d5f7d;--water2:#123c4f;--surface:#7cc8e6;--crest:#ff8a4c;--trough:#b9a2ff;--buoy:#eaf6fb;--hot:#ff5c8a;--arrow:#4fd18a;color-scheme:dark;}}
 :root[data-theme="dark"]{--water:#1d5f7d;--water2:#123c4f;--surface:#7cc8e6;--crest:#ff8a4c;--trough:#b9a2ff;--buoy:#eaf6fb;--hot:#ff5c8a;--arrow:#4fd18a;color-scheme:dark;}
-.wrap{max-width:980px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+.wrap{max-width:1280px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
 #side{height:340px} #top{height:150px}
 input[type=range]{width:130px;}
@@ -24,9 +25,11 @@ input[type=range]{width:130px;}
 <body>
 <div class="wrap">
   <header>
-    <div class="crumb"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave3d/">3D 剖面版</a> · <a href="../ripple/">漣漪</a></div>
-    <h1>水波：從側面看橫波</h1>
-    <p class="sub">追蹤紅色浮標：它只上下振動，波形卻一直往右傳。振動方向 ⟂ 傳播方向，所以是橫波。</p>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave3d/">3D 剖面版</a> · <a href="../ripple/">漣漪</a></div>
+      <h1>水波：從側面看橫波</h1>
+    </div>
+    <p>追蹤紅色浮標：它只上下振動，波形卻一直往右傳。振動方向 ⟂ 傳播方向，所以是橫波。</p>
   </header>
 
   <section class="stage">

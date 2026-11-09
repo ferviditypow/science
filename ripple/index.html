@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js" data-nav="waves"></script>
 <style></style>
 <title>石頭漣漪</title>
 <meta name="claude:viewport-fit-sides" content="cover">
@@ -14,7 +15,7 @@
 :root{--water:#2d7fa3;--water2:#9fd1e4;--surface:#0d5574;--lake:#cfe7f0;--crest:#d9480f;--trough:#6a4fb3;--buoy:#ffffff;--hot:#e0225b;--stone:#5f5a52;}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--water:#1d5f7d;--water2:#123c4f;--surface:#7cc8e6;--lake:#0f2c38;--crest:#ff8a4c;--trough:#b9a2ff;--buoy:#eaf6fb;--hot:#ff5c8a;--stone:#b8b0a3;color-scheme:dark;}}
 :root[data-theme="dark"]{--water:#1d5f7d;--water2:#123c4f;--surface:#7cc8e6;--lake:#0f2c38;--crest:#ff8a4c;--trough:#b9a2ff;--buoy:#eaf6fb;--hot:#ff5c8a;--stone:#b8b0a3;color-scheme:dark;}
-.wrap{max-width:980px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+.wrap{max-width:1280px;margin:0 auto;padding-block:24px 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px}
 #top{height:380px;cursor:crosshair;border-radius:6px} #side{height:240px}
 input[type=range]{width:130px;}
@@ -24,9 +25,11 @@ input[type=range]{width:130px;}
 <body>
 <div class="wrap">
   <header>
-    <div class="crumb"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave/">側視橫波</a> · <a href="../wave3d/">3D 剖面版</a></div>
-    <h1>石頭丟進湖中的漣漪</h1>
-    <p class="sub">點湖面任一處丟石頭。俯視看到一圈圈向外擴大的圓形波前；下方剖面看到浮標只上下振動，波峰卻往外跑。</p>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave/">側視橫波</a> · <a href="../wave3d/">3D 剖面版</a></div>
+      <h1>石頭丟進湖中的漣漪</h1>
+    </div>
+    <p>點湖面任一處丟石頭。俯視看到一圈圈向外擴大的圓形波前；下方剖面看到浮標只上下振動，波峰卻往外跑。</p>
   </header>
 
   <section class="stage">

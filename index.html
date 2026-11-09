@@ -28,17 +28,26 @@
   .shead .ico svg{width:26px;height:26px}
   .shead h2{margin:0;font-family:var(--f-display);font-weight:900;font-size:clamp(1.5rem,3vw,2rem);line-height:1.2;color:var(--ink)}
   .shead .count{margin-left:auto;color:var(--muted);font-size:.9rem}
+  h3.grp{margin:6px 0 0;font-size:1.05rem;font-weight:700;color:var(--c);display:flex;align-items:baseline;gap:8px}
+  h3.grp .n{color:var(--muted);font-size:.85rem;font-weight:400}
   .cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
-  a.card{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px 18px 16px 20px;min-height:132px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:inherit;text-decoration:none;overflow:hidden;transition:border-color .15s,transform .15s}
-  a.card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
-  a.card:hover,a.card:focus-visible{border-color:var(--c);transform:translateY(-2px)}
-  a.card:focus-visible{outline:3px solid var(--c);outline-offset:2px}
+  .card{position:relative;display:flex;flex-direction:column;gap:6px;padding:16px 18px 16px 20px;min-height:132px;background:var(--panel);border:1px solid var(--line);border-radius:12px;color:inherit;text-decoration:none;overflow:hidden;transition:border-color .15s,transform .15s}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:var(--c)}
+  .card:hover,.card:focus-within{border-color:var(--c);transform:translateY(-2px)}
+  .card a.main{color:inherit;text-decoration:none}
+  .card a.main::after{content:"";position:absolute;inset:0;border-radius:12px}
+  .card a.main:focus-visible{outline:none}
+  .card:has(a.main:focus-visible){outline:3px solid var(--c);outline-offset:2px}
+  .card .alt{position:relative;z-index:1;font-size:.88rem;color:var(--muted)}
+  .card .alt a{color:var(--c);font-weight:600}
   .tag{align-self:flex-start;font-size:.78rem;font-weight:700;letter-spacing:.06em;color:var(--c);background:var(--soft);padding:2px 10px;border-radius:999px}
-  a.card strong{font-size:1.15rem;line-height:1.35}
-  a.card span.d{color:var(--muted);font-size:.95rem}
-  a.card .go{margin-top:auto;align-self:flex-end;color:var(--c);font-weight:700;font-size:.9rem}
-  .empty{display:flex;align-items:center;gap:10px;min-height:88px;padding:16px 18px;border:2px dashed var(--line);border-radius:12px;color:var(--muted)}
-  .cards:has(a.card) + .empty{display:none}
+  .card strong{font-size:1.15rem;line-height:1.35}
+  .card span.d{color:var(--muted);font-size:.95rem}
+  .card .go{margin-top:auto;align-self:flex-end;color:var(--c);font-weight:700;font-size:.9rem}
+  .empty{margin:0;display:flex;align-items:center;gap:10px;min-height:88px;padding:16px 18px;border:2px dashed var(--line);border-radius:12px;color:var(--muted)}
+  .lvbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;margin-top:2px}
+  .lvbar .tlabel{font-size:.85rem;color:var(--muted)}
+  .lvbar .hint{font-size:.82rem;color:var(--muted)}
   #phy{--c:var(--phy);--soft:var(--phy-soft)}
   #chem{--c:var(--chem);--soft:var(--chem-soft)}
   #earth{--c:var(--earth);--soft:var(--earth-soft)}
@@ -58,96 +67,41 @@
       <a href="#earth" style="--c:var(--earth)"><span class="dot"></span>地科<span class="n" data-count="earth"></span></a>
       <a href="#bio" style="--c:var(--bio)"><span class="dot"></span>生物<span class="n" data-count="bio"></span></a>
     </nav>
+    <div class="lvbar"><span class="tlabel">程度</span><span class="seg" id="lv" role="group" aria-label="程度"><button type="button" data-lv="all" aria-pressed="true">全部</button><button type="button" data-lv="jh" aria-pressed="false">國中</button><button type="button" data-lv="sh" aria-pressed="false">高中</button></span><span class="hint" id="lvhint"></span></div>
   </header>
 
-  <!-- 新增模擬：在對應科目的 <div class="cards"> 裡加一張 <a class="card">，不要整頁覆蓋 -->
+  <!-- 新增模擬：在對應單元（h3.grp）下面的 <div class="cards"> 裡插入一張卡片，不要整頁覆蓋：
+       <div class="card" data-lv="jh 或 sh 或 jh sh"><span class="tag">年級 · 章節</span><strong><a class="main" href="資料夾/">名稱</a></strong><span class="d">說明</span><span class="go">開始 →</span></div>
+       沒有合適的單元就新增一組 <h3 class="grp">單元名稱<span class="n"></span></h3> ＋ <div class="cards">。另一個版本的連結放在 <span class="alt">另有 <a href="…">…</a></span>。 -->
 
   <section id="phy" aria-labelledby="h-phy">
     <div class="shead">
       <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><ellipse cx="12" cy="12" rx="3.2" ry="9"/><path d="M2 12h20M5 7l14 10M5 17l14-10" opacity=".55"/></svg></span>
       <h2 id="h-phy">物理</h2><span class="count" data-count="phy"></span>
     </div>
+    <h3 class="grp">光學<span class="n"></span></h3>
     <div class="cards">
-      <a class="card" href="pinhole/">
-        <span class="tag">光學 · 國二</span>
-        <strong>針孔成像與點光源成像</strong>
-        <span class="d">針孔成像看倒立實像，點光源模式看手電筒照人在牆上形成的影子；光源、物體、屏幕都能拖曳。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="reflection/">
-        <span class="tag">光學 · 國二・高一</span>
-        <strong>光的反射</strong>
-        <span class="d">反射定律、鏡面反射與漫反射、平面鏡成像、全身鏡、凹面鏡與凸面鏡、光槓桿；頁首可切換國中／高中。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="refraction/">
-        <span class="tag">光學 · 國二・高一</span>
-        <strong>光的折射</strong>
-        <span class="d">空氣到水的折射與全反射、波前轉彎、視深（硬幣、筷子、魚和鳥）、光纖、色散與平行玻璃板、救生員問題。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="lens/">
-        <span class="tag">光學 · 國二</span>
-        <strong>透鏡成像</strong>
-        <span class="d">凸透鏡、凹透鏡切換，拖曳物體看 F 與 2F 位置的成像；實驗台 2 是立體視角，看實像左右也相反。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="color/">
-        <span class="tag">光學 · 國二</span>
-        <strong>色光與顏色</strong>
-        <span class="d">三稜鏡色散（單色光不色散、倒放稜鏡合成白光）與彩虹何時往哪看；紅綠藍聚光燈混色、彩色影子、螢幕畫素；暗箱色紙在各色光下的顏色與反推真正顏色；玻璃紙濾光、有色眼鏡、溫室玻璃。附講義與考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="emwave/">
-        <span class="tag">光學 · 高一</span>
-        <strong>電磁波</strong>
-        <span class="d">加速的電荷怎麼發出電磁波、可旋轉的 3D 電磁波與右手定則、赫茲的火花實驗、可拖曳的電磁波譜與 c＝fλ 計算機；內含講義題目情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="interference/">
-        <span class="tag">光學 · 高一</span>
-        <strong>繞射與干涉</strong>
-        <span class="d">自由波槽（可畫牆、放波源、2D／3D 立體水面）、水波槽的狹縫、擋板邊緣與阿拉戈亮點，疊加原理，兩波源的節線與腹線（含兩個喇叭）、狹縫的惠更斯作圖（課本畫法，2D／3D 可拖曳點波源），楊氏雙狹縫（3D 實驗裝置、白光、單縫比較、狹縫方向、相量圖、數據表），薄膜干涉，光的本質之爭與斐索齒輪；內含講義與一中、二中考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="sound/">
-        <span class="tag">波動與聲音 · 國二</span>
-        <strong>聲音：產生、聲速、三要素、回聲</strong>
-        <span class="d">六個實驗台：音叉與空氣分子、波以耳真空鈴；各種介質聲速賽跑、先看到後聽到、百米計時、傳進另一種介質；示波器比較響度音調音色、分貝；弦樂器、瓶子試管、敲管吹管、共鳴；回聲測距；可聽範圍與聽力檢查。可以真的聽，附講義與考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="static/">
-        <span class="tag">電學 · 國三</span>
-        <strong>靜電與電量</strong>
-        <span class="d">摩擦起電（毛皮、絲絹、氣球、銅棒）與小紙片；金屬球、兩球、三球、驗電器的靜電感應、接觸起電、感應起電與接地電子流向；庫侖定律兩、三個電荷的分力與合力、接觸平分；電量與電子數、Q＝It、mAh、e 的整數倍。附講義與考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="circuit/">
-        <span class="tag">電學 · 國三</span>
-        <strong>電路：電流、電壓與歐姆定律</strong>
-        <span class="d">電子流與電流方向、導體與絕緣體、通路斷路短路、電荷帶的能量；燈泡與電阻的串聯、並聯、混聯、滑線變阻器、電池串並聯，可拔燈泡、跨接導線、用伏特計探棒量任兩點；安培計與伏特計的正確與錯誤接法、量程端子與讀刻度練習；V–I 圖、非歐姆的燈泡、R＝ρL／A、電表內接外接。附講義與考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="doppler/">
-        <span class="tag">波動與聲音</span>
-        <strong>都卜勒效應</strong>
-        <span class="d">聲源與觀察者可等速、等加速度移動，或讓聲源做圓周運動；聽音高變化，看波長疏密。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="wavetype/">
-        <span class="tag">波動</span>
-        <strong>橫波與縱波：繩波、彈簧波</strong>
-        <span class="d">每 ¼ 週期一格一格推進、放慢播放、留下參考波形，追蹤質點看它在原地振動；可切繩波、彈簧橫波、彈簧縱波。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="wave3d/">
-        <span class="tag">波動</span>
-        <strong>水波與橫波</strong>
-        <span class="d">可旋轉的 3D 剖面水塊，看波峰、波谷、波前，追蹤浮標判斷橫波；頁首可切換側視版與石頭漣漪版。</span>
-        <span class="go">開始 →</span>
-      </a>
+      <div class="card" data-lv="jh"><span class="tag">國二 · 第四章</span><strong><a class="main" href="pinhole/">針孔成像與點光源成像</a></strong><span class="d">針孔成像看倒立實像，點光源模式看手電筒照人在牆上形成的影子；光源、物體、屏幕都能拖曳。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh sh"><span class="tag">國二 第四章／高一 2-3</span><strong><a class="main" href="reflection/">光的反射</a></strong><span class="d">反射定律、鏡面反射與漫反射、平面鏡成像、全身鏡、凹面鏡與凸面鏡、光槓桿；頁首可切換國中／高中。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh sh"><span class="tag">國二 第四章／高一 2-4</span><strong><a class="main" href="refraction/">光的折射</a></strong><span class="d">空氣到水的折射與全反射、波前轉彎、視深（硬幣、筷子、魚和鳥）、光纖、色散與平行玻璃板、救生員問題。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國二 · 第四章</span><strong><a class="main" href="lens/">透鏡成像</a></strong><span class="d">凸透鏡、凹透鏡切換，拖曳物體看 F 與 2F 位置的成像；實驗台 2 是立體視角，看實像左右也相反。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國二 · 4-5</span><strong><a class="main" href="color/">色光與顏色</a></strong><span class="d">三稜鏡色散（單色光不色散、倒放稜鏡合成白光）與彩虹何時往哪看；紅綠藍聚光燈混色、彩色影子、螢幕畫素；暗箱色紙在各色光下的顏色與反推真正顏色；玻璃紙濾光、有色眼鏡、溫室玻璃。附講義與考古題情境。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="sh"><span class="tag">高一 · 1-1～1-4</span><strong><a class="main" href="emwave/">電磁波</a></strong><span class="d">加速的電荷怎麼發出電磁波、可旋轉的 3D 電磁波與右手定則、赫茲的火花實驗、可拖曳的電磁波譜與 c＝fλ 計算機；內含講義題目情境。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="sh"><span class="tag">高一 · 2-5、2-6</span><strong><a class="main" href="interference/">繞射與干涉</a></strong><span class="d">自由波槽（可畫牆、放波源、2D／3D 立體水面）、水波槽的狹縫、擋板邊緣與阿拉戈亮點，疊加原理，兩波源的節線與腹線（含兩個喇叭）、狹縫的惠更斯作圖（課本畫法，2D／3D 可拖曳點波源），楊氏雙狹縫（3D 實驗裝置、白光、單縫比較、狹縫方向、相量圖、數據表），薄膜干涉，光的本質之爭與斐索齒輪；內含講義與一中、二中考古題情境。</span><span class="go">開始 →</span></div>
     </div>
-    <div class="empty">尚未加入模擬</div>
+    <h3 class="grp">波動與聲音<span class="n"></span></h3>
+    <div class="cards">
+      <div class="card" data-lv="jh"><span class="tag">國二 · 第三章</span><strong><a class="main" href="wavetype/">橫波與縱波：繩波、彈簧波</a></strong><span class="d">每 ¼ 週期一格一格推進、放慢播放、留下參考波形，追蹤質點看它在原地振動；可切繩波、彈簧橫波、彈簧縱波。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國二 · 第三章</span><strong><a class="main" href="wave3d/">3D 水波剖面</a></strong><span class="d">可旋轉的 3D 剖面水塊，看波峰、波谷、波前，追蹤浮標判斷橫波；頁首可切換側視版與石頭漣漪版。</span><span class="alt">另有 <a href="wave/">側視版</a>、<a href="ripple/">漣漪</a></span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國二 · 3-2～3-4</span><strong><a class="main" href="sound/">聲音：產生、聲速、三要素、回聲</a></strong><span class="d">六個實驗台：音叉與空氣分子、波以耳真空鈴；各種介質聲速賽跑、先看到後聽到、百米計時、傳進另一種介質；示波器比較響度音調音色、分貝；弦樂器、瓶子試管、敲管吹管、共鳴；回聲測距；可聽範圍與聽力檢查。可以真的聽，附講義與考古題情境。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh sh"><span class="tag">延伸</span><strong><a class="main" href="doppler/">都卜勒效應</a></strong><span class="d">聲源與觀察者可等速、等加速度移動，或讓聲源做圓周運動；聽音高變化，看波長疏密。</span><span class="go">開始 →</span></div>
+    </div>
+    <h3 class="grp">電學<span class="n"></span></h3>
+    <div class="cards">
+      <div class="card" data-lv="jh"><span class="tag">國三 · 4-1</span><strong><a class="main" href="static/">靜電與電量</a></strong><span class="d">摩擦起電（毛皮、絲絹、氣球、銅棒）與小紙片；金屬球、兩球、三球、驗電器的靜電感應、接觸起電、感應起電與接地電子流向；庫侖定律兩、三個電荷的分力與合力、接觸平分；電量與電子數、Q＝It、mAh、e 的整數倍。附講義與考古題情境。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國三 · 4-2～4-4</span><strong><a class="main" href="circuit/">電路：電流、電壓與歐姆定律</a></strong><span class="d">電子流與電流方向、導體與絕緣體、通路斷路短路、電荷帶的能量；燈泡與電阻的串聯、並聯、混聯、滑線變阻器、電池串並聯，可拔燈泡、跨接導線、用伏特計探棒量任兩點；安培計與伏特計的正確與錯誤接法、量程端子與讀刻度練習；V–I 圖、非歐姆的燈泡、R＝ρL／A、電表內接外接。附講義與考古題情境。</span><span class="go">開始 →</span></div>
+    </div>
+    <p class="empty">這個程度目前沒有模擬。</p>
   </section>
 
   <section id="chem" aria-labelledby="h-chem">
@@ -155,21 +109,12 @@
       <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6M10 3v6L4.5 19a1.5 1.5 0 0 0 1.3 2h12.4a1.5 1.5 0 0 0 1.3-2L14 9V3"/><path d="M7 15h10" opacity=".55"/></svg></span>
       <h2 id="h-chem">化學</h2><span class="count" data-count="chem"></span>
     </div>
+    <h3 class="grp">化學式與化學鍵<span class="n"></span></h3>
     <div class="cards">
-      <a class="card" href="combustion/">
-        <span class="tag">化學式 · 高一 2-2</span>
-        <strong>燃燒分析法</strong>
-        <span class="d">組裝燃燒分析裝置（CuO、過氯酸鎂、NaOH 擺哪裡）、點火看 C、H、O 原子各跑去哪、甲乙對調或拿掉 CuO 會算錯什麼；一步一步算實驗式與分子式，可隨機出題。附一中、二中、中女中考古題情境與考點快問。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="structure/">
-        <span class="tag">化學鍵與化學式 · 高一 2-1／2-2</span>
-        <strong>分子與晶體結構 3D</strong>
-        <span class="d">44 種分子的 3D 模型＋路易斯結構（孤對電子、八隅體、鍵角），自動標出官能基，兩個分子並排判斷同分異構物；NaCl、鑽石、石墨、C₆₀、石英、銅、乾冰、冰的晶體結構，可數鄰居、敲打看碎裂或延展。附一中、二中、立人考古題情境。</span>
-        <span class="go">開始 →</span>
-      </a>
+      <div class="card" data-lv="sh"><span class="tag">高一 · 2-2</span><strong><a class="main" href="combustion/">燃燒分析法</a></strong><span class="d">組裝燃燒分析裝置（CuO、過氯酸鎂、NaOH 擺哪裡）、點火看 C、H、O 原子各跑去哪、甲乙對調或拿掉 CuO 會算錯什麼；一步一步算實驗式與分子式，可隨機出題。附一中、二中、中女中考古題情境與考點快問。</span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="sh"><span class="tag">高一 · 2-1、2-2</span><strong><a class="main" href="structure/">分子與晶體結構 3D</a></strong><span class="d">44 種分子的 3D 模型＋路易斯結構（孤對電子、八隅體、鍵角），自動標出官能基，兩個分子並排判斷同分異構物；NaCl、鑽石、石墨、C₆₀、石英、銅、乾冰、冰的晶體結構，可數鄰居、敲打看碎裂或延展。附一中、二中、立人考古題情境。</span><span class="go">開始 →</span></div>
     </div>
-    <div class="empty">尚未加入模擬，敬請期待。</div>
+    <p class="empty">這個程度目前沒有模擬。</p>
   </section>
 
   <section id="earth" aria-labelledby="h-earth">
@@ -177,45 +122,13 @@
       <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="9" cy="13" r="6"/><path d="M9 7a6 6 0 0 1 0 12" fill="currentColor" opacity=".35" stroke="none"/><circle cx="19" cy="5" r="2.2"/></svg></span>
       <h2 id="h-earth">地科</h2><span class="count" data-count="earth"></span>
     </div>
+    <h3 class="grp">天文<span class="n"></span></h3>
     <div class="cards">
-      <a class="card" href="universe3d/">
-        <span class="tag">天文 · 7-1</span>
-        <strong>宇宙與太陽系：3D</strong>
-        <span class="d">可自由轉動、全螢幕的 3D 太陽系，點天體靠近看；下方有行星比較表、宇宙尺度、光年計算、星座遠近、天體分類與流星實驗。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="universe/">
-        <span class="tag">天文 · 7-1</span>
-        <strong>宇宙與太陽系：平面版</strong>
-        <span class="d">同樣的四個實驗台，用 2D 俯視圖呈現，較省資源。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="seasons3d/">
-        <span class="tag">天文 · 7-2</span>
-        <strong>晝夜與四季：3D</strong>
-        <span class="d">可自由轉動、全螢幕的 3D 公轉場景（北極上空、黃道面側看、跟著地球），配合天球太陽軌跡、竿影、星軌與全年圖表。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="seasons/">
-        <span class="tag">天文 · 7-2</span>
-        <strong>晝夜與四季：平面版</strong>
-        <span class="d">四個 2D 同步畫面：公轉圖、地球受光、天空與竿影、圖表。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="moon/">
-        <span class="tag">天文 · 7-3</span>
-        <strong>日地月的相對運動</strong>
-        <span class="d">農曆月相、月亮幾點升落、日食與月食、大潮小潮；俯視圖和觀察者的天空同步，內含講義題目情境。</span>
-        <span class="go">開始 →</span>
-      </a>
-      <a class="card" href="moon3d/">
-        <span class="tag">天文 · 7-3</span>
-        <strong>月相：3D 太空視角</strong>
-        <span class="d">可旋轉的立體日地月，一鍵切換到從地球看月亮、站在地面看天空；用兩個半球的界線看懂月相。</span>
-        <span class="go">開始 →</span>
-      </a>
+      <div class="card" data-lv="jh"><span class="tag">國三 · 7-1</span><strong><a class="main" href="universe3d/">宇宙與太陽系</a></strong><span class="d">可自由轉動、全螢幕的 3D 太陽系，點天體靠近看；下方有行星比較表、宇宙尺度、光年計算、星座遠近、天體分類與流星實驗。</span><span class="alt">另有 <a href="universe/">平面版</a></span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國三 · 7-2</span><strong><a class="main" href="seasons3d/">晝夜與四季</a></strong><span class="d">可自由轉動、全螢幕的 3D 公轉場景（北極上空、黃道面側看、跟著地球），配合天球太陽軌跡、竿影、星軌與全年圖表。</span><span class="alt">另有 <a href="seasons/">平面版</a></span><span class="go">開始 →</span></div>
+      <div class="card" data-lv="jh"><span class="tag">國三 · 7-3</span><strong><a class="main" href="moon/">日地月的相對運動</a></strong><span class="d">農曆月相、月亮幾點升落、日食與月食、大潮小潮；俯視圖和觀察者的天空同步，內含講義題目情境。</span><span class="alt">另有 <a href="moon3d/">月相 3D 太空視角</a></span><span class="go">開始 →</span></div>
     </div>
-    <div class="empty">尚未加入模擬</div>
+    <p class="empty">這個程度目前沒有模擬。</p>
   </section>
 
   <section id="bio" aria-labelledby="h-bio">
@@ -223,20 +136,39 @@
       <span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 19c0-8 6-14 15-14 0 9-6 15-14 15"/><path d="M5 19 13 11" opacity=".55"/></svg></span>
       <h2 id="h-bio">生物</h2><span class="count" data-count="bio"></span>
     </div>
+    <h3 class="grp">循環系統<span class="n"></span></h3>
     <div class="cards">
-      <a class="card" href="circulation/"><span class="tag">循環系統 · 國一 4-3、4-4</span><strong>人體的循環系統</strong><span class="d">心臟收縮舒張與瓣膜（2D／3D）、三種血管、魚尾鰭、血液組成、全身循環路徑、淋巴、白血球變形蟲運動、防禦作用與疫苗</span><span class="go">開始 →</span></a>
+      <div class="card" data-lv="jh"><span class="tag">國一 · 4-3、4-4</span><strong><a class="main" href="circulation/">人體的循環系統</a></strong><span class="d">心臟收縮舒張與瓣膜（2D／3D）、三種血管、魚尾鰭、血液組成、全身循環路徑、淋巴、白血球變形蟲運動、防禦作用與疫苗</span><span class="go">開始 →</span></div>
     </div>
-    <div class="empty">尚未加入模擬，敬請期待。</div>
+    <p class="empty">這個程度目前沒有模擬。</p>
   </section>
 
-  <footer>點卡片進入模擬；看完按瀏覽器的「返回」就能回到這一頁。</footer>
+  <footer>點卡片進入模擬；看完按瀏覽器的「返回」就能回到這一頁。給學生的連結可以加 <code>?level=jh</code>（只看國中）或 <code>?level=sh</code>（只看高中）。</footer>
 </main>
 <script>
-  // 依實際卡片數量顯示「n 個」
-  document.querySelectorAll('section[id]').forEach(function(sec){
-    var n=sec.querySelectorAll('a.card').length;
-    document.querySelectorAll('[data-count="'+sec.id+'"]').forEach(function(el){el.textContent=n?n+' 個':'尚無';});
-  });
+  // 程度篩選（全部／國中／高中）：記在瀏覽器裡；網址 ?level=jh 或 ?level=sh 可直接指定（給學生的連結用）
+  // 選國中或高中時，光學頁的程度也跟著切換（optics-level）
+  (function(){
+    var KEY='home-level',q=new URLSearchParams(location.search).get('level'),lv='all';
+    try{lv=localStorage.getItem(KEY)||'all';}catch(e){}
+    if(q==='jh'||q==='sh'||q==='all')lv=q;
+    function apply(){
+      document.querySelectorAll('#lv button').forEach(function(b){b.setAttribute('aria-pressed',String(b.dataset.lv===lv));});
+      document.querySelectorAll('.card').forEach(function(c){c.hidden=lv!=='all'&&(' '+c.dataset.lv+' ').indexOf(' '+lv+' ')<0;});
+      document.querySelectorAll('h3.grp').forEach(function(h){var box=h.nextElementSibling,n=box.querySelectorAll('.card:not([hidden])').length;h.hidden=box.hidden=!n;h.querySelector('.n').textContent=n+' 個';});
+      document.querySelectorAll('section[id]').forEach(function(sec){
+        var n=sec.querySelectorAll('.card:not([hidden])').length;
+        sec.querySelector('.empty').hidden=n>0;
+        sec.hidden=!n&&lv!=='all';
+        var chip=document.querySelector('nav a[href="#'+sec.id+'"]');if(chip)chip.hidden=sec.hidden;
+        document.querySelectorAll('[data-count="'+sec.id+'"]').forEach(function(el){el.textContent=n?n+' 個':'尚無';});
+      });
+      document.getElementById('lvhint').textContent=lv==='jh'?'只顯示國中的單元；光學頁也會切到國中模式':lv==='sh'?'只顯示高中的單元；光學頁也會切到高中模式':'';
+    }
+    document.getElementById('lv').addEventListener('click',function(e){var b=e.target.closest('button[data-lv]');if(!b)return;lv=b.dataset.lv;
+      try{localStorage.setItem(KEY,lv);if(lv!=='all')localStorage.setItem('optics-level',lv);}catch(e){}apply();});
+    apply();
+  })();
 </script>
 </body>
 </html>

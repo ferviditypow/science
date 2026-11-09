@@ -6,6 +6,7 @@
 <title>透鏡成像模擬</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js"></script>
 <script src="../shared/optics.js"></script>
 <style>
 /* 版面：標題 → 光學台（SVG 畫面）→ 下方「控制」與「數據」兩欄，手機時疊成一欄 */
@@ -17,9 +18,9 @@
   :root:not([data-theme="light"]) {--axis: #6f7e8f;--lens: #8e9cff;--lens-fill: rgba(142, 156, 255, 0.2);--zone: rgba(142, 156, 255, 0.07);--obj: #4cc7a4;--img: #ff7c5e;--ray1: #ff7d55;--ray2: #5cabff;--ray3: #f1c13a;color-scheme: dark;}
 }
 :root[data-theme="dark"] {--axis: #6f7e8f;--lens: #8e9cff;--lens-fill: rgba(142, 156, 255, 0.2);--zone: rgba(142, 156, 255, 0.07);--obj: #4cc7a4;--img: #ff7c5e;--ray1: #ff7d55;--ray2: #5cabff;--ray3: #f1c13a;color-scheme: dark;}
-.wrap { max-width: 1080px; margin: 0 auto; display: grid; gap: 18px; }
+.wrap { max-width: 1280px; margin: 0 auto; display: grid; gap: 18px; }
 
-header { display: grid; gap: 4px; }
+
 
 /* 光學台 */
 .bench {
@@ -76,10 +77,12 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
 <body>
 <div class="wrap">
   <header>
-    <div class="crumb"><a href="../">自然科模擬動畫</a> · 光學 · 透鏡</div>
-    <h1>透鏡成像模擬</h1>
-    <p class="formula sh-only">1/f = 1/p + 1/q　　m = −q / p</p>
-    <p class="hint">先選凸透鏡或凹透鏡，再拖曳綠色箭頭（物體）：左右改變物距，上下改變高度；也可以用下方拉桿調整。靠近 F 或 2F 時會自動吸附。</p>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 光學 · 透鏡</div>
+      <h1>透鏡成像</h1>
+      <p class="formula sh-only">1/f = 1/p + 1/q　　m = −q / p</p>
+    </div>
+    <p>先選凸透鏡或凹透鏡，再拖曳綠色箭頭（物體）：左右改變物距，上下改變高度；也可以用下方拉桿調整。靠近 F 或 2F 時會自動吸附。</p>
     <p class="rotate-hint">手機橫拿，畫面會更大。</p>
   </header>
 

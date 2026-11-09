@@ -5,15 +5,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js" data-nav="waves"></script>
 <style></style>
-<title>都卜勒效應實驗台</title>
+<title>都卜勒效應</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
 /* Layout: one wide "wave tank" stage on top, then source / observer / readout panels beneath, like a lab bench */
 :root{--wave:#2a3a4b;--src:#d9481c;--src-soft:#fbe4da;--obs:#1c68ad;--obs-soft:#dcebf8;--up:#c2410c;--down:#1d5fa3;--q:#7b4fc4;}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--wave:#c6d2de;--src:#ff7b47;--src-soft:#3a2219;--obs:#5ba8ec;--obs-soft:#17293a;--up:#ff9a6b;--down:#7cb9f0;--q:#b592f2;color-scheme:dark;}}
 :root[data-theme="dark"]{--wave:#c6d2de;--src:#ff7b47;--src-soft:#3a2219;--obs:#5ba8ec;--obs-soft:#17293a;--up:#ff9a6b;--down:#7cb9f0;--q:#b592f2;color-scheme:dark;}
-.wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:16px}
 header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:8px 24px}
 .panel{background:var(--panel);border:1px solid var(--line);border-radius:10px}
 .stage{overflow:hidden}
@@ -77,7 +78,7 @@ footer p{margin:0 0 6px}
   <header>
     <div>
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 波動與聲音</div>
-      <h1>都卜勒效應實驗台</h1>
+      <h1>都卜勒效應</h1>
     </div>
     <p>聲源和觀察者都能移動，也能等加速度移動或讓聲源做圓周運動。按「開啟聲音」聽觀察者實際聽到的音高，同時看波前疏密的變化。</p>
   </header>

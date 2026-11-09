@@ -7,6 +7,7 @@
 <title>針孔成像實驗台</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js"></script>
 <script src="../shared/optics.js"></script>
 <style>
 /* Layout: a wide optical bench (side view of the camera obscura) on top; the screen as seen from behind + controls below; stacks to one column on phones */
@@ -39,8 +40,8 @@
 .note p{margin:0;font-size:.92rem;color:var(--muted)}
 .note .btn{justify-self:start}
 hr{border:0;border-top:1px solid var(--line);margin:0}
-.wrap{gap:18px}
-header{display:grid;gap:6px;justify-items:start}
+.wrap{max-width:1280px;gap:12px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
 .panel{padding:16px;display:grid;gap:14px;align-content:start}
 .formula{font-size:.9rem;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;overflow-x:auto;white-space:nowrap}
 .notes{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
@@ -51,14 +52,16 @@ header{display:grid;gap:6px;justify-items:start}
 <body>
 <div class="wrap">
   <header>
-    <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 光學 · 光的直線傳播</div>
-    <h1 id="h1">針孔成像</h1>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 光學 · 光的直線傳播</div>
+      <h1 id="h1">針孔成像</h1>
+    </div>
     <p id="intro">拖曳光源、針孔或屏幕改變距離，再調整孔的大小、形狀與數量，觀察屏幕上的像或影子如何變化。</p>
-    <div class="seg mode" data-k="mode" role="group" aria-label="模式">
+  </header>
+  <nav class="panel benchbar" aria-label="實驗台"><span class="tlabel">實驗台</span><div class="seg mode" data-k="mode" role="group" aria-label="模式">
       <button data-v="pinhole">針孔成像</button>
       <button data-v="point">點光源成像</button>
-    </div>
-  </header>
+    </div></nav>
 
   <section class="bench" aria-label="針孔成像側視圖">
     <div class="side-wrap"><canvas id="side" aria-label="側視圖：蠟燭、針孔擋板與屏幕。蠟燭、針孔與屏幕都可拖曳。"></canvas></div>

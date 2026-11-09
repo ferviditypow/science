@@ -7,11 +7,12 @@
 
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js" data-nav="waves"></script>
 <style>
 :root{--rope:#2f5d8a;--spring:#4a7c59;--hot:#d9480f;--hot2:#7048c7;--hot3:#0b8a8f;--ghost:#9aa5a0;--crest:#d9480f;--trough:#7048c7;--dense:#b42318;--sparse:#1570ef;--arrow:#1f8a4c;}
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--rope:#8bb4e0;--spring:#8fd0a0;--hot:#ff8a4c;--hot2:#b9a2ff;--hot3:#5fd3d8;--ghost:#6b7570;--crest:#ff8a4c;--trough:#b9a2ff;--dense:#ff7a6b;--sparse:#6fb1ff;--arrow:#4fd18a;color-scheme:dark;}}
 :root[data-theme="dark"]{--rope:#8bb4e0;--spring:#8fd0a0;--hot:#ff8a4c;--hot2:#b9a2ff;--hot3:#5fd3d8;--ghost:#6b7570;--crest:#ff8a4c;--trough:#b9a2ff;--dense:#ff7a6b;--sparse:#6fb1ff;--arrow:#4fd18a;color-scheme:dark;}
-.wrap{max-width:1000px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
+.wrap{max-width:1280px;margin:0 auto;padding:20px max(16px,env(safe-area-inset-left,0px)) 48px max(16px,env(safe-area-inset-right,0px));display:grid;gap:16px}
 .stage{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px}
 #main{height:300px} #tl{height:46px;cursor:ew-resize} #pt{height:170px} #disp{height:130px}
 input[type=range]{width:120px;}
@@ -27,9 +28,11 @@ button.big{font-size:16px;padding:8px 18px}
 <body>
 <div class="wrap">
   <header>
-    <div class="crumb"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave/">水波側視</a> · <a href="../wave3d/">水波 3D</a></div>
-    <h1>橫波與縱波：繩波、彈簧波</h1>
-    <p class="sub">波形往右傳，質點卻留在原地來回振動。選「✋ 用手拉」可以自己拖曳左端的手把，想怎麼抖就怎麼抖。用「▸ ¼T」一格一格推進，比較每經過四分之一週期波形怎麼變、質點跑到哪。</p>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 波動 · <a href="../wave/">水波側視</a> · <a href="../wave3d/">水波 3D</a></div>
+      <h1>橫波與縱波：繩波、彈簧波</h1>
+    </div>
+    <p>波形往右傳，質點卻留在原地來回振動。選「✋ 用手拉」可以自己拖曳左端的手把，想怎麼抖就怎麼抖。用「▸ ¼T」一格一格推進，比較每經過四分之一週期波形怎麼變、質點跑到哪。</p>
   </header>
 
   <div class="row">
@@ -205,7 +208,7 @@ button.big{font-size:16px;padding:8px 18px}
         else if (i%4===2) label(ctx, '½λ', x, MH-14, C.muted, 'center', 10, 400);
       }
       ctx.setLineDash([]);
-      label(ctx, '每小格 = ¼λ', MW-8, MH-14, C.muted, 'right', 11, 500);
+      label(ctx, '每小格 = ¼λ', MW-8, 14, C.muted, 'right', 11, 500);
     }
     // rest line
     ctx.setLineDash([4,6]); ctx.strokeStyle = C.muted; ctx.lineWidth = 1;
