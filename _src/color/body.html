@@ -1,0 +1,129 @@
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國二 · 第四章 光、影像與顏色 4-5 · <a href="../sound/">上一頁：聲音</a></div>
+      <h1>色光與顏色</h1>
+    </div>
+    <p>四個實驗台對應翰林自然(3) 4-5：三稜鏡色散與彩虹、光的三原色混合、不透明物體的顏色、透明物體與濾光。換燈光顏色、拖曳燈與物體，看看顏色怎麼來的；最下方有講義與考古題的情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="disp" aria-pressed="true"><span class="n">1</span>色散與彩虹</button>
+      <button data-v="mix" aria-pressed="false"><span class="n">2</span>色光的混合</button>
+      <button data-v="obj" aria-pressed="false"><span class="n">3</span>不透明物體的顏色</button>
+      <button data-v="filt" aria-pressed="false"><span class="n">4</span>透明物體與濾光</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 色散與彩虹 ============ -->
+  <section class="bench" id="b-disp">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="dsMode"><button data-v="prism">三稜鏡</button><button data-v="rain">彩虹</button></span>
+      </div>
+      <div class="toolbar dsc" data-m="prism">
+        <span class="tlabel">光源</span><span class="seg" id="dsSrc"><button data-v="white">白光（太陽光）</button><button data-v="red">紅色雷射</button><button data-v="green">綠光</button><button data-v="violet">紫光</button><button data-v="rb">紅光＋藍光</button></span>
+        <label class="tog"><input type="checkbox" id="dsP2">再放一個倒放的三稜鏡</label>
+        <label class="tog"><input type="checkbox" id="dsEx" checked>色散放大 4 倍</label>
+      </div>
+      <div class="toolbar dsc" data-m="rain">
+        <label class="slider"><span class="tlabel">時間</span><input type="range" id="dsH" min="6" max="18" step="0.25" value="16"><output id="dsHo"></output></label>
+        <span class="tlabel">人面向</span><span class="seg" id="dsFace"><button data-v="E">東方</button><button data-v="W">西方</button></span>
+      </div>
+      <div class="cbox"><canvas id="cvDs" aria-label="色散與彩虹"></canvas></div>
+      <p class="hint" id="dsHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="dsBig"></p><div class="formula2" id="dsF"></div><ul class="checks" id="dsC"></ul></section>
+      <section class="panel box"><h3 id="dsHowT">怎麼看</h3><ul id="dsHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 色光的混合 ============ -->
+  <section class="bench" id="b-mix" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="mxMode"><button data-v="spot">三盞聚光燈</button><button data-v="shadow">彩色的影子</button><button data-v="pixel">螢幕的畫素</button></span>
+      </div>
+      <div class="toolbar mxc" data-m="spot">
+        <label class="tog"><input type="checkbox" id="mxR" checked>紅燈</label><label class="tog"><input type="checkbox" id="mxG" checked>綠燈</label><label class="tog"><input type="checkbox" id="mxB" checked>藍燈</label>
+        <button class="btn" id="mxReset">⟲ 排回三角形</button>
+      </div>
+      <div class="toolbar mxc" data-m="shadow">
+        <span class="tlabel">燈</span><span class="seg" id="mxSh"><button data-v="RB">紅燈＋藍燈</button><button data-v="RG">紅燈＋綠燈</button><button data-v="RGB">紅＋綠＋藍</button></span>
+      </div>
+      <div class="toolbar mxc" data-m="pixel">
+        <label class="slider"><span class="tlabel">紅 R</span><input type="range" id="pxR" min="0" max="255" step="1" value="255"><output id="pxRo"></output></label>
+        <label class="slider"><span class="tlabel">綠 G</span><input type="range" id="pxG" min="0" max="255" step="1" value="255"><output id="pxGo"></output></label>
+        <label class="slider"><span class="tlabel">藍 B</span><input type="range" id="pxB" min="0" max="255" step="1" value="0"><output id="pxBo"></output></label>
+      </div>
+      <div class="toolbar mxc" data-m="pixel"><span class="tlabel">範例</span><span class="chips" id="pxPre"></span></div>
+      <div class="cbox"><canvas id="cvMx" aria-label="色光的混合"></canvas></div>
+      <p class="hint" id="mxHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mxBig"></p><div class="formula2" id="mxF"></div><ul class="checks" id="mxC"></ul></section>
+      <section class="panel box"><h3 id="mxHowT">怎麼看</h3><ul id="mxHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 不透明物體的顏色 ============ -->
+  <section class="bench" id="b-obj" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="obMode"><button data-v="cards">暗箱裡的色紙</button><button data-v="pic">圖卡</button><button data-v="outfit">舞台上的服裝</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">照射的光</span><span class="seg" id="obLight"></span>
+      </div>
+      <div class="toolbar obc" data-m="pic"><span class="tlabel">圖卡</span><span class="seg" id="obPic"><button data-v="scene">風景圖卡</button><button data-v="blocks">色塊圖卡（看面積）</button><button data-v="face">四色卡（頭、眼珠、臉頰、嘴巴）</button></span></div>
+      <div class="toolbar obc" data-m="outfit">
+        <span class="tlabel">上衣</span><span class="seg" id="obTop"></span>
+      </div>
+      <div class="toolbar obc" data-m="outfit">
+        <span class="tlabel">裙子</span><span class="seg" id="obBot"></span>
+      </div>
+      <div class="cbox"><canvas id="cvOb" aria-label="物體的顏色"></canvas></div>
+      <p class="hint" id="obHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="obBig"></p><div class="formula2" id="obF"></div><ul class="checks" id="obC"></ul><div id="obTab"></div></section>
+      <section class="panel box"><h3 id="obHowT">怎麼看</h3><ul id="obHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 4 透明物體與濾光 ============ -->
+  <section class="bench" id="b-filt" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span><span class="seg" id="ftMode"><button data-v="filter">光穿過玻璃紙</button><button data-v="glasses">戴有色眼鏡看圖卡</button><button data-v="house">溫室的玻璃</button></span>
+      </div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">光源</span><span class="seg" id="ftLight"></span></div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">第一片</span><span class="seg" id="ftF1"></span></div>
+      <div class="toolbar ftc" data-m="filter"><span class="tlabel">第二片</span><span class="seg" id="ftF2"></span></div>
+      <div class="toolbar ftc" data-m="glasses"><span class="tlabel">鏡片</span><span class="seg" id="ftLens"></span><span class="tlabel">圖卡</span><span class="seg" id="ftCard"><button data-v="dog">dog 字卡</button><button data-v="shirt">白 T 恤圖案</button></span></div>
+      <div class="toolbar ftc" data-m="house"><span class="tlabel">溫室玻璃</span><span class="seg" id="ftGlass"></span></div>
+      <div class="cbox"><canvas id="cvFt" aria-label="透明物體與濾光"></canvas></div>
+      <p class="hint" id="ftHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="ftBig"></p><div class="formula2" id="ftF"></div><ul class="checks" id="ftC"></ul></section>
+      <section class="panel box"><h3 id="ftHowT">怎麼看</h3><ul id="ftHow"></ul></section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(3)》；考古題標示學校、學年-學期-次別與題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>

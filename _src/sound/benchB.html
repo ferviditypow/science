@@ -1,0 +1,32 @@
+
+  <!-- ============ 6 可聽範圍與分貝 ============ -->
+  <section class="bench" id="b-range" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="rgMode"><button data-v="bars">誰聽得到</button><button data-v="area">頻率＋響度</button><button data-v="audio">聽力檢查</button><button data-v="db">分貝尺與噪音</button></span>
+        <button class="btn" id="rgSnd">🔊 播放這個頻率</button>
+      </div>
+      <div class="toolbar rgc" data-m="bars area">
+        <span class="tlabel">動物</span><span class="chips" id="rgAni"></span>
+      </div>
+      <div class="toolbar rgc" data-m="bars area">
+        <label class="slider"><span class="tlabel">頻率</span><input type="range" id="rgF" min="0" max="1000" step="1" value="500"><output id="rgFo"></output></label>
+        <label class="slider rgc" data-m="area"><span class="tlabel">響度</span><input type="range" id="rgL" min="0" max="140" step="1" value="70"><output id="rgLo"></output></label>
+      </div>
+      <div class="toolbar rgc" data-m="audio">
+        <label class="slider"><span class="tlabel">測試音頻率</span><input type="range" id="rgAf" min="0" max="6" step="1" value="2"><output id="rgAfo"></output></label>
+        <label class="slider"><span class="tlabel">測試音音量</span><input type="range" id="rgAl" min="-10" max="120" step="5" value="40"><output id="rgAlo"></output></label>
+      </div>
+      <div class="toolbar rgc" data-m="db">
+        <label class="slider"><span class="tlabel">聲音甲</span><input type="range" id="rgD1" min="0" max="140" step="1" value="80"><output id="rgD1o"></output></label>
+        <label class="slider"><span class="tlabel">聲音乙</span><input type="range" id="rgD2" min="0" max="140" step="1" value="40"><output id="rgD2o"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cvRg" aria-label="可聽範圍"></canvas></div>
+      <p class="hint" id="rgHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="rgBig"></p><div class="formula2" id="rgF2"></div><ul class="checks" id="rgC"></ul></section>
+      <section class="panel box"><h3 id="rgHowT">怎麼看</h3><ul id="rgHow"></ul></section>
+    </div>
+  </section>

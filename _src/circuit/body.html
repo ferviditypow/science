@@ -1,0 +1,105 @@
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國三 · 第四章 4-2～4-4 · <a href="../static/">上一課：靜電與電量</a></div>
+      <h1>電路：電流、電壓與歐姆定律</h1>
+    </div>
+    <p>四個實驗台對應翰林自然(5) 4-2 電流、4-3 電壓、4-4 歐姆定律：電路裡的電子怎麼動、串聯與並聯、安培計與伏特計的接法與讀數、V–I 圖。電路會即時計算每一處的電流與電壓；最下方有講義與考古題的情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="flow" aria-pressed="true"><span class="n">1</span>電流與電子流</button>
+      <button data-v="sp" aria-pressed="false"><span class="n">2</span>電路編輯器（串並聯）</button>
+      <button data-v="meter" aria-pressed="false"><span class="n">3</span>安培計與伏特計</button>
+      <button data-v="ohm" aria-pressed="false"><span class="n">4</span>歐姆定律</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 電流與電子流 ============ -->
+  <section class="bench" id="b-flow">
+    <div class="panel">
+      <div class="toolbar"><span class="tlabel">電池</span><span class="seg" id="flN"><button data-v="1">1 個</button><button data-v="2">2 個</button><button data-v="3">3 個</button><button data-v="4">4 個</button><button data-v="6">6 個（9 V）</button></span>
+        <span class="tlabel">顯示</span><span class="seg" id="flMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button></span></div>
+      <div class="toolbar"><span class="tlabel">夾子之間</span><span class="seg" id="flMat"><button data-v="cu">銅線</button><button data-v="fe">鐵釘</button><button data-v="al">鋁箔</button><button data-v="pen">鉛筆芯</button><button data-v="salt">鹽水</button><button data-v="water">純水</button><button data-v="eraser">橡皮擦</button><button data-v="plastic">塑膠尺</button><button data-v="glass">玻璃棒</button><button data-v="wood">木筷</button><button data-v="air">什麼都不夾</button></span></div>
+      <div class="toolbar"><label class="tog"><input type="checkbox" id="flSw">開關接通</label><label class="tog"><input type="checkbox" id="flJL">導線跨接燈泡</label><label class="tog"><input type="checkbox" id="flJB">導線直接接電池兩端</label>
+        <label class="tog"><input type="checkbox" id="flV">用顏色顯示電位高低</label><label class="tog"><input type="checkbox" id="flEn">顯示每個電荷帶的能量</label></div>
+      <div class="duo"><div><div class="cbox"><canvas id="cvFl" aria-label="電路與電子流"></canvas></div></div>
+        <div><div class="toolbar"><span class="seg" id="flZoom"><button data-v="mat">放大夾子之間</button><button data-v="wire">放大導線</button></span></div><div class="cbox"><canvas id="cvFz" aria-label="微觀放大"></canvas></div></div></div>
+      <p class="hint" style="padding:0 12px 10px">點電路圖上的開關可以接通／打開；點虛線可以接上跨接導線。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="flBig"></p><div class="formula2" id="flF"></div><ul class="checks" id="flC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="flHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 串聯與並聯（電路編輯器） ============ -->
+  <section class="bench" id="b-sp" hidden>
+    <div class="panel">
+      <div class="toolbar"><span class="tlabel">範本</span><span class="seg" id="spT"><button data-v="one">一個燈泡</button><button data-v="ser2">兩個串聯</button><button data-v="ser3">三個串聯</button><button data-v="ser4">四個串聯</button><button data-v="par2">兩個並聯</button><button data-v="par3">三個並聯</button><button data-v="mix">1 串（2∥3）</button><button data-v="spx">（1 串 2）∥3</button><button data-v="rheo">滑線變阻器</button><button data-v="cells">電池串並聯</button><button data-v="blank">空白</button></span>
+        <span id="spCellsW"><span class="seg" id="spCells"><button data-v="one">一個</button><button data-v="s2">兩個串聯</button><button data-v="p2">兩個並聯</button><button data-v="r2">串聯但一個接反</button><button data-v="p2s1">兩個並聯再串一個</button></span></span></div>
+      <div class="toolbar pal" id="spPal"><span class="tlabel">加入</span><button class="btn" data-add="bat">電池</button><button class="btn" data-add="bulb">燈泡</button><button class="btn" data-add="res">電阻器</button><button class="btn" data-add="rheo">滑線變阻器</button><button class="btn" data-add="sw">開關</button><button class="btn" data-add="amm">安培計</button><button class="btn" data-add="vm">伏特計</button><button class="btn" data-add="fuse">保險絲</button><button class="btn" data-add="wire">導線</button><button class="btn" data-add="jump">跨接導線（弧形）</button>
+        <span class="seg" id="spTool"><button data-v="sel">選取／移動</button><button data-v="wire">✎ 畫導線</button></span></div>
+      <div class="toolbar"><button class="btn" id="spUndo">↶ 復原</button><button class="btn" id="spFix">全部修好</button><button class="btn" id="spFit">⤢ 符合畫面</button><button class="btn" id="spRl">⟲ 15°</button><button class="btn" id="spRr">⟳ 15°</button><button class="btn" id="spR0">轉正</button><button class="btn" id="spZout">－</button><button class="btn" id="spZin">＋</button>
+        <label class="tog"><input type="checkbox" id="spSnap">對齊格點</label><label class="tog"><input type="checkbox" id="spLet">接點字母</label><label class="tog"><input type="checkbox" id="spVm">伏特計探棒</label>
+        <label class="tog"><input type="checkbox" id="spV">電位顏色</label><label class="tog"><input type="checkbox" id="spVI">標出 V、I</label><label class="tog"><input type="checkbox" id="spHide">先猜再看</label><button class="btn primary" id="spReveal">揭曉</button></div>
+      <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
+        <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button><button data-v="off">不顯示</button></span></div>
+      <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF"></div><ul class="checks" id="spC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="spHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 安培計與伏特計 ============ -->
+  <section class="bench" id="b-meter" hidden>
+    <div class="panel">
+      <div class="toolbar"><span class="tlabel">電表</span><span class="seg" id="mtMode"><button data-v="amm">安培計</button><button data-v="vm">伏特計</button></span>
+        <span class="tlabel">電池</span><span class="seg" id="mtN"><button data-v="1">1 個</button><button data-v="2">2 個</button><button data-v="3">3 個</button><button data-v="4">4 個</button></span><label class="tog"><input type="checkbox" id="mtSw">開關接通</label></div>
+      <div class="toolbar"><span class="tlabel">接法</span><span class="seg" id="mtConn"></span></div>
+      <div class="toolbar"><span class="tlabel">＋端子</span><span class="seg" id="mtTerm"></span><button class="btn primary" id="mtPrac">🎯 讀刻度練習</button><button class="btn" id="mtAns">看答案</button><button class="btn" id="mtExit">結束練習</button></div>
+      <div class="duo"><div><div class="cbox"><canvas id="cvMc" aria-label="電表接線電路"></canvas></div></div><div><div class="cbox"><canvas id="cvMd" aria-label="電表刻度"></canvas></div></div></div>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mtBig"></p><div class="formula2" id="mtF"></div><ul class="checks" id="mtC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="mtHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 4 歐姆定律 ============ -->
+  <section class="bench" id="b-ohm" hidden>
+    <div class="panel">
+      <div class="toolbar"><span class="tlabel">待測物</span><span class="seg" id="ohS"><button data-v="A">電阻線 A</button><button data-v="B">電阻線 B</button><button data-v="S">A、B 串聯</button><button data-v="P">A、B 並聯</button><button data-v="pen">鉛筆芯</button><button data-v="ni">鎳鉻絲</button><button data-v="bulb">燈泡</button><button data-v="cus">自訂導線</button></span></div>
+      <div class="toolbar" id="ohCus"><span class="tlabel">材質</span><span class="seg" id="ohMat"><button data-v="cu">銅</button><button data-v="w">鎢</button><button data-v="fe">鐵</button><button data-v="ni">鎳鉻合金</button></span>
+        <label class="slider"><span class="tlabel">長度</span><input type="range" id="ohL" min="0.25" max="4" step="0.25" value="1"><output id="ohLo"></output></label>
+        <label class="slider"><span class="tlabel">截面積</span><input type="range" id="ohA" min="0.1" max="2" step="0.05" value="0.5"><output id="ohAo"></output></label></div>
+      <div class="toolbar"><span class="tlabel">電池</span><span class="seg" id="ohN"><button data-v="1">1 個</button><button data-v="2">2 個</button><button data-v="3">3 個</button><button data-v="4">4 個</button></span>
+        <button class="btn primary" id="ohRec">＋ 記錄這一點</button><button class="btn" id="ohAll">1～4 個電池都量</button><button class="btn" id="ohClr">清除圖表</button></div>
+      <div class="toolbar"><span class="tlabel">圖</span><span class="seg" id="ohAx"><button data-v="VI">V–I 圖（縱軸電壓）</button><button data-v="IV">I–V 圖（縱軸電流）</button></span>
+        <span class="tlabel">電表</span><span class="seg" id="ohMt"><button data-v="ideal">理想電表</button><button data-v="out">安培計外接</button><button data-v="in">安培計內接</button></span></div>
+      <div class="duo"><div><div class="cbox"><canvas id="cvOg" aria-label="V–I 圖"></canvas></div></div><div><div class="cbox"><canvas id="cvOc" aria-label="測量電路"></canvas></div>
+        <div style="padding:0 12px 10px"><p class="gcap" id="ohTabT"></p><table class="otab" id="ohTab"></table></div></div></div>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="ohBig"></p><div class="formula2" id="ohF"></div><ul class="checks" id="ohC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="ohHow"></ul></section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(5)》；考古題標示學校、學年-學期-次別與題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>

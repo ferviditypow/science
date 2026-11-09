@@ -1,0 +1,142 @@
+  <!-- ============ 1 聲音的產生與傳播 ============ -->
+  <section class="bench" id="b-make">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="mkMode"><button data-v="fork">音叉與空氣分子</button><button data-v="jar">波以耳真空鈴</button><button data-v="med">傳聲的介質</button></span>
+        <button class="btn" id="mkSnd" aria-pressed="false">🔊 聲音</button>
+      </div>
+      <div class="toolbar mkc" data-m="fork">
+        <button class="btn primary" id="mkHit">🔨 敲擊音叉</button>
+        <button class="btn" id="mkHold">✋ 用手握住</button>
+        <label class="tog"><input type="checkbox" id="mkWater">碰水面</label>
+        <label class="tog"><input type="checkbox" id="mkSlow" checked>慢動作</label>
+        <label class="slider" style="flex:1 1 220px"><span class="tlabel">音叉頻率</span><input type="range" id="mkF" min="200" max="800" step="10" value="440"><output id="mkFo"></output></label>
+      </div>
+      <div class="toolbar mkc" data-m="jar">
+        <button class="btn primary" id="mkBell">🔔 電鈴通電</button>
+        <span class="seg" id="mkPump"><button data-v="-1">抽氣</button><button data-v="0">停</button><button data-v="1">充氣</button></span>
+        <label class="slider" style="flex:1 1 220px"><span class="tlabel">罩內空氣</span><input type="range" id="mkAir" min="0" max="100" step="1" value="100"><output id="mkAiro"></output></label>
+        <label class="slider" style="flex:1 1 200px"><span class="tlabel">人離鐘罩</span><input type="range" id="mkDist" min="1" max="4" step="0.1" value="1.4"><output id="mkDisto"></output></label>
+      </div>
+      <div class="toolbar mkc" data-m="med">
+        <span class="seg" id="mkMed"><button data-v="air">空氣</button><button data-v="water">水</button><button data-v="solid">固體（牆）</button><button data-v="vac">真空（太空）</button><button data-v="cup">傳話筒</button></span>
+        <span class="seg" id="mkCup"><button data-v="taut">棉線拉緊</button><button data-v="slack">放鬆</button><button data-v="cut">剪斷</button></span>
+        <button class="btn primary" id="mkGo">▶ 發出聲音</button>
+      </div>
+      <div class="cbox"><canvas id="cvMk" aria-label="聲音的產生與傳播"></canvas></div>
+      <p class="hint" id="mkHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="mkBig"></p><ul class="checks" id="mkC"></ul></section>
+      <section class="panel box"><h3 id="mkHowT">怎麼看</h3><ul id="mkHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 聲速 ============ -->
+  <section class="bench" id="b-speed" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="spMode"><button data-v="race">各種介質賽跑</button><button data-v="delay">先看到、後聽到</button><button data-v="timer">百米計時</button><button data-v="cross">傳進另一種介質</button></span>
+        <button class="btn primary" id="spPlay">▶ 播放</button><button class="btn" id="spRst">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <label class="slider" id="spTw"><span class="tlabel">氣溫</span><input type="range" id="spT" min="-10" max="40" step="1" value="15"><output id="spTo"></output></label>
+        <label class="slider spc" data-m="race"><span class="tlabel">距離</span><input type="range" id="spD" min="50" max="3000" step="10" value="1000"><output id="spDo"></output></label>
+        <label class="slider spc" data-m="timer"><span class="tlabel">跑者速率</span><input type="range" id="spRun" min="5" max="11" step="0.1" value="8.5"><output id="spRuno"></output></label>
+        <span class="spc" data-m="timer"><span class="seg" id="spCue"><button data-v="sound">聽到槍聲才按</button><button data-v="light">看到槍煙就按</button></span></span>
+      </div>
+      <div class="toolbar spc" data-m="delay">
+        <span class="tlabel">情境</span><span class="seg" id="spPair"></span>
+      </div>
+      <div class="toolbar spc" data-m="delay">
+        <span class="tlabel">已知</span><span class="seg" id="spGiv"><button data-v="t">時間差</button><button data-v="d">距離</button></span>
+        <label class="slider" id="spDtw"><span class="tlabel">時間差</span><input type="range" id="spDt" min="0.1" max="15" step="0.1" value="2"><output id="spDto"></output></label>
+        <label class="slider" id="spDdw"><span class="tlabel">距離</span><input type="range" id="spDd" min="10" max="6000" step="10" value="680"><output id="spDdo"></output></label>
+      </div>
+      <div class="toolbar spc" data-m="cross">
+        <span class="seg" id="spDir"><button data-v="aw">空氣 → 水</button><button data-v="wa">水 → 空氣</button></span>
+        <label class="slider"><span class="tlabel">頻率</span><input type="range" id="spF" min="100" max="1000" step="10" value="340"><output id="spFo"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cvSp" aria-label="聲速"></canvas></div>
+      <p class="hint" id="spHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF2"></div><ul class="checks" id="spC"></ul></section>
+      <section class="panel box"><h3 id="spHowT">怎麼看</h3><ul id="spHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 示波器與三要素 ============ -->
+  <section class="bench" id="b-scope" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">比較</span><span class="seg" id="scN"><button data-v="1">一個聲音</button><button data-v="2">兩個聲音</button><button data-v="4">四個聲音</button></span>
+        <span class="tlabel">調整</span><span class="seg" id="scSel"></span>
+        <button class="btn" id="scPlay">🔊 播放這個聲音</button><button class="btn" id="scPlayAll">🔊 依序播放</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">發聲體</span><span class="seg" id="scSrc"><button data-v="fork">音叉</button><button data-v="flute">長笛</button><button data-v="clar">單簧管</button><button data-v="violin">小提琴</button><button data-v="piano">鋼琴</button><button data-v="voice">人聲</button><button data-v="noise">噪音</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">頻率（音調）</span><input type="range" id="scF" min="100" max="1000" step="1" value="400"><output id="scFo"></output></label>
+        <label class="slider"><span class="tlabel">振幅（響度）</span><input type="range" id="scA" min="0.5" max="4" step="0.5" value="2"><output id="scAo"></output></label>
+        <span class="tlabel">每格</span><span class="seg" id="scDiv"><button data-v="0.5">0.5 ms</button><button data-v="1">1 ms</button><button data-v="2">2 ms</button></span>
+      </div>
+      <div class="cbox"><canvas id="cvSc" aria-label="示波器畫面"></canvas></div>
+      <p class="hint" style="padding:0 12px 10px">示波器把聲音（縱波）的疏密變化畫成橫波的樣子：橫軸是時間，縱軸是振動的位移。上下越高＝振幅大＝響度大；波越密＝頻率高＝音調高；形狀不同＝音色不同。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="scBig"></p><div class="formula2" id="scF2"></div><ul class="checks" id="scC"></ul></section>
+      <section class="panel box">
+        <h3>分貝：每多 10 dB，強度 ×10</h3>
+        <div class="toolbar" style="padding:4px 0">
+          <label class="slider" style="min-width:200px"><span class="tlabel">聲音甲</span><input type="range" id="dbA" min="0" max="140" step="10" value="80"><output id="dbAo"></output></label>
+          <label class="slider" style="min-width:200px"><span class="tlabel">聲音乙</span><input type="range" id="dbB" min="0" max="140" step="10" value="40"><output id="dbBo"></output></label>
+        </div>
+        <canvas id="cvDb" aria-label="分貝與強度"></canvas>
+        <p class="formula2" id="dbTxt"></p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 4 樂器與音調 ============ -->
+  <section class="bench" id="b-inst" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="inMode"><button data-v="string">弦樂器</button><button data-v="bottle">瓶子與試管</button><button data-v="tube">敲管子、吹管子</button><button data-v="reso">共鳴</button></span>
+      </div>
+      <div class="toolbar inc" data-m="string">
+        <span class="tlabel">範例</span><span class="seg" id="inStrPre"><button data-v="uke">烏克麗麗</button><button data-v="sham">三味線</button><button data-v="free">自己調</button></span>
+        <span class="tlabel">調整第</span><span class="seg" id="inStrSel"></span><span class="tlabel">條弦</span>
+      </div>
+      <div class="toolbar inc" data-m="string">
+        <label class="slider"><span class="tlabel">鬆緊</span><input type="range" id="inTen" min="0.5" max="2" step="0.05" value="1"><output id="inTeno"></output></label>
+        <label class="slider"><span class="tlabel">粗細</span><input type="range" id="inThk" min="0.5" max="2" step="0.05" value="1"><output id="inThko"></output></label>
+        <label class="slider"><span class="tlabel">按壓位置（振動長度）</span><input type="range" id="inLen" min="0.4" max="1" step="0.01" value="1"><output id="inLeno"></output></label>
+        <label class="slider"><span class="tlabel">撥弦力道</span><input type="range" id="inPow" min="0.3" max="1" step="0.05" value="0.7"><output id="inPowo"></output></label>
+      </div>
+      <div class="toolbar inc" data-m="bottle">
+        <span class="seg" id="inAct"><button data-v="blow">對瓶口吹氣</button><button data-v="hit">用木棒敲</button></span>
+        <span class="tlabel">範例</span><span class="seg" id="inBotPre"><button data-v="glass">四個玻璃杯</button><button data-v="tube">試管</button><button data-v="cyl">量筒</button></span>
+      </div>
+      <div class="toolbar inc" data-m="tube">
+        <span class="seg" id="inTubeV"><button data-v="len">長度不同</button><button data-v="wall">管壁厚薄不同</button></span>
+        <span class="seg" id="inTubeA"><button data-v="hit">用槌子敲</button><button data-v="blow">對管口吹（下端封閉）</button></span>
+      </div>
+      <div class="toolbar inc" data-m="reso">
+        <span class="tlabel">右邊音叉</span><span class="seg" id="inRes"><button data-v="440">440 Hz（相同）</button><button data-v="500">500 Hz</button><button data-v="360">360 Hz</button></span>
+        <label class="tog"><input type="checkbox" id="inBox" checked>裝在共鳴箱上</label>
+        <button class="btn primary" id="inHitR">🔨 敲左邊音叉</button>
+      </div>
+      <div class="cbox"><canvas id="cvIn" aria-label="樂器與音調"></canvas></div>
+      <p class="hint" id="inHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="inBig"></p><div class="formula2" id="inF2"></div><ul class="checks" id="inC"></ul></section>
+      <section class="panel box"><h3 id="inHowT">怎麼看</h3><ul id="inHow"></ul></section>
+    </div>
+  </section>
+

@@ -1,0 +1,129 @@
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國三 · 第四章 電流、電壓與歐姆定律 4-1 · <a href="../color/">另見：色光與顏色</a></div>
+      <h1>靜電與電量</h1>
+    </div>
+    <p>四個實驗台對應翰林自然(5) 4-1：摩擦起電、接觸起電與感應起電（金屬球、驗電器）、庫侖定律、電量與電子數。拖曳橘色的點操作，紅色「＋」是質子、藍色「−」是電子；最下方有講義與考古題的情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="rub" aria-pressed="true"><span class="n">1</span>摩擦起電</button>
+      <button data-v="ind" aria-pressed="false"><span class="n">2</span>接觸起電與感應起電</button>
+      <button data-v="coul" aria-pressed="false"><span class="n">3</span>庫侖定律</button>
+      <button data-v="count" aria-pressed="false"><span class="n">4</span>電量計算</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 摩擦起電 ============ -->
+  <section class="bench" id="b-rub">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">材料</span><span class="seg" id="rbPair"><button data-v="fur">毛皮＋塑膠尺</button><button data-v="silk">絲絹＋玻璃棒</button><button data-v="wool">毛布＋氣球</button><button data-v="cu">毛皮＋銅棒</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog" id="rbGripW"><input type="checkbox" id="rbGrip">銅棒裝絕緣把手</label>
+        <label class="tog"><input type="checkbox" id="rbWet">潮濕的天氣</label>
+        <button class="btn" id="rbAuto">↔ 自動來回摩擦</button>
+        <button class="btn" id="rbReset">⟲ 重來</button>
+      </div>
+      <div class="cbox"><canvas id="cvRb" aria-label="摩擦起電"></canvas></div>
+      <p class="hint" style="padding:0 12px 10px">拖曳棒子（橘點）在布上左右來回摩擦，再拖到右下方的小紙片旁邊看看。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="rbBig"></p><div class="formula2" id="rbF"></div><ul class="checks" id="rbC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="rbHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 2 接觸起電與感應起電 ============ -->
+  <section class="bench" id="b-ind" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">導體</span><span class="seg" id="idSet"><button data-v="one">一顆金屬球</button><button data-v="two">甲乙兩顆金屬球</button><button data-v="three">A、B、C 三顆</button><button data-v="scope">驗電器</button><button data-v="paper">小紙片（絕緣體）</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">帶電棒</span><span class="seg" id="idRod"><button data-v="1">帶正電（玻璃棒）</button><button data-v="-1">帶負電（塑膠尺）</button></span>
+        <button class="btn primary" id="idGnd">✋ 用手指接觸（接地）</button>
+        <button class="btn" id="idAway">移開帶電棒</button>
+        <button class="btn" id="idReset">⟲ 重來</button>
+      </div>
+      <div class="toolbar"><span class="tlabel">步驟</span><span class="chips" id="idSteps"></span></div>
+      <div class="cbox"><canvas id="cvId" aria-label="接觸起電與感應起電"></canvas></div>
+      <p class="hint" id="idHint" style="padding:0 12px 10px"></p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="idBig"></p><div class="formula2" id="idF"></div><ul class="checks" id="idC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="idHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 3 庫侖定律 ============ -->
+  <section class="bench" id="b-coul" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">電荷數</span><span class="seg" id="clN"><button data-v="2">兩個</button><button data-v="3">三個</button></span>
+        <button class="btn" id="clTouch">A、B 接觸後再分開（相同金屬球）</button>
+        <label class="tog"><input type="checkbox" id="clEach" checked>顯示選取電荷（虛線圈）受到的每一個分力</label>
+      </div>
+      <div class="toolbar">
+        <label class="slider"><span class="tlabel">A 的電量</span><input type="range" id="clQA" min="-4" max="4" step="0.5" value="1"><output id="clQAo"></output></label>
+        <label class="slider"><span class="tlabel">B 的電量</span><input type="range" id="clQB" min="-4" max="4" step="0.5" value="1"><output id="clQBo"></output></label>
+        <label class="slider" id="clQCw"><span class="tlabel">C 的電量</span><input type="range" id="clQC" min="-4" max="4" step="0.5" value="1"><output id="clQCo"></output></label>
+      </div>
+      <div class="cbox"><canvas id="cvCl" aria-label="庫侖定律"></canvas></div>
+      <p class="hint" style="padding:0 12px 10px">拖曳電荷改變距離（每一格是 r）；點一下電荷選取它，看它受到的每一個分力。力的大小以「兩個 1q 相距 1r 時的力 F」為單位。</p>
+    </div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="clBig"></p><div class="formula2" id="clF"></div><ul class="checks" id="clC"></ul></section>
+      <section class="panel box"><h3>怎麼看</h3><ul id="clHow"></ul></section>
+    </div>
+  </section>
+
+  <!-- ============ 4 電量計算 ============ -->
+  <section class="bench" id="b-count" hidden>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>電量 ↔ 電子數</h3>
+        <div class="calc">
+          <span>電量</span><input id="cnQ" value="1" inputmode="decimal"><span>庫侖</span>
+          <span>電子數</span><input id="cnN" value="6.25e18" inputmode="decimal"><span>個</span>
+          <span>相當於</span><input id="cnE" value="6.25e18" inputmode="decimal"><span>個基本電荷 e</span>
+        </div>
+        <p class="hint" style="margin-top:6px">可以輸入 1.6e-19、6.25e18 這樣的寫法（e 後面是 10 的幾次方）。</p>
+        <div class="formula2" id="cnF1"></div>
+        <ul class="checks" id="cnC1"></ul>
+      </section>
+      <section class="panel box">
+        <h3>電流 × 時間 ＝ 電量（Q ＝ I × t）</h3>
+        <div class="calc">
+          <span>電流</span><input id="cnI" value="0.3" inputmode="decimal"><span class="seg" id="cnIu"><button data-v="A">A</button><button data-v="mA">mA</button></span>
+          <span>時間</span><input id="cnT" value="20" inputmode="decimal"><span class="seg" id="cnTu"><button data-v="s">秒</button><button data-v="min">分</button><button data-v="h">時</button></span>
+        </div>
+        <div class="formula2" id="cnF2"></div>
+        <ul class="checks" id="cnC2"></ul>
+      </section>
+    </div>
+    <div class="panel">
+      <p class="ptitle">這個電量可能存在嗎？ <small>帶電量一定是基本電荷 e＝1.6×10⁻¹⁹ 庫侖的整數倍</small></p>
+      <div class="toolbar"><span class="tlabel">試試看</span><span class="chips" id="cnTry"></span></div>
+      <div class="cbox"><canvas id="cvCn" aria-label="電量數線"></canvas></div>
+      <p class="hint" style="padding:0 12px 10px">數線上的刻度是 e 的整數倍；拖曳橘點，或點上面的數值，看它有沒有剛好落在刻度上。</p>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(5)》；考古題標示學校、學年-學期-次別與題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+</div>

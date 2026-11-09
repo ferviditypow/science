@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>電路：電流、電壓與歐姆定律</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+:root{--pos:#d23b2f;--neg:#1c68ad;--metal:#b9c2cb;--metal2:#7d8894;--glow:#ffd23f}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pos:#ff6b5e;--neg:#5ba8ec;--metal:#8a96a3;--metal2:#55606b;color-scheme:dark}}
+:root[data-theme="dark"]{--pos:#ff6b5e;--neg:#5ba8ec;--metal:#8a96a3;--metal2:#55606b;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.grid2{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box p{margin:0 0 6px;font-size:.95rem}
+.box ul{margin:4px 0 0;padding-left:1.2em;font-size:.95rem}
+.box li{margin:2px 0}
+.big{font-family:var(--f-display);font-weight:900;font-size:1.45rem;line-height:1.3;margin:0 0 6px}
+.big .mono{font-family:var(--f-mono);font-weight:600}
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.95rem}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.checks li::before{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;margin-top:1px}
+.checks li.ok::before{content:'✓';background:var(--green)}
+.checks li.no::before{content:'✕';background:#c0453b}
+.checks li.info::before{content:'i';background:var(--blue)}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.7}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+.pick{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center}
+.gcap{font-size:.8rem;color:var(--muted);margin:6px 0 2px}
+.soon{font-size:.82rem;color:var(--muted)}
+.calc{display:grid;grid-template-columns:auto 1fr auto;gap:8px 10px;align-items:center;font-size:.95rem}
+.calc input{font-family:var(--f-mono);font-size:1rem;padding:6px 8px;border:1px solid var(--line);border-radius:8px;background:var(--panel);color:var(--ink);width:100%;min-height:40px}
+.ctable{border-collapse:collapse;font-size:.85rem;margin-top:8px;width:100%}
+.ctable th,.ctable td{border:1px solid var(--line);padding:3px 4px;text-align:center}
+.ctable tr.on td,.ctable tr.on th{background:var(--accent-soft);font-weight:700}
+.sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:3px;border:1px solid rgba(0,0,0,.25)}
+.duo{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:0;align-items:start}
+.duo>div{min-width:0}
+@media (max-width:760px){.duo{grid-template-columns:minmax(0,1fr)}}
+.zcap{font-size:.82rem;color:var(--muted);padding:2px 12px 8px;margin:0}
+.otab{border-collapse:collapse;font-size:.88rem;margin-top:8px;width:100%;font-family:var(--f-mono)}
+.otab th,.otab td{border:1px solid var(--line);padding:3px 6px;text-align:center}
+.otab th{font-family:var(--f-body,inherit);font-weight:600}
+.edgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;align-items:stretch}
+@media (max-width:900px){.edgrid{grid-template-columns:minmax(0,1fr)}}
+.edgrid canvas{outline:none}
+.eprop{border-left:1px solid var(--line);padding:10px 12px 14px;font-size:.9rem;min-width:0}
+@media (max-width:900px){.eprop{border-left:0;border-top:1px solid var(--line)}}
+.eprop .ptype{font-weight:700;margin:0 0 8px;font-size:1rem}
+.prow{display:grid;grid-template-columns:4.6em minmax(0,1fr) 4.4em 1.6em;gap:6px;align-items:center;margin:6px 0}
+.prow2{display:grid;grid-template-columns:4.6em minmax(0,1fr);gap:6px;align-items:center;margin:6px 0}
+.eprop input[type=number],.eprop input[type=text],.eprop select{font:inherit;font-family:var(--f-mono);padding:4px 6px;border:1px solid var(--line);border-radius:6px;background:var(--panel);color:var(--ink);width:100%;min-height:32px}
+.eprop input[type=range]{width:100%;accent-color:var(--accent)}
+.pbtns{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.pbtns .btn{min-height:34px;padding:0 10px;font-size:.85rem}
+kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);border-radius:4px;padding:0 3px;color:var(--muted)}
+.pread{font-family:var(--f-mono);background:var(--accent-soft);border-radius:8px;padding:8px 10px;line-height:1.7;font-size:.88rem}
+.pread:empty{display:none}
+.pnote{font-size:.82rem;color:var(--muted);margin:4px 0;padding-left:1.1em}
+.pal .btn{min-height:36px;padding:0 11px;cursor:grab}
+.reveal{font-family:var(--f-mono);font-weight:700;color:var(--accent)}
+</style>
+</head>
