@@ -396,7 +396,7 @@ function drawPixel(g,W,H){g.fillStyle=C.panel;g.fillRect(0,0,W,H);const c=MX.px;
   text(g,'靠近看：每個畫素都是紅、綠、藍三個小燈',L,H-8,{size:12,col:C.muted});}
 function mxUI(){segSet($('mxMode'),MX.mode);document.querySelectorAll('.mxc').forEach(e=>e.hidden=e.dataset.m!==MX.mode);['mxR','mxG','mxB'].forEach((id,i)=>$(id).checked=!!MX.on[i]);segSet($('mxSh'),MX.sh);
   ['pxR','pxG','pxB'].forEach((id,i)=>{$(id).value=MX.px[i];$(id+'o').textContent=MX.px[i];});
-  $('mxHint').textContent={spot:'拖曳三盞燈（橘點）讓光重疊，拖曳白色十字看那一點是什麼顏色。',shadow:'拖曳燈或物體（橘點）：被擋住一盞燈的地方，只剩另一盞燈的顏色。',pixel:'拖三個滑桿調整紅、綠、藍小燈的亮度，混出各種顏色。'}[MX.mode];
+  $('mxHint').textContent={spot:'拖曳三盞燈（按光圈任何地方都可以）讓光重疊，拖曳白色十字看那一點是什麼顏色。',shadow:'拖曳燈或物體（橘點）：被擋住一盞燈的地方，只剩另一盞燈的顏色。',pixel:'拖三個滑桿調整紅、綠、藍小燈的亮度，混出各種顏色。'}[MX.mode];
   $('mxHowT').textContent={spot:'三盞聚光燈：怎麼看',shadow:'彩色的影子：怎麼看',pixel:'螢幕的畫素：怎麼看'}[MX.mode];
   howList('mxHow',{spot:['紅、綠、藍是光的三原色（RGB），不能由其他色光混合出來。','紅＋綠＝黃；紅＋藍＝洋紅；綠＋藍＝青；紅＋綠＋藍＝白。','色光混合越混越亮（加法）；顏料混合越混越暗，兩者不同。'],
     shadow:['兩盞不同顏色的燈照牆，物體擋住其中一盞燈的光，影子就是另一盞燈的顏色。','兩盞燈都被擋住的地方才是黑色。','兩盞燈都照到的地方是兩色光混合，例如紅＋藍＝洋紅。'],
@@ -408,7 +408,7 @@ segOn($('mxSh'),v=>{MX.sh=v;mxUI();kick();});
 ['pxR','pxG','pxB'].forEach((id,i)=>$(id).addEventListener('input',()=>{MX.px[i]=+$(id).value;mxUI();kick();}));
 const PXP=[['白',[255,255,255]],['黃',[255,255,0]],['洋紅',[255,0,255]],['青',[0,255,255]],['紅',[255,0,0]],['橙',[255,128,0]],['灰',[128,128,128]],['黑',[0,0,0]],['夜間模式（藍光調暗）',[255,200,120]]];
 {const b=$('pxPre');PXP.forEach(([n,c])=>{const x=document.createElement('button');x.className='chip';x.textContent=n;x.addEventListener('click',()=>{MX.px=c.slice();mxUI();kick();});b.appendChild(x);});}
-dragger($('cvMx'),()=>{const W=WX,H=HX;if(MX.mode==='spot')return MX.pos.map((p,i)=>({x:p[0]*W,y:p[1]*H,r:22,move:(x,y)=>{MX.pos[i]=[clamp(x/W,0,1),clamp(y/H,0,1)];}})).concat([{x:MX.probe[0]*W,y:MX.probe[1]*H,r:22,move:(x,y)=>{MX.probe=[clamp(x/W,0,1),clamp(y/H,0,1)];}}]);
+dragger($('cvMx'),()=>{const W=WX,H=HX;if(MX.mode==='spot'){const R=spotR(W,H);return MX.pos.map((p,i)=>({x:p[0]*W,y:p[1]*H,r:MX.on[i]?R:22,move:(x,y)=>{MX.pos[i]=[clamp(x/W,0,1),clamp(y/H,0,1)];}})).concat([{x:MX.probe[0]*W,y:MX.probe[1]*H,r:1e9,hit:(x,y)=>Math.hypot(x-MX.probe[0]*W,y-MX.probe[1]*H)<24?-1:1e9,move:(x,y)=>{MX.probe=[clamp(x/W,0,1),clamp(y/H,0,1)];}}]);}
   if(MX.mode==='shadow'){const G=shGeo(W,H),L=MX.shL[MX.sh];return L.map((lx,i)=>({x:lx*W,y:G.yl,r:22,move:x=>{L[i]=clamp(x/W,.02,.98);}})).concat([{x:MX.obj[0]*W,y:MX.obj[1]*H,r:24,move:(x,y)=>{MX.obj=[clamp(x/W,.05,.95),clamp(y/H,(G.yw+G.ro+8)/H,(G.yl-30)/H)];}}]);}return [];},()=>kick());
 $('cvMx').style.touchAction='none';
 function mxResults(){let big='',f='',ck=[];
