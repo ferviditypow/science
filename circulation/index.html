@@ -47,6 +47,11 @@
 .sw{display:inline-block;width:12px;height:12px;border-radius:3px;vertical-align:-1px;margin-right:4px}
 .infobox{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;margin-top:8px;font-size:.92rem;min-height:3.2em}
 .infobox b{color:var(--accent)}
+#hPanel.fsOn{position:fixed;inset:0;z-index:1000;margin:0;border-radius:0;display:flex;flex-direction:column;overflow:hidden;max-width:none;width:100vw;height:100vh;height:100dvh}
+#hPanel.fsOn>.toolbar{flex:0 0 auto}
+#hPanel.fsOn>#h2wrap,#hPanel.fsOn>#h3wrap{flex:1 1 0;min-height:0;overflow:hidden}
+#hPanel:fullscreen{background:var(--panel)}
+body.hfs{overflow:hidden}
 .stage3d{position:relative;border-radius:8px;overflow:hidden;background:radial-gradient(circle at 50% 40%,#1f2833,#0c1117)}
 .stage3d canvas{border-radius:0}
 .lbl3{position:absolute;left:0;top:0;pointer-events:none;font-size:12.5px;font-weight:700;color:#fff;background:rgba(10,14,20,.62);padding:1px 6px;border-radius:5px;white-space:nowrap;transform:translate(-50%,-50%)}
@@ -106,12 +111,13 @@
   <!-- ============ 1 心臟 ============ -->
   <section class="bench" id="b-heart">
     <div class="grid2">
-      <div class="panel">
+      <div class="panel" id="hPanel">
         <div class="toolbar">
           <span class="seg" id="hDim"><button data-v="2" aria-pressed="true">2D 剖面</button><button data-v="3" aria-pressed="false">3D 立體</button></span>
           <button class="btn primary" id="hPlay">⏸ 暫停</button>
           <button class="btn" id="hStep">下一步 ▸</button>
           <label class="tog" style="font-weight:700"><input type="checkbox" id="hLung" checked> 🫁 顯示肺臟</label>
+          <button class="btn" id="hFS">⛶ 全螢幕</button>
         </div>
         <div class="toolbar" style="padding-top:0">
           <span class="tlabel">縮放、移動</span>
@@ -128,6 +134,7 @@
           <span class="seg" id="hLab"><button data-v="name" aria-pressed="true">名稱</button><button data-v="code" aria-pressed="false">代號</button><button data-v="none" aria-pressed="false">不標（考自己）</button></span>
           <span class="seg" id="hMode"><button data-v="2" aria-pressed="true">課本兩步</button><button data-v="3" aria-pressed="false">分三步</button></span>
           <label class="tog" id="hTintL"><input type="checkbox" id="hTint" checked> 血液上色（關掉＝考卷樣式）</label>
+          <label class="tog"><input type="checkbox" id="hDots" checked> 血球紅藍點</label>
           <label class="tog"><input type="checkbox" id="hSnd"> 🔊 心音</label>
         </div>
         <div class="toolbar">
@@ -446,7 +453,7 @@ function mkView(W,H,w0,h0,pad=6){const s=Math.min((W-2*pad)/w0,(H-2*pad)/h0);ret
 <script>
 // ================= 1 心臟 =================
 // 心動週期 t∈[0,1)：A 心房收縮 0–0.12、V 心室收縮 0.12–0.45、D 全心舒張 0.45–1
-const HS={t:0.28,dur:3.2,play:true,mode:2,lab:'name',def:'',snd:false,dim:'2',sel:null,target:null,tint:true,lung:true,
+const HS={t:0.28,dur:3.2,play:true,mode:2,lab:'name',def:'',snd:false,dim:'2',sel:null,target:null,tint:true,lung:true,dots:true,
   codes:{RA:'丁',RV:'丙',LA:'甲',LV:'乙',svc:'d',ao:'b',pa:'c',pv:'a',ivc:''}};
 window.HS=HS;
 const phaseOf=t=>t<.12?'A':t<.45?'V':'D';
@@ -523,7 +530,20 @@ const HZ={k:1,dx:0,dy:0};
 function hMkView(){const lung=HS.lung;const w0=lung?640:340,h0=lung?350:334,OX=lung?150:0,OY=lung?10:0;const B=mkView(hW,hH,w0,h0);const cx=hW/2,cy=hH/2;
   const s=B.s*HZ.k,ox=cx+(B.ox+OX*B.s-cx)*HZ.k+HZ.dx,oy=cy+(B.oy+OY*B.s-cy)*HZ.k+HZ.dy;
   return{s,ox,oy,X:x=>ox+x*s,Y:y=>oy+y*s,inv:(x,y)=>[(x-ox)/s,(y-oy)/s],base:B,OX,OY};}
-SIZE.heart=()=>{({W:hW,H:hH}=fit($('cvHeart'),HS.lung?.62:.9,320,640));hView=hMkView();window.H3&&window.H3.resize();};
+const hIsFS=()=>$('hPanel').classList.contains('fsOn');
+SIZE.heart=()=>{const fs=hIsFS();window.HFSH=0;
+  if(fs){const box=HS.dim==='3'?$('h3wrap'):$('h2wrap');const r=box.getBoundingClientRect();const h=Math.max(240,Math.floor(r.height-20));
+    if(HS.dim==='3'){window.HFSH=h;}else{const cv=$('cvHeart');cv.style.height=h+'px';const w=Math.max(10,cv.clientWidth),d=DPR();cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.getContext('2d').setTransform(d,0,0,d,0,0);hW=w;hH=h;}}
+  if(!fs||HS.dim==='3')({W:hW,H:hH}=fit($('cvHeart'),HS.lung?.62:.9,320,640));
+  hView=hMkView();window.H3&&window.H3.resize();};
+function hFSset(on){const p=$('hPanel');if(on===hIsFS())return;
+  if(on){p.classList.add('fsOn');document.body.classList.add('hfs');if(p.requestFullscreen&&!document.fullscreenElement)p.requestFullscreen().catch(()=>{});}
+  else{p.classList.remove('fsOn');document.body.classList.remove('hfs');if(document.fullscreenElement)document.exitFullscreen().catch(()=>{});}
+  $('hFS').textContent=on?'✕ 離開全螢幕':'⛶ 全螢幕';setTimeout(()=>{SIZE.heart();kick();},80);}
+$('hFS').addEventListener('click',()=>hFSset(!hIsFS()));
+document.addEventListener('fullscreenchange',()=>{if(!document.fullscreenElement&&hIsFS())hFSset(false);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&hIsFS())hFSset(false);});
+window.addEventListener('resize',()=>{if(hIsFS()){SIZE.heart();kick();}});
 function hZoomAt(f,sx,sy){const k2=clamp(HZ.k*f,.6,6);const V=hMkView();const[mx,my]=V.inv(sx,sy);const B=V.base,cx=hW/2,cy=hH/2;
   HZ.k=k2;const s2=B.s*k2;HZ.dx=sx-(cx+(B.ox+V.OX*B.s-cx)*k2)-mx*s2;HZ.dy=sy-(cy+(B.oy+V.OY*B.s-cy)*k2)-my*s2;hView=hMkView();kick();}
 window.hPan=(dx,dy)=>{if(HS.dim==='3'){window.H3&&window.H3.pan(dx,dy);return;}HZ.dx+=dx*hW*.12;HZ.dy+=dy*hH*.12;hView=hMkView();kick();};
@@ -596,7 +616,7 @@ DRAW.heart=()=>{if(HS.dim==='3'){window.H3&&window.H3.draw();return;}
   // 瓣膜
   for(const k in HVAL){const tips=hValveTips(k,st);const hl=HS.sel===k;tips.forEach(f=>{g.strokeStyle=hl?C.accent:f.leak?C.red:line2;g.lineWidth=hl?4:2.6;g.beginPath();g.moveTo(...f.h);g.lineTo(...f.t);g.stroke();});}
   // 粒子
-  for(const k in HSEG){const s=HSEG[k];if(s.def&&s.def!==HS.def)continue;if(s.lung&&!HS.lung)continue;const col=s.o?C.oxy:C.deoxy;
+  if(HS.dots)for(const k in HSEG){const s=HSEG[k];if(s.def&&s.def!==HS.def)continue;if(s.lung&&!HS.lung)continue;const col=s.o?C.oxy:C.deoxy;
     HP[k].forEach(p=>{const[x,y,a]=pat(s.P,p.s);if(s.hide&&inPoly(HG.outer,x,y))return;const off=p.j*(s.g?5:7);circ(g,x-Math.sin(a)*off,y+Math.cos(a)*off,2.6,s.g?mixCol(C.deoxy,C.oxy,p.s/s.L):col,'rgba(255,255,255,.85)',.8);});}
   // 流向箭頭
   for(const k in HSEG){if(!hOn(k,st.ph))continue;const s=HSEG[k];const n=k==='ao'||k==='pa'?2:1;for(let i=0;i<n;i++){const f=(i+1)/(n+1);const[x,y,a]=pat(s.P,s.L*f);
@@ -648,9 +668,10 @@ segOn($('hLab'),v=>{HS.lab=v;segSet($('hLab'),v);hLastKey='';hSelect(HS.sel);});
 segOn($('hMode'),v=>{HS.mode=+v;segSet($('hMode'),v);hLastKey='';kick();});
 $('hSnd').addEventListener('change',e=>{HS.snd=e.target.checked;if(HS.snd){try{actx=actx||new AudioContext();actx.resume();}catch(_){}}});
 $('hTint').addEventListener('change',e=>{HS.tint=e.target.checked;kick();});
+$('hDots').addEventListener('change',e=>{HS.dots=e.target.checked;kick();});
 $('hLung').addEventListener('change',e=>{HS.lung=e.target.checked;HZ.k=1;HZ.dx=HZ.dy=0;SIZE.heart();window.H3&&window.H3.lung(HS.lung);kick();});
 $('hDef').addEventListener('change',e=>{HS.def=e.target.value;hLastKey='';kick();});
-segOn($('hDim'),v=>{HS.dim=v;segSet($('hDim'),v);$('h2wrap').hidden=v!=='2';$('h3wrap').hidden=v!=='3';$('hTintL').hidden=v!=='2';
+segOn($('hDim'),v=>{HS.dim=v;segSet($('hDim'),v);$('h2wrap').hidden=v!=='2';$('h3wrap').hidden=v!=='3';$('hTintL').hidden=v!=='2';if(hIsFS())setTimeout(()=>{SIZE.heart();kick();},30);
   if(v==='3'){if(window.H3)window.H3.resize();else window.dispatchEvent(new Event('need3d'));}kick();});
 UI.heart=()=>{hLastKey='';hUI();};
 function hSet(p){Object.assign(HS,p);if(p.def!==undefined)$('hDef').value=p.def;segSet($('hLab'),HS.lab);segSet($('hMode'),HS.mode);segSet($('hSpeed'),HS.dur);
@@ -786,7 +807,7 @@ async function build(){if(built)return;built=true;
   const labEls={},lines={};for(const k in LBL){const d=document.createElement('div');d.className='lbl3';stage.appendChild(d);labEls[k]=d;const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('stroke','rgba(255,255,255,.75)');l.setAttribute('stroke-width','1.3');svg.appendChild(l);lines[k]=l;}
   const tmp=new THREE.Vector3(),dummy=new THREE.Object3D();
   let W=600,H=500,cutOn=true,bloodOn=true;
-  function resize(){W=stage.clientWidth||600;H=Math.round(Math.max(360,Math.min(640,W*.9)));stage.style.height=H+'px';ren.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
+  function resize(){W=stage.clientWidth||600;H=window.HFSH?window.HFSH:Math.round(Math.max(360,Math.min(640,W*.9)));stage.style.height=H+'px';ren.setSize(W,H);cam.aspect=W/H;cam.updateProjectionMatrix();svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
     if(W<520&&cam.position.length()<22)cam.position.setLength(22);}
   let last=performance.now();
   function draw(){const now=performance.now();const dt=Math.min(.05,(now-last)/1000);last=now;const st=window.hState(HS.t);const ph=st.ph;const moving=HS.play||HS.target!==null;
@@ -800,7 +821,7 @@ async function build(){if(built)return;built=true;
     for(const k in VES){const v=VES[k];v.m.material.emissive.setHex(HS.sel===v.m.userData.key?0x553000:0);}lungMat.emissive.setHex(HS.sel==='lung'?0x442200:0);
     updValves(st);
     for(const k in SEG){const s=SEG[k],h=HSEG[k];const vis=!h.def||h.def===HS.def;const on=vis&&window.hSegOn(k,ph);
-      s.im.visible=vis&&bloodOn;if(moving&&on){let v=h.v*.9;if(k==='tri'||k==='mit')v=ph==='A'?1.2:.45;for(let i=0;i<s.n;i++)s.u[i]=(s.u[i]+v*dt*(3.2/HS.dur)*.5/s.L)%1;s.au=(s.au+dt*(3.2/HS.dur)*.35)%1;}
+      s.im.visible=vis&&bloodOn&&HS.dots;if(moving&&on){let v=h.v*.9;if(k==='tri'||k==='mit')v=ph==='A'?1.2:.45;for(let i=0;i<s.n;i++)s.u[i]=(s.u[i]+v*dt*(3.2/HS.dur)*.5/s.L)%1;s.au=(s.au+dt*(3.2/HS.dur)*.35)%1;}
       if(s.im.visible){for(let i=0;i<s.n;i++){const p=s.cuIn.getPointAt(s.u[i]);const q=window.pat(h.P,s.u[i]*h.L);const inside=window.inPoly(HG.outer,q[0],q[1]);dummy.position.set(p.x+s.j[i][0]*.12,p.y+s.j[i][1]*.12,p.z+s.j[i][0]*.1);dummy.rotation.set(s.j[i][0]*3,s.j[i][1]*3,0);dummy.scale.setScalar(inside?1:0);dummy.updateMatrix();s.im.setMatrixAt(i,dummy.matrix);}s.im.instanceMatrix.needsUpdate=true;}
       s.arrows.forEach((a,i)=>{a.visible=on;if(!on)return;const u=(s.au+i*.5)%1;if(h.g)a.material.color.setHex(0x4f8bff).lerp(new THREE.Color(0xff5a3c),u);const p=s.cu.getPointAt(u),t=s.cu.getTangentAt(u);a.position.copy(p);a.rotation.set(0,0,Math.atan2(t.y,t.x));const sc=s.L<1?.7:1;a.scale.set(sc,sc,1);});}
     ren.render(scene,cam);
