@@ -91,8 +91,11 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
     <span class="seg" id="paneSeg">
       <button type="button" data-v="2d" aria-pressed="true"><span class="n">1</span>透鏡成像（側視）</button>
       <button type="button" data-v="3d" aria-pressed="false"><span class="n">2</span>立體視角：實像左右也相反</button>
+      <button type="button" data-v="eye" aria-pressed="false"><span class="n">3</span>眼睛與照相機</button>
     </span>
   </nav>
+
+  <section class="story" id="story" hidden><button class="x" id="storyX" aria-label="關閉說明">×</button><h3 id="storyT"></h3><p id="storyP" style="white-space:pre-line"></p></section>
 
   <div id="pane2d">
   <div class="bench">
@@ -116,7 +119,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
       </div>
       <div class="slider-row">
         <div class="top"><label for="fSlider">焦距 f</label><output id="fOut">60 公分</output></div>
-        <input id="fSlider" type="range" min="20" max="100" step="1" value="60">
+        <input id="fSlider" type="range" min="10" max="100" step="1" value="60">
       </div>
       <div class="slider-row">
         <div class="top"><label for="pSlider">物距 p</label><output id="pSliderOut">150 公分</output></div>
@@ -131,12 +134,29 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
         <label><input type="checkbox" id="r2" checked><span class="swatch" style="background: var(--ray2)"></span>通過透鏡中心 → 直線前進</label>
         <label><input type="checkbox" id="r3" checked><span class="swatch" style="background: var(--ray3)"></span><span id="r3Text">通過焦點 → 折射後平行光軸</span></label>
       </div>
+      <div class="convex-only" style="display:grid;gap:6px">
+        <span class="tlabel">物體放在（凸透鏡）</span>
+        <div class="chips" id="posChips">
+          <button type="button" class="chip" data-k="inf">無窮遠（平行光）</button><button type="button" class="chip" data-k="far">2F 以外</button><button type="button" class="chip" data-k="on2">2F 上</button>
+          <button type="button" class="chip" data-k="mid">F～2F 之間</button><button type="button" class="chip" data-k="onF">F 上</button><button type="button" class="chip" data-k="in">F 以內</button>
+        </div>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center">
+        <button id="sweep" type="button" class="btn primary">▶ 物體由遠慢慢移近</button>
+        <label class="tog"><input type="checkbox" id="trail" checked>留下像的位置</label>
+      </div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center">
+        <span class="tlabel">遮住透鏡</span>
+        <span class="seg" id="maskSeg"><button type="button" data-v="none" aria-pressed="true">不遮</button><button type="button" data-v="top" aria-pressed="false">遮上半</button><button type="button" data-v="bottom" aria-pressed="false">遮下半</button></span>
+        <label class="tog"><input type="checkbox" id="fan">很多條光線</label>
+      </div>
       <button id="reset" type="button" class="btn">重設</button>
     </section>
 
     <section class="card" aria-label="數據">
       <h2>數據</h2>
       <p class="region" id="region"></p>
+      <p class="region" id="app" style="color:var(--muted);font-weight:400"></p>
       <dl>
         <dt>物距 p</dt><dd id="pOut"></dd>
         <dt>像距 q</dt><dd id="qOut"></dd>
@@ -148,6 +168,43 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
     </section>
   </div>
   </div>
+
+  <!-- 實驗台 3：眼睛與照相機 -->
+  <div id="paneEye" hidden>
+    <section class="panel">
+      <div class="toolbar" style="padding:10px 12px 0">
+        <span class="seg" id="eyKind"><button type="button" data-v="normal">正常眼</button><button type="button" data-v="myopia">近視眼</button><button type="button" data-v="hyper">遠視眼</button><button type="button" data-v="presby">老花眼</button><button type="button" data-v="camera">照相機</button></span>
+      </div>
+      <div class="toolbar" style="padding:8px 12px 0">
+        <span class="tlabel">看</span><span class="seg" id="eyObj"><button type="button" data-v="far">遠處的物體（平行光）</button><button type="button" data-v="near">近處的物體</button></span>
+        <div class="slider" id="eyDw"><span class="tlabel">物體距離</span><input type="range" id="eyD" min="60" max="110" step="1" value="70"><output id="eyDo"></output></div>
+      </div>
+      <div class="toolbar" style="padding:8px 12px 0" id="eyGlassRow">
+        <span class="tlabel">眼鏡</span><span class="seg" id="eyGl"><button type="button" data-v="none">不戴</button><button type="button" data-v="concave">凹透鏡</button><button type="button" data-v="convex">凸透鏡</button></span>
+        <div class="slider" id="eyFw"><span class="tlabel">眼鏡焦距</span><input type="range" id="eyF" min="40" max="400" step="1" value="180"><output id="eyFo"></output></div>
+        <button type="button" class="btn" id="eyAuto">👓 自動配鏡</button>
+      </div>
+      <div class="toolbar" style="padding:8px 12px 0" id="eyCamRow" hidden>
+        <div class="slider"><span class="tlabel">鏡頭到感光元件</span><input type="range" id="eyS" min="20" max="48" step="0.5" value="30"><output id="eySo"></output></div>
+        <button type="button" class="btn" id="eyFocus">🎯 自動對焦（伸縮鏡頭）</button>
+      </div>
+      <div class="cbox" style="position:relative"><canvas id="cvEye" aria-label="眼睛與照相機的光路"></canvas>
+        <div style="position:absolute;left:20px;bottom:12px;text-align:center;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:4px 6px"><div class="tlabel" style="font-size:.75rem">看到的樣子</div><canvas id="cvSee" width="120" height="84" style="width:120px;height:84px;touch-action:auto"></canvas></div>
+      </div>
+      <p class="hint">示意比例：水晶體會自動調整厚薄（焦距）想把像對在視網膜上；調不到時像就落在視網膜前或後，看起來模糊。</p>
+    </section>
+    <div class="verdict" id="eyVerdict" style="margin-top:12px"></div>
+    <div class="notes" style="margin-top:12px">
+      <div><h2>眼睛 ≈ 照相機</h2><p>水晶體（凸透鏡）↔ 鏡頭；瞳孔 ↔ 光圈；視網膜 ↔ 感光元件。都成<b>倒立、縮小的實像</b>（物體在兩倍焦距外）。眼睛靠<b>水晶體變厚變薄</b>調焦距，照相機靠<b>伸縮鏡頭調像距</b>。</p></div>
+      <div><h2>近視眼（遠物模糊）</h2><p>看遠處時水晶體無法變得很薄（焦距太短），像落在視網膜<b>之前</b>。戴<b>凹透鏡</b>先把光發散一點。</p></div>
+      <div><h2>遠視眼、老花眼（近物模糊）</h2><p>看近處時水晶體無法變得很厚（焦距太長），像落在視網膜<b>之後</b>。戴<b>凸透鏡</b>先把光會聚一點。老花眼是睫狀肌控制能力衰退。</p></div>
+    </div>
+  </div>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">講義題目情境 <small>翰林自然(3) 4-4 透鏡成像；點了會切到對應的實驗台</small></p>
+    <div class="cbox"><div class="chips" id="qbox"></div></div>
+  </section>
 
   <!-- 立體視角：原本的 lens3d/ 頁，內容在 3d.html -->
   <div id="pane3d" hidden>
@@ -166,6 +223,10 @@ const FAR = 2000;         // 光線延伸到畫面外的距離
 const DEFAULT = { f: 60, p: 150, h: 40 };
 let state = { ...DEFAULT };
 let lensType = 'convex';   // 'convex' 凸透鏡、'concave' 凹透鏡
+let inf = false;           // 物體在無窮遠（平行光入射）
+let mask = 'none';         // 遮住透鏡：none／top／bottom
+let trailPts = [];         // 物體移近時留下的像（[x, y, 虛像?]）
+let sweepRaf = 0;
 const isConcave = () => lensType === 'concave';
 const signedF = () => (isConcave() ? -state.f : state.f);   // 凹透鏡的焦距取負值
 
@@ -297,7 +358,7 @@ function render() {
   out += line(0, AY, W, AY, css('axis'), { width: 1.5, dash: '8 6' });
 
   // 透鏡：焦距越短，畫得越彎；凸透鏡中間厚，凹透鏡中間薄、邊緣厚
-  const bulge = 8 + 600 / f;
+  const bulge = Math.min(8 + 600 / f, fs * 0.3 + 4);
   const lensPath = isConcave()
     ? `M${LX - bulge},${AY - 175} L${LX + bulge},${AY - 175} Q${LX - bulge + 2},${AY} ${LX + bulge},${AY + 175} L${LX - bulge},${AY + 175} Q${LX + bulge - 2},${AY} ${LX - bulge},${AY - 175} Z`
     : `M${LX},${AY - 175} Q${LX + bulge * 2},${AY} ${LX},${AY + 175} Q${LX - bulge * 2},${AY} ${LX},${AY - 175} Z`;
@@ -317,6 +378,27 @@ function render() {
     }
   }
 
+  const blocked = yl => mask === 'top' ? yl < AY - 1 : mask === 'bottom' ? yl > AY + 1 : false;
+  // 物體在無窮遠：平行光入射
+  if (inf) {
+    const c = css('ray1');
+    for (const dy of [-130, -65, 0, 65, 130]) {
+      const yl = AY + dy;
+      out += line(0, yl, LX, yl, c);
+      if (blocked(yl)) continue;
+      if (!isConcave()) out += line(LX, yl, FAR, yAt(LX, yl, LX + fs, AY, FAR), c);
+      else { out += line(LX, yl, FAR, yAt(LX - fs, AY, LX, yl, FAR), c); out += line(LX, yl, LX - fs, AY, c, { dash: '5 6', opacity: 0.7 }); }
+    }
+    if (mask !== 'none') out += maskRect(css);
+    const fx2 = isConcave() ? LX - fs : LX + fs;
+    out += `<circle cx="${fx2}" cy="${AY}" r="${7 * K}" fill="${css('img')}"/>`;
+    out += text(fx2, AY - 16 * K, isConcave() ? '光線好像從焦點發出' : '像：焦點上的一點', 'svg-label', { color: css('img') });
+    dyn.innerHTML = out;
+    objG.style.display = 'none';
+    updateReadoutInf();
+    return;
+  }
+  objG.style.display = '';
   // ----- 三條主光線 -----
   const xo = LX - p * S, yo = AY - h * S;   // 物體尖端
   const show = id => document.getElementById(id).checked;
@@ -331,9 +413,11 @@ function render() {
   if (show('r1')) {
     const c = css('ray1');
     out += line(xo, yo, LX, yo, c);
+    if (!blocked(yo)) {
     out += line(LX, yo, FAR, yAt(LX, yo, LX + fx, AY, FAR), c);
     if (conc) out += line(LX, yo, LX - fs, AY, c, { dash: '5 6', opacity: 0.75 });   // 反向延長線回到 F
     else if (virtual) out += line(LX, yo, xi, yi, c, { dash: '5 6', opacity: 0.75 });
+    }
   }
   // 光線 2：通過透鏡中心，方向不變
   if (show('r2')) {
@@ -346,19 +430,37 @@ function render() {
     const c = css('ray3');
     const yb = yAt(LX - fx, AY, xo, yo, LX);   // 打到透鏡的高度
     out += line(xo, yo, LX, yb, c);
+    if (!blocked(yb)) {
     out += line(LX, yb, FAR, yb, c);
     if (!conc && p < f) out += line(LX - fs, AY, xo, yo, c, { dash: '3 6', opacity: 0.6 });  // 看起來像從 F 發出
     if (conc) out += line(LX, yb, LX + fs, AY, c, { dash: '3 6', opacity: 0.6 });         // 原本瞄準 F′ 的方向
     if (virtual) out += line(LX, yb, xi, yi, c, { dash: '5 6', opacity: 0.75 });
+    }
   }
+  // 很多條光線（遮住透鏡時自動顯示）：從物體尖端射向透鏡各處
+  if (show('fan') || mask !== 'none') {
+    const c = css('axis');
+    for (let dy = -170; dy <= 170; dy += 34) {
+      const yl = AY + dy;
+      out += line(xo, yo, LX, yl, c, { width: 1.2, opacity: 0.8 });
+      if (blocked(yl)) continue;
+      if (r.none) { out += line(LX, yl, FAR, yl + (AY - yo) / (LX - xo) * (FAR - LX), c, { width: 1.2, opacity: 0.8 }); continue; }
+      if (!virtual) out += line(LX, yl, FAR, yAt(LX, yl, xi, yi, FAR), c, { width: 1.2, opacity: 0.8 });
+      else { out += line(LX, yl, FAR, yAt(xi, yi, LX, yl, FAR), c, { width: 1.2, opacity: 0.8 }); out += line(LX, yl, xi, yi, c, { width: 1, dash: '3 6', opacity: 0.5 }); }
+    }
+  }
+  if (mask !== 'none') out += maskRect(css);
+  // 物體移近時留下的像
+  if (show('trail')) for (const [tx, ty, tv] of trailPts) out += `<g opacity="0.28">${arrow(tx, ty, css('img'), tv ? { dash: '7 5', hollow: true } : {})}</g>`;
 
-  // 像
+  // 像（遮住一半透鏡：位置、大小不變，只是比較暗）
   if (!r.none) {
-    out += virtual
+    const dim = mask !== 'none' ? ' opacity="0.45"' : '';
+    out += `<g${dim}>` + (virtual
       ? arrow(xi, yi, css('img'), { dash: '7 5', hollow: true })
-      : arrow(xi, yi, css('img'));
+      : arrow(xi, yi, css('img'))) + '</g>';
     const ly = r.hi > 0 ? yi - 10 * K : yi + 8 * K + 15 * K;
-    out += text(xi, ly, virtual ? '虛像' : '實像', 'svg-label', { color: css('img') });
+    out += text(xi, ly, (virtual ? '虛像' : '實像') + (mask !== 'none' ? '（較暗）' : ''), 'svg-label', { color: css('img') });
   }
   dyn.innerHTML = out;
 
@@ -368,6 +470,34 @@ function render() {
 
   updateReadout(r);
 }
+
+function maskRect(css) {
+  const y0 = mask === 'top' ? AY - 182 : AY + 2;
+  return `<rect x="${LX - 26}" y="${y0}" width="52" height="180" rx="4" fill="${css('ink')}" opacity="0.82"/>` +
+    text(LX + 34, mask === 'top' ? AY - 150 : AY + 170, '黑紙', 'svg-label', { anchor: 'start' });
+}
+const APP = {
+  far: '倒立、縮小的實像。應用：照相機、眼睛（成像在感光元件、視網膜上）',
+  on2: '倒立、等大的實像，像在另一側 2F 上',
+  mid: '倒立、放大的實像，像在另一側 2F 以外。應用：投影機',
+  onF: '折射光互相平行，不成像。應用：探照燈、手電筒（光源放在焦點）',
+  in: '正立、放大的虛像，和物體在同側。應用：放大鏡',
+};
+function regionKey() {
+  const { f, p } = state, near = (a, b) => Math.abs(a - b) < 0.01;
+  if (near(p, 2 * f)) return 'on2'; if (p > 2 * f) return 'far'; if (p > f) return 'mid'; if (near(p, f)) return 'onF'; return 'in';
+}
+function updateReadoutInf() {
+  document.getElementById('region').textContent = '物體在無窮遠處（平行光入射）';
+  document.getElementById('app').textContent = isConcave() ? '折射後發散，反向延長線交在焦點 F' : '像在另一側焦點上，是一點。應用：用凸透鏡把陽光聚成一點、量焦距（實驗 4-2 步驟 2）';
+  document.getElementById('pOut').textContent = '∞';
+  document.getElementById('qOut').textContent = isConcave() ? `−${state.f} 公分（虛焦點）` : `${state.f} 公分（焦點）`;
+  document.getElementById('hOut').textContent = '—'; document.getElementById('hiOut').textContent = '一點'; document.getElementById('mOut').textContent = '—';
+  document.getElementById('fOut').textContent = isConcave() ? `−${state.f} 公分` : `${state.f} 公分`;
+  document.getElementById('verdict').innerHTML = '<span class="chip">平行光</span>';
+  markPos('inf');
+}
+function markPos(k) { document.querySelectorAll('#posChips .chip').forEach(b => b.setAttribute('aria-pressed', String(!isConcave() && b.dataset.k === k))); }
 
 // ===== 數據區 =====
 function updateReadout(r) {
@@ -381,6 +511,9 @@ function updateReadout(r) {
   else if (near(p, f)) region = '物體在焦點 F 上';
   else region = '物體在焦點 F 以內';
   document.getElementById('region').textContent = region;
+  const rk = regionKey();
+  document.getElementById('app').textContent = isConcave() ? '應用：近視眼鏡（凹透鏡）' : APP[rk];
+  markPos(rk);
 
   // 讓拉桿跟著拖曳結果同步
   pSlider.value = Math.round(p);
@@ -426,6 +559,7 @@ function snap(p) {
   return p;
 }
 function setObject(p, h) {
+  inf = false;
   state.p = snap(Math.min(240, Math.max(5, p)));
   state.h = Math.min(80, Math.max(10, h));
   scheduleRender();
@@ -447,6 +581,7 @@ objG.addEventListener('pointermove', e => {
   setObject((LX - tipX) / S, (AY - tipY) / S);
 });
 const endDrag = () => { drag = null; };
+objG.addEventListener('pointerdown', () => stopSweep(), true);
 objG.addEventListener('pointerup', endDrag);
 objG.addEventListener('pointercancel', endDrag);
 // 手指按在物體上時，讓瀏覽器不要捲動頁面
@@ -467,11 +602,43 @@ objG.addEventListener('keydown', e => {
 const fSlider = document.getElementById('fSlider');
 const pSlider = document.getElementById('pSlider');
 const hSlider = document.getElementById('hSlider');
-fSlider.addEventListener('input', () => { state.f = Number(fSlider.value); scheduleRender(); });
+fSlider.addEventListener('input', () => { state.f = Number(fSlider.value); trailPts = []; scheduleRender(); });
+const POS = { far: f => Math.min(240, 2.6 * f), on2: f => 2 * f, mid: f => 1.5 * f, onF: f => f, in: f => 0.55 * f };
+document.getElementById('posChips').addEventListener('click', e => {
+  const b = e.target.closest('.chip'); if (!b) return; stopSweep(); trailPts = [];
+  if (b.dataset.k === 'inf') { inf = true; scheduleRender(); return; }
+  setObject(POS[b.dataset.k](state.f), state.h);
+});
+document.getElementById('maskSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-v]'); if (!b) return; mask = b.dataset.v;
+  document.querySelectorAll('#maskSeg button').forEach(x => x.setAttribute('aria-pressed', String(x === b))); scheduleRender();
+});
+['fan', 'trail'].forEach(id => document.getElementById(id).addEventListener('change', render));
+// 物體由遠慢慢移近（約 10 秒），每移近一段就留下當時的像
+function stopSweep() { if (sweepRaf) cancelAnimationFrame(sweepRaf); sweepRaf = 0; document.getElementById('sweep').textContent = '▶ 物體由遠慢慢移近'; }
+document.getElementById('sweep').addEventListener('click', () => {
+  if (sweepRaf) { stopSweep(); return; }
+  inf = false; trailPts = []; state.p = 240; let last = 0, lastMark = 241;
+  document.getElementById('sweep').textContent = '⏸ 停止';
+  const step = t => {
+    if (!last) last = t; const dt = Math.min(0.05, (t - last) / 1000); last = t;
+    state.p = Math.max(state.f * 0.3, state.p - dt * 24);
+    if (lastMark - state.p >= 16 || state.p <= state.f * 0.3) {
+      lastMark = state.p; const r = solve();
+      if (!r.none && Math.abs(r.q * S) < LX && Math.abs(r.hi * S) < AY) trailPts.push([LX + r.q * S, AY - r.hi * S, r.q < 0]);
+    }
+    render();
+    if (state.p <= state.f * 0.3) { stopSweep(); return; }
+    sweepRaf = requestAnimationFrame(step);
+  };
+  sweepRaf = requestAnimationFrame(step);
+});
 pSlider.addEventListener('input', () => setObject(Number(pSlider.value), state.h));
 hSlider.addEventListener('input', () => setObject(state.p, Number(hSlider.value)));
 ['r1', 'r2', 'r3'].forEach(id => document.getElementById(id).addEventListener('change', render));
 document.getElementById('reset').addEventListener('click', () => {
+  stopSweep(); inf = false; trailPts = []; mask = 'none'; document.querySelectorAll('#maskSeg button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === 'none')));
+  document.getElementById('fan').checked = false;
   state = { ...DEFAULT };
   fSlider.value = DEFAULT.f;
   ['r1', 'r2', 'r3'].forEach(id => document.getElementById(id).checked = true);
@@ -491,6 +658,7 @@ function setType(type) {
   document.getElementById('r1Text').textContent = RAY_TEXT[lensType][0];
   document.getElementById('r3Text').textContent = RAY_TEXT[lensType][1];
   writeHash();
+  document.querySelectorAll('.convex-only').forEach(el => el.hidden = isConcave());
   scheduleRender();
 }
 document.getElementById('tConvex').addEventListener('click', () => setType('convex'));
@@ -501,7 +669,7 @@ window.addEventListener('hashchange', () => readHash());
 // 網址：#concave 凹透鏡、#3d 立體視角、#3d-concave 立體視角的凹透鏡
 let pane = '2d';
 function writeHash() {
-  const h = (pane === '3d' ? '3d' : '') + (isConcave() ? (pane === '3d' ? '-concave' : 'concave') : '');
+  const h = pane === 'eye' ? 'eye' : (pane === '3d' ? '3d' : '') + (isConcave() ? (pane === '3d' ? '-concave' : 'concave') : '');
   try { history.replaceState(null, '', location.pathname + location.search + (h ? '#' + h : '')); } catch (e) {}
 }
 function setPane(p) {
@@ -513,10 +681,12 @@ function setPane(p) {
       if (c !== isConcave()) lensType = c ? 'concave' : 'convex';
     } catch (e) {}
   }
-  pane = p === '3d' ? '3d' : '2d';
+  pane = p === '3d' ? '3d' : p === 'eye' ? 'eye' : '2d';
   document.querySelectorAll('#paneSeg button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === pane)));
   document.getElementById('pane2d').hidden = pane !== '2d';
   document.getElementById('pane3d').hidden = pane !== '3d';
+  document.getElementById('paneEye').hidden = pane !== 'eye';
+  if (pane === 'eye') { try { history.replaceState(null, '', location.pathname + location.search + '#eye'); } catch (e) {} window.eyeDraw && eyeDraw(); return; }
   if (pane === '3d') {
     const f = document.getElementById('frame3d');
     if (!f.getAttribute('src')) f.setAttribute('src', '3d.html' + (isConcave() ? '#concave' : ''));
@@ -531,7 +701,7 @@ document.getElementById('paneSeg').addEventListener('click', e => { const b = e.
 function readHash() {
   const h = location.hash.slice(1);
   lensType = /concave/.test(h) ? 'concave' : 'convex';
-  setPane(/^3d/.test(h) ? '3d' : '2d');
+  setPane(/^3d/.test(h) ? '3d' : h === 'eye' ? 'eye' : '2d');
   setType(lensType);
 }
 
@@ -545,6 +715,204 @@ updateScale();
 readColors();
 readHash();
 render();
+</script>
+
+<script>
+// ===== 實驗台 3：眼睛與照相機（示意比例；x、y 單位相同） =====
+(() => {
+  const $ = id => document.getElementById(id);
+  const segSet = (el, v) => el.querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+  const segOn = (el, f) => el.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (b) f(b.dataset.v); });
+  const KIND = { normal: { n: '正常眼', fmin: 20, fmax: 30 }, myopia: { n: '近視眼', fmin: 18, fmax: 26 }, hyper: { n: '遠視眼', fmin: 25.5, fmax: 30 }, presby: { n: '老花眼', fmin: 27, fmax: 30 } };
+  const D = 30, GX = -14, PUP = 5, CAMF = 20;   // 視網膜位置、眼鏡位置、瞳孔半徑、相機鏡頭焦距
+  const E = window.EY = { kind: 'normal', obj: 'far', d: 70, gl: 'none', F: 180, S: 30, cd: 90 };
+  const cv = $('cvEye'), see = $('cvSee');
+  let W = 0, H = 0, sc = 1, ox = 0;
+  const col = n => getComputedStyle(document.documentElement).getPropertyValue('--' + n).trim();
+  function size() {
+    const w = cv.parentElement.clientWidth - 20; const h = Math.round(Math.max(240, Math.min(380, w * 0.34)));
+    const d = devicePixelRatio || 1; if (w === W && h === H) return; W = w; H = h; cv.width = w * d; cv.height = h * d; cv.style.height = h + 'px';
+    cv.getContext('2d').setTransform(d, 0, 0, d, 0, 0);
+  }
+  // 細透鏡光線追跡：u' = u − y/f
+  function trace(rays, lenses, xEnd) {
+    return rays.map(([x0, y0, u]) => { const pts = [[x0, y0]]; let x = x0, y = y0; for (const [lx, f] of lenses) { y += u * (lx - x); x = lx; pts.push([x, y]); if (f) u = u - y / f; } y += u * (xEnd - x); pts.push([xEnd, y]); return { pts, u }; });
+  }
+  // 物體到某一位置的「入射」：回傳下一個透鏡看到的物距（∞ 用 Infinity；會聚光為負）
+  function eyeState() {
+    const camera = E.kind === 'camera';
+    if (camera) { const u = E.cd; const q = 1 / (1 / CAMF - 1 / u); return { camera, f: CAMF, q, u, img: q, scr: E.S }; }
+    const K = KIND[E.kind];
+    let u = E.obj === 'far' ? Infinity : E.d;            // 物體到眼睛（水晶體）的距離
+    if (E.gl !== 'none') {                                 // 先經過眼鏡
+      const Fg = E.gl === 'concave' ? -E.F : E.F, dg = E.obj === 'far' ? Infinity : E.d + GX;
+      const v = 1 / (1 / Fg - (isFinite(dg) ? 1 / dg : 0));  // 眼鏡成像位置（在眼鏡右側為正）
+      u = -GX - v;                                          // 對水晶體而言的物距
+      if (!isFinite(v)) u = Infinity;
+    }
+    const inv = isFinite(u) ? 1 / u : 0;
+    const need = 1 / (inv + 1 / D);                         // 要對到視網膜所需的焦距
+    const f = Math.max(K.fmin, Math.min(K.fmax, need));
+    const q = 1 / (1 / f - inv);
+    return { camera, f, q, u, need, K, scr: D };
+  }
+  function draw() {
+    if ($('paneEye').hidden) return;
+    size(); const g = cv.getContext('2d'); const ink = col('ink'), muted = col('muted'), line = col('line'), acc = col('accent'), ray = col('ray1'), lensC = col('lens'), img = col('img');
+    g.clearRect(0, 0, W, H);
+    const st = eyeState(), camera = st.camera;
+    const xMin = camera ? -118 : -112, xMax = camera ? 62 : 52; sc = W / (xMax - xMin); ox = -xMin * sc; const oy = H / 2;
+    const X = x => ox + x * sc, Y = y => oy - y * sc;
+    // 光軸
+    g.strokeStyle = line; g.setLineDash([6, 5]); g.lineWidth = 1; g.beginPath(); g.moveTo(0, oy); g.lineTo(W, oy); g.stroke(); g.setLineDash([]);
+    g.font = `500 ${Math.max(12, sc * 2.2)}px "Noto Sans TC",sans-serif`; g.textAlign = 'center';
+    const scr = camera ? E.S : D;
+    // 眼球或相機外殼
+    if (!camera) {
+      g.fillStyle = 'rgba(120,170,220,.10)'; g.strokeStyle = muted; g.lineWidth = 2; g.beginPath(); g.arc(X(15), oy, 15.5 * sc, 0, Math.PI * 2); g.fill(); g.stroke();
+      g.strokeStyle = '#e0607a'; g.lineWidth = 5; g.beginPath(); g.arc(X(15), oy, 15.5 * sc, -0.75, 0.75); g.stroke();
+      g.fillStyle = '#e0607a'; g.fillText('視網膜', X(33), Y(13));
+    } else {
+      g.strokeStyle = muted; g.lineWidth = 2; g.strokeRect(X(-4), Y(14), (scr + 10) * sc, 28 * sc);
+      g.fillStyle = '#7a5cc4'; g.fillRect(X(scr) - 3, Y(11), 6, 22 * sc); g.fillText('感光元件', X(scr), Y(12.5));
+    }
+    // 水晶體（越厚 = 焦距越短）
+    const half = Math.max(1.2, 70 / st.f) * sc, hh = 7 * sc;
+    g.fillStyle = 'rgba(79,99,214,.22)'; g.strokeStyle = lensC; g.lineWidth = 2; g.beginPath(); g.ellipse(X(0), oy, half, hh, 0, 0, Math.PI * 2); g.fill(); g.stroke();
+    g.fillStyle = lensC; g.fillText(camera ? `鏡頭 f＝${CAMF}` : `水晶體 f＝${st.f.toFixed(1)}`, X(0), Y(-9.5));
+    // 眼鏡
+    const lenses = [];
+    if (!camera && E.gl !== 'none') {
+      const Fg = E.gl === 'concave' ? -E.F : E.F; lenses.push([GX, Fg]);
+      g.strokeStyle = acc; g.lineWidth = 3; g.beginPath();
+      if (E.gl === 'convex') { g.ellipse(X(GX), oy, 1.6 * sc, 9 * sc, 0, 0, Math.PI * 2); }
+      else { g.moveTo(X(GX) - 2 * sc, Y(9)); g.lineTo(X(GX) + 2 * sc, Y(9)); g.quadraticCurveTo(X(GX), oy, X(GX) + 2 * sc, Y(-9)); g.lineTo(X(GX) - 2 * sc, Y(-9)); g.quadraticCurveTo(X(GX), oy, X(GX) - 2 * sc, Y(9)); }
+      g.stroke(); g.fillStyle = acc; g.fillText(E.gl === 'concave' ? '凹透鏡' : '凸透鏡', X(GX), Y(11));
+    }
+    lenses.push([0, st.f]);
+    // 光線
+    let rays = [], srcX, srcY = 0;
+    if (camera) { srcX = -E.cd; srcY = 8; }
+    else if (E.obj === 'near') srcX = -E.d;
+    const ys = [-1, -0.66, -0.33, 0, 0.33, 0.66, 1].map(k => k * PUP);
+    if (!camera && E.obj === 'far') rays = ys.map(y => [xMin, y, 0]);
+    else {
+      const first = lenses[0][0];
+      rays = ys.map(y => { const yy = y * (E.gl !== 'none' && !camera ? 1.6 : 1); return [srcX, srcY, (yy - srcY) / (first - srcX)]; });
+    }
+    const T = trace(rays, lenses, scr);
+    g.strokeStyle = ray; g.lineWidth = 1.6;
+    T.forEach(t => { g.beginPath(); t.pts.forEach(([x, y], i) => i ? g.lineTo(X(x), Y(y)) : g.moveTo(X(x), Y(y))); g.stroke(); });
+    // 像（光線交會點）
+    const imgX = st.q, inEye = imgX > 0;
+    let imgY = 0; if (camera) imgY = -srcY * st.q / E.cd;
+    if (inEye && Math.abs(imgX - scr) > 0.4) {
+      g.setLineDash([4, 4]); g.globalAlpha = .6;
+      T.forEach(t => { const [x, y] = t.pts[t.pts.length - 1]; const x2 = imgX > scr ? Math.min(imgX + 3, xMax) : x; if (imgX > scr) { g.beginPath(); g.moveTo(X(x), Y(y)); g.lineTo(X(x2), Y(y + t.u * (x2 - x))); g.stroke(); } });
+      g.setLineDash([]); g.globalAlpha = 1;
+      g.fillStyle = img; g.beginPath(); g.arc(X(Math.min(imgX, xMax - 1)), Y(imgY), 5, 0, 7); g.fill();
+      g.fillText(imgX < scr ? '像在這裡（太前面）' : '像在這裡（太後面）', X(Math.min(imgX, xMax - 6)), Y(imgY) + (camera ? 24 : -14));
+    }
+    // 物體
+    g.fillStyle = ink;
+    if (camera) {
+      g.strokeStyle = col('obj') || '#17775f'; g.lineWidth = 4; g.beginPath(); g.moveTo(X(srcX), oy); g.lineTo(X(srcX), Y(srcY)); g.stroke();
+      g.fillStyle = g.strokeStyle; g.beginPath(); g.moveTo(X(srcX), Y(srcY + 2)); g.lineTo(X(srcX) - 6, Y(srcY - 1)); g.lineTo(X(srcX) + 6, Y(srcY - 1)); g.fill();
+      g.fillText('景物', X(srcX), Y(srcY + 3.5));
+      // 2F 標記
+      for (const k of [1, 2]) { g.fillStyle = muted; g.beginPath(); g.arc(X(-k * CAMF), oy, 3, 0, 7); g.fill(); g.fillText(k === 1 ? 'F' : '2F', X(-k * CAMF), oy + 18); g.beginPath(); g.arc(X(k * CAMF), oy, 3, 0, 7); g.fill(); g.fillText(k === 1 ? 'F′' : '2F′', X(k * CAMF), oy + 18); }
+      // 感光元件上的像（對焦時）
+      const blurC = PUP * Math.abs(st.q - scr) / st.q;
+      if (blurC < 0.6) { const yy = -srcY * scr / E.cd; g.strokeStyle = img; g.lineWidth = 4; g.beginPath(); g.moveTo(X(scr) + 6, oy); g.lineTo(X(scr) + 6, Y(yy)); g.stroke(); g.fillStyle = img; g.fillText('倒立縮小實像', X(scr) + 6, Y(yy) + 18); }
+    } else if (E.obj === 'near') {
+      g.fillStyle = '#f5b301'; g.beginPath(); g.arc(X(srcX), oy, 6, 0, 7); g.fill(); g.fillStyle = ink; g.fillText('近處的物體', X(srcX), oy - 14);
+    } else { g.fillStyle = muted; g.textAlign = 'left'; g.fillText('← 來自遠處物體的平行光', 6, Y(PUP + 3)); g.textAlign = 'center'; }
+    // 看到的樣子
+    const blur = PUP * Math.abs(st.q - scr) / Math.max(1, Math.abs(st.q));
+    const bpx = inEye ? Math.min(10, blur * 3.2) : 10;
+    const s2 = see.getContext('2d'); s2.save(); s2.clearRect(0, 0, 120, 84); s2.fillStyle = '#fff'; s2.fillRect(0, 0, 120, 84); s2.filter = `blur(${bpx.toFixed(1)}px)`;
+    s2.fillStyle = '#111'; s2.font = '700 46px "Noto Sans TC",sans-serif'; s2.textAlign = 'center'; s2.textBaseline = 'middle'; s2.fillText(camera ? '景' : E.obj === 'far' ? '遠' : '近', 60, 44); s2.restore();
+    // 文字
+    const ok = inEye && blur < 0.25;
+    let v;
+    if (camera) v = `物距 ${E.cd}（${E.cd > 2 * CAMF ? '兩倍焦距外' : E.cd > CAMF ? '焦點與兩倍焦距間' : '焦點內'}），像距 ${st.q.toFixed(1)}，鏡頭到感光元件 ${E.S}：${ok ? '對焦清楚，成倒立、縮小的實像' : st.q > scr ? '像在感光元件後面，模糊 → 鏡頭往前伸' : '像在感光元件前面，模糊 → 鏡頭往後縮'}。`;
+    else {
+      const K = st.K; const lim = st.need > K.fmax + 0.05 ? '水晶體已經最薄（焦距最長），還是不夠' : st.need < K.fmin - 0.05 ? '水晶體已經最厚（焦距最短），還是不夠' : '';
+      v = `${K.n}${E.gl !== 'none' ? `＋${E.gl === 'concave' ? '凹' : '凸'}透鏡眼鏡` : ''}看${E.obj === 'far' ? '遠處' : '近處'}：水晶體焦距可調 ${K.fmin}～${K.fmax}，需要 ${isFinite(st.need) ? st.need.toFixed(1) : '—'}。` +
+        (ok ? ' 像剛好落在視網膜上 → 看得清楚。' : (lim ? lim + '，' : '') + (st.q < D && st.q > 0 ? '像落在視網膜之前 → 模糊（近視的情形），要戴凹透鏡。' : '像落在視網膜之後 → 模糊（遠視、老花的情形），要戴凸透鏡。'));
+    }
+    $('eyVerdict').textContent = v;
+  }
+  window.eyeDraw = draw;
+  function ui() {
+    segSet($('eyKind'), E.kind); segSet($('eyObj'), E.obj); segSet($('eyGl'), E.gl);
+    const cam = E.kind === 'camera';
+    $('eyGlassRow').hidden = cam; $('eyCamRow').hidden = !cam; $('eyObj').hidden = cam; $('eyObj').previousElementSibling.hidden = cam;
+    $('eyDw').hidden = !cam && E.obj === 'far'; $('eyFw').hidden = E.gl === 'none';
+    $('eyD').min = cam ? 25 : 60; $('eyD').max = cam ? 110 : 110; $('eyD').value = cam ? E.cd : E.d; $('eyDo').textContent = (cam ? E.cd : E.d) + (cam ? `（f＝${CAMF}）` : '');
+    $('eyF').value = E.F; $('eyFo').textContent = E.F; $('eyS').value = E.S; $('eySo').textContent = E.S;
+    draw();
+  }
+  window.eyeSet = o => { Object.assign(E, o); ui(); };
+  segOn($('eyKind'), v => { E.kind = v; ui(); });
+  segOn($('eyObj'), v => { E.obj = v; ui(); });
+  segOn($('eyGl'), v => { E.gl = v; ui(); });
+  $('eyD').addEventListener('input', e => { if (E.kind === 'camera') E.cd = +e.target.value; else E.d = +e.target.value; ui(); });
+  $('eyF').addEventListener('input', e => { E.F = +e.target.value; ui(); });
+  $('eyS').addEventListener('input', e => { E.S = +e.target.value; ui(); });
+  $('eyFocus').addEventListener('click', () => { E.S = Math.round(1 / (1 / CAMF - 1 / E.cd) * 2) / 2; ui(); });
+  // 自動配鏡：近視看遠 → 凹透鏡把遠物成像在遠點；遠視、老花看近 → 凸透鏡把近物成像在近點
+  $('eyAuto').addEventListener('click', () => {
+    const K = KIND[E.kind] || KIND.normal;
+    if (E.kind === 'myopia') { const far = 1 / (1 / K.fmax - 1 / D); E.gl = 'concave'; E.F = Math.round(far + GX); if (E.obj === 'near' && E.d > 0) E.obj = 'far'; }
+    else if (E.kind === 'hyper' || E.kind === 'presby') { const nearP = 1 / (1 / K.fmin - 1 / D); const dg = E.d + GX, v = -(nearP + GX); E.gl = 'convex'; E.F = Math.round(1 / (1 / dg + 1 / v)); E.obj = 'near'; }
+    else E.gl = 'none';
+    E.F = Math.max(40, Math.min(400, E.F)); ui();
+  });
+  new ResizeObserver(() => { W = 0; draw(); }).observe(cv.parentElement);
+  matchMedia('(prefers-color-scheme: dark)').addEventListener('change', draw);
+  ui();
+})();
+</script>
+
+<script>
+// ===== 講義題目情境（翰林自然(3) 4-4） =====
+(() => {
+  const $ = id => document.getElementById(id);
+  const b1 = o => () => { setPane('2d'); stopSweep(); trailPts = []; inf = false; setType(o.type || 'convex');
+    mask = o.mask || 'none'; document.querySelectorAll('#maskSeg button').forEach(x => x.setAttribute('aria-pressed', String(x.dataset.v === mask)));
+    document.getElementById('fan').checked = !!o.fan;
+    if (o.f) { state.f = o.f; fSlider.value = o.f; }
+    if (o.inf) inf = true; else setObject(o.p, o.h || state.h);
+    scheduleRender(); if (o.sweep) document.getElementById('sweep').click(); };
+  const b3 = o => () => { setPane('eye'); eyeSet(Object.assign({ gl: 'none' }, o)); };
+  const Q = [
+    ['實驗 4-2 步驟 2　陽光聚成一點量焦距', 'p.145', b1({ inf: true }), '平行光經凸透鏡會聚在焦點', '太陽很遠，射來的光可看成平行光，經凸透鏡後會聚在另一側的焦點；白紙上最小最亮的一點到透鏡中心的距離就是焦距 f。'],
+    ['老師的話　物體由遠移近，像怎麼變', 'p.148', b1({ sweep: true }), '像漸漸遠離透鏡、愈來愈大', '物體由遠處移向焦點：實像由焦點漸漸遠離透鏡，且愈來愈大（物在 2F 上時像在另一側 2F 上、等大）。\n物體進入焦點以內：變成同側的正立放大虛像，愈靠近透鏡，像愈小。\n不論實像或虛像，物體愈靠近焦點，像愈大且愈遠離透鏡。'],
+    ['隨堂練習 2 第 4 題（1）　p＞2f 時 q＝？', 'p.149', b1({ p: 150, f: 50 }), '答案 (B) 2f＞q＞f', '物體在兩倍焦距外，像在另一側焦點與兩倍焦距之間，倒立縮小實像。'],
+    ['隨堂練習 2 第 4 題（2）　要在屏幕上成放大的像', 'p.149', b1({ p: 75, f: 50 }), '答案 (A) f＜p＜2f', '屏幕上的像一定是實像；要放大，物體要放在焦點與兩倍焦距之間（像在 2F 以外）。投影機就是這樣。'],
+    ['隨堂練習 2 第 4 題（3）　p＜f 時 q＝？', 'p.149', b1({ p: 30, f: 50 }), '答案 (D) q 不存在', '物體在焦點內，折射光發散，屏幕上接不到像；眼睛透過透鏡看到同側的正立放大虛像（放大鏡）。'],
+    ['探究提問　投影機的鏡頭', 'p.152', b1({ p: 90, f: 60 }), '凸透鏡，物在 F～2F，成倒立放大實像', '投影片放在鏡頭的焦點與兩倍焦距之間，布幕上得到倒立、放大的實像，所以投影片要倒著放。'],
+    ['老師的話　遮住一半透鏡', 'p.148', b1({ p: 150, mask: 'top', fan: true }), '像的位置、大小不變，只是比較暗', '物體每一點發出無數光線，遮住透鏡一部分，其餘部分的光線仍會聚在同一點，所以成像位置與性質都相同，只是光量變少、像較暗。'],
+    ['素養題 1　f 和哪次的像最大', 'p.155', b1({ f: 10, p: 12, h: 12 }), '答案 (A) 10 cm、甲', '表中丁 p＝q＝20 cm → 物在 2F 上，2f＝20，f＝10 cm。\n實像的放大率＝q／p，甲 p＝12、q＝60 最大（拖曳物體到 14、15、20…看像變小）。'],
+    ['素養題 2　p＝40 cm 的像', 'p.155', b1({ f: 10, p: 40, h: 12 }), '答案 (A) 倒立縮小實像', 'f＝10 cm，p＝40 cm 在兩倍焦距外，q＝13.3 cm，成倒立、縮小的實像。'],
+    ['素養題 3　透鏡貼上挖了三個圓孔的黑紙', 'p.155', b1({ f: 10, p: 20, h: 12, mask: 'top', fan: true }), '答案 (D) 一個亮度較暗的倒立三角形', '透鏡被遮住大部分，只要還有光通過，仍然成完整的像（三角形光源 → 倒立三角形），不會變成三個圓；光量少所以較暗。'],
+    ['試題 11　大雄看直尺（正立放大）', 'p.154', b1({ f: 20, p: 10, h: 10 }), '答案 (A) 焦距大於 10 公分的凸透鏡', '看到正立放大的像 → 凸透鏡的虛像，物體在焦點內：10 公分＜f。'],
+    ['優良經典 1　考古學家看小符號', 'p.155', b1({ f: 40, p: 20, h: 12 }), '答案 (A) 透過凸透鏡觀看', '放大鏡：物體放在凸透鏡焦點內，成正立放大的虛像。'],
+    ['優良經典 3（109 會考 42）　凹透鏡', 'p.155', b1({ type: 'concave', f: 10, p: 6, h: 6 }), '答案 (A) 正立縮小的像', '無論怎麼移動紙屏都不成像、從另一側看到正立縮小的像 → 凹透鏡。凹透鏡不論物體在哪裡都成正立縮小虛像，移到 13 cm 也一樣（拖曳物體試試）。'],
+    ['隨堂練習 3 第 1 題　照相機底片在哪裡', 'p.152', b3({ kind: 'camera', cd: 90, S: 26 }), '答案 (D) 焦點與兩倍焦距間', '景物在兩倍焦距外，像（感光元件、底片）在另一側焦點與兩倍焦距之間，成倒立縮小實像。按「自動對焦」看鏡頭伸縮。'],
+    ['試題 14、15　數位相機', 'p.154', b3({ kind: 'camera', cd: 100, S: 25 }), '答案 14 (A) 兩倍焦距外；15 (A) 倒立縮小實像', '拍照時景物在鏡頭兩倍焦距外，感光元件上形成倒立、縮小的實像。'],
+    ['隨堂練習 3 第 2 題　酷爸近物清楚、遠物模糊', 'p.152', b3({ kind: 'myopia', obj: 'far' }), '答案 (B) 凹透鏡（近視）', '看遠處時水晶體無法變得很薄，像落在視網膜之前 → 近視。按「凹透鏡」或「自動配鏡」看矯正。'],
+    ['隨堂練習 3 第 3 題　貝克水晶體焦距太長', 'p.152', b3({ kind: 'hyper', obj: 'near' }), '答案 (A) 凸透鏡（遠視）', '焦距太長，看近物時像落在視網膜之後 → 遠視，戴凸透鏡讓光先會聚一點。'],
+    ['試題 12　技安：像落在視網膜前', 'p.154', b3({ kind: 'myopia', obj: 'far' }), '配戴凹透鏡', '遠處物體的像落在視網膜之前 → 近視眼，用凹透鏡矯正。'],
+    ['試題 13　胖虎：像落在視網膜後', 'p.154', b3({ kind: 'hyper', obj: 'near' }), '配戴凸透鏡', '近處物體的像落在視網膜之後 → 遠視眼，用凸透鏡矯正。'],
+    ['老花眼', 'p.151', b3({ kind: 'presby', obj: 'near' }), '配戴凸透鏡', '眼球肌肉控制能力衰退，水晶體無法變厚，看不清楚近處的物體，用凸透鏡矯正。'],
+  ];
+  const box = $('qbox');
+  Q.forEach(([n, pg, set, t, p]) => { const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.innerHTML = `${n} <small style="color:var(--muted)">${pg}</small>`;
+    b.addEventListener('click', () => { set(); $('storyT').textContent = `${pg}　${t}`; $('storyP').textContent = p; $('story').hidden = false; $('story').scrollIntoView({ behavior: 'smooth', block: 'start' }); }); box.appendChild(b); });
+  $('storyX').addEventListener('click', () => { $('story').hidden = true; });
+})();
 </script>
 
 </body>
