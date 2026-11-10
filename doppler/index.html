@@ -72,6 +72,33 @@ footer p{margin:0 0 6px}
 .leg{font-size:12px;font-weight:500;color:var(--muted);display:inline-flex;align-items:center;gap:5px}
 .leg i{display:inline-block;width:14px;height:3px;border-radius:2px}
 .leg i.dash{background:none;border-top:2px dashed var(--src);height:0}
+/* ---- 實驗台切換與新實驗台 ---- */
+:root{--pas:#2f8a4e;--refl:#c0262d}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--pas:#5cc77f;--refl:#ff6b70}}
+:root[data-theme="dark"]{--pas:#5cc77f;--refl:#ff6b70}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.pane{display:flex;flex-direction:column;gap:16px}
+.pane[hidden]{display:none}
+.ftgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+@media (max-width:760px){.ftgrid{grid-template-columns:1fr}}
+.ftgrid .slider{min-width:0;flex:none}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl[hidden]{display:none}
+.slider.grow{flex:1 1 340px}
+#ftScene,#rfScene,#ltScene,#ltSpec{display:block;width:100%;touch-action:none}
+#ftGraph{display:block;width:100%;height:210px}
+#ltBand{display:block;width:100%;height:70px}
+dl.fk{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;margin:0;align-items:baseline}
+dl.fk dt{color:var(--muted);font-size:13px}
+dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+dl.fk dd small{font-family:var(--f-body);font-weight:400;color:var(--muted);margin-left:6px}
+.exam{padding-bottom:12px}
+.exam .chips{padding:8px 12px 0}
+.exbox{margin:10px 12px 0;border-left:4px solid var(--accent);background:var(--accent-soft);border-radius:0 8px 8px 0;padding:8px 12px;font-size:.95rem}
+.exbox p{margin:0 0 6px}.exbox p:last-child{margin:0}
+.exbox b.ans{color:var(--accent)}
+.why p{margin:0 0 6px;font-size:.95rem}
+#exSound{margin:0}
 </style>
 
 <div class="wrap">
@@ -80,8 +107,12 @@ footer p{margin:0 0 6px}
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 波動與聲音</div>
       <h1>都卜勒效應</h1>
     </div>
-    <p>聲源和觀察者都能移動，也能等加速度移動或讓聲源做圓周運動。按「開啟聲音」聽觀察者實際聽到的音高，同時看波前疏密的變化。</p>
+    <p>實驗台 1 讓聲源、觀察者移動並聽實際音高；2 畫火車過平交道、圓周運動的頻率–時間圖；3 看血流計、雷達與風；4 看光的紅移、藍移。每個實驗台下方都有一中、二中考古題情境。</p>
   </header>
+  <nav class="panel benchbar" aria-label="實驗台"><span class="tlabel">實驗台</span><span class="seg" role="group" id="bench" aria-label="實驗台">
+    <button data-v="sound" aria-pressed="true">1 聲源與觀察者</button><button data-v="ft" aria-pressed="false">2 頻率–時間圖</button><button data-v="refl" aria-pressed="false">3 反射體與風</button><button data-v="light" aria-pressed="false">4 光的紅移、藍移</button>
+  </span></nav>
+  <div class="pane" id="pane-sound">
 
   <section class="panel stage">
     <div class="toolbar">
@@ -125,6 +156,7 @@ footer p{margin:0 0 6px}
   </section>
 
   <div class="presets" id="presets"><span class="tlabel">情境</span></div>
+  <div class="exbox" id="exSound" hidden></div>
 
   <div class="grid">
     <section class="panel card">
@@ -225,6 +257,145 @@ footer p{margin:0 0 6px}
     <p>圓周運動：聲源沿 A→B→C→D 逆時針運動，P、Q 位於 CA 延長線上，可拖曳改變位置。也可以抓住聲源沿軌道手動移動，放開後停在原位，調整速率滑桿即可繼續繞圈。</p>
     <p>畫面上的波前間距已依比例放大；聲音頻率則用真實的公式計算。預設「即時反應」，變化馬上聽得到；選「等聲波傳到才改變」則更接近真實，聲音要等波傳過來才會改變。</p>
   </footer>
+  </div>
+
+  <!-- ===== 實驗台 2：接收頻率 f–t 圖 ===== -->
+  <div class="pane" id="pane-ft" hidden>
+    <section class="panel stage">
+      <div class="toolbar">
+        <button class="btn primary" id="ftPlay">▶ 播放</button>
+        <button class="btn" id="ftReset">⟲ 從頭</button>
+        <span class="seg" role="group" aria-label="情境" id="ftMode">
+          <button data-v="train" aria-pressed="true">火車過平交道</button><button data-v="circle" aria-pressed="false">圓周運動</button><button data-v="burst" aria-pressed="false">經過圓心時發短聲</button>
+        </span>
+        <span class="seg" role="group" aria-label="播放速度" id="ftTs">
+          <button data-v="1" aria-pressed="false">1×</button><button data-v="0.25" aria-pressed="true">¼×</button><button data-v="0.0625" aria-pressed="false">1/16×</button>
+        </span>
+        <label class="tog"><input type="checkbox" id="ftDelay"> 考慮聲音傳到的時間</label>
+        <label class="tog" id="ftXYZw"><input type="checkbox" id="ftXYZ"> 曲線只標 X、Y、Z</label>
+        <label class="tog" id="ftTanW" hidden><input type="checkbox" id="ftTan" checked> 畫出切線</label>
+      </div>
+      <div class="cbox"><canvas id="ftScene" aria-label="俯視圖：聲源與聽者"></canvas></div>
+      <div class="toolbar">
+        <div class="slider grow"><span class="tlabel">時間 t</span><input type="range" id="ftT" min="0" max="1000" value="0"><output id="ftTo">0.00 s</output></div>
+      </div>
+    </section>
+
+    <div class="ftgrid">
+      <section class="panel card">
+        <h2>設定</h2>
+        <div class="ctl" data-m="train">
+          <div class="slider"><span class="tlabel">火車速率</span><input type="range" id="trV" min="10" max="120" step="5" value="40"><output id="trVo"></output></div>
+          <div class="slider"><span class="tlabel">甲離鐵軌</span><input type="range" id="trD1" min="5" max="100" step="5" value="15"><output id="trD1o"></output></div>
+          <div class="slider"><span class="tlabel">乙離鐵軌</span><input type="range" id="trD2" min="20" max="200" step="5" value="60"><output id="trD2o"></output></div>
+        </div>
+        <div class="ctl" data-m="circle" hidden>
+          <div class="slider"><span class="tlabel">軌道半徑</span><input type="range" id="ciR" min="0.5" max="60" step="0.5" value="20"><output id="ciRo"></output></div>
+          <div class="slider"><span class="tlabel">聲源速率</span><input type="range" id="ciV" min="4" max="150" step="2" value="60"><output id="ciVo"></output></div>
+          <div class="slider"><span class="tlabel">P 到圓心</span><input type="range" id="ciP" min="1.1" max="4" step="0.1" value="1.6"><output id="ciPo"></output></div>
+          <div class="slider"><span class="tlabel">Q 到圓心</span><input type="range" id="ciQ" min="1.2" max="8" step="0.1" value="3"><output id="ciQo"></output></div>
+          <p class="note" id="ciInfo"></p>
+        </div>
+        <div class="ctl" data-m="burst" hidden>
+          <div class="slider"><span class="tlabel">車速</span><input type="range" id="buV" min="10" max="150" step="5" value="60"><output id="buVo"></output></div>
+          <div class="slider"><span class="tlabel">圓的半徑</span><input type="range" id="buR" min="20" max="200" step="10" value="80"><output id="buRo"></output></div>
+        </div>
+        <div class="slider"><span class="tlabel">原本頻率 f₀</span><input type="range" id="ftF0" min="200" max="2000" step="50" value="1000"><output id="ftF0o"></output></div>
+        <p class="note">聲速 v = 340 m/s。f′ = f₀ × v ／（v − v<sub>s</sub> cosθ），θ 是聲源速度與「聲源→聽者」連線的夾角，v<sub>s</sub> cosθ 就是聲源朝聽者的分速度（畫面上的小箭頭）。</p>
+      </section>
+      <section class="panel card">
+        <h2>現在各人聽到的頻率</h2>
+        <dl class="fk" id="ftNow"></dl>
+        <div class="verdict" id="ftSay"></div>
+      </section>
+    </div>
+
+    <section class="panel hist">
+      <h3>頻率–時間圖 <span id="ftLeg"></span></h3>
+      <canvas id="ftGraph" aria-label="各聽者聽到的頻率隨時間變化"></canvas>
+    </section>
+
+    <section class="panel exam">
+      <p class="ptitle">考古題情境 <small>點一下設定畫面並看解說</small></p>
+      <div class="chips" id="ftEx"></div>
+      <div class="exbox" id="ftExBox" hidden></div>
+    </section>
+  </div>
+
+  <!-- ===== 實驗台 3：反射體與風 ===== -->
+  <div class="pane" id="pane-refl" hidden>
+    <section class="panel stage">
+      <div class="toolbar">
+        <button class="btn primary" id="rfPlay">❚❚ 暫停</button>
+        <span class="seg" role="group" aria-label="情境" id="rfMode">
+          <button data-v="blood" aria-pressed="true">超音波血流計</button><button data-v="radar" aria-pressed="false">雷達與雨滴</button><button data-v="wind" aria-pressed="false">有風</button>
+        </span>
+        <div class="slider" id="rfUw"><span class="tlabel" id="rfUl">血流速率</span><input type="range" id="rfU" min="-30" max="30" step="1" value="15"><output id="rfUo"></output></div>
+      </div>
+      <div class="cbox"><canvas id="rfScene" aria-label="反射體或風的示意圖"></canvas></div>
+      <p class="hint" id="rfHint"></p>
+    </section>
+    <div class="ftgrid">
+      <section class="panel card">
+        <h2 id="rfTitle">各處的頻率</h2>
+        <dl class="fk" id="rfNow"></dl>
+      </section>
+      <section class="panel card">
+        <h2>怎麼想</h2>
+        <div id="rfWhy" class="why"></div>
+      </section>
+    </div>
+    <section class="panel exam">
+      <p class="ptitle">考古題情境 <small>點一下設定畫面並看解說</small></p>
+      <div class="chips" id="rfEx"></div>
+      <div class="exbox" id="rfExBox" hidden></div>
+    </section>
+  </div>
+
+  <!-- ===== 實驗台 4：光的都卜勒 ===== -->
+  <div class="pane" id="pane-light" hidden>
+    <section class="panel stage">
+      <div class="toolbar">
+        <button class="btn primary" id="ltPlay">❚❚ 暫停</button>
+        <div class="slider grow"><span class="tlabel">恆星速度</span><input type="range" id="ltB" min="-30" max="30" step="1" value="10"><output id="ltBo"></output></div>
+        <span class="seg" role="group" aria-label="快速設定" id="ltQuick">
+          <button data-v="-10" aria-pressed="false">接近</button><button data-v="0" aria-pressed="false">靜止</button><button data-v="10" aria-pressed="false">遠離</button>
+        </span>
+      </div>
+      <div class="cbox"><canvas id="ltScene" aria-label="恆星發光，波傳到地球"></canvas></div>
+      <div class="toolbar">
+        <span class="tlabel">元素</span>
+        <span class="seg" role="group" aria-label="元素" id="ltEl">
+          <button data-v="H" aria-pressed="true">氫</button><button data-v="He" aria-pressed="false">氦</button><button data-v="Na" aria-pressed="false">鈉</button>
+        </span>
+        <span class="tlabel">光譜</span>
+        <span class="seg" role="group" aria-label="光譜種類" id="ltKind">
+          <button data-v="em" aria-pressed="true">放射（亮線）</button><button data-v="ab" aria-pressed="false">吸收（暗線）</button>
+        </span>
+      </div>
+      <div class="cbox"><canvas id="ltSpec" aria-label="實驗室光譜與恆星光譜比較"></canvas></div>
+      <p class="hint">上排：實驗室裡靜止的元素光譜；下排：從恆星收到的光譜。整組譜線一起往同一邊平移，間隔比例不變，所以還認得出是哪個元素。</p>
+    </section>
+    <div class="ftgrid">
+      <section class="panel card">
+        <h2>收到的光</h2>
+        <dl class="fk" id="ltNow"></dl>
+      </section>
+      <section class="panel card">
+        <h2>電磁波譜上往哪邊移</h2>
+        <canvas id="ltBand" aria-label="電磁波譜上的偏移方向"></canvas>
+        <p class="note">接近：頻率變高、波長變短，往紫外線那側移（藍移）。遠離：頻率變低、波長變長，往紅外線、微波那側移（紅移）。光速不變，改變的是波長與頻率。</p>
+      </section>
+    </div>
+    <section class="panel exam">
+      <p class="ptitle">考古題情境 <small>點一下設定畫面並看解說</small></p>
+      <div class="chips" id="ltEx"></div>
+      <div class="exbox" id="ltExBox" hidden></div>
+    </section>
+    <footer>
+      <p>波長比 λ′/λ = √[(1 + β)/(1 − β)]，β = 速度／光速（遠離取正）。速度遠小於光速時約等於 1 + β，也就是 Δλ/λ ≈ v/c。畫面的速度已誇大到光速的 30%，方便看出偏移；真實恆星多半只有光速的萬分之幾。</p>
+    </footer>
+  </div>
 </div>
 
 <script>
@@ -270,6 +441,14 @@ const PRESETS = [
   {grp:'等加速度', id:'accpass', name:'救護車加速駛過', src:[50,.5,0,40,'toward'], obs:[560,.5,0], edge:'stop'},
   {grp:'等加速度', id:'accaway', name:'救護車加速遠離', src:[430,.5,0,40,'away'], obs:[620,.5,0], edge:'stop'},
   {grp:'圓周', id:'circle', name:'圓周運動聲源（P、Q 兩點）', mode:'circle', src:[0,0,150], obs:[560,.5,0], q:[940,.5], edge:'bounce'},
+  {grp:'考古題', id:'x1', name:'一中 114-2-3 第 1 題（救護車追觀察者）', src:[150,.5,50], obs:[500,.5,30], edge:'wrap',
+   ex:'<p>救護車 5 m/s、觀察者 3 m/s 都向右，救護車在後方追。f′ ＝ f × (340 − 3)／(340 − 5) ＝ 1.006 f，頻率增加。觀察者在聲源前方，波長被壓短；聲波相對觀察者的速度是 340 − 3，變小。答案 <b class="ans">A</b>。（畫面速度放大 10 倍：50 與 30 m/s。）</p>'},
+  {grp:'考古題', id:'x2', name:'一中 113-1-3 第 20 題（救護車與自行車同向）', src:[900,.5,-100], obs:[550,.5,-40], edge:'wrap',
+   ex:'<p>救護車 v<sub>s</sub> 比騎士 v<sub>o</sub> 快，都向左。救護車在騎士後方接近時，f′ ＝ f₀ (v − v<sub>o</sub>)／(v − v<sub>s</sub>) ＞ f₀，騎士在聲源前方，波長較短（A、C 對）。超過騎士、在前方遠離時，f′ ＝ f₀ (v + v<sub>o</sub>)／(v + v<sub>s</sub>) ＜ f₀，騎士在聲源後方，波長較長（B、D 錯）。速度相等、同向時沒有相對運動，f′ ＝ f₀（E 對）。答案 <b class="ans">ACE</b>。</p>'},
+  {grp:'考古題', id:'x3', name:'一中 111-2-3 第 19 題（火車離站：媽媽與大豐）', src:[420,.5,60], obs:[220,.5,0], edge:'wrap',
+   ex:'<p>畫面是月台上的媽媽：火車遠離，她聽到的頻率比 f 低（A 對）；聲音相對靜止空氣的速度是 v₀，經過媽媽的聲速仍是 v₀（B 錯）。大豐坐在火車上，和汽笛一起動，聽到的就是 f（C 對）。汽笛聲往後傳到大豐，大豐往前迎上去，聲波相對大豐的速度是 v₀ ＋ v，比 v₀ 大（D 錯、E 對）。答案 <b class="ans">ACE</b>。</p>'},
+  {grp:'考古題', id:'x4', name:'一中 112-2-3 第 23 題（觀察者往不同方向跑）', src:[300,.5,0], obs:[850,.5,-100], edge:'bounce',
+   ex:'<p>聲源靜止，只看觀察者「沿著和聲源連線」的分速度。畫面是丙：朝聲源跑，頻率比 f 高（C 對）。丁也是朝聲源跑（D 對）。甲背離聲源，頻率較低（A 錯）。乙、戊的速度和連線垂直，那一瞬間頻率不變（B 錯、E 對）。答案 <b class="ans">CDE</b>。</p>'},
 ];
 
 /* ---------- 讀主題色 ---------- */
@@ -359,11 +538,11 @@ for (const p of PRESETS){
   if (p.grp !== lastGrp){ const g = document.createElement('span'); g.className = 'grp'; g.textContent = p.grp; presetBox.appendChild(g); lastGrp = p.grp; }
   const b = document.createElement('button');
   b.className='chip'; b.textContent=p.name; b.dataset.id=p.id; b.setAttribute('aria-pressed','false');
-  b.onclick = () => { applyPreset(p); setRunning(true); };
+  b.onclick = () => { applyPreset(p); setRunning(true); const eb = $('#exSound'); eb.hidden = !p.ex; if (p.ex) eb.innerHTML = p.ex; };
   presetBox.appendChild(b);
 }
 function markPreset(){ presetBox.querySelectorAll('.chip').forEach(b=>b.setAttribute('aria-pressed', b.dataset.id===S.preset)); }
-function unmark(){ S.preset = null; markPreset(); }
+function unmark(){ S.preset = null; markPreset(); $('#exSound').hidden = true; }
 
 /* ---------- 等加速度 ---------- */
 // 開始加速的那一刻依相對位置決定方向，之後方向固定
@@ -641,7 +820,7 @@ function bracket(xa, xb, y, up, label, color){
 function drawListener(x, y, color, soft, label, flash){
   if (flash > 0.02){
     ctx.strokeStyle = color; ctx.globalAlpha = flash; ctx.lineWidth = 3;
-    ctx.beginPath(); ctx.arc(x, y, 16 + (1-flash)*16, 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
+    ctx.beginPath(); ctx.arc(x, y, Math.max(1, 16 + (1-flash)*16), 0, Math.PI*2); ctx.stroke(); ctx.globalAlpha = 1;
   }
   ctx.fillStyle = soft; ctx.strokeStyle = color; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill(); ctx.stroke();
@@ -701,7 +880,7 @@ function draw(){
     const r = CW*(S.t - w.t); if (r <= 0) continue;
     const a = Math.max(0.08, 0.9 * (1 - r/R));
     ctx.globalAlpha = circle ? a*0.7 : a; ctx.strokeStyle = C.wave; ctx.lineWidth = circle ? 1.2 : 1.6;
-    ctx.beginPath(); ctx.arc(w.x*sc, w.y*H, r*sc, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.arc(w.x*sc, w.y*H, Math.max(0, r*sc), 0, Math.PI*2); ctx.stroke();
   }
   ctx.globalAlpha = 1;
   if (circle){
@@ -868,4 +1047,641 @@ requestAnimationFrame(frame);
 })();
 </script>
 
+
+<script>
+(() => {
+const $ = s => document.querySelector(s);
+const VS = 340;
+let C = {};
+function readC(){
+  const cs = getComputedStyle(document.documentElement), g = n => cs.getPropertyValue(n).trim();
+  C = {ink:g('--ink'), muted:g('--muted'), line:g('--line'), panel:g('--panel'), bg:g('--bg'), accent:g('--accent'),
+       src:g('--src'), obs:g('--obs'), q:g('--q'), pas:g('--pas'), refl:g('--refl'), wave:g('--wave'), up:g('--up'), down:g('--down'),
+       dark: matchMedia('(prefers-color-scheme: dark)').matches && document.documentElement.dataset.theme !== 'light' || document.documentElement.dataset.theme === 'dark'};
+}
+readC();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => { readC(); redrawAll(); });
+new MutationObserver(() => { readC(); redrawAll(); }).observe(document.documentElement, {attributes:true, attributeFilter:['data-theme']});
+
+function fit(cv, h){
+  const dpr = Math.min(2, devicePixelRatio || 1), w = cv.parentElement.clientWidth - (cv.parentElement.classList.contains('cbox') ? 20 : 0);
+  if (w <= 0) return null;
+  const hh = typeof h === 'function' ? h(w) : h;
+  if (cv.width !== Math.round(w*dpr) || cv.height !== Math.round(hh*dpr)){ cv.width = Math.round(w*dpr); cv.height = Math.round(hh*dpr); }
+  cv.style.height = hh + 'px';
+  const x = cv.getContext('2d'); x.setTransform(dpr,0,0,dpr,0,0);
+  return {x, w, h:hh};
+}
+function seg(id, cb){
+  const el = $(id);
+  el.addEventListener('click', e => { const b = e.target.closest('button'); if (!b) return; setSeg(id, b.dataset.v); cb(b.dataset.v); });
+}
+function setSeg(id, v){ $(id).querySelectorAll('button').forEach(b => b.setAttribute('aria-pressed', b.dataset.v === String(v))); }
+function arrow(x, a, b, c, d, col, w=2.2){
+  const ang = Math.atan2(d-b, c-a), L = Math.hypot(c-a, d-b); if (L < 2) return;
+  x.strokeStyle = x.fillStyle = col; x.lineWidth = w;
+  x.beginPath(); x.moveTo(a,b); x.lineTo(c,d); x.stroke();
+  const hs = Math.min(9, L*0.5);
+  x.beginPath(); x.moveTo(c,d); x.lineTo(c - hs*Math.cos(ang-0.42), d - hs*Math.sin(ang-0.42)); x.lineTo(c - hs*Math.cos(ang+0.42), d - hs*Math.sin(ang+0.42)); x.closePath(); x.fill();
+}
+function dot(x, px, py, r, col, label, lc){
+  x.fillStyle = col; x.beginPath(); x.arc(px, py, r, 0, 7); x.fill();
+  if (label){ x.fillStyle = lc || col; x.font = '700 14px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText(label, px, py + r + 3); }
+}
+const fmt = (n, d=0) => n.toFixed(d);
+function exChips(box, list, exBox, apply){
+  const el = $(box);
+  list.forEach((q, i) => {
+    const b = document.createElement('button'); b.type = 'button'; b.className = 'chip'; b.textContent = q.name; b.setAttribute('aria-pressed','false');
+    b.onclick = () => {
+      el.querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed', c === b));
+      apply(q); const bx = $(exBox); bx.hidden = false; bx.innerHTML = q.ex;
+    };
+    el.appendChild(b);
+  });
+}
+function clearEx(box, exBox){ $(box).querySelectorAll('.chip').forEach(c => c.setAttribute('aria-pressed','false')); $(exBox).hidden = true; }
+
+/* ======================================================================
+   實驗台 2：接收頻率 f–t 圖
+   ====================================================================== */
+const FT = {mode:'train', t:0, playing:false, ts:0.25, delay:false, xyz:false, tan:true,
+  train:{v:40, d1:15, d2:60}, circ:{R:20, v:60, kP:1.6, kQ:3, th0:Math.PI, labels:null}, burst:{v:60, R:80}, f0:1000, curves:[], lastTs:0};
+const LAB_DEF = [['A',0],['B',90],['C',180],['D',270]];
+
+function ftRange(){
+  if (FT.mode === 'train') return [0, 6];
+  if (FT.mode === 'circle'){ const T = 2*Math.PI*FT.circ.R/FT.circ.v; return [0, 2*T]; }
+  const b = FT.burst; return [-0.6, b.R/VS + 0.5];
+}
+/* 聽者列表：{id, name, xyz, col, pos(t)} ；聲源 src(t) → {x,y,vx,vy} */
+function ftSrc(t){
+  if (FT.mode === 'train'){ const v = FT.train.v; return {x: v*(t-3), y:0, vx:v, vy:0}; }
+  if (FT.mode === 'circle'){ const c = FT.circ, w = c.v/c.R, th = c.th0 + w*t; return {x:c.R*Math.cos(th), y:c.R*Math.sin(th), vx:-c.v*Math.sin(th), vy:c.v*Math.cos(th), th}; }
+  const v = FT.burst.v; return {x: v*t, y:0, vx:v, vy:0};
+}
+function ftListeners(){
+  if (FT.mode === 'train'){
+    const T = FT.train;
+    return [
+      {id:'a', name:'甲', xyz:'X', col:C.obs, pos:()=>({x:0, y:-T.d1})},
+      {id:'b', name:'乙', xyz:'Y', col:C.q, pos:()=>({x:0, y:-T.d2})},
+      {id:'c', name:'丙（乘客）', xyz:'Z', col:C.pas, ride:true, pos:t=>({x:T.v*(t-3)-18, y:0})},
+    ];
+  }
+  if (FT.mode === 'circle'){
+    const c = FT.circ;
+    return [
+      {id:'P', name:'P', xyz:'P', col:C.obs, pos:()=>({x:c.kP*c.R, y:0})},
+      {id:'Q', name:'Q', xyz:'Q', col:C.q, pos:()=>({x:c.kQ*c.R, y:0})},
+    ];
+  }
+  const R = FT.burst.R;
+  return [
+    {id:'a', name:'a', xyz:'a', col:C.down, pos:()=>({x:-R, y:0})},
+    {id:'b', name:'b', xyz:'b', col:C.up, pos:()=>({x:R, y:0})},
+    {id:'c', name:'c', xyz:'c', col:C.pas, pos:()=>({x:0, y:R})},
+    {id:'d', name:'d', xyz:'d', col:C.q, pos:()=>({x:0, y:-R})},
+  ];
+}
+const BURST = 0.05;          // 短聲持續時間（秒）
+/* 某聽者在時刻 t 聽到的頻率；回傳 {f, te, cos} 或 null */
+function heard(L, t){
+  if (L.ride) return {f:FT.f0, te:t, cos:0};
+  let te = t;
+  if (FT.delay || FT.mode === 'burst'){
+    // 解 t = te + |r(te) − L| / v （聲源速度 < 聲速，單調）
+    let lo = t - 20, hi = t;
+    for (let i = 0; i < 50; i++){
+      const m = (lo+hi)/2, s = ftSrc(m), p = L.pos(m), g = m + Math.hypot(p.x-s.x, p.y-s.y)/VS - t;
+      if (g > 0) hi = m; else lo = m;
+    }
+    te = (lo+hi)/2;
+  }
+  if (FT.mode === 'burst' && Math.abs(te) > BURST/2) return null;
+  const s = ftSrc(te), p = L.pos(t), dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx, dy) || 1e-9;
+  const vt = (s.vx*dx + s.vy*dy)/d;     // 聲源朝聽者的分速度
+  return {f: FT.f0*VS/(VS - vt), te, vt, s, d};
+}
+function ftCompute(){
+  const [a, b] = ftRange(), Ls = ftListeners(), N = FT.mode === 'burst' ? 1200 : 480;
+  FT.curves = Ls.map(L => { const pts = []; for (let i = 0; i <= N; i++){ const t = a + (b-a)*i/N, h = heard(L, t); pts.push([t, h ? h.f : null]); } return {L, pts}; });
+}
+
+function ftSync(){
+  const T = FT.train, c = FT.circ, b = FT.burst;
+  $('#trV').value = T.v; $('#trVo').textContent = T.v + ' m/s';
+  $('#trD1').value = T.d1; $('#trD1o').textContent = T.d1 + ' m';
+  $('#trD2').value = T.d2; $('#trD2o').textContent = T.d2 + ' m';
+  $('#ciR').value = c.R; $('#ciRo').textContent = (c.R < 2 ? c.R.toFixed(2) : c.R) + ' m';
+  $('#ciV').value = c.v; $('#ciVo').textContent = c.v + ' m/s';
+  $('#ciP').value = c.kP; $('#ciPo').textContent = c.kP.toFixed(1) + ' R';
+  $('#ciQ').value = c.kQ; $('#ciQo').textContent = c.kQ.toFixed(1) + ' R';
+  $('#ciInfo').textContent = `周長 ${(2*Math.PI*c.R).toFixed(c.R<2?1:0)} m，繞一圈 ${(2*Math.PI*c.R/c.v).toFixed(2)} 秒，逆時針 A→B→C→D。`;
+  $('#buV').value = b.v; $('#buVo').textContent = b.v + ' m/s';
+  $('#buR').value = b.R; $('#buRo').textContent = b.R + ' m';
+  $('#ftF0').value = FT.f0; $('#ftF0o').textContent = FT.f0 + ' Hz';
+  $('#ftDelay').checked = FT.delay; $('#ftXYZ').checked = FT.xyz; $('#ftTan').checked = FT.tan;
+  document.querySelectorAll('#pane-ft .ctl').forEach(el => el.hidden = el.dataset.m !== FT.mode);
+  $('#ftXYZw').hidden = FT.mode !== 'train'; $('#ftTanW').hidden = FT.mode !== 'circle';
+  $('#ftDelay').closest('label').hidden = FT.mode === 'burst';
+  setSeg('#ftMode', FT.mode); setSeg('#ftTs', FT.ts);
+  ftCompute();
+}
+function ftSetT(t){ const [a,b] = ftRange(); FT.t = Math.max(a, Math.min(b, t)); }
+function ftPlay(p){ FT.playing = p; $('#ftPlay').textContent = p ? '❚❚ 暫停' : '▶ 播放'; if (p) FT.lastTs = performance.now(); }
+
+function bindRange(id, fn){ $(id).addEventListener('input', e => { fn(+e.target.value); clearEx('#ftEx', '#ftExBox'); ftSync(); ftDraw(); }); }
+bindRange('#trV', v => FT.train.v = v); bindRange('#trD1', v => FT.train.d1 = v); bindRange('#trD2', v => FT.train.d2 = v);
+bindRange('#ciR', v => FT.circ.R = v); bindRange('#ciV', v => FT.circ.v = v);
+bindRange('#ciP', v => { FT.circ.kP = v; if (FT.circ.kQ < v + .2) FT.circ.kQ = +(v + .2).toFixed(1); });
+bindRange('#ciQ', v => FT.circ.kQ = Math.max(v, FT.circ.kP + .1));
+bindRange('#buV', v => FT.burst.v = v); bindRange('#buR', v => FT.burst.R = v);
+bindRange('#ftF0', v => FT.f0 = v);
+$('#ftDelay').onchange = e => { FT.delay = e.target.checked; ftSync(); ftDraw(); };
+$('#ftXYZ').onchange = e => { FT.xyz = e.target.checked; ftDraw(); };
+$('#ftTan').onchange = e => { FT.tan = e.target.checked; ftDraw(); };
+seg('#ftMode', m => { FT.mode = m; FT.circ.labels = null; FT.circ.th0 = Math.PI; clearEx('#ftEx', '#ftExBox'); ftSync(); ftSetT(ftRange()[0]); ftPlay(true); ftDraw(); });
+seg('#ftTs', v => { FT.ts = +v; });
+$('#ftPlay').onclick = () => { const [a,b] = ftRange(); if (!FT.playing && FT.t >= b - 1e-6) ftSetT(a); ftPlay(!FT.playing); };
+$('#ftReset').onclick = () => { ftSetT(ftRange()[0]); ftDraw(); };
+$('#ftT').addEventListener('input', e => { const [a,b] = ftRange(); ftPlay(false); ftSetT(a + (b-a)*e.target.value/1000); ftDraw(); });
+
+function ftLabel(L){ return FT.mode === 'train' && FT.xyz ? L.xyz : L.name; }
+
+function ftDraw(){
+  drawFtScene(); drawFtGraph(); ftReadout();
+  const [a,b] = ftRange(); $('#ftT').value = Math.round((FT.t - a)/(b-a)*1000);
+  $('#ftTo').textContent = FT.t.toFixed(FT.mode === 'burst' ? 3 : 2) + ' s';
+}
+
+function drawFtScene(){
+  const g = fit($('#ftScene'), w => w < 560 ? Math.round(w*0.8) : 360); if (!g) return;
+  const {x, w, h} = g, t = FT.t, Ls = ftListeners();
+  x.clearRect(0, 0, w, h);
+  // 世界範圍
+  let xmin, xmax, ymin, ymax;
+  if (FT.mode === 'train'){ const T = FT.train; xmin = -T.v*3.3; xmax = T.v*3.3; ymin = -T.d2 - 22; ymax = 22; }
+  else if (FT.mode === 'circle'){ const c = FT.circ; xmin = -c.R*1.35; xmax = c.kQ*c.R + c.R*0.4; ymin = -c.R*1.35; ymax = c.R*1.35; }
+  else { const R = FT.burst.R; xmin = -R*1.6; xmax = R*1.6; ymin = -R*1.25; ymax = R*1.25; }
+  const k = Math.min((w-40)/(xmax-xmin), (h-40)/(ymax-ymin));
+  const ox = w/2 - k*(xmin+xmax)/2, oy = h/2 + k*(ymin+ymax)/2;
+  const X = v => ox + v*k, Y = v => oy - v*k;
+
+  // 波前
+  x.save(); x.beginPath(); x.rect(0,0,w,h); x.clip();
+  x.strokeStyle = C.wave; x.lineWidth = 1;
+  const span = Math.max(xmax-xmin, ymax-ymin), dT = FT.mode === 'burst' ? BURST/5 : span/VS/9;
+  if (FT.mode === 'burst'){
+    for (let te = -BURST/2; te <= BURST/2 + 1e-9; te += dT){
+      if (te > t) break; const s = ftSrc(te), r = (t-te)*VS*k; if (r <= 0) continue;
+      x.globalAlpha = 0.85; x.beginPath(); x.arc(X(s.x), Y(s.y), r, 0, 7); x.stroke();
+    }
+  } else {
+    const t0 = Math.floor(t/dT)*dT;
+    for (let j = 0; j < 40; j++){
+      const te = t0 - j*dT, r = (t-te)*VS*k; if (r > span*k*1.6) break;
+      const s = ftSrc(te); x.globalAlpha = Math.max(0.08, 0.6 - j*0.02);
+      x.beginPath(); x.arc(X(s.x), Y(s.y), r, 0, 7); x.stroke();
+    }
+  }
+  x.globalAlpha = 1; x.restore();
+
+  if (FT.mode === 'train'){
+    // 鐵軌與道路
+    x.fillStyle = C.dark ? '#2a3038' : '#e4e7ea'; x.fillRect(X(-7), 0, 14*k, h);
+    x.fillStyle = C.muted; x.font = '12px "Noto Sans TC",sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText('道路', X(7)+4, 6);
+    x.strokeStyle = C.muted; x.lineWidth = 1.5;
+    for (const yy of [-1.5, 1.5]){ x.beginPath(); x.moveTo(0, Y(yy)); x.lineTo(w, Y(yy)); x.stroke(); }
+    x.lineWidth = 1; for (let xx = Math.ceil(xmin/4)*4; xx < xmax; xx += 4){ x.beginPath(); x.moveTo(X(xx), Y(-2.4)); x.lineTo(X(xx), Y(2.4)); x.stroke(); }
+    x.fillText('平交道', X(7)+4, Y(2.4)-16);
+    // 火車
+    const s = ftSrc(t), len = 60;
+    x.fillStyle = C.dark ? '#3a4552' : '#c9d2db'; x.strokeStyle = C.ink; x.lineWidth = 1.2;
+    x.beginPath(); x.roundRect(X(s.x - len), Y(3), len*k, 6*k, 3); x.fill(); x.stroke();
+    dot(x, X(s.x), Y(s.y), 7, C.src);
+    x.fillStyle = C.src; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'bottom'; x.fillText('聲源', X(s.x), Y(3) - 4);
+    arrow(x, X(s.x)+10, Y(5)-8, X(s.x)+10+Math.max(18, FT.train.v*0.5), Y(5)-8, C.src, 2);
+  }
+  if (FT.mode === 'circle'){
+    const c = FT.circ;
+    x.strokeStyle = C.ink; x.lineWidth = 1.6; x.beginPath(); x.arc(X(0), Y(0), c.R*k, 0, 7); x.stroke();
+    x.setLineDash([4,4]); x.strokeStyle = C.muted; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(X(-c.R), Y(0)); x.lineTo(X(c.kQ*c.R), Y(0)); x.stroke(); x.setLineDash([]);
+    const labs = c.labels || LAB_DEF;
+    x.font = '700 14px "Noto Sans TC",sans-serif'; x.fillStyle = C.ink; x.textAlign = 'center'; x.textBaseline = 'middle';
+    for (const [nm, deg] of labs){ const a = deg*Math.PI/180; dot(x, X(c.R*Math.cos(a)), Y(c.R*Math.sin(a)), 3.5, C.ink);
+      x.fillStyle = C.ink; x.fillText(nm, X(c.R*1.16*Math.cos(a)), Y(c.R*1.16*Math.sin(a))); }
+    dot(x, X(0), Y(0), 2.5, C.muted);
+    if (FT.tan){ // 由 P 對圓畫切線，切點是最高、最低頻率的發聲處
+      const d = c.kP*c.R, al = Math.acos(c.R/d);
+      for (const sg of [1,-1]){
+        const tx = c.R*Math.cos(sg*al), ty = c.R*Math.sin(sg*al);
+        x.strokeStyle = sg < 0 ? C.up : C.down; x.setLineDash([5,4]); x.lineWidth = 1.2;
+        x.beginPath(); x.moveTo(X(d), Y(0)); x.lineTo(X(tx), Y(ty)); x.stroke(); x.setLineDash([]);
+        dot(x, X(tx), Y(ty), 5, sg < 0 ? C.up : C.down);
+        x.fillStyle = sg < 0 ? C.up : C.down; x.font = '12px "Noto Sans TC",sans-serif';
+        x.fillText(sg < 0 ? '最高頻在此發出' : '最低頻在此發出', X(tx*1.55), Y(ty*1.55 + (sg<0?-1:1)*c.R*0.05));
+      }
+    }
+    const s = ftSrc(t);
+    dot(x, X(s.x), Y(s.y), 8, C.src);
+    const sp = Math.min(46, 16 + c.v*0.25);
+    arrow(x, X(s.x), Y(s.y), X(s.x) + s.vx/c.v*sp, Y(s.y) - s.vy/c.v*sp, C.src, 2);
+  }
+  if (FT.mode === 'burst'){
+    const R = FT.burst.R;
+    x.strokeStyle = C.line; x.lineWidth = 1.5; x.beginPath(); x.arc(X(0), Y(0), R*k, 0, 7); x.stroke();
+    x.setLineDash([4,4]); x.strokeStyle = C.muted; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(X(-R*1.5), Y(0)); x.lineTo(X(R*1.5), Y(0)); x.moveTo(X(0), Y(-R)); x.lineTo(X(0), Y(R)); x.stroke(); x.setLineDash([]);
+    x.fillStyle = C.muted; x.font = '13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText('O', X(0)+10, Y(0)+4);
+    const s = ftSrc(t), on = Math.abs(t) <= BURST/2;
+    x.fillStyle = C.dark ? '#3a4552' : '#c9d2db'; x.strokeStyle = C.ink; x.lineWidth = 1.2;
+    x.beginPath(); x.roundRect(X(s.x) - 22, Y(0) - 9, 30, 18, 4); x.fill(); x.stroke();
+    dot(x, X(s.x), Y(0), on ? 8 : 6, on ? C.src : C.muted);
+    arrow(x, X(s.x)+12, Y(0)-16, X(s.x)+40, Y(0)-16, C.src, 2);
+    if (on){ x.fillStyle = C.src; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textBaseline = 'bottom'; x.fillText('發聲！', X(s.x), Y(0)-22); }
+  }
+
+  // 聽者與視線分速度
+  for (const L of Ls){
+    const p = L.pos(t);
+    if (!L.ride){
+      const hh = heard(L, t);
+      if (hh && FT.mode !== 'burst'){
+        const s = FT.delay ? hh.s : ftSrc(t), dx = p.x - s.x, dy = p.y - s.y, d = Math.hypot(dx,dy) || 1;
+        x.strokeStyle = L.col; x.globalAlpha = 0.45; x.setLineDash([3,4]); x.lineWidth = 1;
+        x.beginPath(); x.moveTo(X(s.x), Y(s.y)); x.lineTo(X(p.x), Y(p.y)); x.stroke(); x.setLineDash([]); x.globalAlpha = 1;
+        const sv = FT.mode === 'train' ? FT.train.v : FT.circ.v, sl = Math.min(46, 16 + sv*0.25)/sv;
+        const comp = hh.vt; // 朝向聽者的分速度
+        if (Math.abs(comp) > 0.5) arrow(x, X(s.x), Y(s.y), X(s.x) + dx/d*comp*sl, Y(s.y) - dy/d*comp*sl, L.col, 2.4);
+        if (FT.delay){ dot(x, X(s.x), Y(s.y), 3, L.col); }
+      }
+    }
+    if (L.ride){ dot(x, X(p.x), Y(p.y), 6, L.col); x.fillStyle = L.col; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText(ftLabel(L), X(p.x), Y(-3)+4); }
+    else dot(x, X(p.x), Y(p.y), 7, L.col, ftLabel(L));
+  }
+  // 比例尺
+  const sb = niceLen((xmax-xmin)/5);
+  x.strokeStyle = C.muted; x.fillStyle = C.muted; x.lineWidth = 1.5;
+  x.beginPath(); x.moveTo(12, h-12); x.lineTo(12 + sb*k, h-12); x.moveTo(12, h-16); x.lineTo(12, h-8); x.moveTo(12+sb*k, h-16); x.lineTo(12+sb*k, h-8); x.stroke();
+  x.font = '12px "IBM Plex Mono",monospace'; x.textAlign = 'left'; x.textBaseline = 'bottom'; x.fillText(sb + ' m', 16 + sb*k, h-6);
+}
+function niceLen(r){ const p = Math.pow(10, Math.floor(Math.log10(r))), m = r/p; return (m < 1.5 ? 1 : m < 3.5 ? 2 : m < 7 ? 5 : 10)*p; }
+
+function drawFtGraph(){
+  const g = fit($('#ftGraph'), 210); if (!g) return;
+  const {x, w, h} = g, [a, b] = ftRange();
+  x.clearRect(0,0,w,h);
+  let lo = Infinity, hi = -Infinity;
+  for (const c of FT.curves) for (const [, f] of c.pts) if (f != null){ lo = Math.min(lo, f); hi = Math.max(hi, f); }
+  lo = Math.min(lo, FT.f0); hi = Math.max(hi, FT.f0);
+  const pad = Math.max((hi-lo)*0.15, FT.f0*0.01); lo -= pad; hi += pad;
+  const L = 58, R = 14, T = 10, B = 26, gw = w-L-R, gh = h-T-B;
+  const X = t => L + (t-a)/(b-a)*gw, Y = f => T + (hi-f)/(hi-lo)*gh;
+  x.strokeStyle = C.line; x.lineWidth = 1; x.fillStyle = C.muted; x.font = '11px "IBM Plex Mono",monospace';
+  const st = niceLen((hi-lo)/4); x.textAlign = 'right'; x.textBaseline = 'middle';
+  for (let f = Math.ceil(lo/st)*st; f <= hi; f += st){ x.beginPath(); x.moveTo(L, Y(f)); x.lineTo(w-R, Y(f)); x.stroke(); x.fillText(Math.round(f), L-6, Y(f)); }
+  const tt = niceLen((b-a)/(w < 520 ? 3 : 6)); x.textAlign = 'center'; x.textBaseline = 'top';
+  for (let t = Math.ceil(a/tt)*tt; t <= b + 1e-9; t += tt){ x.beginPath(); x.moveTo(X(t), T); x.lineTo(X(t), T+gh); x.stroke(); x.fillText(+t.toFixed(3) + ' s', X(t), T+gh+5); }
+  x.save(); x.translate(12, T+gh/2); x.rotate(-Math.PI/2); x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('f（Hz）', 0, 0); x.restore();
+  x.strokeStyle = C.src; x.setLineDash([5,4]); x.lineWidth = 1.2; x.beginPath(); x.moveTo(L, Y(FT.f0)); x.lineTo(w-R, Y(FT.f0)); x.stroke(); x.setLineDash([]);
+  if (FT.mode === 'train'){ x.strokeStyle = C.muted; x.setLineDash([2,3]); x.beginPath(); x.moveTo(X(3), T); x.lineTo(X(3), T+gh); x.stroke(); x.setLineDash([]); }
+  for (const c of FT.curves){
+    x.strokeStyle = c.L.col; x.lineWidth = FT.mode === 'burst' ? 4 : 2.4; x.beginPath(); let pen = false;
+    for (const [t, f] of c.pts){ if (f == null){ pen = false; continue; } if (!pen){ x.moveTo(X(t), Y(f)); pen = true; } else x.lineTo(X(t), Y(f)); }
+    x.stroke();
+    // 曲線標籤（放在曲線右端附近）
+  }
+  if (FT.mode !== 'burst'){
+    const labs = FT.curves.map(c => { const p0 = c.pts[Math.round(c.pts.length*0.12)]; return p0[1] == null ? null : {c, x:X(p0[0]) + 4, y:Y(p0[1]) - 4}; }).filter(Boolean).sort((a,b) => a.y - b.y);
+    for (let i = 1; i < labs.length; i++) if (labs[i].y - labs[i-1].y < 15) labs[i].y = labs[i-1].y + 15;
+    x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'left'; x.textBaseline = 'bottom';
+    for (const l of labs){ x.fillStyle = l.c.L.col; x.fillText(ftLabel(l.c.L), l.x, l.y); }
+  }
+  if (FT.mode === 'burst'){ // 標出每人的短音
+    x.font = '700 13px "Noto Sans TC",sans-serif'; x.textBaseline = 'bottom'; x.textAlign = 'center';
+    const seen = {};
+    for (const c of FT.curves){ const pts = c.pts.filter(p => p[1] != null); if (!pts.length) continue; const m = pts[Math.floor(pts.length/2)];
+      const key = Math.round(m[1]); seen[key] = (seen[key] || 0) + 1; x.fillStyle = c.L.col; x.fillText(c.L.name, X(m[0]) + (seen[key]-1)*14 - 0, Y(m[1]) - 6); }
+  }
+  // 時間游標
+  x.strokeStyle = C.ink; x.lineWidth = 1.2; x.beginPath(); x.moveTo(X(FT.t), T); x.lineTo(X(FT.t), T+gh); x.stroke();
+  for (const c of FT.curves){ const hh = heard(c.L, FT.t); if (hh) dot(x, X(FT.t), Y(hh.f), 4.5, c.L.col); }
+  $('#ftLeg').innerHTML = FT.curves.map(c => `<span class="leg"><i style="background:${c.L.col}"></i>${ftLabel(c.L)}</span>`).join('') + '<span class="leg"><i class="dash"></i>原本頻率 f₀</span>';
+}
+
+function ftReadout(){
+  const Ls = ftListeners(), out = [];
+  for (const L of Ls){
+    const hh = heard(L, FT.t);
+    let tag = '';
+    if (hh){ const r = hh.f/FT.f0 - 1; tag = Math.abs(r) < 2e-4 ? '和原本一樣' : r > 0 ? '比原本高' : '比原本低'; }
+    out.push(`<dt style="color:${L.col}">${ftLabel(L)}</dt><dd>${hh ? Math.round(hh.f) + ' Hz' : '—'}<small>${hh ? tag : (FT.mode==='burst' ? '沒有聲音' : '')}</small></dd>`);
+  }
+  $('#ftNow').innerHTML = out.join('');
+  let say = '';
+  if (FT.mode === 'train'){
+    const t = FT.t;
+    say = t < 3 - 0.05 ? '火車正在接近平交道：聲源朝甲、乙的分速度為正，甲、乙聽到的頻率都比原本高。甲離鐵軌近，視線和鐵軌夾角小，分速度大，所以甲比乙高。'
+        : t > 3 + 0.05 ? '火車已經通過：聲源遠離甲、乙，兩人聽到的都比原本低；甲的視線更貼近鐵軌，分速度大，所以甲比乙更低。'
+        : '火車頭正好通過平交道：速度和甲、乙的視線垂直，朝向他們的分速度是 0，聽到的就是原本頻率（不計聲音傳到的時間）。';
+    say += ' 乘客和聲源一起移動，兩者沒有相對運動，聽到的一直是原本頻率。';
+    if (FT.delay) say += ' 打開「考慮聲音傳到的時間」後，甲、乙的曲線會往後延，延遲的時間 ＝ 距離 ÷ 340。';
+  } else if (FT.mode === 'circle'){
+    say = '只有沿「聲源→聽者」連線的分速度會改變頻率。聲源跑到從 P 畫出的切點時，速度整個朝向（或背離）P，頻率最高（或最低）；在 A、C 兩點速度和連線垂直，聽到原本頻率。最近的點 A 不是最高頻。Q 在同一直線上較遠處，切點不同，但最大分速度都等於 v<sub>s</sub>，所以最高、最低頻率和 P 一樣。';
+  } else {
+    say = '車經過圓心 O 的瞬間才發聲，聲音同時往四面傳出，同一時刻傳到四人。b 在前方：分速度 +v<sub>s</sub>，最高；a 在後方：最低；c、d 的連線和速度垂直，聽到原本頻率 f₀。';
+  }
+  $('#ftSay').innerHTML = say;
+}
+
+/* 考古題：f–t */
+const FT_EX = [
+  {name:'一中 111-1-3 第 30 題（火車過平交道 f–t 圖）', set:{mode:'train', train:{v:40,d1:15,d2:60}, f0:1000, delay:false, xyz:true},
+   ex:'<p>火車在 t＝3 秒進入平交道。乘客和聲源一起動，頻率不變，是水平線 <b>Z</b>。甲離鐵軌較近，火車接近時視線幾乎沿著鐵軌，分速度大；經過時視線方向一下子轉過來，所以甲的曲線變化最急，是 <b>X</b>；乙是 <b>Y</b>。</p><p>答案 <b class="ans">ACD</b>。關掉「曲線只標 X、Y、Z」可以看到名字。</p>'},
+  {name:'一中 114-1-3 第 22 題（火車過平交道，原頻 1000 Hz）', set:{mode:'train', train:{v:40,d1:15,d2:60}, f0:1000, delay:false, xyz:true}, t:4,
+   ex:'<p>乘客聽到的水平線 Z 在 1000 Hz，所以原始頻率是 1000 Hz，不是 1200 Hz（A 錯）。t＝3 秒時三條線交在 1000 Hz，聲源正好在甲乙連線上（B 對）。之後兩人都聽到比原本低，甲變化較大，所以 t＝4 秒時甲比乙低（C 對）；t＝2 秒時甲比乙高（D 錯）。</p><p>站在火車正後方的鐵軌上，火車以等速遠離，視線方向的分速度固定，頻率不變，不會逐漸下降（E 錯）。答案 <b class="ans">BC</b>。</p>'},
+  {name:'一中 111-2-3 第 20 題（圓周運動 f–t 圖）', set:{mode:'circle', circ:{R:4/(2*Math.PI), v:4, kP:1.6, kQ:2.4, th0:Math.PI, labels:null}, f0:6000, delay:true},
+   ex:'<p>周長 4 m、每秒一圈，聲源速率 4 m/s。題目圖二在 t＝0、1 秒時頻率等於 6000 Hz 且正在上升：從最低升回原本頻率，是聲源經過 C 點（速度與 CA 連線垂直，接著開始朝 P 跑）。所以 t＝1 秒時聲源在 C 點附近（B 對、A 錯）。</p><p>在 A 點速度也和連線垂直，聽到的是原本頻率（C 錯）。最低頻是在 P 對圓的上方切點發出，介於 A、B 之間，不是 B 點（D 錯）。Q 的切點不同，但切點處速度整個朝向聽者，極大、極小值和 P 相同（E 對）。答案 <b class="ans">BE</b>。</p>'},
+  {name:'一中 112-2-3 第 4 題（圓周運動：哪一點最高頻）', set:{mode:'circle', circ:{R:20, v:60, kP:1.4, kQ:3, th0:Math.PI, labels:[['D',0],['E',90],['A',180],['B',270],['C',-45]]}, f0:1000, delay:false},
+   ex:'<p>聲源逆時針運動，在下半圈往右跑，朝 P 靠近。速度整個朝向 P 的位置，是從 P 對圓畫的切點，也就是圖中的 <b>C 點</b>。最近的 D 點速度和連線垂直，反而聽到原本頻率。答案 <b class="ans">C</b>。</p>'},
+  {name:'一中 114-1-3 第 28 題（經過圓心時發短聲）', set:{mode:'burst', burst:{v:60, R:80}, f0:1000},
+   ex:'<p>車由 a 往 b 行駛，在圓心發短聲。b 在正前方，f<sub>b</sub> ＞ f₀；a 在正後方，f<sub>a</sub> ＜ f₀；c、d 的方向和車速垂直，f<sub>c</sub> ＝ f<sub>d</sub> ＝ f₀。</p><p>所以 f<sub>b</sub> ＞ f₀ ＝ f<sub>c</sub> ＝ f<sub>d</sub> ＞ f<sub>a</sub>。答案 <b class="ans">CE</b>。（二中 113-2-3 第 5 題也是這個情境。）</p>'},
+];
+exChips('#ftEx', FT_EX, '#ftExBox', q => {
+  const s = q.set; FT.mode = s.mode;
+  if (s.train) Object.assign(FT.train, s.train);
+  if (s.circ) Object.assign(FT.circ, s.circ);
+  if (s.burst) Object.assign(FT.burst, s.burst);
+  FT.f0 = s.f0; FT.delay = !!s.delay; FT.xyz = !!s.xyz;
+  ftSync(); ftSetT(q.t != null ? q.t : ftRange()[0]); ftPlay(q.t == null); ftDraw();
+});
+
+/* ======================================================================
+   實驗台 3：反射體（血流計、雷達）與風
+   ====================================================================== */
+const RF = {mode:'blood', u:15, playing:true, ph:0, last:0, wind:0};
+function rfSync(){
+  const m = RF.mode;
+  setSeg('#rfMode', m);
+  $('#rfUl').textContent = m === 'blood' ? '血流速率' : m === 'radar' ? '雨滴速度' : '風速';
+  const u = $('#rfU'); u.min = m === 'wind' ? -40 : -30; u.max = m === 'wind' ? 40 : 30; u.value = RF.u;
+  $('#rfUo').textContent = m === 'wind' ? `${Math.abs(RF.u)*5} m/s ${RF.u>0?'吹向西':RF.u<0?'吹向東':''}` : `${Math.abs(RF.u)}% v ${RF.u === 0 ? '' : m === 'blood' ? (RF.u > 0 ? '向右' : '向左') : (RF.u > 0 ? '接近' : '遠離')}`;
+  $('#rfHint').textContent = m === 'blood' ? '發射器 E 斜向發出超音波，被隨血液流動的紅血球反射，R₁ 與 E 同側、R₂ 在另一側。速度已誇大（數值是聲速 v 的百分比）。'
+    : m === 'radar' ? '雷達發出電磁波，被雨滴反射回雷達。雨滴是移動的反射體：先當「移動的觀察者」接收，再當「移動的波源」反射，頻率改變兩次。速度已誇大。'
+    : '喇叭和四位學生都靜止，風把整團空氣（連同聲波）往下風處帶。看波前的圓心如何隨風漂移。風速已誇大（聲速 340 m/s）。';
+}
+seg('#rfMode', m => { RF.mode = m; RF.u = m === 'wind' ? 12 : 15; clearEx('#rfEx', '#rfExBox'); rfSync(); rfDraw(); });
+$('#rfU').addEventListener('input', e => { RF.u = +e.target.value; clearEx('#rfEx', '#rfExBox'); rfSync(); rfDraw(); });
+$('#rfPlay').onclick = () => { RF.playing = !RF.playing; $('#rfPlay').textContent = RF.playing ? '❚❚ 暫停' : '▶ 播放'; };
+
+/* 沿射線畫移動的波峰：起點 a、終點 b，波長 lam（像素），相位 ph（像素） */
+function crestRay(x, a, b, lam, ph, col){
+  const L = Math.hypot(b.x-a.x, b.y-a.y), ux = (b.x-a.x)/L, uy = (b.y-a.y)/L;
+  x.strokeStyle = col; x.globalAlpha = 0.35; x.lineWidth = 1.2; x.beginPath(); x.moveTo(a.x, a.y); x.lineTo(b.x, b.y); x.stroke(); x.globalAlpha = 1;
+  x.lineWidth = 2.4;
+  for (let s = ((ph % lam) + lam) % lam; s < L; s += lam){
+    const cx = a.x + ux*s, cy = a.y + uy*s;
+    x.beginPath(); x.moveTo(cx - uy*8, cy + ux*8); x.lineTo(cx + uy*8, cy - ux*8); x.stroke();
+  }
+  arrow(x, a.x + ux*(L*0.5-10), a.y + uy*(L*0.5-10), a.x + ux*(L*0.5+8), a.y + uy*(L*0.5+8), col, 1.6);
+}
+function rfDraw(){
+  const g = fit($('#rfScene'), w => w < 560 ? Math.round(w*0.85) : 380); if (!g) return;
+  const {x, w, h} = g, u = RF.u/100, m = RF.mode;
+  x.clearRect(0,0,w,h);
+  const lam0 = Math.max(18, Math.min(30, w/34)), cs = 60;   // 畫面波長、波速（像素／秒）
+  let rows = [], why = '';
+  if (m === 'blood'){
+    const cx = w/2, cy = h/2, a = Math.min(w*0.36, 300), hh = Math.min(h*0.38, 150);
+    // 血管
+    x.fillStyle = C.dark ? '#3a1d22' : '#fbe3e3'; x.fillRect(0, cy-26, w, 52);
+    x.strokeStyle = C.refl; x.lineWidth = 2; for (const yy of [cy-26, cy+26]){ x.beginPath(); x.moveTo(0,yy); x.lineTo(w,yy); x.stroke(); }
+    // 紅血球
+    x.fillStyle = C.refl;
+    for (let i = 0; i < 12; i++){ const px = ((i*97 + RF.wind*u*400) % (w+40) + w + 40) % (w+40) - 20, py = cy + ((i*37)%30 - 15);
+      x.beginPath(); x.ellipse(px, py, 9, 5, 0, 0, 7); x.globalAlpha = 0.45; x.fill(); }
+    x.globalAlpha = 1; x.beginPath(); x.ellipse(cx, cy, 11, 6, 0, 0, 7); x.fill();
+    if (Math.abs(u) > 0) arrow(x, cx - 30*Math.sign(u), cy + 38, cx + 30*Math.sign(u), cy + 38, C.refl, 2);
+    x.fillStyle = C.refl; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'right'; x.textBaseline = 'middle'; x.fillText('血流', w - 12, cy - 38);
+    const P = {x:cx, y:cy}, E = {x:cx-a, y:cy-hh}, R1 = {x:cx+a, y:cy-hh}, R2 = {x:cx-a, y:cy+hh};
+    const L = Math.hypot(a, hh), cth = a/L;
+    const fP = (1 - u*cth), f1 = fP/(1 - u*cth), f2 = fP/(1 + u*cth);
+    crestRay(x, E, P, lam0, RF.ph, C.src);
+    crestRay(x, P, R1, lam0/f1, RF.ph/1, C.obs);
+    crestRay(x, P, R2, lam0/f2, RF.ph/1, C.q);
+    dot(x, E.x, E.y, 9, C.src, 'E 發射器'); dot(x, R1.x, R1.y, 9, C.obs, 'R₁'); dot(x, R2.x, R2.y, 9, C.q, 'R₂');
+    rows = [['發射器 E', '1.000 f', ''], ['紅血球收到', fP.toFixed(3)+' f', fP < 1-1e-4 ? '紅血球遠離 E' : fP > 1+1e-4 ? '紅血球朝 E 接近' : ''],
+            ['R₁ 收到', f1.toFixed(3)+' f', u === 0 ? '' : u > 0 ? '先降後升，抵消' : '先升後降，抵消'], ['R₂ 收到', f2.toFixed(3)+' f', f2 < 1 ? '降兩次' : f2 > 1 ? '升兩次' : '']];
+    why = '<p>第一次：紅血球當「移動的觀察者」。它沿 E→紅血球的方向遠離 E，收到的頻率變低。</p><p>第二次：紅血球當「移動的波源」把聲波反射出去。往 R₁ 時它朝 R₁ 前進，頻率升高，剛好抵消第一次（E、R₁ 對稱）；往 R₂ 時它遠離 R₂，再降一次。</p><p>流速愈快，頻率改變愈大，儀器就是用這個差算出流速。</p>';
+  } else if (m === 'radar'){
+    const cy = h/2, rx = 70, tx = w - 110;
+    const fD = 1 + u, fB = (1 + u)/(1 - u);   // u>0 接近
+    crestRay(x, {x:rx, y:cy-14}, {x:tx, y:cy-14}, lam0, RF.ph, C.src);
+    crestRay(x, {x:tx, y:cy+14}, {x:rx, y:cy+14}, lam0/fB, RF.ph, C.obs);
+    // 雷達
+    x.fillStyle = C.ink; x.beginPath(); x.moveTo(rx-30, cy+40); x.lineTo(rx-10, cy+40); x.lineTo(rx-20, cy); x.closePath(); x.fill();
+    x.strokeStyle = C.ink; x.lineWidth = 3; x.beginPath(); x.arc(rx-14, cy-6, 22, -1.2, 1.2); x.stroke();
+    x.fillStyle = C.ink; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText('雷達', rx-20, cy+46);
+    // 雨滴
+    x.fillStyle = C.obs;
+    for (let i = 0; i < 9; i++){ const px = tx + 20 + (i%3)*24 + Math.sin(i)*4, py = cy - 50 + Math.floor(i/3)*40 + (i%2)*8;
+      x.beginPath(); x.moveTo(px, py-9); x.quadraticCurveTo(px+7, py+2, px, py+6); x.quadraticCurveTo(px-7, py+2, px, py-9); x.fill(); }
+    if (u !== 0) arrow(x, tx + 44, cy + 78, tx + 44 - 40*Math.sign(u), cy + 78, C.obs, 2);
+    x.fillStyle = C.obs; x.textAlign = 'center'; x.fillText('雨滴', tx + 44, cy - 86);
+    rows = [['雷達發出', '1.000 f', ''], ['雨滴收到', fD.toFixed(3)+' f', u > 0 ? '雨滴迎向波' : u < 0 ? '雨滴順著波跑' : ''],
+            ['反射回雷達', fB.toFixed(3)+' f', u > 0 ? '頻率增加、波長縮短' : u < 0 ? '頻率減少、波長變長' : '不變'], ['頻率差', ((fB-1)*100).toFixed(1)+' %', '約為 2 × 速度／波速']];
+    why = '<p>雨滴朝雷達移動時，先迎著入射波跑，每秒碰到更多波峰（頻率升高）；再把波反射回來時又是朝雷達前進的波源，前方波長被壓短（再升高一次）。</p><p>電磁波速固定為光速，頻率升高就代表波長縮短。遠離時兩次都降低。</p>';
+  } else {
+    // 風：喇叭在中央，四位學生
+    const cx = w/2, cy = h/2, R = Math.min(w*0.38, h*0.42), wv = RF.u*5;  // m/s，正 = 吹向西（左）
+    const kk = R/150;            // 像素／公尺：學生距喇叭 150 m（畫面比例）
+    const per = 0.08;            // 畫面上的發波週期（秒）
+    const T = RF.wind;
+    x.save(); x.beginPath(); x.rect(0,0,w,h); x.clip(); x.strokeStyle = C.wave; x.lineWidth = 1.1;
+    const t0 = Math.floor(T/per)*per;
+    for (let j = 0; j < 30; j++){
+      const age = T - (t0 - j*per); const r = age*VS*kk*0.25, dx = -wv*age*kk*0.25;
+      if (r > Math.hypot(w,h)) break;
+      x.globalAlpha = Math.max(0.1, 0.75 - j*0.025); x.beginPath(); x.arc(cx + dx, cy, r, 0, 7); x.stroke();
+    }
+    x.globalAlpha = 1; x.restore();
+    dot(x, cx, cy, 9, C.src);
+    const studs = [['東', R, 0, C.up], ['西', -R, 0, C.down], ['北', 0, -R, C.pas], ['南', 0, R, C.q]];
+    for (const [n, dx, dy, col] of studs){ dot(x, cx+dx, cy+dy, 8, col, n); }
+    if (wv !== 0){ for (const yy of [32, h-28]){ arrow(x, cx + 60*Math.sign(wv), yy, cx - 60*Math.sign(wv), yy, C.muted, 2); }
+      x.fillStyle = C.muted; x.font = '13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'bottom'; x.fillText(wv > 0 ? '風：由東吹向西' : '風：由西吹向東', cx, 26); }
+    x.fillStyle = C.muted; x.font = '12px "Noto Sans TC",sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText('↑ 北', 10, 8);
+    const f = 1, vW = VS + wv, vE = VS - wv, vNS = Math.sqrt(VS*VS - wv*wv);
+    rows = [['西方（下風）', `波速 ${vW} m/s`, `波長 ${(vW/VS).toFixed(2)} λ₀、頻率 f`], ['東方（上風）', `波速 ${vE} m/s`, `波長 ${(vE/VS).toFixed(2)} λ₀、頻率 f`],
+            ['南、北方', `波速 ${vNS.toFixed(0)} m/s`, `頻率 f`], ['結論', '四人都聽到 f', '喇叭和學生相對空氣的運動一樣']];
+    if (wv < 0) { rows[0][0] = '西方（上風）'; rows[1][0] = '東方（下風）'; }
+    why = '<p>風讓波前整個往下風處漂。下風處：波速變成 v＋w，波長也等比例拉長；上風處：波速 v－w，波長縮短。</p><p>頻率 ＝ 波速 ÷ 波長，兩者同比例改變，所以每秒傳到學生的波峰數不變。聲源和聽者都靜止（彼此沒有相對運動）時，有風也不改變頻率。</p>';
+  }
+  $('#rfNow').innerHTML = rows.map(r => `<dt>${r[0]}</dt><dd>${r[1]}<small>${r[2]}</small></dd>`).join('');
+  $('#rfWhy').innerHTML = why;
+}
+const RF_EX = [
+  {name:'一中 112-2-3 第 14 題（超音波血流計 R₁、R₂）', set:{mode:'blood', u:15},
+   ex:'<p>E 發出的聲波斜向射到往右流的紅血球，紅血球沿入射方向遠離 E，收到的頻率較低。反射到 R₁ 時，紅血球朝 R₁ 前進，頻率升高；E 和 R₁ 對稱，兩次剛好抵消，f₁ ＝ f。反射到 R₂ 時紅血球遠離 R₂，又降一次，f₂ ＜ f。</p><p>答案 <b class="ans">B</b>（f₂ ＜ f）。二中 113-2-3 第 28 題、114-1-3 第 17 題也考血流計。</p>'},
+  {name:'一中 111-1-3 第 18 題（雷射都卜勒血流計）', set:{mode:'blood', u:-15},
+   ex:'<p>靜止組織反射的光沒有頻率改變，f₁ ＝ f。紅血球朝入射光流動時反射光 f₂ ＞ f₁；遠離時 f₂ ＜ f₁。流速愈快，兩種反射光的頻率差愈大。</p><p>答案 <b class="ans">E</b>。滑桿拉到「向左」（朝 E 接近）可看到收到的頻率變高。</p>'},
+  {name:'二中 112-1-3 第 26 題（雨滴向雷達移動）', set:{mode:'radar', u:15},
+   ex:'<p>雨滴朝雷達移動，反射波頻率增加；電磁波速不變，所以波長縮短。答案 <b class="ans">A</b>。</p>'},
+  {name:'一中 113-1-3 第 4 題（有風時四方的學生）', set:{mode:'wind', u:12},
+   ex:'<p>風由東吹向西，喇叭和學生都靜止。下風（西）處波速、波長都變大，上風（東）處都變小，但頻率 ＝ 波速 ÷ 波長不變，四人聽到的都是 f。答案 <b class="ans">E</b>。</p>'},
+];
+exChips('#rfEx', RF_EX, '#rfExBox', q => { RF.mode = q.set.mode; RF.u = q.set.u; rfSync(); rfDraw(); });
+
+/* ======================================================================
+   實驗台 4：光的都卜勒（紅移、藍移）
+   ====================================================================== */
+const LINES = {H:[656.3, 486.1, 434.0, 410.2], He:[667.8, 587.6, 501.6, 492.2, 471.3, 447.1, 402.6], Na:[589.0, 589.6, 568.8, 498.3, 616.1]};
+const LT = {b:10, el:'H', kind:'em', ph:0, playing:true};
+function wl2rgb(l){
+  let r=0,g=0,b=0;
+  if (l>=380&&l<440){r=-(l-440)/60;b=1}else if(l<490){g=(l-440)/50;b=1}else if(l<510){g=1;b=-(l-510)/20}else if(l<580){r=(l-510)/70;g=1}else if(l<645){r=1;g=-(l-645)/65}else if(l<=780){r=1}
+  let k = l<380||l>780 ? 0 : l<420 ? .3+.7*(l-380)/40 : l>700 ? .3+.7*(780-l)/80 : 1;
+  const c = v => Math.round(255*Math.pow(v*k, .8));
+  return `rgb(${c(r)},${c(g)},${c(b)})`;
+}
+const shiftK = b => Math.sqrt((1+b)/(1-b));
+function ltSync(){
+  $('#ltB').value = LT.b; const b = LT.b/100;
+  $('#ltBo').textContent = LT.b === 0 ? '靜止' : `${Math.abs(LT.b)}% c ${LT.b > 0 ? '遠離' : '接近'}`;
+  setSeg('#ltQuick', LT.b === 0 ? 0 : LT.b > 0 && LT.b === 10 ? 10 : LT.b === -10 ? -10 : 'x');
+  setSeg('#ltEl', LT.el); setSeg('#ltKind', LT.kind);
+  const k = shiftK(b), z = k - 1, l0 = LINES[LT.el][0];
+  $('#ltNow').innerHTML = [
+    ['速度', LT.b === 0 ? '0' : `${(Math.abs(b)*3e5).toLocaleString()} km/s`, LT.b > 0 ? '遠離地球' : LT.b < 0 ? '接近地球' : ''],
+    ['波長變成', `${k.toFixed(3)} 倍`, z > 1e-6 ? '變長：紅移' : z < -1e-6 ? '變短：藍移' : '不變'],
+    ['頻率變成', `${(1/k).toFixed(3)} 倍`, z > 1e-6 ? '變低' : z < -1e-6 ? '變高' : '不變'],
+    [`例：${l0} nm`, `→ ${(l0*k).toFixed(1)} nm`, (l0*k < 380 ? '已到紫外線' : l0*k > 780 ? '已到紅外線' : '')],
+    ['光速', '3×10⁸ m/s', '不變'],
+  ].map(r => `<dt>${r[0]}</dt><dd>${r[1]}<small>${r[2]}</small></dd>`).join('');
+}
+$('#ltB').addEventListener('input', e => { LT.b = +e.target.value; clearEx('#ltEx', '#ltExBox'); ltSync(); ltDraw(); });
+seg('#ltQuick', v => { LT.b = +v; clearEx('#ltEx', '#ltExBox'); ltSync(); ltDraw(); });
+seg('#ltEl', v => { LT.el = v; ltSync(); ltDraw(); });
+seg('#ltKind', v => { LT.kind = v; ltDraw(); });
+$('#ltPlay').onclick = () => { LT.playing = !LT.playing; $('#ltPlay').textContent = LT.playing ? '❚❚ 暫停' : '▶ 播放'; };
+
+function ltDraw(){
+  const b = LT.b/100, k = shiftK(b);
+  // 場景：恆星在左、地球在右，畫一列波
+  let g = fit($('#ltScene'), w => w < 560 ? 170 : 200);
+  if (g){
+    const {x, w, h} = g, cy = h/2, sx = 70, ex = w - 70;
+    x.clearRect(0,0,w,h);
+    const lam = 46*k, col = wl2rgb(Math.max(381, Math.min(779, 550*k)));
+    // 恆星前方（朝地球）的波：波長 lam；後方：lam0*(1/k)
+    x.lineWidth = 3; x.strokeStyle = col; x.beginPath();
+    for (let px = sx+24; px <= ex-26; px += 2){ const y = cy - 22*Math.sin(2*Math.PI*(px - sx - LT.ph)/lam); px === sx+24 ? x.moveTo(px,y) : x.lineTo(px,y); }
+    x.stroke();
+    // 恆星
+    const grd = x.createRadialGradient(sx, cy, 4, sx, cy, 30); grd.addColorStop(0, '#fff7d6'); grd.addColorStop(1, 'rgba(255,200,80,0)');
+    x.fillStyle = grd; x.beginPath(); x.arc(sx, cy, 30, 0, 7); x.fill(); dot(x, sx, cy, 12, '#f4b400');
+    x.fillStyle = C.ink; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'top'; x.fillText('恆星', sx, cy + 34);
+    if (LT.b !== 0) arrow(x, sx, cy - 44, sx - 34*Math.sign(LT.b), cy - 44, C.ink, 2.2);
+    if (LT.b !== 0){ x.font = '12px "Noto Sans TC",sans-serif'; x.textBaseline = 'bottom'; x.fillText(LT.b > 0 ? '遠離' : '接近', sx, cy - 50); }
+    // 地球
+    dot(x, ex, cy, 14, '#2f7fd1'); x.fillStyle = '#3aa35b'; x.beginPath(); x.arc(ex-4, cy-3, 6, 0, 7); x.fill();
+    x.fillStyle = C.ink; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textBaseline = 'top'; x.fillText('地球', ex, cy + 34);
+    // 波長標示
+    const lx = ex - 40 - lam*2; x.strokeStyle = C.muted; x.fillStyle = C.muted; x.lineWidth = 1;
+    x.beginPath(); x.moveTo(lx, cy + 32); x.lineTo(lx + lam, cy + 32); x.stroke();
+    for (const xx of [lx, lx+lam]){ x.beginPath(); x.moveTo(xx, cy+27); x.lineTo(xx, cy+37); x.stroke(); }
+    x.font = '12px "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.fillText(`收到的波長 ${k.toFixed(2)} λ`, lx + lam/2, cy + 40);
+    x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText('（示意：畫面上把光的波長放大很多倍）', 10, 8);
+  }
+  // 光譜比較
+  g = fit($('#ltSpec'), 150);
+  if (g){
+    const {x, w, h} = g, L = 64, R = 12, l0 = 360, l1 = 800;
+    const X = l => L + (l - l0)/(l1 - l0)*(w - L - R);
+    x.clearRect(0,0,w,h);
+    const bands = [[14, '實驗室', 1], [70, '恆星', k]];
+    for (const [y, name, kk] of bands){
+      const bh = 40;
+      if (LT.kind === 'ab'){ for (let px = X(380); px < X(780); px++){ const l = l0 + (px - L)/(w-L-R)*(l1-l0); x.fillStyle = wl2rgb(l); x.fillRect(px, y, 1.5, bh); } }
+      else { x.fillStyle = '#0b0d10'; x.fillRect(X(l0), y, X(l1)-X(l0), bh); }
+      x.strokeStyle = C.line; x.lineWidth = 1; x.strokeRect(X(l0)+.5, y+.5, X(l1)-X(l0)-1, bh-1);
+      for (const l of LINES[LT.el]){
+        const ll = l*kk; if (ll < l0 || ll > l1) continue;
+        x.fillStyle = LT.kind === 'ab' ? '#0b0d10' : (ll < 380 || ll > 780 ? '#8a8f96' : wl2rgb(ll));
+        x.fillRect(X(ll) - 1.5, y, 3, bh);
+      }
+      x.fillStyle = C.ink; x.font = '700 13px "Noto Sans TC",sans-serif'; x.textAlign = 'right'; x.textBaseline = 'middle'; x.fillText(name, L - 8, y + bh/2);
+    }
+    // 偏移箭頭（以第一條譜線為例）
+    const l = LINES[LT.el][0];
+    if (Math.abs(k - 1) > 1e-4 && l*k > l0 && l*k < l1){ x.setLineDash([3,3]); x.strokeStyle = C.muted; x.beginPath(); x.moveTo(X(l), 54); x.lineTo(X(l*k), 70); x.stroke(); x.setLineDash([]); arrow(x, X(l), 62, X(l*k), 62, k > 1 ? '#d33' : '#36c', 2); }
+    x.fillStyle = C.muted; x.font = '11px "IBM Plex Mono",monospace'; x.textAlign = 'center'; x.textBaseline = 'top';
+    for (const t of [400, 500, 600, 700]) x.fillText(t + ' nm', X(t), 116);
+    x.font = '12px "Noto Sans TC",sans-serif'; x.textAlign = 'left'; x.fillText('← 紫外線', X(l0), 132); x.textAlign = 'right'; x.fillText('紅外線 →', X(l1), 132);
+  }
+  // 電磁波譜帶
+  g = fit($('#ltBand'), 70);
+  if (g){
+    const {x, w, h} = g, names = ['無線電波','微波','紅外線','可見光','紫外線','X 射線'], n = names.length, bw = w/n;
+    x.clearRect(0,0,w,h);
+    names.forEach((nm, i) => { x.fillStyle = i === 3 ? 'rgba(200,140,255,.25)' : (i%2 ? C.bg : C.panel); x.fillRect(i*bw, 18, bw, 28); x.strokeStyle = C.line; x.strokeRect(i*bw+.5, 18.5, bw-1, 27);
+      x.fillStyle = C.ink; x.font = (w < 420 ? '11px' : '13px') + ' "Noto Sans TC",sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(nm, i*bw + bw/2, 32); });
+    x.fillStyle = C.muted; x.font = '11px "Noto Sans TC",sans-serif'; x.textAlign = 'left'; x.textBaseline = 'top'; x.fillText('頻率低、波長長', 2, 2); x.textAlign = 'right'; x.fillText('頻率高、波長短', w-2, 2);
+    if (LT.b !== 0){ const c = 3.5*bw, d = LT.b > 0 ? -1 : 1; arrow(x, c, 56, c + d*bw*1.1, 56, LT.b > 0 ? '#d33' : '#36c', 2.4);
+      x.fillStyle = LT.b > 0 ? '#d33' : '#36c'; x.font = '700 12px "Noto Sans TC",sans-serif'; x.textAlign = d < 0 ? 'right' : 'left'; x.textBaseline = 'middle'; x.fillText(LT.b > 0 ? '紅移' : '藍移', c + d*(bw*1.1 + 6), 57); }
+  }
+}
+const LT_EX = [
+  {name:'一中 114-2-3 第 29 題（電磁波頻率往哪偏）', b:-10,
+   ex:'<p>頻率往高頻那側偏（例如微波→紅外線、紅光→紫光）表示接近；往低頻那側偏（例如紫光→紅外線、微波→無線電波）表示遠離。</p><p>(A) 微波往紅外線偏：頻率變高，接近 ✓；(B) 微波往無線電波偏卻說接近 ✗；(C) 紫光往紫外線偏卻說遠離 ✗；(D) 紫光往紅外線偏：頻率變低，遠離 ✓；(E) 沿連線運動時頻率一定會變 ✗。答案 <b class="ans">AD</b>。</p>'},
+  {name:'一中 110-2-3 第 18 題（電磁波頻率往哪偏）', b:10,
+   ex:'<p>(A) 紅外線往紅光偏：頻率變高應是接近，題目說遠離 ✗；(B) 微波往無線電波偏：頻率變低，遠離 ✓；(C) 紫光往紫外線偏：頻率變高，接近 ✓；(D) 紅外線往微波偏：頻率變低，遠離 ✓；(E) 遠離時頻率不會不變 ✗。答案 <b class="ans">BCD</b>。</p>'},
+  {name:'二中 110-2-3 第 19 題（藍移的意義）', b:-10,
+   ex:'<p>藍移：光源接近，光速不變，頻率變高、波長變短。答案 <b class="ans">D</b>。</p>'},
+  {name:'二中 111-1-3 第 4 題（接近地球的恆星氫光譜）', b:-6, el:'H',
+   ex:'<p>恆星接近地球，整組氫譜線一起往短波長（高頻）平移，每一條譜線的頻率都比實驗室的高。只是平移一點，不會全部跑到藍光或紫外線區，也不是完全相同。答案 <b class="ans">C</b>。</p>'},
+  {name:'二中 113-2-3 第 7 題（宇宙膨脹的證據）', b:12, el:'H',
+   ex:'<p>遠方星系大多在遠離我們，光譜紅移：波長變長、頻率變低，光速不變。答案 <b class="ans">E</b>（頻率變低）。</p>'},
+];
+exChips('#ltEx', LT_EX, '#ltExBox', q => { LT.b = q.b; if (q.el) LT.el = q.el; ltSync(); ltDraw(); });
+
+/* ======================================================================
+   切換實驗台與主迴圈
+   ====================================================================== */
+const PANES = {sound:'#pane-sound', ft:'#pane-ft', refl:'#pane-refl', light:'#pane-light'};
+let cur = 'sound';
+function setPane(p, noHash){
+  if (!PANES[p]) p = 'sound';
+  if (cur === 'sound' && p !== 'sound'){ const sb = $('#sound'); if (sb && sb.classList.contains('sound-on')) sb.click(); }
+  cur = p;
+  for (const k in PANES) $(PANES[k]).hidden = k !== p;
+  setSeg('#bench', p);
+  if (!noHash) history.replaceState(null, '', p === 'sound' ? location.pathname + location.search : '#' + p);
+  redrawAll();
+}
+seg('#bench', v => setPane(v));
+function redrawAll(){ if (cur === 'ft') ftDraw(); if (cur === 'refl') rfDraw(); if (cur === 'light') ltDraw(); }
+window.addEventListener('resize', redrawAll);
+
+let last = performance.now();
+function loop(now){
+  const dt = Math.min(0.05, (now - last)/1000); last = now;
+  if (cur === 'ft' && FT.playing){
+    const [a, b] = ftRange(); FT.t += dt*FT.ts;
+    if (FT.t >= b){ FT.t = b; ftPlay(false); }
+    ftDraw();
+  }
+  if (cur === 'refl' && RF.playing){ RF.ph += dt*60; RF.wind += dt*0.35; rfDraw(); }
+  if (cur === 'light' && LT.playing){ LT.ph += dt*50; ltDraw(); }
+  requestAnimationFrame(loop);
+}
+ftSync(); rfSync(); ltSync();
+ftSetT(0);
+if (matchMedia('(prefers-reduced-motion: reduce)').matches){ RF.playing = false; LT.playing = false; $('#rfPlay').textContent = '▶ 播放'; $('#ltPlay').textContent = '▶ 播放'; }
+setPane((location.hash || '').slice(1), true);
+requestAnimationFrame(loop);
+})();
+</script>
 </html>
