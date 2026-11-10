@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>功與能</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js"></script>
+<style>
+:root{--ke:#d9480f;--ug:#1c7ed6;--us:#7b4fc4;--heat:#c92a2a;--tot:#2b2f33;--wood:#c9a26b;--wood2:#8a6a3f;--steel:#8d99a6;--floor:#d9dde2}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ke:#ff8a4c;--ug:#5aa9ff;--us:#b28cf5;--heat:#ff6b6b;--tot:#e8eaed;--wood:#a8875a;--wood2:#6e5434;--steel:#7a8794;--floor:#3a4048;color-scheme:dark}}
+:root[data-theme="dark"]{--ke:#ff8a4c;--ug:#5aa9ff;--us:#b28cf5;--heat:#ff6b6b;--tot:#e8eaed;--wood:#a8875a;--wood2:#6e5434;--steel:#7a8794;--floor:#3a4048;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.benchbar .lv{margin-left:auto;display:flex;gap:8px;align-items:center}
+.bench{display:flex;flex-direction:column;gap:12px}
+.bench[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box p{margin:0 0 6px;font-size:.95rem}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl .slider{min-width:0;flex:none}
+canvas.cv{display:block;width:100%;touch-action:none}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.7}
+.wt{border-collapse:collapse;width:100%;font-size:.92rem;margin-top:4px}
+.wt th,.wt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+.wt td.n{font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.wt td.bar{width:42%}
+.wt .b{height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
+.wt tr.sum td{font-weight:700}
+.pos{color:var(--green)}.neg{color:var(--heat)}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.qchip.sh{border-style:dashed}
+.story p{white-space:pre-line}
+.ctable{border-collapse:collapse;font-size:.88rem;margin-top:6px;width:100%}
+.ctable th,.ctable td{border:1px solid var(--line);padding:3px 6px;text-align:center;font-family:var(--f-mono)}
+.ctable th{font-family:var(--f-body);font-weight:500;color:var(--muted)}
+.ctable tr.on td{background:var(--accent-soft);font-weight:700}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;color:var(--muted);margin:4px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+html.lv-jh .sh-only{display:none!important}
+html.lv-sh .jh-only{display:none!important}
+.mini{font-size:.85rem;color:var(--muted);margin:4px 0 0}
+dl.fk{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:8px 0 0;align-items:baseline}
+dl.fk dt{color:var(--muted);font-size:13px}
+dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國三 第三章 3-1～3-3 ／ 高一 功與能量</div>
+      <h1>功與能</h1>
+    </div>
+    <p>四個實驗台：作功（力、位移、方向、摩擦）、功率（誰比較快）、動能與位能的實驗、力學能守恆（單擺、軌道、上拋、彈簧，可加摩擦看熱能）。橘色的東西可以拖曳。右上可切換國中／高中。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="work" aria-pressed="true"><span class="n">1</span>作功</button>
+      <button data-v="power" aria-pressed="false"><span class="n">2</span>功率</button>
+      <button data-v="ke" aria-pressed="false"><span class="n">3</span>動能與位能</button>
+      <button data-v="cons" aria-pressed="false"><span class="n">4</span>力學能守恆</button>
+    </span>
+    <span class="lv"><span class="tlabel">程度</span><span class="seg" id="lvSeg"><button data-v="jh" aria-pressed="false">國中</button><button data-v="sh" aria-pressed="false">高中</button></span>
+      <span class="tlabel">g</span><span class="seg" id="gSeg"><button data-v="9.8" aria-pressed="true">9.8</button><button data-v="10" aria-pressed="false">10</button></span></span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 作功 ============ -->
+  <section class="bench" id="b-work">
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="wPlay">▶ 開始</button>
+        <button class="btn" id="wReset">⟲ 回到起點</button>
+        <label class="tog"><input type="checkbox" id="wWall"> 前面有牆（推不動）</label>
+        <label class="tog"><input type="checkbox" id="wComp" checked> 畫出力的分量</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvWork" aria-label="物體受力與移動"></canvas></div>
+      <p class="hint">拖曳橘色箭頭的尖端可改變施力大小與方向。黑色箭頭是物體的位移，藍色是重力，綠色是正向力，紅色是摩擦力。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>設定</h3>
+        <div class="ctl">
+          <div class="slider"><span class="tlabel">施力 F</span><input type="range" id="wF" min="0" max="100" step="1" value="20"><output id="wFo"></output></div>
+          <div class="slider sh-only"><span class="tlabel">施力方向 θ</span><input type="range" id="wTh" min="-90" max="180" step="5" value="0"><output id="wTho"></output></div>
+          <div class="jh-only" style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:4px 0"><span class="tlabel">施力方向</span><span class="seg" id="wThSeg"><button data-v="0" aria-pressed="true">順著移動方向</button><button data-v="90" aria-pressed="false">垂直向上</button><button data-v="180" aria-pressed="false">逆著移動方向</button></span></div>
+          <div class="slider"><span class="tlabel">質量 m</span><input type="range" id="wM" min="0.5" max="20" step="0.5" value="5"><output id="wMo"></output></div>
+          <div class="slider"><span class="tlabel">斜面角度</span><input type="range" id="wA" min="0" max="90" step="1" value="0"><output id="wAo"></output></div>
+          <div class="slider"><span class="tlabel">摩擦力</span><input type="range" id="wMu" min="0" max="0.6" step="0.02" value="0"><output id="wMuo"></output></div>
+          <div class="slider"><span class="tlabel">初速</span><input type="range" id="wV0" min="0" max="5" step="0.5" value="0"><output id="wV0o"></output></div>
+          <div class="slider"><span class="tlabel">移動距離 S</span><input type="range" id="wL" min="1" max="30" step="1" value="10"><output id="wLo"></output></div>
+        </div>
+        <p class="mini" id="wFix"></p>
+      </section>
+      <section class="panel box">
+        <h3>各個力作的功 <small id="wState" style="color:var(--muted);font-weight:400"></small></h3>
+        <table class="wt" id="wTable"></table>
+        <div class="formula2" id="wFormula"></div>
+        <div class="verdict" id="wSay"></div>
+      </section>
+    </div>
+    <section class="panel box">
+      <h3>力–位移圖 <small style="color:var(--muted);font-weight:400">沿移動方向的施力分量；塗色面積＝施力作的功</small></h3>
+      <canvas class="cv" id="cvWG" aria-label="施力與位移的關係圖"></canvas>
+    </section>
+  </section>
+
+  <!-- ============ 2 功率 ============ -->
+  <section class="bench" id="b-power" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="pPlay">▶ 一起開始</button>
+        <button class="btn" id="pReset">⟲ 放回地面</button>
+        <span class="tlabel">調整</span>
+        <span class="seg" id="pPick"><button data-v="0" aria-pressed="true">甲</button><button data-v="1" aria-pressed="false">乙</button><button data-v="2" aria-pressed="false">丙</button></span>
+        <label class="tog"><input type="checkbox" id="pThree"> 三台比較</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvPow" aria-label="起重機把重物吊上去"></canvas></div>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3 id="pTitle">起重機 甲</h3>
+        <div class="ctl">
+          <div class="slider"><span class="tlabel">質量 m</span><input type="range" id="pM" min="10" max="2000" step="10" value="200"><output id="pMo"></output></div>
+          <div class="slider"><span class="tlabel">吊升高度</span><input type="range" id="pH" min="1" max="40" step="1" value="10"><output id="pHo"></output></div>
+          <div class="slider"><span class="tlabel">功率 P</span><input type="range" id="pP" min="50" max="20000" step="50" value="1000"><output id="pPo"></output></div>
+        </div>
+        <p class="mini">等速吊升：拉力＝重力 mg，所以 P ＝ W／t ＝ mg × h／t ＝ mg × v。</p>
+      </section>
+      <section class="panel box">
+        <h3>比一比</h3>
+        <table class="ctable" id="pTable"></table>
+        <div class="verdict" id="pSay" style="margin-top:8px"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 3 動能與位能 ============ -->
+  <section class="bench" id="b-ke" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="seg" id="kMode"><button data-v="ke" aria-pressed="true">動能：小車撞木塊</button><button data-v="ug" aria-pressed="false">重力位能：鋼球打木樁</button><button data-v="us" aria-pressed="false">彈力位能：彈簧推木塊</button></span>
+        <button class="btn primary" id="kGo">▶ 放手</button>
+        <button class="btn" id="kRec">＋ 記錄這一次</button>
+        <button class="btn" id="kClr">清除紀錄</button>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvKE" aria-label="動能與位能實驗"></canvas></div>
+      <p class="hint" id="kHint"></p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>設定</h3>
+        <div class="ctl">
+          <div class="slider"><span class="tlabel" id="kAl">質量</span><input type="range" id="kA" min="0.5" max="4" step="0.5" value="1"><output id="kAo"></output></div>
+          <div class="slider"><span class="tlabel" id="kBl">速率</span><input type="range" id="kB" min="0.5" max="4" step="0.5" value="2"><output id="kBo"></output></div>
+        </div>
+        <div class="formula2" id="kFormula"></div>
+        <table class="ctable" id="kTable"></table>
+      </section>
+      <section class="panel box">
+        <h3>紀錄的圖 <small style="color:var(--muted);font-weight:400" id="kGcap"></small></h3>
+        <canvas class="cv" id="cvKG" aria-label="紀錄的關係圖"></canvas>
+        <div class="verdict" id="kSay" style="margin-top:8px"></div>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 4 力學能守恆 ============ -->
+  <section class="bench" id="b-cons" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="cPlay">▶ 放手</button>
+        <button class="btn" id="cReset">⟲ 回到起點</button>
+        <button class="btn" id="cStep">▸ 0.1 秒</button>
+        <span class="seg" id="cTrack"><button data-v="pend" aria-pressed="true">單擺</button><button data-v="bowl" aria-pressed="false">光滑軌道</button><button data-v="ramp" aria-pressed="false">斜面滑下</button><button data-v="throw" aria-pressed="false">鉛直上拋</button><button data-v="spring" aria-pressed="false">彈簧</button></span>
+        <span class="seg" id="cTs"><button data-v="1" aria-pressed="true">1×</button><button data-v="0.25" aria-pressed="false">¼×</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvCons" aria-label="力學能守恆動畫與能量長條圖"></canvas></div>
+      <p class="hint" id="cHint">拖曳橘色的球改變起點；拖曳虛線可以改變「位能為 0」的高度（高中）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>設定</h3>
+        <div class="ctl">
+          <div class="slider"><span class="tlabel">質量 m</span><input type="range" id="cM" min="0.1" max="5" step="0.1" value="1"><output id="cMo"></output></div>
+          <div class="slider"><span class="tlabel">摩擦／空氣阻力</span><input type="range" id="cMu" min="0" max="0.5" step="0.01" value="0"><output id="cMuo"></output></div>
+          <div class="slider" id="cV0w"><span class="tlabel">上拋初速</span><input type="range" id="cV0" min="2" max="30" step="1" value="10"><output id="cV0o"></output></div>
+          <div class="slider" id="cKw"><span class="tlabel">彈性常數 k</span><input type="range" id="cK" min="10" max="200" step="10" value="50"><output id="cKo"></output></div>
+        </div>
+        <dl class="fk" id="cNow"></dl>
+      </section>
+      <section class="panel box">
+        <h3>能量–時間圖</h3>
+        <canvas class="cv" id="cvCG" aria-label="能量隨時間變化"></canvas>
+        <div class="legend"><span><i style="background:var(--ke)"></i>動能</span><span><i style="background:var(--ug)"></i>重力位能</span><span id="cLegUs"><i style="background:var(--us)"></i>彈力位能</span><span><i style="background:var(--heat)"></i>熱能（摩擦生熱）</span><span><i style="background:var(--tot)"></i>總和</span></div>
+        <div class="verdict" id="cSay" style="margin-top:8px"></div>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(5)》第三章；考古題標示學校、學年-學期-次別與題號；虛線框為高中題</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+
+  <div class="notes">
+    <div><h2>功</h2><p>力使物體沿著力的方向移動，就對物體作功：W ＝ F × S（高中：W ＝ F S cosθ）。力和位移同向作正功、反向作負功、垂直不作功；沒有位移也不作功。單位：焦耳（J）＝ 牛頓・公尺。</p></div>
+    <div><h2>功與能</h2><p>合力作的功 ＝ 動能的變化。重力作負功，重力位能就增加同樣的量。摩擦力作負功，減少的力學能變成熱能。只有重力、彈力作功時，力學能（動能＋位能）守恆。</p></div>
+    <div><h2>常見誤解</h2><p>「用力就是作功」：提著東西水平走、推牆不動都不作功。「等速上升動能沒變，所以力學能不變」：位能增加了。「位能有絕對值」：位能要先選定零位能的高度。功率是「作功快慢」，不是作功多少。</p></div>
+  </div>
+</div>
+<script>
+// ================= 共用 =================
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),TAU=Math.PI*2,D2R=Math.PI/180;
+const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','ke','ug','us','heat','tot','wood','wood2','steel','floor'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
+  const h=Math.round(clamp(w*ratio,minH,maxH));cv.style.height=h+'px';const d=DPR();
+  if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
+  cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null,mono=false}={}){
+  g.font=`${bold?700:500} ${size}px ${mono?'"IBM Plex Mono",monospace':FONT}`;g.textAlign=align;g.textBaseline=base;
+  const w=g.measureText(s).width,cw=g.canvas.clientWidth||1e9;let px=align==='center'?x-w/2:align==='right'?x-w:x;x+=Math.max(4-px,0)+Math.min(cw-4-(px+w),0);
+  if(bg){px=align==='center'?x-w/2:align==='right'?x-w:x;const py=base==='middle'?y-size/2-1:base==='top'?y-1:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-3,py-2,w+6,size+5);g.restore();}
+  g.fillStyle=col;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
+function head(g,x,y,ang,col,size=10){g.fillStyle=col;g.beginPath();g.moveTo(x,y);g.lineTo(x-size*Math.cos(ang-.42),y-size*Math.sin(ang-.42));g.lineTo(x-size*Math.cos(ang+.42),y-size*Math.sin(ang+.42));g.closePath();g.fill();}
+function arrow(g,x1,y1,x2,y2,col,w=2.4){const L=Math.hypot(x2-x1,y2-y1);if(L<2)return;const a=Math.atan2(y2-y1,x2-x1);line(g,x1,y1,x2-Math.cos(a)*5,y2-Math.sin(a)*5,col,w);head(g,x2,y2,a,col,Math.min(11,L*.6));}
+function handle(g,x,y,r=9){g.fillStyle=C.accent;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const h of handles()){const d=h.hit?h.hit(x,y):Math.hypot(x-h.x,y-h.y);if(d<(h.r||26)&&d<bd){bd=d;best=h;}}return best;};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const h=pick(x,y);if(!h)return;cur={h,dx:h.free?0:h.x-x,dy:h.free?0:h.y-y};h.start&&h.start();cv.setPointerCapture(ev.pointerId);ev.preventDefault();});
+  cv.addEventListener('pointermove',ev=>{const[x,y]=pos(ev);if(!cur){cv.style.cursor=pick(x,y)?'grab':'default';return;}cur.h.move(x+cur.dx,y+cur.dy);after();});
+  const up=()=>{if(cur&&cur.h.end)cur.h.end();cur=null;after();};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const nf=(x,d=1)=>{const r=(Math.round(x*Math.pow(10,d))/Math.pow(10,d));return (Object.is(r,-0)?0:r).toFixed(d);};
+const J=x=>{const a=Math.abs(x);return a>=1e5?(x/1000).toFixed(0)+' kJ':a>=100?x.toFixed(0)+' J':a>=10?x.toFixed(1)+' J':x.toFixed(2)+' J';};
+let G=9.8;
+function sliderBind(id,fn,fmt){const el=$(id),o=$(id+'o');const up=()=>{o.textContent=fmt(+el.value);};el.addEventListener('input',()=>{fn(+el.value);up();hideStory();kick();});up();return v=>{el.value=v;o.textContent=fmt(v);};}
+
+// ================= 程度、g =================
+let LV='sh';
+try{const q=new URLSearchParams(location.search).get('level');LV=(q==='jh'||q==='sh')?q:(localStorage.getItem('optics-level')||'sh');}catch(e){}
+function setLV(v){LV=v;document.documentElement.classList.toggle('lv-jh',v==='jh');document.documentElement.classList.toggle('lv-sh',v==='sh');segSet($('lvSeg'),v);
+  try{localStorage.setItem('optics-level',v);}catch(e){}
+  if(v==='jh'){W1.th=[0,90,180].includes(W1.th)?W1.th:0;setTh(W1.th);C4.zero=0;}
+  buildQ();kick();}
+segOn($('lvSeg'),setLV);
+segOn($('gSeg'),v=>{G=+v;segSet($('gSeg'),v);if(bench==='work')wReset();if(bench==='ke')kReset();if(bench==='cons')cReset();kick();});
+
+// ================= 實驗台切換與迴圈 =================
+let bench='work';const BENCHES=['work','power','ke','cons'];
+const DRAW={},TICK={},UI={};
+function setBench(b,noHash){if(!BENCHES.includes(b))b='work';bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+new MutationObserver(()=>{readColors();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+addEventListener('resize',kick);
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;$('story').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideStory(){$('story').hidden=true;document.querySelectorAll('.qchip[aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+
+// ======================================================================
+// 1 作功
+// ======================================================================
+const W1={F:20,th:0,m:5,al:0,mu:0,v0:0,L:10,wall:false,comp:true,s:0,v:0,t:0,run:false,done:false,
+  WF:0,Wg:0,Wf:0,WN:0,hist:[],fixF:null};
+const setF=sliderBind('wF',v=>{W1.F=v;wReset();},v=>v+' N');
+const setThS=sliderBind('wTh',v=>{W1.th=v;wReset();},v=>v+'°');
+function setTh(v){W1.th=v;setThS(v);segSet($('wThSeg'),v);}
+segOn($('wThSeg'),v=>{setTh(+v);hideStory();wReset();kick();});
+const setM=sliderBind('wM',v=>{W1.m=v;wReset();},v=>v+' kg');
+const setA=sliderBind('wA',v=>{W1.al=v;wReset();},v=>v===0?'水平面':v===90?'鉛直':v+'°');
+const setMu=sliderBind('wMu',v=>{W1.mu=v;wReset();},v=>v===0?'光滑':'μ＝'+v.toFixed(2));
+const setV0=sliderBind('wV0',v=>{W1.v0=v;wReset();},v=>v+' m/s');
+const setL=sliderBind('wL',v=>{W1.L=v;wReset();},v=>v+' m');
+$('wWall').addEventListener('change',e=>{W1.wall=e.target.checked;wReset();kick();});
+$('wComp').addEventListener('change',e=>{W1.comp=e.target.checked;kick();});
+function wForces(){const a=W1.al*D2R,t=W1.th*D2R,m=W1.m;
+  const Fpar=W1.F*Math.cos(t),Fperp=W1.F*Math.sin(t);
+  const gpar=-m*G*Math.sin(a),N=Math.max(0,m*G*Math.cos(a)-Fperp);
+  return{Fpar,Fperp,gpar,N,fmax:W1.mu*N};}
+function wReset(){Object.assign(W1,{s:0,v:W1.v0,t:0,run:false,done:false,WF:0,Wg:0,Wf:0,WN:0,hist:[[0,wForces().Fpar]]});$('wPlay').textContent='▶ 開始';}
+function wStep(dt){const f=wForces();let a;
+  if(W1.wall&&W1.s>=W1.L*0.5-1e-9){W1.v=0;W1.t+=dt;if(W1.t>2.5){W1.run=false;W1.done=true;}return;}
+  if(Math.abs(W1.v)<1e-6){const net=f.Fpar+f.gpar;if(Math.abs(net)<=f.fmax+1e-9){W1.v=0;W1.t+=dt;if(W1.t>3){W1.run=false;W1.done=true;}return;}
+    a=(net-Math.sign(net)*f.fmax)/W1.m;}
+  else a=(f.Fpar+f.gpar-Math.sign(W1.v)*f.fmax)/W1.m;
+  let v1=W1.v+a*dt;if(W1.v!==0&&Math.sign(v1)!==Math.sign(W1.v)&&Math.abs(f.Fpar+f.gpar)<=f.fmax){v1=0;}
+  let ds=(W1.v+v1)/2*dt;
+  const lim=W1.wall?W1.L*0.5:W1.L;
+  if(W1.s+ds>=lim){ds=lim-W1.s;W1.run=W1.wall;W1.done=!W1.wall;}
+  if(W1.s+ds<=0&&ds<0){ds=-W1.s;W1.run=false;W1.done=true;v1=0;}
+  W1.WF+=f.Fpar*ds;W1.Wg+=f.gpar*ds;W1.Wf+=-f.fmax*Math.abs(ds);
+  W1.s+=ds;W1.v=v1;W1.t+=dt;if(W1.done)W1.run=false;
+  W1.hist.push([W1.s,f.Fpar]);}
+TICK.work=dt=>{if(!W1.run)return false;const n=8;for(let i=0;i<n&&W1.run;i++)wStep(dt/n);if(!W1.run)$('wPlay').textContent='▶ 再一次';return W1.run;};
+$('wPlay').addEventListener('click',()=>{if(W1.run){W1.run=false;$('wPlay').textContent='▶ 繼續';return;}if(W1.done)wReset();W1.run=true;$('wPlay').textContent='❚❚ 暫停';kick();});
+$('wReset').addEventListener('click',()=>{wReset();kick();});
+let wGeo=null;
+DRAW.work=()=>{const cv=$('cvWork'),{W,H}=fit(cv,W1.al<15?.3:.42,240,400),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const a=W1.al*D2R,ca=Math.cos(a),sa=Math.sin(a),L=W1.L;
+  const padL=60,padR=60,padT=60,padB=50;
+  const k=Math.min((W-padL-padR)/Math.max(L*ca,1e-6+ (sa>.999?0:0))||1e9,(H-padT-padB)/Math.max(L*sa,1e-6));
+  const kk=Math.min(k,(W-padL-padR)/Math.max(L*ca,.01),(H-padT-padB)/Math.max(L*sa,.01));
+  const x0=sa>.999?W/2:padL,y0=H-padB;
+  const P=s=>[x0+s*ca*kk,y0-s*sa*kk];
+  // 地面與斜面
+  g.fillStyle=C.floor;
+  if(W1.al===0){g.fillRect(0,y0,W,H-y0);}
+  else{g.beginPath();const [ex,ey]=P(L+0.3);g.moveTo(x0-20,y0);g.lineTo(ex,ey);g.lineTo(ex,y0);g.closePath();g.fill();g.fillRect(0,y0,W,H-y0);}
+  line(g,0,y0,W,y0,C.muted,1.5);
+  if(W1.al>0){const[ex,ey]=P(L);line(g,x0,y0,ex,ey,C.muted,2);if(W1.al<90)text(g,W1.al+'°',x0+34,y0-6,{col:C.muted,size:12});}
+  // 起點、終點刻度
+  const[sx,sy]=P(0),[tx,ty]=P(W1.wall?L*.5:L);
+  g.save();g.translate(tx,ty);g.rotate(-a);line(g,0,4,0,-8,C.muted,1.5);g.restore();
+  if(W1.wall){g.save();g.translate(tx,ty);g.rotate(-a);g.fillStyle=C.muted;g.fillRect(0,-90,14,90);g.restore();}
+  // 物體
+  const bw=46,bh=34;const[bx,by]=P(W1.s);
+  g.save();g.translate(bx,by);g.rotate(-a);
+  g.fillStyle=C.wood;g.strokeStyle=C.wood2;g.lineWidth=2;g.beginPath();g.roundRect(-bw/2-bw/2*0,-bh,bw,bh,4);g.fill();g.stroke();
+  text(g,W1.m+' kg',0,-bh/2,{size:12,align:'center',base:'middle',bold:true,col:'#3a2a12'});
+  g.restore();
+  // 力（畫在物體中心，局部座標：x 沿斜面向上、y 垂直斜面向外）
+  const cx=bx-Math.sin(a)*bh/2*-1*0,cy=by;const ctr=[bx-(-sa)*(-bh/2)*0 - sa*bh/2*0,by];
+  const mid=[bx+(-sa)*(-1)*0,by]; // placeholder
+  const cxx=bx-sa*(-bh/2)*-1, cyy=by-ca*bh/2; // 物體中心
+  const fsc=Math.min(2.2,110/Math.max(20,W1.m*G,W1.F));
+  const dir=(u,v)=>[ca*u-sa*v,-(sa*u+ca*v)]; // 局部→畫面
+  const Fd=dir(Math.cos(W1.th*D2R),Math.sin(W1.th*D2R));
+  const fF=W1.F*fsc,f=wForces();
+  // 重力
+  arrow(g,cxx,cyy,cxx,cyy+W1.m*G*fsc,C.ug);text(g,'重力 '+nf(W1.m*G,1)+' N',cxx+6,cyy+W1.m*G*fsc+2,{col:C.ug,size:12,base:'top'});
+  // 正向力
+  if(f.N>0.01){const nd=dir(0,1);const[bx0,by0]=[bx,by];arrow(g,bx0,by0,bx0+nd[0]*f.N*fsc,by0+nd[1]*f.N*fsc,C.green);text(g,'正向力',bx0+nd[0]*f.N*fsc-8,by0+nd[1]*f.N*fsc,{col:C.green,size:12,align:'right'});}
+  // 摩擦
+  if(f.fmax>0.01){const mv=Math.abs(W1.v)>1e-6?Math.sign(W1.v):Math.sign(f.Fpar+f.gpar)||1;const fd=dir(-mv,0);const[ox,oy]=[bx-ca*bw/2*mv*0,by];
+    const mag=Math.abs(W1.v)>1e-6?f.fmax:Math.min(f.fmax,Math.abs(f.Fpar+f.gpar));if(mag>0.01){arrow(g,ox,oy+2,ox+fd[0]*mag*fsc,oy+2+fd[1]*mag*fsc,C.heat);text(g,'摩擦力',ox+fd[0]*mag*fsc,oy+fd[1]*mag*fsc+16,{col:C.heat,size:12,align:'center'});}}
+  // 施力
+  const hx=cxx+Fd[0]*fF,hy=cyy+Fd[1]*fF;
+  if(W1.F>0){arrow(g,cxx,cyy,hx,hy,C.accent,3);
+    if(W1.comp&&LV==='sh'&&Math.abs(Math.sin(W1.th*D2R))>.05&&Math.abs(Math.cos(W1.th*D2R))>.05){const pd=dir(1,0),qd=dir(0,1);const fp=f.Fpar*fsc,fq=f.Fperp*fsc;
+      arrow(g,cxx,cyy,cxx+pd[0]*fp,cyy+pd[1]*fp,C.accent,1.6);line(g,cxx+pd[0]*fp,cyy+pd[1]*fp,hx,hy,C.accent,1,[3,3]);line(g,cxx+qd[0]*fq,cyy+qd[1]*fq,hx,hy,C.accent,1,[3,3]);
+      text(g,'F cosθ',cxx+pd[0]*fp,cyy+pd[1]*fp+14,{col:C.accent,size:11,align:'center'});}
+    text(g,'F＝'+W1.F+' N',hx+8,hy-6,{col:C.accent,size:13,bold:true});
+  }
+  handle(g,hx,hy,8);
+  // 位移
+  const[dx1,dy1]=P(0),[dx2,dy2]=P(W1.s);
+  if(W1.s>0.01){const off=dir(0,1);const o=bh+30;arrow(g,dx1+off[0]*o,dy1+off[1]*o,dx2+off[0]*o,dy2+off[1]*o,C.ink,2);text(g,'位移 '+nf(W1.s,2)+' m',(dx1+dx2)/2+off[0]*(o+12),(dy1+dy2)/2+off[1]*(o+12),{col:C.ink,size:12,align:'center',base:'middle'});}
+  text(g,`t＝${nf(W1.t,2)} s　v＝${nf(W1.v,2)} m/s`,10,20,{size:13,mono:true,col:C.muted});
+  wGeo={cxx,cyy,fsc,a};
+  wPanel();drawWG();};
+dragger($('cvWork'),()=>wGeo?[{x:wGeo.cxx+Math.cos(-wGeo.a+(-W1.th*D2R))*W1.F*wGeo.fsc,y:wGeo.cyy+Math.sin(-wGeo.a-W1.th*D2R)*W1.F*wGeo.fsc,r:24,
+  move(x,y){const dx=x-wGeo.cxx,dy=y-wGeo.cyy;let F=Math.round(Math.hypot(dx,dy)/wGeo.fsc);F=clamp(F,0,100);
+    let th=Math.round((Math.atan2(-dy,dx)/D2R-W1.al)/5)*5;while(th>180)th-=360;while(th<-180)th+=360;
+    if(LV==='jh'){th=[0,90,180].reduce((b,c)=>Math.abs(c-th)<Math.abs(b-th)?c:b,0);}else th=clamp(th,-90,180);
+    W1.F=F;setF(F);setTh(th);wReset();hideStory();}}]:[],kick);
+function wPanel(){const f=wForces();const K0=.5*W1.m*W1.v0**2,K=.5*W1.m*W1.v**2,net=W1.WF+W1.Wg+W1.Wf;
+  const rows=[['施力 F',W1.WF,C.accent],['重力',W1.Wg,C.ug],['正向力',0,C.green],['摩擦力',W1.Wf,C.heat]];
+  const mx=Math.max(1,...rows.map(r=>Math.abs(r[1])),Math.abs(net));
+  const bar=(v,c)=>`<span class="b" style="width:${Math.abs(v)/mx*100}%;background:${c};${v<0?'opacity:.55':''}"></span>`;
+  $('wTable').innerHTML=rows.map(r=>`<tr><td>${r[0]}</td><td class="n ${r[1]>1e-6?'pos':r[1]<-1e-6?'neg':''}">${J(r[1])}</td><td class="bar">${bar(r[1],r[2])}</td></tr>`).join('')+
+    `<tr class="sum"><td>合力（總功）</td><td class="n">${J(net)}</td><td class="bar">${bar(net,C.tot)}</td></tr>`+
+    `<tr><td>動能變化 ΔK</td><td class="n">${J(K-K0)}</td><td class="mini">½mv² − ½mv₀²</td></tr>`+
+    (W1.al>0?`<tr><td>重力位能增加</td><td class="n">${J(-W1.Wg)}</td><td class="mini">mg × 上升高度 ${nf(W1.s*Math.sin(W1.al*D2R),2)} m</td></tr>`:'')+
+    (W1.Wf<-1e-6?`<tr><td>摩擦生熱</td><td class="n">${J(-W1.Wf)}</td><td></td></tr>`:'')+
+    `<tr><td>施力的平均功率</td><td class="n">${W1.t>0?nf(W1.WF/W1.t,1)+' W':'—'}</td><td class="mini">施力作的功 ÷ 時間</td></tr>`;
+  $('wState').textContent=W1.done?'（完成）':W1.run?'（進行中）':'';
+  const th=W1.th;
+  $('wFormula').innerHTML=LV==='sh'?`W<sub>F</sub> ＝ F S cosθ ＝ ${W1.F} × ${nf(W1.s,2)} × cos${th}° ＝ ${J(W1.WF)}`:
+    `W ＝ F × S ＝ ${th===0?W1.F:th===180?'−'+W1.F:'0（力垂直位移）'} ${th===90?'':'× '+nf(W1.s,2)} ${th===90?'':'＝ '+J(W1.WF)}`;
+  let say='';const ts=Math.abs(Math.cos(th*D2R));
+  if(W1.wall&&W1.s>=W1.L*.5-1e-6)say='物體被牆擋住，位移是 0，所以就算一直用力，施力也不作功。';
+  else if(W1.done&&W1.s<1e-6)say='物體沒有被推動（施力不夠大，或被摩擦力擋住），位移是 0，所有的力都不作功。';
+  else if(th===90&&W1.al===0)say='施力垂直於位移方向（例如提著東西在水平路面走），施力不作功。'+(Math.abs(W1.v0)>0&&W1.mu===0?' 光滑水平面上等速前進，合力為 0，合力也不作功。':'');
+  else if(ts<1e-6)say='施力垂直於位移，施力不作功。';
+  else if(Math.cos(th*D2R)<0)say='施力和位移方向相反，施力作負功，物體的能量減少。';
+  else say='施力和位移同方向，施力作正功。'+(W1.Wf<-1e-6?'摩擦力和位移相反，作負功，這部分能量變成熱。':'')+(W1.al>0?'物體往上移，重力作負功，重力位能增加。':'');
+  if(W1.done&&Math.abs(net-(K-K0))<0.5)say+=' 合力作的功 ＝ 動能的變化。';
+  $('wSay').textContent=say;
+  const lam=W1.m*G*Math.sin(W1.al*D2R)+W1.mu*W1.m*G*Math.cos(W1.al*D2R);
+  $('wFix').textContent=`要讓物體等速前進，順著移動方向需要的力 ＝ 重力分力＋摩擦力 ＝ ${nf(lam,1)} N（g＝${G}）。`;}
+function drawWG(){const cv=$('cvWG'),{W,H}=fit(cv,.28,150,220),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const L=W1.wall?W1.L*.5:W1.L,Fm=Math.max(10,W1.F*1.15);
+  const l=46,r=14,t=10,b=26,gw=W-l-r,gh=H-t-b;const X=s=>l+s/L*gw,Y=f=>t+gh/2-f/Fm*gh/2;
+  line(g,l,Y(0),W-r,Y(0),C.muted,1);line(g,l,t,l,t+gh,C.muted,1);
+  text(g,'F（N）',4,t+10,{col:C.muted,size:11});text(g,'位移（m）',W-r,H-6,{col:C.muted,size:11,align:'right'});
+  for(let i=0;i<=4;i++){const s=L*i/4;text(g,nf(s,1),X(s),Y(0)+14,{col:C.muted,size:10,align:'center',mono:true});}
+  text(g,nf(Fm,0),l-4,Y(Fm)+4,{col:C.muted,size:10,align:'right',mono:true});text(g,'−'+nf(Fm,0),l-4,Y(-Fm)+4,{col:C.muted,size:10,align:'right',mono:true});
+  const h=W1.hist;if(h.length>1){g.fillStyle=C['accent-soft'];g.beginPath();g.moveTo(X(h[0][0]),Y(0));h.forEach(p=>g.lineTo(X(p[0]),Y(p[1])));g.lineTo(X(h[h.length-1][0]),Y(0));g.closePath();g.fill();
+    g.strokeStyle=C.accent;g.lineWidth=2.4;g.beginPath();h.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();}
+  else{const f=wForces();line(g,X(0),Y(f.Fpar),X(L),Y(f.Fpar),C.accent,1.2,[4,4]);}
+  text(g,'面積 ＝ '+J(W1.WF),W-r-4,t+14,{col:C.accent,size:12,align:'right',bold:true});}
+UI.work=()=>{};
+wReset();
+
+// ======================================================================
+// 2 功率
+// ======================================================================
+const P2={lanes:[{n:'甲',m:200,H:10,P:1000},{n:'乙',m:200,H:10,P:500},{n:'丙',m:200,H:10,P:2000}],pick:0,three:false,t:0,run:false};
+function pLane(){return P2.lanes[P2.pick];}
+const setPM=sliderBind('pM',v=>{pLane().m=v;pReset();},v=>v+' kg');
+const setPH=sliderBind('pH',v=>{pLane().H=v;pReset();},v=>v+' m');
+const setPP=sliderBind('pP',v=>{pLane().P=v;pReset();},v=>v>=1000?(v/1000).toFixed(v%1000?2:0)+' kW':v+' W');
+function pSync(){const L=pLane();setPM(L.m);setPH(L.H);setPP(L.P);segSet($('pPick'),P2.pick);$('pTitle').textContent='起重機 '+L.n;$('pThree').checked=P2.three;
+  $('pPick').querySelector('[data-v="2"]').hidden=!P2.three;}
+segOn($('pPick'),v=>{P2.pick=+v;pSync();kick();});
+$('pThree').addEventListener('change',e=>{P2.three=e.target.checked;if(!P2.three&&P2.pick===2)P2.pick=0;pSync();pReset();kick();});
+function pReset(){P2.t=0;P2.run=false;$('pPlay').textContent='▶ 一起開始';}
+const lanesOn=()=>P2.lanes.slice(0,P2.three?3:2);
+const pT=L=>L.m*G*L.H/L.P;
+$('pPlay').addEventListener('click',()=>{if(P2.run){P2.run=false;$('pPlay').textContent='▶ 繼續';return;}if(P2.t>=Math.max(...lanesOn().map(pT)))P2.t=0;P2.run=true;$('pPlay').textContent='❚❚ 暫停';kick();});
+$('pReset').addEventListener('click',()=>{pReset();kick();});
+TICK.power=dt=>{if(!P2.run)return false;const Tm=Math.max(...lanesOn().map(pT));const sp=Tm>60?Tm/20:Tm>20?Tm/12:1;P2.t+=dt*sp;if(P2.t>=Tm){P2.t=Tm;P2.run=false;$('pPlay').textContent='▶ 再一次';}return P2.run;};
+DRAW.power=()=>{const cv=$('cvPow'),{W,H}=fit(cv,.42,260,400),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const Ls=lanesOn(),n=Ls.length,Hm=Math.max(...Ls.map(L=>L.H));const top=50,bot=H-40,k=(bot-top)/Hm;
+  g.fillStyle=C.floor;g.fillRect(0,bot,W,H-bot);line(g,0,bot,W,bot,C.muted,1.5);
+  // 刻度
+  for(let h=0;h<=Hm;h+=Hm>20?10:Hm>8?2:1){line(g,30,bot-h*k,38,bot-h*k,C.muted,1);text(g,h+' m',26,bot-h*k+4,{col:C.muted,size:10,align:'right',mono:true});}
+  const cw=(W-60)/n;
+  Ls.forEach((L,i)=>{const cx=60+cw*(i+.5),T=pT(L),h=Math.min(P2.t/T,1)*L.H,y=bot-h*k;
+    // 吊臂
+    line(g,cx-cw*.3,bot,cx-cw*.3,top-20,C.muted,4);line(g,cx-cw*.3,top-20,cx+6,top-20,C.muted,4);
+    line(g,cx,top-20,cx,y-26,C.ink,1.5);
+    // 目標高度
+    line(g,cx-30,bot-L.H*k,cx+30,bot-L.H*k,C.accent,1.5,[5,4]);
+    // 重物
+    const bw=Math.min(54,cw*.45);g.fillStyle=C.steel;g.strokeStyle=C.ink;g.lineWidth=1.5;g.beginPath();g.roundRect(cx-bw/2,y-26,bw,26,4);g.fill();g.stroke();
+    text(g,L.m+' kg',cx,y-13,{align:'center',base:'middle',size:11,bold:true,col:'#111'});
+    text(g,'起重機 '+L.n,cx,bot+18,{align:'center',size:13,bold:true});
+    const done=P2.t>=T-1e-9;text(g,done?`完成 ${nf(T,1)} s`:`${nf(Math.min(P2.t,T),1)} s`,cx,top-28,{align:'center',size:12,mono:true,col:done?C.accent:C.muted});
+  });
+  text(g,'t ＝ '+nf(P2.t,1)+' s',W-10,20,{align:'right',mono:true,size:13,col:C.muted});
+  const rows=Ls.map(L=>{const Wk=L.m*G*L.H,T=pT(L);return{L,Wk,T};});
+  $('pTable').innerHTML='<tr><th></th><th>質量</th><th>高度</th><th>作功 W＝mgh</th><th>時間 t</th><th>功率 P＝W／t</th><th>上升速率</th></tr>'+
+    rows.map(r=>`<tr class="${r.L===pLane()?'on':''}"><td>${r.L.n}</td><td>${r.L.m} kg</td><td>${r.L.H} m</td><td>${J(r.Wk)}</td><td>${nf(r.T,1)} s</td><td>${r.L.P>=1000?(r.L.P/1000)+' kW':r.L.P+' W'}</td><td>${nf(r.L.P/(r.L.m*G),2)} m/s</td></tr>`).join('');
+  const sameW=rows.every(r=>Math.abs(r.Wk-rows[0].Wk)<1e-6);const fast=rows.reduce((a,b)=>a.T<b.T?a:b);
+  $('pSay').textContent=(sameW?'作的功一樣多，':'')+`起重機${fast.L.n}最先完成：功率愈大，作同樣的功所需時間愈短。功率是「作功的快慢」，不是作功的多少。`;};
+UI.power=()=>pSync();
+pSync();
+
+// ======================================================================
+// 3 動能與位能
+// ======================================================================
+const K3={mode:'ke',A:1,B:2,ph:'ready',t:0,x:0,d:0,rec:{ke:[],ug:[],us:[]},hit:false};
+const KDEF={ke:{Al:'小車質量',A:[0.5,4,0.5,1,'kg'],Bl:'小車速率',B:[0.5,4,0.5,2,'m/s']},
+            ug:{Al:'鋼球質量',A:[0.1,2,0.1,0.5,'kg'],Bl:'落下高度',B:[0.1,2,0.1,1,'m']},
+            us:{Al:'彈簧壓縮量',A:[1,10,1,4,'cm'],Bl:'彈性常數',B:[100,1000,100,500,'N/m']}};
+const FR=4; // 木塊受到的阻力（N）
+function niceUp(v){const p=Math.pow(10,Math.floor(Math.log10(v))),m=v/p;return (m<=1.2?1.2:m<=2.4?2.4:m<=3?3:m<=6?6:12)*p;}
+function kE(){const m=K3.mode;if(m==='ke')return .5*K3.A*K3.B**2;if(m==='ug')return K3.A*G*K3.B;return .5*K3.B*(K3.A/100)**2;}
+function kD(){const m=K3.mode;if(m==='ug')return kE()/200*100;return kE()/FR*100;} // cm；木樁阻力 200 N
+function kSetMode(m){K3.mode=m;segSet($('kMode'),m);const d=KDEF[m];$('kAl').textContent=d.Al;$('kBl').textContent=d.Bl;
+  [['kA',d.A],['kB',d.B]].forEach(([id,a])=>{const el=$(id);el.min=a[0];el.max=a[1];el.step=a[2];});
+  K3.A=d.A[3];K3.B=d.B[3];setKA(K3.A);setKB(K3.B);kReset();}
+const setKA=sliderBind('kA',v=>{K3.A=v;kReset();},v=>v+' '+KDEF[K3.mode].A[4]);
+const setKB=sliderBind('kB',v=>{K3.B=v;kReset();},v=>v+' '+KDEF[K3.mode].B[4]);
+segOn($('kMode'),v=>{hideStory();kSetMode(v);kick();});
+function kReset(){K3.ph='ready';K3.t=0;$('kGo').textContent='▶ 放手';}
+$('kGo').addEventListener('click',()=>{kReset();K3.ph='go';kick();});
+$('kRec').addEventListener('click',()=>{const R=K3.rec[K3.mode];R.push({A:K3.A,B:K3.B,E:kE(),d:kD()});if(R.length>12)R.shift();kick();});
+$('kClr').addEventListener('click',()=>{K3.rec[K3.mode]=[];kick();});
+TICK.ke=dt=>{if(K3.ph!=='go')return false;K3.t+=dt;if(K3.t>3.2){K3.ph='done';$('kGo').textContent='▶ 再放一次';}return K3.ph==='go';};
+DRAW.ke=()=>{const cv=$('cvKE'),{W,H}=fit(cv,.24,190,260),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const m=K3.mode,E=kE(),dcm=kD(),t=K3.ph==='ready'?0:K3.ph==='done'?99:K3.t;
+  const fy=H-46;
+  if(m==='ke'||m==='us'){g.fillStyle=C.floor;g.fillRect(0,fy,W,H-fy);line(g,0,fy,W,fy,C.muted,1.5);
+    const bx0=W*0.5;const rMax=niceUp(Math.max(dcm,...K3.rec[m].map(r=>r.d),10)*1.1),pxPerCm=(W*0.45)/rMax;const tick=rMax/6;
+    // 刻度尺
+    for(let i=0;i<=6;i++){const c=tick*i,x=bx0+c*pxPerCm;line(g,x,fy+4,x,fy+12,C.muted,1);text(g,nf(c,c<10?1:0),x,fy+26,{col:C.muted,size:10,align:'center',mono:true});}
+    text(g,'公分',W-8,fy+40,{col:C.muted,size:10,align:'right'});
+    // 木塊滑行
+    let T1,dx;
+    if(m==='ke'){const v=K3.B,run=(bx0-80)/((W*0.04)*v+1e-9);T1=Math.min(1.2,(bx0-90)/(60*v));}
+    T1=0.9;const T2=1.6; // 碰撞時刻、滑行時間
+    const fr=t<T1?0:Math.min(1,(t-T1)/T2),ease=1-(1-fr)*(1-fr);dx=dcm*ease*pxPerCm;
+    if(m==='ke'||t>=T1){g.fillStyle=C.wood;g.strokeStyle=C.wood2;g.lineWidth=2;g.beginPath();g.roundRect(bx0+dx,fy-30,48,30,3);g.fill();g.stroke();
+    text(g,'木塊',bx0+dx+24,fy-15,{align:'center',base:'middle',size:11,col:'#3a2a12',bold:true});}
+    if(t>=T1)text(g,'滑行 '+nf(dcm*ease,1)+' cm',bx0+dx+24,fy-40,{align:'center',size:13,bold:true,col:C.accent});
+    if(m==='ke'){const cx=t<T1?20+(bx0-62-20)*(t/T1):bx0-62;const cw=60;
+      g.fillStyle=C.accent;g.beginPath();g.roundRect(cx,fy-34,cw,24,5);g.fill();g.fillStyle=C.ink;[cx+14,cx+cw-14].forEach(x=>{g.beginPath();g.arc(x,fy-8,8,0,TAU);g.fill();});
+      text(g,K3.A+' kg',cx+cw/2,fy-22,{align:'center',base:'middle',size:11,bold:true,col:'#fff'});
+      if(t<T1)arrow(g,cx+cw+4,fy-44,cx+cw+30+K3.B*10,fy-44,C.ke,2.4);
+      text(g,'v＝'+K3.B+' m/s',cx+cw/2,fy-50,{align:'center',size:12,col:C.ke});}
+    else{ // 彈簧
+      const wallX=40,rest=bx0-wallX,comp=t<T1?K3.A*pxPerCm*Math.max(2,2)*(1-Math.min(1,Math.max(0,(t-0.4)/(T1-0.4)))):0;
+      const cAmt=K3.A*pxPerCm*2.5*(K3.ph==='ready'?1:t<0.4?1:t<T1?1-(t-.4)/(T1-.4):0);
+      g.fillStyle=C.muted;g.fillRect(wallX-12,fy-60,12,60);
+      const end=bx0-cAmt;const N=14;g.strokeStyle=C.us;g.lineWidth=2.4;g.beginPath();g.moveTo(wallX,fy-15);
+      for(let i=1;i<=N;i++){const x=wallX+(end-wallX)*i/N;g.lineTo(x-(end-wallX)/N/2,fy-15+(i%2?-9:9));g.lineTo(x,fy-15);}g.stroke();
+      if(cAmt>0){g.fillStyle=C.wood;g.strokeStyle=C.wood2;g.beginPath();g.roundRect(end,fy-30,48,30,3);g.fill();g.stroke();text(g,'木塊',end+24,fy-15,{align:'center',base:'middle',size:11,col:'#3a2a12',bold:true});
+        text(g,'壓縮 '+K3.A+' cm',end-30,fy-64,{align:'center',size:12,col:C.us,bold:true});handle(g,end+48,fy-15,7);}
+    }
+  } else { // 重力位能：鋼球打木樁
+    const cx=W*0.45,gy=fy,pxm=Math.min(110,(H-120)/2.1);const h=K3.B;
+    g.fillStyle=C.wood;g.fillRect(cx-70,gy,140,H-gy);line(g,cx-70,gy,cx+70,gy,C.wood2,2);
+    const T1=Math.sqrt(2*h/G)*0.9+0.15,depth=dcm*Math.min(1,Math.max(0,(t-T1)/0.25));
+    const pxcm=Math.min(4,50/Math.max(dcm,1));// 木樁
+    const pegTop=gy-40+depth*pxcm;g.fillStyle=C.steel;g.fillRect(cx-6,pegTop,12,60);g.fillStyle=C.ink;g.fillRect(cx-12,pegTop-6,24,6);
+    const by0=pegTop-6-h*pxm,ft=Math.max(0,t-0.15),yb=t<T1?by0+Math.min(h*pxm,0.5*G*ft*ft*pxm/0.81):pegTop-6;
+    const r=8+K3.A*7;g.fillStyle=C.steel;g.strokeStyle=C.ink;g.lineWidth=1.5;g.beginPath();g.arc(cx,yb-r,r,0,TAU);g.fill();g.stroke();
+    if(K3.ph==='ready'){line(g,cx+50,by0,cx+50,pegTop-6,C.ug,1.5);text(g,'h＝'+h+' m',cx+56,(by0+pegTop)/2,{col:C.ug,size:12,bold:true});}
+    text(g,'木樁打入 '+nf(depth,1)+' cm',cx+80,gy+24,{size:13,bold:true,col:C.accent});
+  }
+  const mm=m==='ke'?'動能 K ＝ ½mv² ＝ ½ × '+K3.A+' × '+K3.B+'² ＝ ':m==='ug'?'重力位能 U ＝ mgh ＝ '+K3.A+' × '+G+' × '+K3.B+' ＝ ':'彈力位能 ＝ ½kx² ＝ ½ × '+K3.B+' × '+(K3.A/100)+'² ＝ ';
+  $('kFormula').innerHTML=(LV==='sh'||m!=='us'?mm+J(E):'壓縮量愈大，彈簧儲存的彈力位能愈大：這次約 '+J(E))+'<br>能量全部用來克服阻力：滑行（打入）距離 ∝ 能量';
+  $('kHint').textContent=m==='ke'?'小車撞上木塊後，木塊受固定的摩擦力滑行；滑得愈遠，表示小車原本的動能愈大。':m==='ug'?'鋼球從高處落下打木樁；木樁打得愈深，表示鋼球原本的重力位能愈大。':'壓縮彈簧後放手，彈簧把木塊推出去；木塊滑得愈遠，表示彈簧儲存的彈力位能愈大。';
+  kRecDraw();};
+function kRecDraw(){const R=K3.rec[K3.mode],d=KDEF[K3.mode];
+  $('kTable').innerHTML=`<tr><th>#</th><th>${d.Al}</th><th>${d.Bl}</th><th>${K3.mode==='ug'?'打入深度':'滑行距離'}</th></tr>`+(R.length?R.map((r,i)=>`<tr><td>${i+1}</td><td>${r.A} ${d.A[4]}</td><td>${r.B} ${d.B[4]}</td><td>${nf(r.d,1)} cm</td></tr>`).join(''):`<tr><td colspan="4" style="font-family:var(--f-body)">按「＋ 記錄這一次」把結果加進表格。只改一個變因，看看距離怎麼變。</td></tr>`);
+  const cv=$('cvKG'),{W,H}=fit(cv,.6,180,260),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  // 判斷變的是哪一個
+  let key='B';if(R.length>1){const As=new Set(R.map(r=>r.A)),Bs=new Set(R.map(r=>r.B));key=As.size>Bs.size?'A':'B';}
+  const xs=R.map(r=>r[key]),ys=R.map(r=>r.d);const xmax=Math.max(...(key==='A'?[d.A[1]]:[d.B[1]])),ymax=Math.max(10,...ys)*1.15;
+  const l=44,r=12,t=10,b=30,gw=W-l-r,gh=H-t-b,X=v=>l+v/xmax*gw,Y=v=>t+gh-v/ymax*gh;
+  line(g,l,t+gh,W-r,t+gh,C.muted,1);line(g,l,t,l,t+gh,C.muted,1);
+  text(g,(key==='A'?d.Al:d.Bl)+'（'+(key==='A'?d.A[4]:d.B[4])+'）',W-r,H-6,{col:C.muted,size:11,align:'right'});text(g,'距離（cm）',l+4,t+10,{col:C.muted,size:11});
+  for(let i=0;i<=4;i++){text(g,nf(xmax*i/4,1),X(xmax*i/4),t+gh+14,{col:C.muted,size:10,align:'center',mono:true});text(g,nf(ymax*i/4,0),l-4,Y(ymax*i/4)+4,{col:C.muted,size:10,align:'right',mono:true});}
+  R.forEach((p,i)=>{g.fillStyle=C.accent;g.beginPath();g.arc(X(p[key]),Y(p.d),5,0,TAU);g.fill();});
+  // 理論曲線（固定另一個變因為最後一筆）
+  if(R.length>1){const last=R[R.length-1];g.strokeStyle=C.muted;g.setLineDash([4,4]);g.lineWidth=1.2;g.beginPath();
+    for(let i=0;i<=60;i++){const v=xmax*i/60;const s={A:last.A,B:last.B};s[key]=v;const sv=K3.A,sb=K3.B;K3.A=s.A;K3.B=s.B;const dd=kD();K3.A=sv;K3.B=sb;i?g.lineTo(X(v),Y(dd)):g.moveTo(X(v),Y(dd));}g.stroke();g.setLineDash([]);}
+  const cap={ke:{A:'質量變 2 倍 → 距離變 2 倍（正比）',B:'速率變 2 倍 → 距離變 4 倍（與速率平方成正比）'},ug:{A:'質量變 2 倍 → 深度變 2 倍',B:'高度變 2 倍 → 深度變 2 倍'},us:{A:'壓縮量變 2 倍 → 距離變 4 倍',B:'k 變 2 倍 → 距離變 2 倍'}}[K3.mode][key];
+  $('kGcap').textContent=R.length>1?'橫軸是改變的變因':'';
+  $('kSay').textContent=R.length>1?cap:'記錄兩次以上（只改一個變因），就能看出關係。';}
+UI.ke=()=>{};
+kSetMode('ke');
+
+// ======================================================================
+// 4 力學能守恆
+// ======================================================================
+const C4={track:'pend',m:1,mu:0,v0:10,k:50,s0:0,s:0,v:0,t:0,run:false,Q:0,zero:0,hist:[],ts:1,marks:null,E0:0};
+const TRK={
+  pend:{L:2,amax:80,label:'單擺：擺長 2 m'},
+  bowl:{label:'光滑軌道'},
+  ramp:{label:'斜面滑下'},
+  throw:{label:'鉛直上拋'},
+  spring:{label:'彈簧'}};
+// 軌道：回傳 {pts:[[x,y]], s:[], len}；以公尺為單位
+function buildTrack(name){const P=[];
+  if(name==='pend'){const L=TRK.pend.L;for(let a=-80;a<=80;a+=1){const r=a*D2R;P.push([L*Math.sin(r),L-L*Math.cos(r)]);}}
+  else if(name==='bowl'){for(let x=-6;x<=6;x+=0.05){P.push([x,x<0?5*(x/6)**2:4*(x/6)**2]);}}
+  else if(name==='ramp'){const H=3,Lr=5;for(let x=-Lr;x<=8;x+=0.05){P.push([x,x<0?-H*x/Lr:0]);}}
+  else if(name==='throw'){for(let y=0;y<=60;y+=0.05)P.push([0,y]);}
+  else if(name==='spring'){for(let x=-1.2;x<=1.2;x+=0.01)P.push([x,0]);}
+  const S=[0];for(let i=1;i<P.length;i++)S.push(S[i-1]+Math.hypot(P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]));return{pts:P,S,len:S[S.length-1]};}
+let TR=buildTrack('pend');
+function at(s){const S=TR.S,P=TR.pts;s=clamp(s,0,TR.len);let lo=0,hi=S.length-1;while(hi-lo>1){const md=(lo+hi)>>1;if(S[md]>s)hi=md;else lo=md;}
+  const f=(s-S[lo])/((S[hi]-S[lo])||1);const x=P[lo][0]+(P[hi][0]-P[lo][0])*f,y=P[lo][1]+(P[hi][1]-P[lo][1])*f;
+  const ds=(S[hi]-S[lo])||1;return{x,y,tx:(P[hi][0]-P[lo][0])/ds,ty:(P[hi][1]-P[lo][1])/ds};}
+function sNear(x,y){let b=0,bd=1e9;TR.pts.forEach((p,i)=>{const d=Math.hypot(p[0]-x,p[1]-y);if(d<bd){bd=d;b=i;}});return TR.S[b];}
+function cDefaults(){const n=C4.track;
+  if(n==='pend'){C4.s0=sNear(...(()=>{const r=-40*D2R;return[2*Math.sin(r),2-2*Math.cos(r)];})());}
+  else if(n==='bowl')C4.s0=0.0001;
+  else if(n==='ramp')C4.s0=0;
+  else if(n==='throw')C4.s0=0;
+  else if(n==='spring')C4.s0=sNear(0.6,0);
+  C4.marks=null;}
+function cU(){const p=at(C4.s);return C4.m*G*(p.y-C4.zero);}
+function cUs(){if(C4.track!=='spring')return 0;const x=at(C4.s).x;return .5*C4.k*x*x;}
+function cK(){return .5*C4.m*C4.v*C4.v;}
+function cReset(){C4.s=C4.s0;C4.v=C4.track==='throw'?C4.v0:0;C4.t=0;C4.Q=0;C4.run=false;C4.hist=[];C4.E0=cK()+cU()+cUs();$('cPlay').textContent='▶ 放手';cRec();}
+function cRec(){C4.hist.push([C4.t,cK(),cU(),cUs(),C4.Q]);if(C4.hist.length>2000)C4.hist.shift();}
+function cStep(dt){const n=C4.track;const p=at(C4.s);
+  let a;
+  if(n==='spring'){const x=p.x;a=-C4.k/C4.m*x;}
+  else a=-G*p.ty;
+  // 摩擦（軌道：μ g × 法向分量；單擺與上拋：空氣阻力 ∝ v）
+  let fr=0;
+  if(C4.mu>0){if(n==='pend'||n==='throw')fr=C4.mu*0.6*Math.abs(C4.v)*1.0;else fr=C4.mu*G*Math.abs(p.tx||0)+ (n==='spring'?C4.mu*G:0);}
+  if(n==='spring')fr=C4.mu*G;
+  let v1=C4.v+a*dt;
+  if(fr>0){const dv=fr*dt;if(Math.abs(v1)<=dv&&Math.abs(a)<=fr){v1=0;}else v1-=Math.sign(v1||a)*dv;}
+  const ds=(C4.v+v1)/2*dt;const sNew=C4.s+ds;
+  if(sNew<=0||sNew>=TR.len){C4.v=0;C4.s=clamp(sNew,0,TR.len);return;}
+  C4.Q+=fr*C4.m*Math.abs(ds);
+  C4.s=sNew;C4.v=v1;C4.t+=dt;
+  // 數值修正：無摩擦時把總能量拉回（保持守恆）
+  if(C4.mu===0&&n!=='spring'){const Kt=C4.E0-cU()-cUs();if(Kt>=0){const sp=Math.sqrt(2*Kt/C4.m);C4.v=Math.sign(C4.v||1)*sp;}}}
+TICK.cons=dt=>{if(!C4.run)return false;const T=dt*C4.ts,n=40;for(let i=0;i<n;i++)cStep(T/n);cRec();
+  if(C4.track==='throw'&&C4.s<=0.0001&&C4.t>0.1){C4.run=false;$('cPlay').textContent='▶ 再一次';}
+  if(C4.mu>0&&Math.abs(C4.v)<1e-3&&C4.t>0.5){const p=at(C4.s);const still=C4.track==='spring'?Math.abs(C4.k*p.x)<=C4.mu*G*C4.m+1e-6:Math.abs(G*p.ty)<=C4.mu*G*Math.abs(p.tx)+1e-6||C4.track==='pend'&&Math.abs(p.x)<0.01;if(still){C4.run=false;$('cPlay').textContent='▶ 再一次';}}
+  if(C4.t>120){C4.run=false;}
+  return C4.run;};
+$('cPlay').addEventListener('click',()=>{if(C4.run){C4.run=false;$('cPlay').textContent='▶ 繼續';return;}if(!C4.run&&C4.t===0)cReset();C4.run=true;$('cPlay').textContent='❚❚ 暫停';kick();});
+$('cReset').addEventListener('click',()=>{cReset();kick();});
+$('cStep').addEventListener('click',()=>{C4.run=false;$('cPlay').textContent='▶ 繼續';for(let i=0;i<40;i++)cStep(0.1/40);cRec();kick();});
+segOn($('cTs'),v=>{C4.ts=+v;segSet($('cTs'),v);});
+function cSetTrack(n){C4.track=n;segSet($('cTrack'),n);TR=buildTrack(n);cDefaults();C4.zero=0;
+  $('cV0w').hidden=n!=='throw';$('cKw').hidden=n!=='spring';$('cLegUs').hidden=n!=='spring';cReset();}
+segOn($('cTrack'),v=>{hideStory();cSetTrack(v);kick();});
+const setCM=sliderBind('cM',v=>{C4.m=v;cReset();},v=>v+' kg');
+const setCMu=sliderBind('cMu',v=>{C4.mu=v;cReset();},v=>v===0?'無':v.toFixed(2));
+const setCV0=sliderBind('cV0',v=>{C4.v0=v;cReset();},v=>v+' m/s');
+const setCK=sliderBind('cK',v=>{C4.k=v;cReset();},v=>v+' N/m');
+let cGeo=null;
+DRAW.cons=()=>{const cv=$('cvCons'),nar=cv.clientWidth<600,{W,H}=fit(cv,nar?1.15:.5,nar?380:280,nar?560:460),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const n=C4.track,barW=nar?W-20:Math.min(230,W*.3),sceneW=nar?W:W-barW-20,SH=nar?H-170:H;
+  // 世界範圍
+  let xs=TR.pts.map(p=>p[0]),ys=TR.pts.map(p=>p[1]);let x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys,C4.zero),y1=Math.max(...ys);
+  if(n==='throw'){y1=Math.max(4,C4.v0**2/(2*G)*1.1);x0=-2;x1=2;}
+  if(n==='spring'){y0=-0.4;y1=0.6;}
+  if(n==='pend'){y1=2.3;}
+  const pad=36,k=Math.min((sceneW-2*pad)/Math.max(x1-x0,.1),(SH-2*pad-10)/Math.max(y1-y0,.1));
+  const ox=pad+(sceneW-2*pad-(x1-x0)*k)/2-x0*k,oy=SH-pad-(-y0)*k;
+  const X=x=>ox+x*k,Y=y=>oy-y*k;
+  // 地面
+  g.fillStyle=C.floor;g.fillRect(0,Y(Math.min(0,y0))+(n==='spring'?12:0),sceneW,Math.max(0,SH-Y(Math.min(0,y0))-(n==='spring'?12:0)));
+  // 軌道
+  if(n==='pend'){const L=TRK.pend.L;const px=X(0),py=Y(L);g.fillStyle=C.muted;g.fillRect(px-40,py-6,80,6);
+    const b=at(C4.s);line(g,px,py,X(b.x),Y(b.y),C.ink,1.5);
+    g.strokeStyle=C.line;g.setLineDash([3,4]);g.lineWidth=1;g.beginPath();TR.pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();g.setLineDash([]);}
+  else if(n==='throw'){line(g,X(0),Y(0),X(0),Y(y1),C.line,1,[3,4]);for(let h=0;h<=y1;h+=y1>12?5:2){line(g,X(0)+30,Y(h),X(0)+38,Y(h),C.muted,1);text(g,h+' m',X(0)+42,Y(h)+4,{size:10,col:C.muted,mono:true});}}
+  else if(n==='spring'){const wy=Y(0);g.fillStyle=C.muted;g.fillRect(X(-1.2)-14,wy-60,14,60);const bx=X(at(C4.s).x);const N=16;
+    g.strokeStyle=C.us;g.lineWidth=2.4;g.beginPath();g.moveTo(X(-1.2),wy-20);for(let i=1;i<=N;i++){const x=X(-1.2)+(bx-24-X(-1.2))*i/N;g.lineTo(x-(bx-24-X(-1.2))/N/2,wy-20+(i%2?-10:10));g.lineTo(x,wy-20);}g.stroke();
+    line(g,X(0),wy+4,X(0),wy+16,C.muted,1.5);text(g,'O（原長）',X(0),wy+28,{size:11,align:'center',col:C.muted});}
+  else{g.strokeStyle=C.ink;g.lineWidth=3;g.beginPath();TR.pts.forEach((p,i)=>i?g.lineTo(X(p[0]),Y(p[1])):g.moveTo(X(p[0]),Y(p[1])));g.stroke();}
+  // 標記點
+  (C4.marks||[]).forEach(mk=>{const p=at(sNear(mk[1],mk[2]));g.fillStyle=C.ink;g.beginPath();g.arc(X(p.x),Y(p.y),3.5,0,TAU);g.fill();text(g,mk[0],X(p.x)+(mk[3]||0),Y(p.y)-10,{size:13,bold:true,align:'center'});});
+  // 零位能線
+  if(n!=='spring'){const zy=Y(C4.zero);line(g,0,zy,sceneW,zy,C.ug,1.2,[6,5]);text(g,'重力位能＝0',6,zy-5,{size:11,col:C.ug});if(LV==='sh')handle(g,sceneW-14,zy,7);}
+  // 球
+  const b=at(C4.s),bxp=n==='spring'?X(b.x):X(b.x),byp=n==='spring'?Y(0)-20:Y(b.y);
+  if(n==='spring'){g.fillStyle=C.wood;g.strokeStyle=C.wood2;g.lineWidth=2;g.beginPath();g.roundRect(bxp-24,byp-20,48,40,4);g.fill();g.stroke();handle(g,bxp,byp,8);}
+  else{const r=10+C4.m*2;g.fillStyle=C.accent;g.beginPath();g.arc(bxp,byp-(n==='pend'?0:r),r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();
+    // 速度箭頭
+    if(Math.abs(C4.v)>0.05){const sc=Math.min(60,6*Math.abs(C4.v))*Math.sign(C4.v);arrow(g,bxp,byp-(n==='pend'?0:r),bxp+b.tx*sc,byp-(n==='pend'?0:r)-b.ty*sc,C.ke,2);}}
+  // 高度標示
+  if(n!=='spring'&&n!=='pend'||n==='pend'){const hz=b.y-C4.zero;if(Math.abs(hz)>0.02){line(g,bxp+26,Y(C4.zero),bxp+26,byp,C.ug,1.2);text(g,'h＝'+nf(hz,2)+' m',bxp+30,(Y(C4.zero)+byp)/2,{size:11,col:C.ug,mono:true});}}
+  cGeo={X,Y,k,ox,oy};
+  // 能量長條
+  const K=cK(),U=cU(),Us=cUs(),Q=C4.Q,tot=K+U+Us+Q;const bx0=nar?10:sceneW+20,bw=barW-10,top=nar?SH+26:30,bot=H-36;
+  const mx=Math.max(Math.abs(C4.E0)+1e-6,K+Math.max(U,0)+Us+Q,1e-6)*1.08,mn=Math.min(0,U);const span=mx-mn;
+  const Yb=e=>bot-(e-mn)/span*(bot-top);
+  line(g,bx0,Yb(0),bx0+bw,Yb(0),C.muted,1);
+  const bars=[['動能',K,C.ke],['重力位能',U,C.ug]].concat(n==='spring'?[['彈力位能',Us,C.us]]:[]).concat([['熱能',Q,C.heat],['總和',tot,C.tot]]);
+  const cw=bw/bars.length;
+  bars.forEach(([nm,e,c],i)=>{const x=bx0+i*cw+cw*.18,w=cw*.64;g.fillStyle=c;const y1=Yb(Math.max(e,0)),y2=Yb(Math.min(e,0));g.fillRect(x,y1,w,Math.max(1,y2-y1));
+    text(g,nm,x+w/2,bot+14,{size:10.5,align:'center',col:C.muted});text(g,nf(e,e>=100?0:1),x+w/2,y1-4,{size:10,align:'center',mono:true,col:c});});
+  text(g,'能量（J）',bx0,top-12,{size:12,col:C.muted});
+  cNowPanel();drawCG();};
+dragger($('cvCons'),()=>{if(!cGeo)return[];const L=[];const b=at(C4.s);const n=C4.track;
+  const r=10+C4.m*2;const bx=cGeo.X(b.x),by=n==='spring'?cGeo.Y(0)-20:cGeo.Y(b.y)-(n==='pend'?0:r);
+  if(n!=='throw')L.push({x:bx,y:by,r:30,move(x,y){C4.run=false;const wx=(x-cGeo.ox)/cGeo.k,wy=(cGeo.oy-y)/cGeo.k;let s=n==='spring'?sNear(clamp(wx,-1,1),0):sNear(wx,wy);
+    if(n==='pend'){const p=at(s);}C4.s0=s;C4.marks=C4.marks;cReset();hideStory();}});
+  if(n!=='spring'&&LV==='sh'){const zy=cGeo.Y(C4.zero);const cw0=$('cvCons').clientWidth;L.push({x:cw0<600?cw0-14:cw0-Math.min(230,cw0*.3)-20-14,y:zy,r:22,move(x,y){C4.zero=Math.round(((cGeo.oy-y)/cGeo.k)*2)/2;cReset();}});}
+  return L;},kick);
+function cNowPanel(){const p=at(C4.s);const K=cK(),U=cU(),Us=cUs();
+  $('cNow').innerHTML=[['高度（離零位能線）',nf(p.y-C4.zero,2)+' m'],['速率',nf(Math.abs(C4.v),2)+' m/s'],['動能 ½mv²',J(K)],['重力位能 mgh',J(U)]].concat(C4.track==='spring'?[['彈力位能 ½kx²',J(Us)],['伸長量 x',nf(p.x*100,1)+' cm']]:[]).concat([['熱能',J(C4.Q)],['力學能',J(K+U+Us)],['總能量',J(K+U+Us+C4.Q)]]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
+  let say='';const n=C4.track;
+  if(C4.mu===0)say=n==='spring'?'沒有摩擦：動能和彈力位能互相轉換，力學能維持不變。物體經過 O 點（原長）時動能最大；在兩端速度為 0，彈力位能最大。':
+    n==='throw'?'上升時動能減少、重力位能增加；到最高點速度為 0，動能全部變成位能（最高點 ＝ v₀²／2g）。下落時再換回來，回到手中速率和拋出時一樣。':
+    '沒有摩擦：位能減少多少，動能就增加多少，兩者的和（力學能）不變。最低點速率最大；回到和起點一樣高的地方時速度為 0。';
+  else say='有摩擦（或空氣阻力）：每經過一段距離就有一部分力學能變成熱能，所以擺動愈來愈低、最後停下來。但「動能＋位能＋熱能」的總和仍然不變——這就是能量守恆。';
+  if(LV==='sh'&&C4.zero!==0)say+=' 零位能線改了，每一點的重力位能都差一個定值，但位能的「變化量」不變，所以結果一樣。';
+  $('cSay').textContent=say;}
+function drawCG(){const cv=$('cvCG'),{W,H}=fit(cv,.45,160,230),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const h=C4.hist;if(h.length<2)return;const t1=Math.max(5,h[h.length-1][0]),t0=Math.max(0,t1-12);
+  const vals=h.map(r=>[r[1],r[2],r[3],r[4],r[1]+r[2]+r[3]+r[4]]);let mx=1e-6,mn=0;vals.forEach(v=>v.forEach(e=>{mx=Math.max(mx,e);mn=Math.min(mn,e);}));mx*=1.08;
+  const l=40,r=8,t=8,b=22,gw=W-l-r,gh=H-t-b,X=x=>l+(x-t0)/(t1-t0)*gw,Y=e=>t+gh-(e-mn)/(mx-mn)*gh;
+  line(g,l,Y(0),W-r,Y(0),C.muted,1);line(g,l,t,l,t+gh,C.muted,1);
+  for(let i=0;i<=3;i++){const e=mn+(mx-mn)*i/3;text(g,nf(e,e>=100?0:1),l-4,Y(e)+4,{size:10,align:'right',mono:true,col:C.muted});}
+  text(g,nf(t0,0)+' s',l,H-4,{size:10,col:C.muted,mono:true});text(g,nf(t1,1)+' s',W-r,H-4,{size:10,col:C.muted,mono:true,align:'right'});
+  [[0,C.ke],[1,C.ug],[2,C.us],[3,C.heat],[4,C.tot]].forEach(([j,c])=>{if(j===2&&C4.track!=='spring')return;g.strokeStyle=c;g.lineWidth=j===4?2.4:1.8;g.beginPath();let st=false;
+    h.forEach((row,i)=>{if(row[0]<t0)return;const x=X(row[0]),y=Y(vals[i][j]);st?g.lineTo(x,y):g.moveTo(x,y);st=true;});g.stroke();});}
+UI.cons=()=>{};
+cSetTrack('pend');
+
+// ======================================================================
+// 題目情境
+// ======================================================================
+const QG=[
+ {h:'作功（翰林自然(5) 3-1）',q:[
+  {t:'作功為零的三種情形',pg:'p.79',go(){wSet({F:10,th:90,m:1,al:0,mu:0,v0:1,L:10});},p:'表格三種情形：①光滑面上等速運動：合力為 0，不作功。②推牆不動：有力沒有位移，不作功（勾「前面有牆」試試）。③提著東西水平走：力向上、位移水平，兩者垂直，不作功。畫面是第③種：施力 10 N 向上，物體等速前進，施力作的功一直是 0。'},
+  {t:'範例 1 小娟背書包',pg:'p.80',go(){wSet({F:10,th:90,m:10/G,al:0,mu:0,v0:1,L:10});},p:'書包重 10 N。\n(1) 等速走到公車站：手的力向上、位移水平，作功 0 J。\n(2) 等速走上 1 公尺高的公車：W ＝ 10 × 1 ＝ 10 J。\n(3) 走下公車，下降 1 公尺：力向上、位移向下，W ＝ −10 J。\n畫面是 (1)；把斜面角度拉到 90°（鉛直），就是 (2) 的上升部分。'},
+  {t:'範例 2 水平力與摩擦力',pg:'p.80',go(){wSet({F:10,th:0,m:5,al:0,mu:4/(5*G),v0:0,L:2});},p:'5 kg 物體受 10 N 水平力，移動 2 m，摩擦力 4 N。\n(1) 水平外力作功 ＝ 10 × 2 ＝ 20 J。\n(2) 摩擦力作功 ＝ −4 × 2 ＝ −8 J。\n(3) 合力作功 ＝ 20 − 8 ＝ 12 J，也就是動能增加 12 J。按「開始」核對。'},
+  {t:'試題 1 大明推行李又搬上樓',pg:'p.81',go(){wSet({F:20,th:0,m:2,al:0,mu:0,v0:0,L:4});},p:'光滑平面上 20 N 推 4 m：20 × 4 ＝ 80 J；再用 10 N 向上的力把行李搬到 2 m 高的二樓：10 × 2 ＝ 20 J。全程共 100 J，答案 (C)。畫面是第一段。'},
+  {t:'斜面等速上推（題組 7～9）',pg:'p.89',go(){wSet({F:20,th:0,m:30/G,al:37,mu:(20-18)/(24),v0:0.5,L:5});},p:'斜面長 5 m、高 3 m，沿斜面施 20 N 把重 30 N 的物體等速推上去。\n7. 施力作功 ＝ 20 × 5 ＝ 100 J (C)。\n8. 重力位能增加 30 × 3 ＝ 90 J，等速所以動能不變，剩下 100 − 90 ＝ 10 J 是摩擦生熱 (A)。\n9. 動能增加 0 J (A)。\n畫面用 37°（高 3、長 5）並設定摩擦讓物體等速。'},
+  {t:'單擺：重力與繩張力作功',pg:'p.82 #9',go(){goCons('pend',{});},p:'擺錘下降時，重力和位移的方向夾銳角，重力作正功；繩的張力永遠和運動方向垂直，不作功。答案 (A)。到實驗台 4 看單擺。'},
+  {t:'向上 114-1-2 第 3 題（提重物上樓再下樓）',go(){wSet({F:10,th:0,m:10/G,al:90,mu:0,v0:0.5,L:10});},p:'以 10 N 向上提重物爬到 10 m 高：作功 ＋100 J；再下樓回原地：力向上、位移向下，作功 −100 J。總位移為 0，總功 ＝ 0 J，答案 (A)。'},
+ ]},
+ {h:'功率（翰林自然(5) 3-1）',q:[
+  {t:'範例 3 提 20 kgw 上二樓',pg:'p.80',go(){pSet([[20,3,5],[20,3,10]],false);},p:'20 kgw ＝ 200 N（1 kgw＝10 N），沿 6 m 斜面上到 3 m 高的二樓。\n(1) 作功 ＝ 200 × 3 ＝ 600 J（只看高度，和走哪條路無關）。\n(2) 費時 2 分鐘 ＝ 120 秒，平均功率 ＝ 600 ÷ 120 ＝ 5 W。\n畫面甲是 5 W（g 請選 10），乙是 10 W 對照。'},
+  {t:'範例 4 起重機 500 W 吊 1000 kg',pg:'p.80',go(){pSet([[1000,30,500]],false);},p:'W ＝ mgh ＝ 1000 × 9.8 × 30 ＝ 294000 J，t ＝ W ÷ P ＝ 294000 ÷ 500 ＝ 588 秒。'},
+  {t:'隨堂 2 三次搬磚：誰作功多、誰功率大',pg:'p.81',go(){pSet([[20,10,20*G*10/10],[20,10,20*G*10/15],[20,10,20*G*10/20]],true);},p:'同樣的磚塊搬到同樣的高度，三次作的功一樣多 (D)。所用時間 10 秒最短，第一次功率最大 (A)。\n「老師的話」：作功大小與路徑、方法、時間無關；甲起重機功率是乙的 2 倍，時間只要一半，但兩者作的功一樣。'},
+  {t:'向上 114-1-2 第 25 題（20 kW 吊 2 公噸汽車）',go(){$('gSeg').querySelector('[data-v="10"]').click();pSet([[2000,60,20000]],false);},p:'等速吊升：P ＝ F × v ＝ mg × v。20000 ＝ 2000 × 10 × v，v ＝ 1 m/s，答案 (A)。耗時 1 分鐘，所以懸崖高 60 m。'},
+ ]},
+ {h:'動能與位能（翰林自然(5) 3-2、3-3）',q:[
+  {t:'動能和質量、速率的關係',pg:'p.85',go(){goKE('ke',1,2);},p:'先固定質量、改變速率記錄幾次，再固定速率、改變質量記錄幾次。速率加倍，木塊滑行距離變成 4 倍；質量加倍，距離變成 2 倍：K ＝ ½mv²。'},
+  {t:'範例 1 子彈穿木板',pg:'p.86',go(){goKE('ke',1,2);},p:'子彈動能由 80 J 降為 45 J，摩擦力對子彈作功 ＝ 動能變化 ＝ 45 − 80 ＝ −35 J。'},
+  {t:'範例 2 40 N 推 10 kg 物體 10 秒',pg:'p.86',go(){wSet({F:40,th:0,m:10,al:0,mu:0,v0:0,L:200});},p:'a ＝ 40 ÷ 10 ＝ 4 m/s²，10 秒後 v ＝ 40 m/s，K ＝ ½ × 10 × 40² ＝ 8000 J。也可以用功算：10 秒走了 200 m，W ＝ 40 × 200 ＝ 8000 J。按「開始」看 t＝10 s 時的動能。'},
+  {t:'試題 3 甲 m、乙 4m 受相同力走相同距離',pg:'p.87',go(){wSet({F:20,th:0,m:4,al:0,mu:0,v0:0,L:5});},p:'F 和 S 都一樣，F 對兩物體作的功一樣，所以兩物體得到的動能也一樣，答案 (C)。質量大的速率比較小。改質量 1 kg、4 kg 各跑一次比較。'},
+  {t:'素養 3 第幾秒動能 720 J',pg:'p.88',go(){wSet({F:20,th:0,m:10,al:0,mu:0,v0:0,L:40});},p:'K ＝ 720 J ⇒ ½ × 10 × v² ＝ 720，v ＝ 12 m/s；a ＝ 20 ÷ 10 ＝ 2 m/s²，t ＝ 12 ÷ 2 ＝ 6 秒，答案 (B)。'},
+  {t:'素養 5 質量 1：3 受相同力 1 秒',pg:'p.88',go(){wSet({F:20,th:0,m:1,al:0,mu:0,v0:0,L:10});},p:'相同的力作用 1 秒：速度比 3：1（a ＝ F／m）。K ＝ ½mv²：1 × 3² ： 3 × 1² ＝ 9：3 ＝ 3：1，答案 (B)。'},
+  {t:'重力位能 mgh 與高度、質量',pg:'p.90',go(){goKE('ug',0.5,1);},p:'鋼球從愈高的地方落下、或質量愈大，木樁被打得愈深：U ＝ mgh。記錄幾次看看深度和高度是不是成正比。'},
+  {t:'彈力位能：壓縮愈多推得愈遠',pg:'p.90',go(){goKE('us',4,500);},p:'彈簧壓縮（或拉長）的形變量愈大，儲存的彈力位能愈大，木塊被推出後滑得愈遠。高中：彈力位能 ＝ ½kx²，壓縮量加倍，能量變 4 倍。'},
+  {t:'向上 114-1-2 第 4 題（摩擦力作功與減少的動能）',go(){wSet({F:0,th:0,m:2,al:0,mu:0.3,v0:4,L:30});},p:'物體只受摩擦力作用而停下：摩擦力作的（負）功 ＝ 動能的變化，所以摩擦力作功的大小等於減少的動能，答案 (B)。'},
+ ]},
+ {h:'力學能守恆（翰林自然(5) 3-3）',q:[
+  {t:'單擺的能量轉換',pg:'p.91 圖二',go(){goCons('pend',{});},p:'擺錘在最高點速率為 0，位能最大；最低點速率最大，動能最大。不計空氣阻力時，動能＋位能＝定值。把「摩擦／空氣阻力」拉大，看熱能長出來。'},
+  {t:'隨堂 1 #4、#5 彈簧甲乙丙三點',pg:'p.91',go(){goCons('spring',{marks:[['甲',-0.6,0],['乙',0,0],['丙',0.6,0]]});},p:'乙是原長位置。甲、丙的形變量一樣大，彈力位能 甲＝丙＞乙，答案 (C)。動能：乙最大，甲、丙速度為 0，乙＞甲＝丙，答案 (D)。'},
+  {t:'範例 1 光滑軌道 A→B→C',pg:'p.92',go(){goCons('bowl',{marks:[['A',-6,5],['B',0,0],['C',4.243,2]],m:0.2});},p:'200 g 小球由 A（5 m）靜止滑下。B 在最低點（高度 0），C 高 2 m。\n(1) K<sub>B</sub> ＝ mgh ＝ 0.2 × 9.8 × 5 ＝ 9.8 J。\n(2) K<sub>C</sub> ＝ 0.2 × 9.8 × (5 − 2) ＝ 5.88 J。\n畫面的 C 點標在高 2 m 的位置。'},
+  {t:'範例 2 單擺 100 g 甲比乙高 0.1 m',pg:'p.92',go(){goCons('pend',{m:0.1,deg:-18.2});},p:'以最低點乙為零位能。\n(1) 力學能守恆，在丙的力學能 ＝ 在甲的位能 ＝ 0.1 × 9.8 × 0.1 ＝ 0.098 J。\n(2) 在乙的動能 ＝ 0.098 J。\n畫面擺長 2 m，起點拉到高 0.1 m。'},
+  {t:'隨堂 2 上拋 300 J',pg:'p.92',go(){goCons('throw',{m:1.5,v0:20});},p:'不計空氣阻力，到最高點動能全部變成位能：300 J，答案 (C)。位能 200 J 時，動能 ＝ 300 − 200 ＝ 100 J，答案 (A)。畫面用 1.5 kg、初速 20 m/s，動能正好 300 J。'},
+  {t:'向上 114-1-2 第 5 題（羽毛球加速下墜）',go(){goCons('ramp',{});},p:'由高處加速往低處：高度降低，重力位能減少；速率增加，動能增加，答案 (A)。'},
+  {t:'向上 114-1-2 第 9 題（哪一句正確）',go(){goCons('ramp',{mu:0.15});},p:'(A) 還要看速率，質量大不一定動能大 ✗。(B) 等速下降，動能不變 ✗。(C) 同高度落下速率相同，但質量不同動能不同 ✗。(D) 棒球沿溜滑梯滑下動能增加，到平地受阻力，動能慢慢減少 ✓。答案 (D)。畫面：斜面滑下＋地面有摩擦。'},
+  {t:'向上 114-1-2 第 26、28 題（彈珠台）',go(){goCons('spring',{});},p:'26. 拉動彈簧：外力作功，儲存成彈力位能 (B)。\n28. 無摩擦由高處滑到低處：位能減少、動能增加 (D)。'},
+  {sh:1,t:'一中 112-1-3 第 4 題（等速上升，力學能變多少）',go(){wSet({F:5*G,th:0,m:5,al:90,mu:0,v0:0.5,L:4});},p:'施力等於重力，物體等速上升。施力作正功、重力作負功，合力作功為 0，所以動能不變；但重力位能增加，力學能增加（施力是「外力」，它作的功變成力學能）。答案 (D)。'},
+  {sh:1,t:'一中 111-1-3 第 7 題（傘兵減速下降 h）',go(){goCons('throw',{mu:0.2});},p:'阻力 F（向上）大於重力 mg，傘兵減速下降 h。\n重力作功 ＋mgh，重力位能減少 mgh (C ✓)。阻力作功 −Fh (B ✗)。合力作功 mgh − Fh (A ✗)。力學能減少 Fh（只看非保守力的功）(D ✗)。有阻力作功，力學能不守恆 (E ✗)。答案 (C)。'},
+  {sh:1,t:'一中 111-1-3 第 21 題（彈簧小球振幅快速減小）',go(){goCons('spring',{mu:0.25});},p:'振幅快速變小，表示有阻力，系統力學能減少 (B ✗)。動能時大時小 (A ✗)；彈力位能隨伸長量改變 (C ✗)。小球向上運動時，彈簧可能拉它（作正功）也可能推它（作負功），小球自己的力學能可能減小 (D ✓)。彈力位能只由伸長量決定，同一位置就相等 (E ✓)。答案 DE。'},
+ ]},
+];
+function wSet(o){setBench('work');Object.assign(W1,o);setF(W1.F);setTh(W1.th);setM(+W1.m.toFixed(2));setA(W1.al);setMu(+W1.mu.toFixed(2));setV0(W1.v0);setL(W1.L);
+  if(LV==='jh'&&![0,90,180].includes(W1.th))setLV('sh');$('wWall').checked=W1.wall=false;wReset();}
+function pSet(arr,three){setBench('power');P2.three=three;arr.forEach((a,i)=>{Object.assign(P2.lanes[i],{m:a[0],H:a[1],P:a[2]});});P2.pick=0;pSync();pReset();}
+function goKE(m,A,B){setBench('ke');kSetMode(m);K3.A=A;K3.B=B;setKA(A);setKB(B);kReset();}
+function goCons(tr,o){setBench('cons');cSetTrack(tr);if(o.m){C4.m=o.m;setCM(o.m);}C4.mu=o.mu||0;setCMu(C4.mu);if(o.v0){C4.v0=o.v0;setCV0(o.v0);}
+  if(o.deg!=null){const r=o.deg*D2R;C4.s0=sNear(2*Math.sin(r),2-2*Math.cos(r));}
+  if(o.marks)C4.marks=o.marks;cReset();}
+function buildQ(){const box=$('qbox');box.innerHTML='';QG.forEach(gp=>{const qs=gp.q.filter(q=>!(q.sh&&LV==='jh'));if(!qs.length)return;
+  const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gp.h}</h4>`;const w=document.createElement('div');w.className='qchips';
+  qs.forEach(q=>{const b=document.createElement('button');b.className='qchip'+(q.sh?' sh':'');b.type='button';b.setAttribute('aria-pressed','false');b.innerHTML=q.t+(q.pg?`<span class="pg">${q.pg}</span>`:'');
+    b.onclick=()=>{q.go();document.querySelectorAll('.qchip').forEach(c=>c.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');showStory(q.t+(q.pg?'（'+q.pg+'）':''),q.p);kick();};w.appendChild(b);});
+  d.appendChild(w);box.appendChild(d);});}
+
+setLV(LV);
+setBench((location.hash||'').slice(1),true);
+</script>
+</body>
+</html>
