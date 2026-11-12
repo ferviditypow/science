@@ -1,0 +1,732 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>發力地圖</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 版面：手機 app 結構。上方 3D 展示台，下方白色資訊卡片，底部分頁列 */
+  --bg:#f1f2ef; --card:#ffffff; --card2:#f0f2ef; --ink:#1d2127; --muted:#666c75; --line:#dfe2de;
+  --accent:#0f8a7a; --accent-ink:#ffffff; --hot:#d9412b; --warm:#f08a4b;
+  --warn:#c9790c; --bad:#c62f25; --good:#2f8a45;
+  --stage:#f6f6f3;
+  --display:"Barlow Condensed","Noto Sans TC",system-ui,sans-serif;
+  --body:"Noto Sans TC",system-ui,-apple-system,"PingFang TC","Microsoft JhengHei",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.6}
+.app{max-width:760px;margin:0 auto;padding-bottom:76px}
+.view{display:none}.view.on{display:block}
+.top{display:flex;align-items:center;gap:10px;padding:12px 16px}
+.top h1{font-family:var(--display);font-size:26px;font-weight:600;margin:0;letter-spacing:.5px}
+.top .sub{color:var(--muted);font-size:13px}
+.back{font:inherit;background:none;border:0;color:var(--ink);font-size:22px;cursor:pointer;padding:2px 8px;border-radius:8px}
+.stageWrap{position:relative;background:var(--stage);border-radius:0 0 18px 18px;overflow:hidden;border-bottom:1px solid var(--line)}
+#gl{display:block;width:100%;height:420px;touch-action:none;cursor:grab}
+.stageBtns{position:absolute;right:10px;top:10px;display:flex;flex-direction:column;gap:6px}
+.pill{font:inherit;font-size:13px;border:0;border-radius:999px;padding:5px 12px;background:#1c1d21;color:#fff;cursor:pointer}
+.pill.ghost{background:rgba(28,29,33,.08);color:#2a2c31}
+.pill.ghost.on{background:#1c1d21;color:#fff}
+.stageBar{position:absolute;left:10px;right:10px;bottom:8px;display:flex;align-items:center;gap:8px}
+.stageBar input{flex:1;accent-color:#1c1d21}
+.phaseTag{font-size:12px;color:#55585f;min-width:48px;text-align:right}
+.hint{position:absolute;left:12px;top:12px;font-size:12px;color:#7a7d84}
+.cards{display:flex;flex-direction:column;gap:12px;padding:12px}
+.card{background:var(--card);border-radius:14px;padding:14px 16px;border:1px solid var(--line)}
+.card h2{font-size:16px;margin:0 0 10px;font-weight:700;text-wrap:balance}
+.titleRow{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}
+.titleRow h2{font-size:20px;margin:0}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.tag{font-size:12px;padding:2px 8px;border-radius:6px;background:var(--card2);color:var(--muted)}
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px}
+.chips button{font:inherit;font-size:14px;flex:none;border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:10px;padding:6px 12px;cursor:pointer}
+.chips button.on{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.mgroup{margin-top:4px}
+.mgroup h3{font-size:12px;color:var(--muted);font-weight:500;margin:8px 0 6px}
+.mrow{display:grid;grid-template-columns:12px 1fr 120px 34px;gap:10px;align-items:center;font-size:14px;padding:3px 0}
+.mrow .dot{width:10px;height:10px;border-radius:50%}
+.mrow i{display:block;height:6px;border-radius:3px;background:var(--card2);overflow:hidden}
+.mrow i em{display:block;height:100%;border-radius:3px}
+.mrow s{text-decoration:none;text-align:right;color:var(--muted);font-variant-numeric:tabular-nums;font-size:13px}
+ol.steps,ul.pts2{margin:0;padding-left:20px}
+ol.steps li,ul.pts2 li{margin:6px 0}
+.metrics{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+@media (max-width:480px){.metrics{grid-template-columns:repeat(2,minmax(0,1fr))}.mrow{grid-template-columns:12px 1fr 80px 30px}}
+.metric{background:var(--card2);border-radius:10px;padding:8px 10px}
+.metric b{display:block;font-family:var(--display);font-size:26px;font-weight:600;line-height:1.1;font-variant-numeric:tabular-nums}
+.metric span{font-size:12px;color:var(--muted)}
+.split{display:flex;height:12px;border-radius:6px;overflow:hidden;margin:8px 0 4px}
+.note{font-size:13px;color:var(--muted)}
+.list .fam{background:var(--card);border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.fam h2{font-size:17px;margin:0;padding:14px 16px 6px}
+.fam .sub{padding:0 16px 8px;color:var(--muted);font-size:13px}
+.vrow{display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);text-decoration:none;color:var(--ink)}
+.vrow:hover{background:var(--card2)}
+.vrow .ic{width:46px;height:46px;border-radius:10px;background:var(--card2);flex:none;display:grid;place-items:center}
+.vrow .nm{flex:1}
+.vrow .nm b{display:block;font-weight:500}
+.vrow .nm small{color:var(--muted)}
+.vrow .go{color:var(--muted)}
+.tabbar{position:fixed;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;z-index:9}
+.tabbar a{flex:1;max-width:220px;text-align:center;padding:10px 0 12px;color:var(--muted);text-decoration:none;font-size:13px}
+.tabbar a.on{color:var(--accent);font-weight:700}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:10px;padding:7px 12px;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-weight:700}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.seg{display:flex;border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.seg button{font:inherit;border:0;background:var(--card2);color:var(--muted);padding:6px 12px;cursor:pointer}
+.seg button.on{background:var(--accent);color:var(--accent-ink);font-weight:700}
+#stage2{display:block;width:100%;height:auto;border-radius:12px;background:#eceeeb}
+.ptsel{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.ptsel button{font:inherit;font-size:13px;border:1px solid var(--line);background:var(--card2);color:var(--ink);border-radius:999px;padding:3px 10px;cursor:pointer;display:flex;align-items:center;gap:6px}
+.ptsel button .dot{width:10px;height:10px;border-radius:50%}
+.ptsel button.cur{border-color:var(--accent);box-shadow:0 0 0 2px rgba(15,138,122,.25)}
+.ptsel button.done{color:var(--muted)}
+input[type=range]{accent-color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{padding:6px 4px;border-bottom:1px solid var(--line);text-align:right}
+th:first-child,td:first-child{text-align:left}
+th{font-size:12px;color:var(--muted);font-weight:500}
+.tips{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+.tip{border-radius:10px;padding:8px 10px 8px 12px;border-left:4px solid;font-size:14px;background:var(--card2)}
+.tip.bad{border-color:var(--bad)}.tip.warn{border-color:var(--warn)}.tip.good{border-color:var(--good)}.tip.info{border-color:var(--accent)}
+.tip b{display:block}
+.msg{font-size:13px;padding:8px 10px;border-radius:10px;background:var(--card2);margin-top:10px}
+details summary{cursor:pointer;color:var(--muted);font-size:13px}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ========== 動作庫 ========== -->
+<section class="view" id="view-home">
+  <div class="top"><h1>發力地圖</h1><span class="sub">動作肌群與發力分析</span></div>
+  <div class="cards list" id="famList"></div>
+  <p class="note" style="padding:0 16px 8px">人體模型：<a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" style="color:inherit">Z-Anatomy</a>（CC BY-SA 4.0），源自 <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" style="color:inherit">BodyParts3D</a>（The Database Center for Life Science，CC BY-SA 2.1 JP）。本 app 為了動作展示做了減面、合併與骨骼綁定，調整後的模型同樣以 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:inherit">CC BY-SA 4.0</a> 提供。</p>
+</section>
+
+<!-- ========== 動作詳細 ========== -->
+<section class="view" id="view-ex">
+  <div class="stageWrap">
+    <canvas id="gl" aria-label="3D 人體動作動畫，紅色代表正在出力的肌群，可拖曳旋轉"></canvas>
+    <div class="hint" id="hint">拖曳可旋轉</div>
+    <div class="stageBtns" id="viewBtns">
+      <button class="pill ghost" data-view="front">正面</button>
+      <button class="pill ghost" data-view="back">背面</button>
+      <button class="pill ghost" data-view="side">側面</button>
+    </div>
+    <div class="stageBar">
+      <button class="pill" id="playBtn">暫停</button>
+      <input type="range" id="phase" min="0" max="1000" value="0" aria-label="動作階段">
+      <span class="phaseTag" id="phaseTag"></span>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card">
+      <div class="titleRow">
+        <div><h2 id="exTitle"></h2><div class="tags" id="exTags"></div></div>
+        <a class="btn" href="#home" aria-label="回動作庫">動作庫</a>
+      </div>
+      <div class="chips" id="varChips" style="margin-top:12px"></div>
+    </div>
+    <div class="card" id="liveCard">
+      <h2>此刻的發力</h2>
+      <div class="metrics" id="live"></div>
+      <div id="liveSplit"></div>
+    </div>
+    <div class="card">
+      <h2>目標肌群</h2>
+      <div id="muscles"></div>
+      <p class="note" style="margin:10px 0 0">數值是依研究趨勢整理的相對估計（0–100），用來比較變化式差異，不是實際量測的百分比。</p>
+    </div>
+    <div class="card"><h2>步驟</h2><ol class="steps" id="steps"></ol></div>
+    <div class="card"><h2>要點</h2><ul class="pts2" id="keys"></ul></div>
+    <div class="card"><h2>常見錯誤</h2><ul class="pts2" id="errs"></ul></div>
+    <div class="card"><h2>這個變化式</h2><p id="varNote" style="margin:0"></p>
+      <div class="row" style="margin-top:12px"><a class="btn primary" id="toAnalyze" href="#analyze">拍影片分析我的動作</a></div></div>
+  </div>
+  <p class="note" style="padding:0 16px 8px">人體模型：<a href="https://github.com/Z-Anatomy/Models-of-human-anatomy" style="color:inherit">Z-Anatomy</a>（CC BY-SA 4.0），源自 <a href="https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html" style="color:inherit">BodyParts3D</a>（The Database Center for Life Science，CC BY-SA 2.1 JP）。本 app 為了動作展示做了減面、合併與骨骼綁定，調整後的模型同樣以 <a href="https://creativecommons.org/licenses/by-sa/4.0/" style="color:inherit">CC BY-SA 4.0</a> 提供。</p>
+</section>
+
+<!-- ========== 影片分析 ========== -->
+<section class="view" id="view-analyze">
+  <div class="top"><h1>影片分析</h1><span class="sub">標記關節，推估發力分配</span></div>
+  <div class="cards">
+    <div class="card">
+      <div class="row" style="justify-content:space-between;margin-bottom:10px">
+        <div class="seg" id="anSeg"><button data-ex="rdl">羅馬尼亞硬舉</button><button data-ex="pullup">引體向上</button></div>
+        <label class="btn primary" for="vid">選擇影片</label>
+        <input type="file" id="vid" accept="video/*" hidden>
+      </div>
+      <canvas id="stage2" width="1080" height="1200" aria-label="影片畫面，點擊以標記關節"></canvas>
+      <div class="row" style="margin-top:8px;flex-wrap:nowrap">
+        <button class="btn" id="vPlay" style="min-width:60px">播放</button>
+        <button class="btn" id="vPrev" aria-label="上一幀">‹</button>
+        <button class="btn" id="vNext" aria-label="下一幀">›</button>
+        <input type="range" id="seek" min="0" max="1000" value="0" style="flex:1" aria-label="影片位置">
+        <span class="note" id="tLbl" style="min-width:48px;text-align:right">0.00s</span>
+      </div>
+      <div class="row" style="margin-top:10px">
+        <span class="note">關鍵幀</span>
+        <div class="seg" id="kfSeg"><button data-k="A" id="kfA">起始</button><button data-k="B" id="kfB">最低點</button></div>
+        <button class="btn" id="setKf">把目前畫面設為這一幀</button>
+      </div>
+      <div class="ptsel" id="pts"></div>
+      <div class="row">
+        <button class="btn" id="clearKf">清除這一幀的標記</button>
+        <button class="btn" id="autoBtn">自動偵測（實驗）</button>
+        <input type="file" id="modelFile" accept=".task" hidden>
+      </div>
+      <div class="msg" id="msg">目前顯示示範資料。上傳側面影片後，選好關鍵幀，依序點擊畫面上的關節位置。</div>
+    </div>
+    <div class="card">
+      <h2 id="resTitle">分析結果</h2>
+      <div class="metrics" id="anStats"></div>
+      <div id="splitBox"></div>
+      <div class="tips" id="tips"></div>
+    </div>
+    <div class="card">
+      <h2>關節角度</h2>
+      <table id="angTable"></table>
+      <details style="margin-top:10px"><summary>這些數字怎麼算的</summary>
+        <p class="note">角度由你標記的點算出。髖／膝負擔用「槓鈴到關節的水平距離（力臂）」比例推估；臀／腿後分配依最低點的膝角與髖角做經驗推估。尾椎點用來看骨盆有沒有跟著軀幹轉：軀幹轉了但骨盆沒轉的角度，就是下背彎曲代償的估計值。拍攝請用正側面、手機放髖部高度、全身入鏡。</p>
+      </details>
+    </div>
+  </div>
+</section>
+</div>
+
+<nav class="tabbar" aria-label="主選單">
+  <a href="#home" id="tab-home">動作庫</a>
+  <a href="#analyze" id="tab-analyze">影片分析</a>
+</nav>
+
+<script>
+/* ================= 資料 ================= */
+const $=s=>document.querySelector(s);
+const D=Math.PI/180;
+const MNAME={traps_up:'上斜方肌',traps_mid:'中斜方／菱形肌',traps_low:'下斜方肌',lats:'背闊肌',teres:'大圓肌',delt_rear:'後三角肌',delt_front:'前三角肌',delt_side:'側三角肌',triceps:'肱三頭肌',biceps:'肱二頭／肱肌',forearm:'前臂／握力',pecs:'胸大肌',abs:'腹直肌',obliques:'腹斜肌',erector:'豎脊肌',glute_max:'臀大肌',glute_med:'臀中肌',hams:'腿後肌群',adductor:'內收大肌',quads:'股四頭肌',calves:'小腿',rotator:'旋轉肌袖',serratus:'前鋸肌'};
+const SHAPE={flat:p=>1,late:p=>.55+.45*p,early:p=>.55+.45*Math.exp(-(((p-.12)/.25)**2)),mid:p=>.6+.4*Math.sin(Math.PI*p)};
+const EX={
+ pullup:{name:'引體向上',tags:['背部','自體重量','單槓'],phase:['懸吊','頂點'],view:'back',
+  profile:{rotator:'mid',serratus:'mid',lats:'mid',teres:'mid',traps_low:'early',traps_mid:'late',delt_rear:'late',biceps:'late',forearm:'flat',abs:'flat',pecs:'mid',triceps:'flat'},
+  steps:['依變化式選好握法與握距，手臂伸直懸吊，肩膀遠離耳朵。','啟動前先把肩胛往下、往後收，身體被帶高幾公分，手肘還不彎。','想像把手肘往下拉向肋骨側邊，胸口朝單槓靠近，直到下巴過槓。','花 2–3 秒控制下放，回到手臂完全伸直再做下一下。'],
+  keys:['核心收緊、雙腿併攏，身體不要前後擺盪。','頂點用胸口找槓，不是用下巴去勾。','上拉時吐氣，下放時吸氣。'],
+  errs:['只做半程：底部沒放直或頂點沒過槓。','聳肩：上斜方肌搶走背闊肌的工作。','擺盪踢腿借力，背部負荷變少。'],
+  variants:{
+   shoulder:{name:'肩寬正握',grip:'pro',w:.27,m:{lats:90,teres:75,traps_low:75,traps_mid:65,delt_rear:50,biceps:60,forearm:65,abs:35,pecs:25,triceps:15},note:'最標準的版本，背部與手臂分配均衡，適合當基準來比較其他變化式。'},
+   wide:{name:'寬握正握',grip:'pro',w:.42,m:{lats:95,teres:85,traps_low:70,traps_mid:60,delt_rear:50,biceps:45,forearm:60,abs:35,pecs:20,triceps:15},note:'握距約 1.5 倍肩寬。背闊肌與大圓肌比重最高，但活動範圍較短、肩關節壓力較大。'},
+   chin:{name:'反握',grip:'sup',w:.2,m:{lats:85,teres:65,traps_low:60,traps_mid:50,delt_rear:40,biceps:90,forearm:45,abs:45,pecs:45,triceps:15},note:'掌心朝自己。肱二頭肌參與明顯上升，胸大肌也會幫忙，通常比正握多做幾下。'},
+   neutral:{name:'對握',grip:'sup',w:.24,m:{lats:85,teres:70,traps_low:65,traps_mid:60,delt_rear:45,biceps:75,forearm:80,abs:40,pecs:30,triceps:15},note:'掌心相對。肱橈肌參與最多，手肘和肩膀通常最舒服。'},
+   assisted:{name:'輔助機',grip:'pro',w:.3,assist:true,m:{lats:72,teres:60,traps_low:62,traps_mid:52,delt_rear:40,biceps:48,forearm:52,abs:15,pecs:20,triceps:12},note:'雙膝跪在輔助踏板上，配重越重越輕鬆。發力模式和肩寬正握相同，但核心幾乎不用穩定身體。'}
+  }},
+ rdl:{name:'羅馬尼亞硬舉',tags:['臀腿','槓鈴','髖鉸鏈'],phase:['站直','最低點'],view:'side',
+  profile:{hams:'late',glute_max:'mid',erector:'late',adductor:'late',glute_med:'flat',forearm:'flat',traps_up:'flat',lats:'flat',quads:'flat',abs:'flat',obliques:'flat',calves:'flat'},
+  steps:['腳與髖同寬，正握槓鈴放在大腿前，膝蓋微彎後鎖定角度。','臀部往後推，上半身跟著前傾，槓鈴貼著大腿往下滑。','腿後有明顯拉伸、骨盆推不動時就停，背部維持中立。','臀部往前推回站直，頂端夾臀，不要往後仰。'],
+  keys:['動作從「臀部往後推」開始，不是上半身往前倒。','槓鈴全程貼腿，背闊肌往下夾。','下巴微收，視線看前方地板 2–3 公尺。'],
+  errs:['膝蓋往前跑，動作變成半深蹲。','下背彎曲代償，骨盆沒有跟著轉。','抬頭看前方，頸部過度後仰。'],
+  variants:{
+   standard:{name:'標準',k:25,as:3,tr:74,m:{hams:85,glute_max:75,erector:70,adductor:55,glute_med:30,forearm:55,traps_up:35,lats:35,quads:15,abs:35,calves:15},note:'膝蓋微彎約 20–25°，臀部往後推到腿後有明顯拉伸感就停。'},
+   stiff:{name:'直腿',k:10,as:0,tr:80,m:{hams:95,glute_max:60,erector:80,adductor:55,glute_med:25,forearm:55,traps_up:35,lats:35,quads:8,abs:35,calves:15},note:'膝蓋幾乎打直。腿後肌被拉得最長、參與最多，下背負擔也最大。'},
+   glute:{name:'偏臀版',k:32,as:4,tr:68,wide:true,m:{hams:70,glute_max:90,erector:65,adductor:60,glute_med:40,forearm:55,traps_up:35,lats:35,quads:25,abs:35,calves:15},note:'膝彎到 30° 左右、站距略寬、腳尖微外開。腿後肌張力下降，臀大肌接手更多髖伸展。'},
+   single:{name:'單腿',k:22,as:3,tr:78,single:true,m:{glute_max:90,glute_med:75,hams:85,erector:55,adductor:50,abs:50,obliques:50,forearm:35,traps_up:25,lats:25,quads:15,calves:30},note:'支撐腳的臀大肌與臀中肌負擔大增，要抗骨盆旋轉和側傾，重量可以輕很多。'}
+  }}
+};
+for(const k in EX.pullup.variants){const m=EX.pullup.variants[k].m;m.rotator=Math.round(m.delt_rear*.9);m.serratus=Math.round(m.lats*.3);}
+for(const k in EX.rdl.variants){EX.rdl.variants[k].m.serratus=10;}
+const S={ex:'pullup',v:'shoulder',p:0,playing:true,t0:performance.now(),off:0,yaw:Math.PI,pitch:.12,dist:3.4,view:'back'};
+function curM(){const E=EX[S.ex],V=E.variants[S.v],o={};for(const k in V.m)o[k]=V.m[k]/100*SHAPE[E.profile[k]||'flat'](S.p);return o;}
+
+/* ================= 矩陣 ================= */
+const M4={
+ I:()=>[1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1],
+ mul(a,b){const o=new Array(16);for(let c=0;c<4;c++)for(let r=0;r<4;r++){let s=0;for(let k=0;k<4;k++)s+=a[k*4+r]*b[c*4+k];o[c*4+r]=s;}return o;},
+ T:(x,y,z)=>[1,0,0,0,0,1,0,0,0,0,1,0,x,y,z,1],
+ S:(x,y,z)=>[x,0,0,0,0,y,0,0,0,0,z,0,0,0,0,1],
+ Rx(a){const c=Math.cos(a),s=Math.sin(a);return[1,0,0,0,0,c,s,0,0,-s,c,0,0,0,0,1];},
+ Ry(a){const c=Math.cos(a),s=Math.sin(a);return[c,0,-s,0,0,1,0,0,s,0,c,0,0,0,0,1];},
+ Rz(a){const c=Math.cos(a),s=Math.sin(a);return[c,s,0,0,-s,c,0,0,0,0,1,0,0,0,0,1];},
+ persp(f,asp,n,fa){const t=1/Math.tan(f/2);return[t/asp,0,0,0,0,t,0,0,0,0,(fa+n)/(n-fa),-1,0,0,2*fa*n/(n-fa),0];},
+ look(e,c,u){const z=norm(sub(e,c)),x=norm(cross(u,z)),y=cross(z,x);return[x[0],y[0],z[0],0,x[1],y[1],z[1],0,x[2],y[2],z[2],0,-dot(x,e),-dot(y,e),-dot(z,e),1];},
+ pt(m,p){return[m[0]*p[0]+m[4]*p[1]+m[8]*p[2]+m[12],m[1]*p[0]+m[5]*p[1]+m[9]*p[2]+m[13],m[2]*p[0]+m[6]*p[1]+m[10]*p[2]+m[14]];},
+ nrm(m){const a=m[0],b=m[1],c=m[2],d=m[4],e=m[5],f=m[6],g=m[8],h=m[9],i=m[10];
+  const A=e*i-f*h,B=-(d*i-f*g),C=d*h-e*g,det=a*A+b*B+c*C||1e-9;
+  return[A/det,B/det,C/det,-(b*i-c*h)/det,(a*i-c*g)/det,-(a*h-b*g)/det,(b*f-c*e)/det,-(a*f-c*d)/det,(a*e-b*d)/det];}
+};
+function sub(a,b){return[a[0]-b[0],a[1]-b[1],a[2]-b[2]];}
+function cross(a,b){return[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];}
+function dot(a,b){return a[0]*b[0]+a[1]*b[1]+a[2]*b[2];}
+function norm(a){const l=Math.hypot(...a)||1;return[a[0]/l,a[1]/l,a[2]/l];}
+function trs(p,r,s){let m=M4.T(...p);if(r){m=M4.mul(m,M4.Ry(r[1]||0));m=M4.mul(m,M4.Rz(r[2]||0));m=M4.mul(m,M4.Rx(r[0]||0));}return M4.mul(m,M4.S(...s));}
+
+/* ================= WebGL ================= */
+const cv=$('#gl'); const gl=cv.getContext('webgl',{antialias:true});
+let prog,U={},GEO={};
+function initGL(){
+  if(!gl){$('#hint').textContent='這個瀏覽器不支援 WebGL，無法顯示 3D 人體。';return;}
+  const vs=`attribute vec3 p;attribute vec3 n;uniform mat4 M,VP;uniform mat3 N;varying vec3 vn,vw;
+  void main(){vec4 w=M*vec4(p,1.);vw=w.xyz;vn=N*n;gl_Position=VP*w;}`;
+  const fs=`precision mediump float;uniform vec3 col,eye,ld;uniform float gloss;varying vec3 vn,vw;
+  void main(){vec3 n=normalize(vn);vec3 v=normalize(eye-vw);
+   float d=max(dot(n,ld),0.);float fill=max(dot(n,normalize(vec3(-ld.x,.2,-ld.z))),0.);
+   float h=pow(max(dot(n,normalize(ld+v)),0.),28.);float hemi=.5+.5*n.y;float rim=pow(1.-max(dot(n,v),0.),2.5);
+   vec3 c=col*(.30+.18*hemi+.62*d+.12*fill)+vec3(gloss*h)+vec3(.10)*rim;
+   gl_FragColor=vec4(c,1.);}`;
+  const sh=(t,s)=>{const o=gl.createShader(t);gl.shaderSource(o,s);gl.compileShader(o);return o;};
+  prog=gl.createProgram();gl.attachShader(prog,sh(gl.VERTEX_SHADER,vs));gl.attachShader(prog,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(prog);gl.useProgram(prog);
+  ['M','VP','N','col','eye','ld','gloss'].forEach(k=>U[k]=gl.getUniformLocation(prog,k));
+  U.p=gl.getAttribLocation(prog,'p');U.n=gl.getAttribLocation(prog,'n');
+  GEO.sph=mk(sphere(20,28));GEO.cyl=mk(cylinder(28));GEO.box=mk(box());
+  gl.enable(gl.DEPTH_TEST);gl.enable(gl.CULL_FACE);
+}
+function mk(g){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,new Float32Array(g.v),gl.STATIC_DRAW);
+  const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint16Array(g.i),gl.STATIC_DRAW);return{b,ib,n:g.i.length};}
+function sphere(la,lo){const v=[],i=[];for(let a=0;a<=la;a++){const th=a*Math.PI/la;for(let b=0;b<=lo;b++){const ph=b*2*Math.PI/lo;const x=Math.sin(th)*Math.cos(ph),y=Math.cos(th),z=Math.sin(th)*Math.sin(ph);v.push(x,y,z,x,y,z);}}
+  for(let a=0;a<la;a++)for(let b=0;b<lo;b++){const p=a*(lo+1)+b,q=p+lo+1;i.push(p,p+1,q,q,p+1,q+1);}return{v,i};}
+function cylinder(n){const v=[],i=[];for(let k=0;k<=n;k++){const a=k/n*2*Math.PI,x=Math.cos(a),z=Math.sin(a);v.push(x,-.5,z,x,0,z,x,.5,z,x,0,z);}
+  for(let k=0;k<n;k++){const p=k*2;i.push(p,p+3,p+1,p,p+2,p+3);}
+  const base=v.length/6;v.push(0,.5,0,0,1,0,0,-.5,0,0,-1,0);
+  for(let k=0;k<=n;k++){const a=k/n*2*Math.PI,x=Math.cos(a),z=Math.sin(a);v.push(x,.5,z,0,1,0,x,-.5,z,0,-1,0);}
+  for(let k=0;k<n;k++){const p=base+2+k*2;i.push(base,p+2,p,base+1,p+1,p+3);}return{v,i};}
+function box(){const v=[],i=[];const F=[[[1,0,0],[0,1,0],[0,0,1]],[[-1,0,0],[0,0,1],[0,1,0]],[[0,1,0],[0,0,1],[1,0,0]],[[0,-1,0],[1,0,0],[0,0,1]],[[0,0,1],[1,0,0],[0,1,0]],[[0,0,-1],[0,1,0],[1,0,0]]];
+  F.forEach(([n,u,w],f)=>{const c=n.map(x=>x*.5);[[-1,-1],[1,-1],[1,1],[-1,1]].forEach(([a,b])=>{v.push(c[0]+(u[0]*a+w[0]*b)*.5,c[1]+(u[1]*a+w[1]*b)*.5,c[2]+(u[2]*a+w[2]*b)*.5,...n);});const o=f*4;i.push(o,o+1,o+2,o,o+2,o+3);});return{v,i};}
+function draw(g,M,col,gloss=.12){gl.bindBuffer(gl.ARRAY_BUFFER,GEO[g].b);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,GEO[g].ib);
+  gl.enableVertexAttribArray(U.p);gl.vertexAttribPointer(U.p,3,gl.FLOAT,false,24,0);gl.enableVertexAttribArray(U.n);gl.vertexAttribPointer(U.n,3,gl.FLOAT,false,24,12);
+  gl.uniformMatrix4fv(U.M,false,M);gl.uniformMatrix3fv(U.N,false,M4.nrm(M));gl.uniform3fv(U.col,col);gl.uniform1f(U.gloss,gloss);gl.drawElements(gl.TRIANGLES,GEO[g].n,gl.UNSIGNED_SHORT,0);}
+
+/* ================= 人體模型 ================= */
+// 骨架：單位公尺，Y 向上，人面向 +Z。左側為 +X。
+const BONES={
+ root:{p:null}, torso:{p:'root',o:[0,0,0]}, neck:{p:'torso',o:[0,.5,0]},
+ uaL:{p:'torso',o:[.19,.45,0]}, faL:{p:'uaL',o:[0,-.30,0]}, hdL:{p:'faL',o:[0,-.27,0]},
+ uaR:{p:'torso',o:[-.19,.45,0]}, faR:{p:'uaR',o:[0,-.30,0]}, hdR:{p:'faR',o:[0,-.27,0]},
+ thL:{p:'root',o:[.095,-.04,0]}, shL:{p:'thL',o:[0,-.44,0]}, ftL:{p:'shL',o:[0,-.43,0]},
+ thR:{p:'root',o:[-.095,-.04,0]}, shR:{p:'thR',o:[0,-.44,0]}, ftR:{p:'shR',o:[0,-.43,0]}
+};
+const ORDER=Object.keys(BONES);
+// 皮膚底層（灰白）
+const SKIN=[
+ ['torso',[0,.34,0],[.158,.165,.1]],['torso',[0,.17,0],[.125,.14,.088]],['torso',[0,.01,0],[.16,.11,.1]],
+ ['torso',[0,.52,0],[.05,.06,.05]],['neck',[0,.12,.01],[.082,.105,.092]],
+ ['ua',[0,0,0],[.055,.055,.055]],['ua',[0,-.15,0],[.042,.16,.042]],['fa',[0,-.12,0],[.036,.14,.036]],['hd',[0,-.05,.005],[.024,.055,.04]],
+ ['th',[0,-.2,0],[.07,.24,.072]],['sh',[0,-.2,0],[.045,.22,.047]],['ft',[0,-.035,.06],[.045,.032,.11]]
+];
+// 肌肉（[骨, 肌肉id, 位置, 半徑, 旋轉(rx,ry,rz)]，L/R 側自動鏡像）
+const MUS=[
+ ['torso','pecs',[.072,.375,.082],[.078,.062,.036],[0,0,-.25]],
+ ['torso','abs',[.034,.27,.084],[.031,.032,.018]],['torso','abs',[.034,.2,.083],[.031,.03,.018]],['torso','abs',[.034,.13,.08],[.03,.03,.018]],
+ ['torso','obliques',[.112,.17,.045],[.04,.09,.05],[0,0,.12]],
+ ['torso','traps_up',[0,.47,-.035],[.125,.05,.06],null,1],
+ ['torso','traps_mid',[0,.37,-.093],[.085,.06,.026],null,1],
+ ['torso','traps_low',[0,.285,-.088],[.048,.09,.02],null,1],
+ ['torso','lats',[.11,.27,-.062],[.066,.145,.036],[0,0,-.35]],
+ ['torso','teres',[.14,.37,-.07],[.036,.026,.03]],
+ ['torso','erector',[.036,.14,-.083],[.026,.17,.026]],
+ ['torso','glute_max',[.07,-.045,-.072],[.08,.095,.066]],
+ ['torso','glute_med',[.125,.05,-.035],[.05,.045,.045]],
+ ['ua','delt_front',[.006,-.05,.034],[.046,.075,.036]],['ua','delt_rear',[.006,-.05,-.034],[.046,.075,.036]],['ua','delt_side',[.03,-.05,0],[.036,.075,.04]],
+ ['ua','biceps',[0,-.17,.028],[.035,.095,.036]],['ua','triceps',[0,-.16,-.028],[.04,.105,.037]],
+ ['fa','forearm',[0,-.09,0],[.041,.09,.041]],
+ ['th','quads',[0,-.2,.03],[.066,.18,.05]],['th','hams',[0,-.22,-.034],[.058,.17,.05]],['th','adductor',[-.036,-.14,0],[.034,.13,.04]],
+ ['sh','calves',[0,-.13,-.03],[.048,.11,.045]]
+];
+const COL={skin:[.80,.79,.77],mus:[.90,.89,.87],bone:[.87,.84,.77],metal:[.36,.38,.42],dark:[.18,.19,.21],floor:[.90,.90,.88],pad:[.25,.26,.29]};
+function heat(v){v=Math.max(0,Math.min(1,v));const a=COL.mus,b=[.95,.55,.33],c=[.84,.17,.12];
+  return v<.15?a:v<.55?a.map((x,i)=>x+(b[i]-x)*((v-.15)/.4)):b.map((x,i)=>x+(c[i]-x)*((v-.55)/.45));}
+
+/* ================= 姿勢 ================= */
+function ik(d,a,b){const c=Math.max(-1,Math.min(1,(a*a+d*d-b*b)/(2*a*d)));const e=Math.max(-1,Math.min(1,(a*a+b*b-d*d)/(2*a*b)));return{alpha:Math.acos(c),flex:Math.PI-Math.acos(e)};}
+function worlds(R,rootPos){
+  const W={};for(const k of ORDER){const b=BONES[k],r=R[k]||[0,0,0];
+    let m=b.p?M4.mul(W[b.p],M4.T(...b.o)):M4.T(...rootPos);
+    m=M4.mul(m,M4.Ry(r[1]*D));m=M4.mul(m,M4.Rz(r[2]*D));m=M4.mul(m,M4.Rx(r[0]*D));W[k]=m;}
+  return W;
+}
+const BAR_Y=2.3;
+const RIG={ua:.30,fa:.27,grip:.04,shx:.19,ank:.085};
+function posePullup(V,p){
+  const R={},a=RIG.ua,b=RIG.fa+RIG.grip,top=p;
+  R.torso=[-(V.grip==='pro'?10:6)*top,0,0]; R.neck=[-10*top,0,0];
+  if(V.assist){R.thL=[-4,0,2];R.thR=[-4,0,-2];R.shL=[92,0,0];R.shR=[92,0,0];R.ftL=[-20,0,0];R.ftR=[-20,0,0];}
+  else{R.thL=[-14,0,3];R.thR=[-14,0,-3];R.shL=[34,0,0];R.shR=[34,0,0];R.ftL=[25,0,0];R.ftR=[25,0,0];}
+  const dyUp=(.585)*(1-top)+.10*top;
+  if(V.grip==='pro'){
+    const dx=V.w-RIG.shx, d=Math.hypot(dx,dyUp), phi=Math.atan2(dx,-dyUp), k=ik(d,a,b);
+    const ua=(phi-k.alpha)/D, fl=k.flex/D;
+    R.uaL=[0,0,ua];R.faL=[0,0,fl];R.uaR=[0,0,-ua];R.faR=[0,0,-fl];
+  }else{
+    const fw=.04+.12*top, d=Math.hypot(fw,dyUp), psi=Math.atan2(fw,-dyUp), k=ik(d,a,b);
+    const ua=(psi-k.alpha)/D, fl=k.flex/D, ab=(V.w-RIG.shx)/.6/D;
+    R.uaL=[-ua,0,ab];R.faL=[-fl,0,0];R.uaR=[-ua,0,-ab];R.faR=[-fl,0,0];
+  }
+  R.hdL=[0,0,0];R.hdR=[0,0,0];
+  let W=worlds(R,[0,0,0]);
+  const h=M4.pt(W.hdL,[0,-RIG.grip,0]);
+  const root=[0,BAR_Y-h[1],-h[2]];
+  W=worlds(R,root);
+  return{R,W,root,handZ:0};
+}
+function poseRDL(V,p){
+  const R={},k=5+(V.k-5)*p,as=1+(V.as-1)*p,at=k-as,tr=4+(V.tr-4)*p;
+  R.torso=[tr,0,0]; R.neck=[-6*p,0,0];
+  const ab=V.wide?7:2, er=V.wide?14:0;
+  R.thL=[-at,er,ab];R.shL=[k,0,0];R.ftL=[-as,0,0];
+  if(V.single){R.thR=[tr*.92,0,-2];R.shR=[6,0,0];R.ftR=[90-tr*.92-6,0,0];}
+  else{R.thR=[-at,-er,-ab];R.shR=[k,0,0];R.ftR=[-as,0,0];}
+  R.uaL=[0,0,5];R.uaR=[0,0,-5];
+  let W=worlds(R,[0,0,0]);
+  const an=M4.pt(W.ftL,[0,0,0]);
+  const root=[0,RIG.ank-an[1],-an[2]];
+  W=worlds(R,root);
+  const Sh=M4.pt(W.uaL,[0,0,0]),Kn=M4.pt(W.shL,[0,0,0]),An=M4.pt(W.ftL,[0,0,0]);
+  const zt=Math.max(Kn[2]+.07,An[2]+.075), L=RIG.ua+RIG.fa+RIG.grip;
+  const th=Math.asin(Math.max(-1,Math.min(1,(Sh[2]-zt)/L)))/D;
+  R.uaL=[th-tr,0,5];R.uaR=[th-tr,0,-5];
+  W=worlds(R,root);
+  const H=M4.pt(W.thL,[0,0,0]),K=M4.pt(W.shL,[0,0,0]),hL=M4.pt(W.hdL,[0,-RIG.grip,0]),hR=M4.pt(W.hdR,[0,-RIG.grip,0]);
+  const bar=[(hL[0]+hR[0])/2,(hL[1]+hR[1])/2,(hL[2]+hR[2])/2];
+  return{R,W,root,bar,hip:H,knee:K,k,hipFlex:tr+at};
+}
+function gluteShare(knee,hipFlex){return Math.max(.25,Math.min(.72,.40+.010*(knee-10)-.001*(hipFlex-80)));}
+
+
+/* ================= Z-Anatomy 解剖模型（蒙皮） ================= */
+let BODY=null,bprog=null,BU={},REST_INV={};
+function rotFromDown(d){d=norm(d);const a=[0,-1,0],c=dot(a,d);let ax=cross(a,d);const s=Math.hypot(...ax);if(s<1e-6)return M4.I();ax=ax.map(x=>x/s);const t=1-c,[x,y,z]=ax;
+  return[t*x*x+c,t*x*y+s*z,t*x*z-s*y,0,t*x*y-s*z,t*y*y+c,t*y*z+s*x,0,t*x*z+s*y,t*y*z-s*x,t*z*z+c,0,0,0,0,1];}
+function invRigid(m){const r=[m[0],m[4],m[8],0,m[1],m[5],m[9],0,m[2],m[6],m[10],0,0,0,0,1];const t=M4.pt(r,[m[12],m[13],m[14]]);r[12]=-t[0];r[13]=-t[1];r[14]=-t[2];return r;}
+function applyRig(j){
+  const r=j.root,rel=k=>sub(j[k],r),len=(a,b)=>Math.hypot(...sub(j[a],j[b]));
+  BONES.neck.o=rel('neck');
+  for(const s of 'LR'){BONES['ua'+s].o=rel('shoulder'+s);BONES['fa'+s].o=[0,-len('shoulder'+s,'elbow'+s),0];BONES['hd'+s].o=[0,-len('elbow'+s,'wrist'+s),0];
+    BONES['th'+s].o=rel('hip'+s);BONES['sh'+s].o=[0,-len('hip'+s,'knee'+s),0];BONES['ft'+s].o=[0,-len('knee'+s,'ankle'+s),0];}
+  RIG.ua=len('shoulderL','elbowL');RIG.fa=len('elbowL','wristL');RIG.grip=.06;RIG.shx=j.shoulderL[0];RIG.ank=j.ankleL[1];
+  const T=p=>M4.T(...p),rest={root:T(r),torso:T(r),neck:T(j.neck)};
+  for(const s of 'LR'){
+    rest['ua'+s]=M4.mul(T(j['shoulder'+s]),rotFromDown(sub(j['elbow'+s],j['shoulder'+s])));
+    rest['fa'+s]=M4.mul(T(j['elbow'+s]),rotFromDown(sub(j['wrist'+s],j['elbow'+s])));
+    rest['hd'+s]=M4.mul(T(j['wrist'+s]),rotFromDown(sub(j['handEnd'+s],j['wrist'+s])));
+    rest['th'+s]=M4.mul(T(j['hip'+s]),rotFromDown(sub(j['knee'+s],j['hip'+s])));
+    rest['sh'+s]=M4.mul(T(j['knee'+s]),rotFromDown(sub(j['ankle'+s],j['knee'+s])));
+    rest['ft'+s]=T(j['ankle'+s]);}
+  for(const k in rest)REST_INV[k]=invRigid(rest[k]);
+}
+async function loadBody(){
+  if(!gl||!gl.getExtension('OES_element_index_uint'))return;
+  try{
+    $('#hint').textContent='正在載入解剖模型…';
+    if(!window.BODY_B64)await new Promise((ok,no)=>{const sc=document.createElement('script');sc.src='body.js';sc.onload=ok;sc.onerror=()=>no(new Error('body.js'));document.head.appendChild(sc);});
+    const bin=atob(window.BODY_B64),u8=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);window.BODY_B64=null;
+    const buf=u8.buffer,dv=new DataView(buf);
+    const jl=dv.getUint32(4,true),meta=JSON.parse(new TextDecoder().decode(new Uint8Array(buf,8,jl)));
+    let off=8+jl;off+=(4-off%4)%4;
+    const vb=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,vb);gl.bufferData(gl.ARRAY_BUFFER,new Uint8Array(buf,off,meta.nv*meta.stride),gl.STATIC_DRAW);
+    off+=meta.nv*meta.stride;
+    const ib=gl.createBuffer();gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,ib);gl.bufferData(gl.ELEMENT_ARRAY_BUFFER,new Uint32Array(buf.slice(off,off+meta.nt*12)),gl.STATIC_DRAW);
+    const vs=`attribute vec3 p;attribute vec3 n;attribute vec2 b;attribute float w;attribute float m;
+    uniform mat4 VP;uniform mat4 B[15];uniform vec3 lo,sc;uniform vec3 C[26];varying vec3 vn,vw,vc;
+    void main(){mat4 M=B[int(b.x+.5)]*w+B[int(b.y+.5)]*(1.-w);vec4 wp=M*vec4(lo+p*sc,1.);vw=wp.xyz;vn=(M*vec4(n,0.)).xyz;vc=C[int(m+.5)];gl_Position=VP*wp;}`;
+    const fs=`precision mediump float;uniform vec3 eye,ld;varying vec3 vn,vw,vc;
+    void main(){vec3 n=normalize(vn);vec3 v=normalize(eye-vw);if(dot(n,v)<0.)n=-n;
+     float d=max(dot(n,ld),0.);float fill=max(dot(n,normalize(vec3(-ld.x,.25,-ld.z))),0.);
+     float h=pow(max(dot(n,normalize(ld+v)),0.),36.);float hemi=.5+.5*n.y;float rim=pow(1.-max(dot(n,v),0.),3.);
+     vec3 c=vc*(.26+.16*hemi+.66*d+.14*fill)+vec3(.16*h)+vec3(.06)*rim;gl_FragColor=vec4(c,1.);}`;
+    const sh=(t,src)=>{const o=gl.createShader(t);gl.shaderSource(o,src);gl.compileShader(o);if(!gl.getShaderParameter(o,gl.COMPILE_STATUS))throw new Error(gl.getShaderInfoLog(o));return o;};
+    bprog=gl.createProgram();gl.attachShader(bprog,sh(gl.VERTEX_SHADER,vs));gl.attachShader(bprog,sh(gl.FRAGMENT_SHADER,fs));gl.linkProgram(bprog);
+    if(!gl.getProgramParameter(bprog,gl.LINK_STATUS))throw new Error(gl.getProgramInfoLog(bprog));
+    for(const k of ['VP','B','lo','sc','C','eye','ld'])BU[k]=gl.getUniformLocation(bprog,k);
+    for(const k of ['p','n','b','w','m'])BU['a_'+k]=gl.getAttribLocation(bprog,k);
+    applyRig(meta.joints);
+    BODY={vb,ib,meta};
+    $('#hint').textContent='拖曳可旋轉';
+  }catch(e){BODY=null;console.error('body',e.message);$('#hint').textContent='解剖模型載入失敗，改用簡化人體。';}
+}
+function drawBody(W,m,VP,eye,ld){
+  const {meta}=BODY;gl.useProgram(bprog);
+  gl.uniformMatrix4fv(BU.VP,false,VP);gl.uniform3fv(BU.eye,eye);gl.uniform3fv(BU.ld,ld);gl.uniform3fv(BU.lo,meta.lo);gl.uniform3fv(BU.sc,meta.sc);
+  const B=new Float32Array(15*16);meta.bones.forEach((k,i)=>B.set(M4.mul(W[k],REST_INV[k]),i*16));gl.uniformMatrix4fv(BU.B,false,B);
+  const C=new Float32Array(26*3);meta.ids.forEach((id,i)=>C.set(id==='base'?COL.mus:id==='bone'?COL.bone:heat(m[id]||0),i*3));gl.uniform3fv(BU.C,C);
+  gl.bindBuffer(gl.ARRAY_BUFFER,BODY.vb);gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER,BODY.ib);const st=meta.stride,A=BU;
+  const at=(loc,size,type,norm,off)=>{gl.enableVertexAttribArray(loc);gl.vertexAttribPointer(loc,size,type,norm,st,off);};
+  at(A.a_p,3,gl.UNSIGNED_SHORT,false,0);at(A.a_n,3,gl.BYTE,true,6);at(A.a_b,2,gl.UNSIGNED_BYTE,false,10);at(A.a_w,1,gl.UNSIGNED_BYTE,true,12);at(A.a_m,1,gl.UNSIGNED_BYTE,false,13);
+  gl.disable(gl.CULL_FACE);gl.drawElements(gl.TRIANGLES,meta.nt*3,gl.UNSIGNED_INT,0);gl.enable(gl.CULL_FACE);
+  [A.a_p,A.a_n,A.a_b,A.a_w,A.a_m].forEach(l=>gl.disableVertexAttribArray(l));
+  gl.useProgram(prog);
+}
+
+/* ================= 渲染 ================= */
+let lastPose=null;
+function render(){
+  if(!gl)return;
+  const dpr=Math.min(2,window.devicePixelRatio||1),w=cv.clientWidth,h=cv.clientHeight;
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  gl.useProgram(prog);gl.viewport(0,0,cv.width,cv.height);gl.clearColor(.965,.965,.953,1);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
+  const V=EX[S.ex].variants[S.v], P=S.ex==='rdl'?poseRDL(V,S.p):posePullup(V,S.p); lastPose=P;
+  const tgt=S.ex==='rdl'?[0,.78,0]:[0,1.55,0];
+  const eye=[tgt[0]+S.dist*Math.sin(S.yaw)*Math.cos(S.pitch),tgt[1]+S.dist*Math.sin(S.pitch),tgt[2]+S.dist*Math.cos(S.yaw)*Math.cos(S.pitch)];
+  const VP=M4.mul(M4.persp(36*D,cv.width/cv.height,.1,30),M4.look(eye,tgt,[0,1,0]));
+  gl.uniformMatrix4fv(U.VP,false,VP);gl.uniform3fv(U.eye,eye);
+  const fwd=norm(sub(eye,tgt)),right=norm(cross([0,1,0],fwd));
+  gl.uniform3fv(U.ld,norm([fwd[0]*.7-right[0]*.5,.85,fwd[2]*.7-right[2]*.5]));
+  const W=P.W, m=curM();
+  // 地板
+  draw('cyl',trs([0,-.006,S.ex==='rdl'?0:.05],null,[1.15,.012,1.15]),COL.floor,0);
+  // 器材
+  if(S.ex==='pullup'){
+    const hz=M4.pt(W.hdL,[0,-RIG.grip,0])[2];
+    draw('cyl',trs([0,BAR_Y,hz],[0,0,Math.PI/2],[.017,1.5,.017]),COL.metal,.5);
+    for(const s of [-1,1]){draw('box',trs([s*.74,BAR_Y/2,hz-.06],null,[.06,BAR_Y+.08,.06]),COL.dark,.2);draw('box',trs([s*.74,.02,hz-.06],null,[.1,.04,.7]),COL.dark,.1);}
+    if(V.assist){const kn=M4.pt(W.shL,[0,0,0]);draw('box',trs([0,kn[1]-.075,kn[2]-.17],null,[.42,.05,.36]),COL.pad,.15);
+      draw('box',trs([0,(kn[1]-.1)/2,hz-.06],null,[.07,kn[1]-.1,.07]),COL.metal,.3);}
+  }else{
+    const b=P.bar;
+    draw('cyl',trs(b,[0,0,Math.PI/2],[.014,1.9,.014]),COL.metal,.6);
+    for(const s of [-1,1]){draw('cyl',trs([b[0]+s*.62,b[1],b[2]],[0,0,Math.PI/2],[.225,.055,.225]),COL.dark,.15);
+      draw('cyl',trs([b[0]+s*.56,b[1],b[2]],[0,0,Math.PI/2],[.03,.04,.03]),COL.metal,.5);}
+  }
+  if(BODY){drawBody(W,m,VP,eye,norm([fwd[0]*.7-right[0]*.5,.85,fwd[2]*.7-right[2]*.5]));return;}
+  // 皮膚
+  for(const [bn,pos,sc] of SKIN){
+    const list=['ua','fa','hd','th','sh','ft'].includes(bn)?[bn+'L',bn+'R']:[bn];
+    for(const b of list){const mir=b.endsWith('R')?-1:1;draw('sph',M4.mul(W[b],trs([pos[0]*mir,pos[1],pos[2]],null,sc)),COL.skin,.08);}
+  }
+  // 肌肉
+  for(const [bn,id,pos,sc,rot,single] of MUS){
+    const col=heat(m[id]||0), g=(m[id]||0)>.15?.22:.1;
+    if(bn==='torso'){
+      const sides=single||pos[0]===0?[1]:[1,-1];
+      for(const s of sides){const r=rot?[rot[0],(rot[1]||0)*s,(rot[2]||0)*s]:null;draw('sph',M4.mul(W.torso,trs([pos[0]*s,pos[1],pos[2]],r,sc)),col,g);}
+    }else{
+      for(const side of ['L','R']){const s=side==='L'?1:-1;const r=rot?[rot[0],(rot[1]||0)*s,(rot[2]||0)*s]:null;draw('sph',M4.mul(W[bn+side],trs([pos[0]*s,pos[1],pos[2]],r,sc)),col,g);}
+    }
+  }
+}
+
+/* ================= 詳細頁 UI ================= */
+function setView(v){S.view=v;S.yaw={front:0,back:Math.PI,side:S.ex==='rdl'?Math.PI/2+.35:Math.PI/2+.55}[v];S.pitch=S.ex==='rdl'&&v==='side'?.24:.1;
+  document.querySelectorAll('#viewBtns button').forEach(b=>b.classList.toggle('on',b.dataset.view===v));}
+function liveUpdate(){
+  const E=EX[S.ex],V=E.variants[S.v];
+  $('#phaseTag').textContent=E.phase[S.p<.5?0:1];
+  if(S.ex==='rdl'&&lastPose){
+    const P=lastPose, hip=Math.max(0,P.bar[2]-P.hip[2]), kn=Math.abs(P.bar[2]-P.knee[2]), hs=hip/(hip+kn||1), g=gluteShare(P.k,P.hipFlex);
+    $('#live').innerHTML=[[Math.round(P.k)+'°','膝屈曲'],[Math.round(P.hipFlex)+'°','髖屈曲'],[Math.round(hs*100)+'%','髖負擔（vs 膝）'],[Math.round(g*100)+'%','臀大肌佔髖伸展']].map(([v,l])=>`<div class="metric"><b>${v}</b><span>${l}</span></div>`).join('');
+    $('#liveSplit').innerHTML=`<div class="split"><div style="width:${g*100}%;background:var(--hot)"></div><div style="flex:1;background:var(--accent)"></div></div><div class="row note" style="justify-content:space-between"><span>臀大肌</span><span>腿後肌群</span></div>`;
+  }else{
+    const m=curM(), top=Object.keys(m).sort((a,b)=>m[b]-m[a]).slice(0,3);
+    const P=lastPose; let el='—'; if(P){const r=P.R.faL;el=Math.round(Math.abs(r[0]||r[2]))+'°';}
+    $('#live').innerHTML=[[el,'肘屈曲'],...top.map((k,i)=>[MNAME[k].split('／')[0],i===0?'此刻主力':'協同'])].map(([v,l])=>`<div class="metric"><b style="font-size:${v.length>3?18:26}px">${v}</b><span>${l}</span></div>`).join('');
+    $('#liveSplit').innerHTML='';
+  }
+}
+function buildEx(){
+  const E=EX[S.ex],V=E.variants[S.v];
+  $('#exTitle').textContent=E.name+'（'+V.name+'）';
+  $('#exTags').innerHTML=E.tags.map(t=>`<span class="tag">${t}</span>`).join('');
+  $('#varChips').innerHTML=Object.keys(E.variants).map(k=>`<a href="#ex-${S.ex}-${k}" style="text-decoration:none"><button class="${k===S.v?'on':''}" tabindex="-1">${E.variants[k].name}</button></a>`).join('');
+  const rows=Object.keys(V.m).map(k=>[k,V.m[k]]).sort((a,b)=>b[1]-a[1]);
+  const grp=[['主要肌群',r=>r[1]>=70],['次要肌群',r=>r[1]>=40&&r[1]<70],['穩定肌群',r=>r[1]<40]];
+  $('#muscles').innerHTML=grp.map(([t,f])=>{const rs=rows.filter(f);if(!rs.length)return'';return`<div class="mgroup"><h3>${t}</h3>`+rs.map(([k,v])=>{const c=heat(v/100).map(x=>Math.round(x*255));return`<div class="mrow"><span class="dot" style="background:rgb(${c})"></span><span>${MNAME[k]}</span><i><em style="width:${v}%;background:rgb(${c})"></em></i><s>${v}</s></div>`;}).join('')+'</div>';}).join('');
+  $('#steps').innerHTML=E.steps.map(s=>`<li>${s}</li>`).join('');
+  $('#keys').innerHTML=E.keys.map(s=>`<li>${s}</li>`).join('');
+  $('#errs').innerHTML=E.errs.map(s=>`<li>${s}</li>`).join('');
+  $('#varNote').textContent=V.note;
+  $('#toAnalyze').onclick=()=>{an.ex=S.ex;};
+}
+$('#viewBtns').onclick=e=>{const b=e.target.closest('button');if(b)setView(b.dataset.view);};
+$('#playBtn').onclick=()=>{S.playing=!S.playing;$('#playBtn').textContent=S.playing?'暫停':'播放';if(S.playing){S.t0=performance.now();S.off=Math.acos(1-2*S.p);}};
+$('#phase').oninput=e=>{S.playing=false;$('#playBtn').textContent='播放';S.p=e.target.value/1000;};
+// 拖曳旋轉
+let drag=null;
+cv.addEventListener('pointerdown',e=>{drag=[e.clientX,e.clientY,S.yaw,S.pitch];cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';$('#hint').style.display='none';
+  document.querySelectorAll('#viewBtns button').forEach(b=>b.classList.remove('on'));});
+cv.addEventListener('pointermove',e=>{if(!drag)return;S.yaw=drag[2]-(e.clientX-drag[0])*.01;S.pitch=Math.max(-.3,Math.min(1.1,drag[3]+(e.clientY-drag[1])*.006));});
+cv.addEventListener('pointerup',()=>{drag=null;cv.style.cursor='grab';});
+cv.addEventListener('wheel',e=>{e.preventDefault();S.dist=Math.max(2,Math.min(6,S.dist*(1+e.deltaY*.001)));},{passive:false});
+const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
+if(reduce){S.playing=false;S.p=.75;}
+let lastUI=0;
+function loop(now){
+  if($('#view-ex').classList.contains('on')){
+    if(S.playing){S.p=(1-Math.cos((now-S.t0)/3600*2*Math.PI+S.off))/2;$('#phase').value=Math.round(S.p*1000);}
+    render(); if(now-lastUI>150){liveUpdate();lastUI=now;}
+  }
+  requestAnimationFrame(loop);
+}
+
+/* ================= 動作庫 ================= */
+function buildHome(){
+  const ic=k=>k==='pullup'?'<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#2a2c31" stroke-width="2" stroke-linecap="round"><path d="M3 4h22M9 4l2 7M19 4l-2 7"/><circle cx="14" cy="10" r="2.5"/><path d="M14 13v8M14 21l-2 5M14 21l2 5"/></svg>':'<svg width="28" height="28" viewBox="0 0 28 28" fill="none" stroke="#2a2c31" stroke-width="2" stroke-linecap="round"><circle cx="6" cy="9" r="2.5"/><path d="M8 10l10 3M18 13l-1 7l1 6M10 11l2 9"/><path d="M4 20h18"/><circle cx="12" cy="20" r="3"/></svg>';
+  $('#famList').innerHTML=Object.keys(EX).map(k=>{const E=EX[k];return`<div class="fam"><h2>${E.name}</h2><div class="sub">${E.tags.join('・')}</div>`+
+    Object.keys(E.variants).map(v=>{const V=E.variants[v];const main=Object.keys(V.m).sort((a,b)=>V.m[b]-V.m[a]).slice(0,3).map(x=>MNAME[x].split('／')[0]).join('、');
+      return`<a class="vrow" href="#ex-${k}-${v}"><span class="ic">${ic(k)}</span><span class="nm"><b>${V.name}</b><small>主要：${main}</small></span><span class="go">›</span></a>`;}).join('')+'</div>';}).join('');
+}
+
+/* ================= 影片分析 ================= */
+const PTS={
+ rdl:[['ear','耳朵','#a59cff'],['shoulder','肩','#4ea3ff'],['hip','髖（大轉子）','#ff6a4d'],['knee','膝','#3ec1a8'],['ankle','腳踝','#6f7b87'],['bar','槓鈴中心','#d99a00'],['sacrum','尾椎（薦椎）','#ff5fa2']],
+ pullup:[['ear','耳朵','#a59cff'],['shoulder','肩','#4ea3ff'],['elbow','手肘','#ffa94d'],['wrist','握槓手','#d99a00'],['hip','髖','#ff6a4d'],['knee','膝','#3ec1a8']]
+};
+const KFNAME={rdl:{A:'站直',B:'最低點'},pullup:{A:'底部懸吊',B:'頂點'}};
+const an={ex:'rdl',k:'B',cur:null,video:null,hasVideo:false,kf:{A:{t:null,m:{}},B:{t:null,m:{}}}};
+const DEMO={
+ rdl:{A:{t:null,m:{ear:[520,300],shoulder:[560,385],hip:[585,625],knee:[580,840],ankle:[590,1050],bar:[565,640],sacrum:[620,600]}},
+      B:{t:null,m:{ear:[372,462],shoulder:[433,539],hip:[650,640],knee:[600,850],ankle:[590,1050],bar:[520,830],sacrum:[661,598]}}},
+ pullup:{A:{t:null,m:{ear:[548,330],shoulder:[540,420],elbow:[536,300],wrist:[540,175],hip:[548,700],knee:[552,900]}},
+         B:{t:null,m:{ear:[520,170],shoulder:[548,300],elbow:[470,300],wrist:[540,175],hip:[600,560],knee:[590,770]}}}
+};
+let demo=true;
+const st=$('#stage2'), sx=st.getContext('2d');
+const R2D=180/Math.PI;
+function loadDemo(){an.kf=JSON.parse(JSON.stringify(DEMO[an.ex]));demo=true;}
+function vsub(a,b){return[a[0]-b[0],a[1]-b[1]];}
+function angB(u,v){const c=(u[0]*v[0]+u[1]*v[1])/(Math.hypot(...u)*Math.hypot(...v));return Math.acos(Math.max(-1,Math.min(1,c)))*R2D;}
+function inner(a,b,c){return angB(vsub(a,b),vsub(c,b));}
+function dirAng(v){return Math.atan2(v[1],v[0])*R2D;}
+function dAng(a,b){let d=b-a;while(d>180)d-=360;while(d<-180)d+=360;return d;}
+function facing(){const m=an.kf.B.m.shoulder&&an.kf.B.m.hip?an.kf.B.m:an.kf.A.m;
+  if(an.ex==='rdl'&&m.shoulder&&m.hip)return Math.sign(m.shoulder[0]-m.hip[0])||-1;
+  if(m.ear&&m.shoulder)return Math.sign(m.ear[0]-m.shoulder[0])||-1;return -1;}
+function mRDL(m,f){const r={};
+  if(m.shoulder&&m.hip)r.trunk=angB(vsub(m.shoulder,m.hip),[0,-1]);
+  if(m.hip&&m.knee&&m.ankle)r.knee=180-inner(m.hip,m.knee,m.ankle);
+  if(m.shoulder&&m.hip&&m.knee)r.hipFlex=180-inner(m.shoulder,m.hip,m.knee);
+  if(m.knee&&m.ankle){const a=angB(vsub(m.knee,m.ankle),[0,-1]);r.shin=a*(Math.sign((m.knee[0]-m.ankle[0])*f)||1);}
+  if(m.ear&&m.shoulder&&m.hip){const t=vsub(m.shoulder,m.hip),h=vsub(m.ear,m.shoulder);const a=angB(t,h);const cr=t[0]*h[1]-t[1]*h[0];r.neck=a*(Math.sign(cr*-f)||1);}
+  if(m.bar&&m.hip&&m.knee){const hip=f*(m.bar[0]-m.hip[0]),kn=Math.abs(m.bar[0]-m.knee[0]);r.hipShare=Math.max(0,hip)/(Math.max(0,hip)+kn);}
+  if(m.bar&&m.ankle&&m.knee){const shin=Math.hypot(...vsub(m.knee,m.ankle));const mid=m.ankle[0]+f*.25*shin;r.barDrift=f*(m.bar[0]-mid)/shin;}
+  return r;}
+function mPU(m){const r={};
+  if(m.shoulder&&m.elbow&&m.wrist)r.elbow=180-inner(m.shoulder,m.elbow,m.wrist);
+  if(m.shoulder&&m.hip)r.trunk=angB(vsub(m.shoulder,m.hip),[0,-1]);
+  if(m.ear&&m.wrist)r.chinOver=m.ear[1]<m.wrist[1];
+  if(m.ear&&m.shoulder&&m.hip)r.neckGap=Math.hypot(...vsub(m.ear,m.shoulder))/Math.hypot(...vsub(m.shoulder,m.hip));
+  return r;}
+const fmt=(v,d=0,u='°')=>v==null||isNaN(v)?'—':(v.toFixed(d)+u);
+const metric=arr=>arr.map(([v,l])=>`<div class="metric"><b>${v}</b><span>${l}</span></div>`).join('');
+function analyze(){
+  const f=facing(),A=an.kf.A.m,B=an.kf.B.m,tips=[],kn=KFNAME[an.ex];
+  if(an.ex==='rdl'){
+    const a=mRDL(A,f),b=mRDL(B,f);let lumbar=null;
+    if(A.sacrum&&A.hip&&A.shoulder&&B.sacrum&&B.hip&&B.shoulder){
+      const dT=dAng(dirAng(vsub(A.shoulder,A.hip)),dirAng(vsub(B.shoulder,B.hip)));
+      const dP=dAng(dirAng(vsub(A.sacrum,A.hip)),dirAng(vsub(B.sacrum,B.hip)));lumbar=Math.abs(dT)-Math.abs(dP);}
+    const g=b.knee!=null&&b.hipFlex!=null?gluteShare(b.knee,b.hipFlex):null;
+    $('#anStats').innerHTML=metric([[fmt(b.knee),'最低點膝角'],[fmt(b.hipFlex),'最低點髖角'],[b.hipShare!=null?Math.round(b.hipShare*100)+'%':'—','髖負擔'],[lumbar!=null?fmt(Math.max(0,lumbar)):'—','下背代償估計']]);
+    $('#splitBox').innerHTML=g!=null?`<div class="note" style="margin-top:12px">髖伸展分配（推估）</div><div class="split"><div style="width:${g*100}%;background:var(--hot)"></div><div style="flex:1;background:var(--accent)"></div></div><div class="row note" style="justify-content:space-between"><span>臀大肌 ${Math.round(g*100)}%</span><span>腿後肌群 ${100-Math.round(g*100)}%</span></div>`:'';
+    $('#angTable').innerHTML=`<tr><th>項目</th><th>${kn.A}</th><th>${kn.B}</th></tr>`+
+      [['軀幹前傾（離垂直）','trunk'],['髖屈曲','hipFlex'],['膝屈曲','knee'],['小腿前傾','shin'],['頸部後仰','neck']].map(([l,k])=>`<tr><td>${l}</td><td>${fmt(a[k])}</td><td>${fmt(b[k])}</td></tr>`).join('')+
+      `<tr><td>髖負擔（vs 膝）</td><td>—</td><td>${b.hipShare!=null?Math.round(b.hipShare*100)+'%':'—'}</td></tr>`+
+      `<tr><td>槓鈴偏離中足</td><td>${fmt(a.barDrift!=null?a.barDrift*100:null,0,'%')}</td><td>${fmt(b.barDrift!=null?b.barDrift*100:null,0,'%')}</td></tr>`;
+    if(b.neck!=null)b.neck>20?tips.push(['warn',`頸部後仰約 ${b.neck.toFixed(0)}°`,'下巴微收，視線落在前方地板 2–3 公尺，讓頭和背維持一直線。']):tips.push(['good','頸部角度正常','頭和軀幹大致保持一直線。']);
+    if(lumbar!=null)lumbar>15?tips.push(['bad',`下背代償約 ${lumbar.toFixed(0)}°`,'軀幹轉動的角度明顯比骨盆多，代表一部分是靠腰椎彎下去的。減輕重量，想著「骨盆跟著上半身一起往前轉」，骨盆轉不動就停。']):tips.push(['good','骨盆有跟著轉','髖鉸鏈主要來自髖關節，下背沒有明顯代償。']);
+    else tips.push(['info','還沒標記尾椎','在兩個關鍵幀都標記尾椎（薦椎貼紙），就能估算下背有沒有彎曲代償。']);
+    if(b.knee!=null){if(b.knee<12)tips.push(['info',`膝角只有 ${b.knee.toFixed(0)}°，偏向腿後肌`,'想多用臀部，最低點把膝蓋彎到 20–30°，站距略寬、腳尖微微外開。']);
+      else if(b.knee>42)tips.push(['warn',`膝角 ${b.knee.toFixed(0)}°，接近深蹲`,'膝蓋彎太多，股四頭肌開始接手。膝角固定後，只靠臀部往後推來下放。']);
+      else tips.push(['good',`膝角 ${b.knee.toFixed(0)}° 在合理範圍`,'臀大肌和腿後肌都有充分參與。']);}
+    if(b.shin!=null&&b.shin>12)tips.push(['warn',`小腿前傾 ${b.shin.toFixed(0)}°`,'膝蓋往前跑了。下放時讓小腿接近垂直，動作從臀部往後推開始。']);
+    if(b.hipShare!=null&&b.hipShare<.8)tips.push(['warn',`髖負擔只有 ${Math.round(b.hipShare*100)}%`,'槓鈴離膝蓋太近或在膝蓋前方，代表臀部往後推得不夠。想像用屁股去碰身後的牆。']);
+    if(b.barDrift!=null&&b.barDrift>.3)tips.push(['warn','槓鈴往前飄','槓鈴偏離中足上方。讓槓鈴貼著大腿、小腿滑下去，背闊肌往下夾。']);
+    if(b.hipFlex!=null&&b.hipFlex<55)tips.push(['info','下放幅度偏淺','柔軟度允許的話可以再往下一點，直到腿後有明顯拉伸感。']);
+  }else{
+    const a=mPU(A),b=mPU(B);
+    $('#anStats').innerHTML=metric([[fmt(a.elbow),'底部肘角'],[fmt(b.elbow),'頂點肘角'],[b.chinOver==null?'—':b.chinOver?'有':'沒有','下巴過槓'],[fmt(b.trunk),'頂點身體後仰']]);
+    $('#splitBox').innerHTML='';
+    $('#angTable').innerHTML=`<tr><th>項目</th><th>${kn.A}</th><th>${kn.B}</th></tr>`+
+      `<tr><td>肘屈曲</td><td>${fmt(a.elbow)}</td><td>${fmt(b.elbow)}</td></tr><tr><td>軀幹角度（離垂直）</td><td>${fmt(a.trunk)}</td><td>${fmt(b.trunk)}</td></tr>`+
+      `<tr><td>耳肩距離／軀幹長</td><td>${a.neckGap!=null?a.neckGap.toFixed(2):'—'}</td><td>${b.neckGap!=null?b.neckGap.toFixed(2):'—'}</td></tr>`;
+    if(a.elbow!=null)a.elbow>25?tips.push(['warn',`底部肘角 ${a.elbow.toFixed(0)}°`,'底部沒有放到手臂伸直，背闊肌的拉長位置練不到。']):tips.push(['good','底部有放到底','手臂接近伸直，背闊肌有完整拉長。']);
+    if(b.chinOver!=null)b.chinOver?tips.push(['good','下巴過槓','頂點高度足夠。']):tips.push(['warn','下巴沒有過槓','頂點想著把手肘往後下方拉到肋骨旁，而不是用脖子去夠槓。']);
+    if(A.hip&&B.hip&&A.shoulder){const sw=Math.abs(A.hip[0]-B.hip[0])/Math.hypot(...vsub(A.shoulder,A.hip));if(sw>.35)tips.push(['warn','身體擺盪偏大','髖部前後位移明顯，可能在借力。核心收緊，放慢下放速度。']);}
+    if(a.neckGap!=null&&a.neckGap<.22)tips.push(['info','底部肩膀可能聳著','啟動前先把肩胛往下沉，讓下斜方肌先出力。']);
+    if(b.trunk!=null&&b.trunk>30)tips.push(['info',`頂點身體後仰 ${b.trunk.toFixed(0)}°`,'後仰越多越偏中背與菱形肌；想多練背闊肌就讓身體直一點。']);
+  }
+  $('#tips').innerHTML=tips.map(([c,t,d])=>`<div class="tip ${c}"><b>${t}</b>${d}</div>`).join('');
+  $('#resTitle').textContent=(demo?'示範結果・':'分析結果・')+EX[an.ex].name;
+}
+function drawStage(){
+  const W=st.width,H=st.height;
+  if(an.hasVideo&&an.video.readyState>=2)sx.drawImage(an.video,0,0,W,H);
+  else{sx.fillStyle='#eceeeb';sx.fillRect(0,0,W,H);sx.strokeStyle='#d8dbd7';sx.lineWidth=1;for(let x=0;x<W;x+=60){sx.beginPath();sx.moveTo(x,0);sx.lineTo(x,H);sx.stroke();}for(let y=0;y<H;y+=60){sx.beginPath();sx.moveTo(0,y);sx.lineTo(W,y);sx.stroke();}
+    sx.fillStyle='#666c75';sx.font=`500 ${W/30}px "Noto Sans TC",sans-serif`;sx.fillText(demo?'示範資料（尚未載入影片）':'尚未載入影片',W*.04,H*.06);}
+  const r=Math.max(6,W/110),list=PTS[an.ex];
+  const dk=(k,al)=>{const m=an.kf[k].m;sx.globalAlpha=al;
+    const link=an.ex==='rdl'?[['ear','shoulder'],['shoulder','hip'],['hip','knee'],['knee','ankle'],['shoulder','bar'],['hip','sacrum']]:[['ear','shoulder'],['shoulder','elbow'],['elbow','wrist'],['shoulder','hip'],['hip','knee']];
+    sx.lineWidth=r*.7;sx.strokeStyle='rgba(255,255,255,.85)';link.forEach(([a,b])=>{if(m[a]&&m[b]){sx.beginPath();sx.moveTo(...m[a]);sx.lineTo(...m[b]);sx.stroke();}});
+    sx.lineWidth=r*.35;sx.strokeStyle='#0f8a7a';link.forEach(([a,b])=>{if(m[a]&&m[b]){sx.beginPath();sx.moveTo(...m[a]);sx.lineTo(...m[b]);sx.stroke();}});
+    if(an.ex==='rdl'&&m.bar){sx.setLineDash([r,r]);sx.strokeStyle='#d99a00';sx.lineWidth=r*.3;sx.beginPath();sx.moveTo(m.bar[0],0);sx.lineTo(m.bar[0],H);sx.stroke();sx.setLineDash([]);}
+    list.forEach(([id,,col])=>{if(m[id]){sx.fillStyle=col;sx.strokeStyle='#fff';sx.lineWidth=r*.35;sx.beginPath();sx.arc(...m[id],r,0,7);sx.fill();sx.stroke();}});sx.globalAlpha=1;};
+  const other=an.k==='A'?'B':'A';if(!an.hasVideo||an.kf[other].t===an.kf[an.k].t)dk(other,.25);dk(an.k,1);
+}
+function buildPts(){
+  const m=an.kf[an.k].m,list=PTS[an.ex];
+  if(!an.cur||!list.find(p=>p[0]===an.cur))an.cur=(list.find(p=>!m[p[0]])||list[0])[0];
+  $('#pts').innerHTML=list.map(([id,n,col])=>`<button data-id="${id}" class="${id===an.cur?'cur':''} ${m[id]?'done':''}"><span class="dot" style="background:${col}"></span>${n}${m[id]?' ✓':''}</button>`).join('');
+  $('#kfA').textContent=KFNAME[an.ex].A+(an.kf.A.t!=null?` ${an.kf.A.t.toFixed(2)}s`:'');
+  $('#kfB').textContent=KFNAME[an.ex].B+(an.kf.B.t!=null?` ${an.kf.B.t.toFixed(2)}s`:'');
+  document.querySelectorAll('#kfSeg button').forEach(b=>b.classList.toggle('on',b.dataset.k===an.k));
+  document.querySelectorAll('#anSeg button').forEach(b=>b.classList.toggle('on',b.dataset.ex===an.ex));
+}
+function refresh(){buildPts();drawStage();analyze();}
+function say(t){$('#msg').textContent=t;}
+$('#anSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;an.ex=b.dataset.ex;an.cur=null;
+  if(an.hasVideo){an.kf={A:{t:null,m:{}},B:{t:null,m:{}}};say('已切換動作。請重新設定關鍵幀並標記。');}else loadDemo();refresh();};
+$('#kfSeg').onclick=e=>{const b=e.target.closest('button');if(!b)return;an.k=b.dataset.k;an.cur=null;const t=an.kf[an.k].t;if(an.hasVideo&&t!=null)an.video.currentTime=t;refresh();};
+$('#pts').onclick=e=>{const b=e.target.closest('button');if(!b)return;an.cur=b.dataset.id;buildPts();};
+$('#setKf').onclick=()=>{if(!an.hasVideo){say('先選擇一支影片。');return;}an.kf[an.k].t=an.video.currentTime;buildPts();say(`已把 ${an.video.currentTime.toFixed(2)}s 設為「${KFNAME[an.ex][an.k]}」。接著點擊畫面標記關節。`);};
+$('#clearKf').onclick=()=>{an.kf[an.k].m={};an.cur=null;demo=false;refresh();};
+st.addEventListener('click',e=>{
+  if(demo){an.kf={A:{t:null,m:{}},B:{t:null,m:{}}};demo=false;say('已清除示範資料，開始你的標記。');}
+  if(an.hasVideo&&an.kf[an.k].t==null)an.kf[an.k].t=an.video.currentTime;
+  const rc=st.getBoundingClientRect(),x=(e.clientX-rc.left)*st.width/rc.width,y=(e.clientY-rc.top)*st.height/rc.height;
+  an.kf[an.k].m[an.cur]=[x,y];const list=PTS[an.ex],m=an.kf[an.k].m;const next=list.find(p=>!m[p[0]]);an.cur=next?next[0]:an.cur;
+  if(!next)say(`「${KFNAME[an.ex][an.k]}」標記完成。`+(an.k==='A'?'切到另一個關鍵幀繼續。':'分析結果已更新。'));refresh();});
+$('#vid').onchange=e=>{const f=e.target.files[0];if(!f)return;const v=an.video||document.createElement('video');an.video=v;
+  v.muted=true;v.playsInline=true;v.preload='auto';v.src=URL.createObjectURL(f);
+  v.onloadedmetadata=()=>{const s=Math.min(1,1280/v.videoWidth);st.width=Math.round(v.videoWidth*s);st.height=Math.round(v.videoHeight*s);
+    an.hasVideo=true;demo=false;an.kf={A:{t:null,m:{}},B:{t:null,m:{}}};an.k='A';an.cur=null;v.currentTime=0;
+    say(`影片已載入（${v.duration.toFixed(1)} 秒）。先找到「${KFNAME[an.ex].A}」的畫面，按「把目前畫面設為這一幀」，再依序點關節。`);refresh();};
+  v.onseeked=()=>{drawStage();updT();};};
+function updT(){if(!an.video)return;$('#tLbl').textContent=an.video.currentTime.toFixed(2)+'s';$('#seek').value=Math.round(an.video.currentTime/an.video.duration*1000)||0;}
+$('#seek').oninput=e=>{if(!an.hasVideo)return;an.video.pause();$('#vPlay').textContent='播放';an.video.currentTime=e.target.value/1000*an.video.duration;};
+$('#vPlay').onclick=()=>{if(!an.hasVideo)return;const v=an.video;if(v.paused){v.play();$('#vPlay').textContent='暫停';const tick=()=>{drawStage();updT();if(!v.paused&&!v.ended)requestAnimationFrame(tick);else $('#vPlay').textContent='播放';};tick();}else{v.pause();$('#vPlay').textContent='播放';}};
+const step=d=>{if(!an.hasVideo)return;an.video.pause();$('#vPlay').textContent='播放';an.video.currentTime=Math.max(0,Math.min(an.video.duration,an.video.currentTime+d/60));};
+$('#vPrev').onclick=()=>step(-1);$('#vNext').onclick=()=>step(1);
+let landmarker=null;
+$('#autoBtn').onclick=()=>{if(!an.hasVideo){say('先選擇一支影片，再用自動偵測。');return;}if(!landmarker){say('請選擇 MediaPipe 姿勢模型檔（pose_landmarker_full.task）。');$('#modelFile').click();return;}runDetect();};
+$('#modelFile').onchange=async e=>{const f=e.target.files[0];if(!f)return;say('正在載入姿勢偵測模型…');
+  try{const base='https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14';const{FilesetResolver,PoseLandmarker}=await import(base+'/vision_bundle.mjs');
+    const fs=await FilesetResolver.forVisionTasks(base+'/wasm');
+    landmarker=await PoseLandmarker.createFromOptions(fs,{baseOptions:{modelAssetBuffer:new Uint8Array(await f.arrayBuffer())},runningMode:'IMAGE',numPoses:1});runDetect();}
+  catch(err){landmarker=null;say('這個環境擋住了偵測引擎的載入，請先用手動標記。打包成 APK 後模型會內建，可以離線自動偵測。');}};
+function runDetect(){try{const res=landmarker.detect(st);const L=res.landmarks&&res.landmarks[0];if(!L){say('這一幀沒有偵測到人，換一個畫面再試。');return;}
+  const vis=i=>L[i].visibility||0,side=(vis(11)+vis(23)+vis(25))>=(vis(12)+vis(24)+vis(26))?0:1;
+  const idx={ear:7,shoulder:11,elbow:13,wrist:15,hip:23,knee:25,ankle:27};const m=an.kf[an.k].m,W=st.width,H=st.height;
+  for(const[id]of PTS[an.ex]){const key=id==='bar'?'wrist':id;if(idx[key]!=null){const p=L[idx[key]+side];m[id]=[p.x*W,p.y*H];}}
+  if(an.kf[an.k].t==null)an.kf[an.k].t=an.video.currentTime;an.cur=an.ex==='rdl'?'sacrum':null;
+  say('已自動標記。尾椎模型抓不到，請手動點一下；其他點不準也可以點選後重新標記。');refresh();}catch(err){say('偵測失敗，請改用手動標記。');}}
+
+/* ================= 路由 ================= */
+function route(){
+  const h=location.hash.slice(1)||'home';let view='home';
+  const mm=h.match(/^ex-(pullup|rdl)-([a-z]+)$/);
+  if(mm&&EX[mm[1]].variants[mm[2]]){view='ex';const changed=S.ex!==mm[1];S.ex=mm[1];S.v=mm[2];if(changed||!S.viewSet){setView(EX[S.ex].view);S.viewSet=true;}buildEx();}
+  else if(h==='analyze'){view='analyze';refresh();}
+  else buildHome();
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('on',v.id==='view-'+view));
+  $('#tab-home').classList.toggle('on',view!=='analyze');$('#tab-analyze').classList.toggle('on',view==='analyze');
+  window.scrollTo(0,0);
+}
+addEventListener('hashchange',route);
+initGL();loadBody();loadDemo();
+if(!location.hash)location.hash='ex-pullup-shoulder';
+route();requestAnimationFrame(loop);
+</script>
+</body>
+</html>

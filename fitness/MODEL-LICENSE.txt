@@ -1,0 +1,11 @@
+發力地圖（fitness/）使用的人體解剖模型
+
+來源：
+- "Z-Anatomy - The libre 3D atlas of anatomy - CC-BY-SA 4.0"
+  https://github.com/Z-Anatomy/Models-of-human-anatomy
+  （FBX 取自 https://github.com/LluisV/Z-Anatomy ，Mobile-Version 分支 Assets/Models/1.0 Models/）
+- "BodyParts3D - The Database Center for Life Science - CC-BY-SA 2.1 Japan"
+  https://dbarchive.biosciencedbc.jp/en/bodyparts3d/download.html
+
+修改內容：挑選表層肌肉與骨骼、減面（頂點合併）、合併成單一檔案、加上骨骼權重以便播放動作。
+body.js 內的模型資料（base64）依 CC BY-SA 4.0 授權提供：https://creativecommons.org/licenses/by-sa/4.0/
