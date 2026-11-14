@@ -61,21 +61,21 @@
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 電磁波與光（四） · <a href="../refraction/">上一頁：光的折射</a></div>
       <h1>繞射與干涉</h1>
     </div>
-    <p>拖曳橘色的點操作。九個實驗台對應講義 2-5、2-6 與 2-1：自由波槽、繞射、惠更斯作圖、疊加原理、水波干涉、雙狹縫、薄膜干涉、光的本質之爭；最下方有隨堂練習與考古題的情境。</p>
+    <p>拖曳橘色的點操作。實驗台照講義 2-5、2-6 的順序排：惠更斯作圖 → 繞射 → 疊加原理 → 兩波源干涉 → 狹縫作圖 → 楊氏雙狹縫 → 薄膜干涉，再加光的本質之爭（2-1）與可以自己畫牆、放波源的自由波槽；最下方有隨堂練習與考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
     <span class="tlabel">實驗台</span>
     <span class="seg" id="benchSeg">
-      <button data-v="tank" aria-pressed="true"><span class="n">0</span>自由波槽（2D／3D）</button>
-      <button data-v="diffract" aria-pressed="false"><span class="n">1</span>繞射</button>
-      <button data-v="huyg" aria-pressed="false"><span class="n">2</span>惠更斯作圖</button>
+      <button data-v="huyg" aria-pressed="true"><span class="n">1</span>惠更斯作圖</button>
+      <button data-v="diffract" aria-pressed="false"><span class="n">2</span>繞射</button>
       <button data-v="super" aria-pressed="false"><span class="n">3</span>疊加原理</button>
       <button data-v="two" aria-pressed="false"><span class="n">4</span>兩波源干涉</button>
       <button data-v="huy" aria-pressed="false"><span class="n">5</span>狹縫作圖（2D／3D）</button>
       <button data-v="young" aria-pressed="false"><span class="n">6</span>楊氏雙狹縫</button>
       <button data-v="film" aria-pressed="false"><span class="n">7</span>薄膜干涉</button>
       <button data-v="nature" aria-pressed="false"><span class="n">8</span>光的本質之爭</button>
+      <button data-v="tank" aria-pressed="false"><span class="n">9</span>自由波槽（2D／3D）</button>
     </span>
   </nav>
 
@@ -87,7 +87,7 @@
   </section>
 
   <!-- ============ 0 自由波槽 ============ -->
-  <section class="bench" id="b-tank">
+  <section class="bench" id="b-tank" hidden>
     <div class="panel">
       <div class="toolbar">
         <button class="btn primary" id="playT">❚❚ 暫停</button>
@@ -135,15 +135,16 @@
         <button class="btn primary" id="play1">❚❚ 暫停</button>
         <span class="seg" id="mode1"><button data-v="slit">狹縫</button><button data-v="edge">擋板邊緣</button><button data-v="block">小障礙物</button></span>
         <label class="tog"><input type="checkbox" id="sh1" checked>直線傳播的陰影邊界</label>
+        <label class="tog"><input type="checkbox" id="cmp1">並排比較：寬縫 vs 窄縫（講義圖 2-7）</label>
       </div>
-      <div class="cbox"><canvas id="cv1" aria-label="水波槽俯視圖，直線波通過狹縫或擋板"></canvas></div>
+      <div class="cbox"><canvas id="cv1" aria-label="水波槽俯視圖，直線波通過狹縫或擋板"></canvas><canvas id="cv1c" hidden aria-label="寬縫與窄縫並排比較"></canvas></div>
       <div class="toolbar">
         <label class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="f1" min="4" max="20" step="0.5" value="8"><output id="f1o"></output></label>
         <label class="slider"><span class="tlabel">水深</span><input type="range" id="h1" min="0.3" max="1.5" step="0.05" value="0.8"><output id="h1o"></output></label>
         <label class="slider" id="a1w"><span class="tlabel" id="a1l">縫寬</span><input type="range" id="a1" min="0.5" max="30" step="0.5" value="6"><output id="a1o"></output></label>
       </div>
       <div class="toolbar"><span class="chips" id="pre1"></span></div>
-      <p class="hint">水波槽俯視圖（慢動作）：亮的是波峰、暗的是波谷，直線波從左邊射來。拖曳橘色的 P 點，看它在陰影區裡有沒有跟著上下振動。</p>
+      <p class="hint" id="hint1">水波槽俯視圖（慢動作）：亮的是波峰、暗的是波谷，直線波從左邊射來。拖曳橘色的 P 點，看它在陰影區裡有沒有跟著上下振動。</p>
     </div>
     <div class="grid2">
       <section class="panel box">
@@ -163,10 +164,21 @@
         </ul>
       </section>
     </div>
+    <section class="panel box" id="aragoBox">
+      <h3>光的繞射：影子正中央的亮點（阿拉戈亮點，講義 2-6） <small style="font-weight:400;color:var(--muted)">雷射照一個小圓盤，看後面屏幕上的影子</small></h3>
+      <div class="toolbar" style="padding:4px 0">
+        <div class="pick"><span class="tlabel">光</span><span class="seg" id="arCol"><button data-v="650">紅</button><button data-v="532">綠</button><button data-v="450">藍</button></span></div>
+        <label class="slider"><span class="tlabel">圓盤直徑</span><input type="range" id="arD" min="1" max="4" step="0.5" value="2"><output id="arDo"></output></label>
+        <label class="slider"><span class="tlabel">屏幕距離</span><input type="range" id="arL" min="0.5" max="3" step="0.1" value="1"><output id="arLo"></output></label>
+        <label class="tog"><input type="checkbox" id="arP">微粒說的預測（影子全暗）</label>
+      </div>
+      <canvas id="cvAr" aria-label="圓盤影子的光強度分布：正面看屏幕與強度曲線"></canvas>
+      <p class="note" id="arNote"></p>
+    </section>
   </section>
 
   <!-- ============ 惠更斯作圖 ============ -->
-  <section class="bench" id="b-huyg" hidden>
+  <section class="bench" id="b-huyg">
     <div class="panel">
       <div class="toolbar">
         <button class="btn primary" id="playG">❚❚ 暫停</button><button class="btn" id="backG">◂ 上一格</button><button class="btn" id="stepG">下一格 ▸</button><button class="btn" id="resetG">⟲ 重來</button>
@@ -304,7 +316,7 @@
         <label class="slider" id="dHw"><span class="tlabel">縫距 d</span><input type="range" id="dH" min="3" max="40" step="0.5" value="16"><output id="dHo"></output></label>
         <label class="slider" id="aHw"><span class="tlabel">縫寬 a</span><input type="range" id="aH" min="2" max="30" step="0.5" value="12"><output id="aHo"></output></label>
         <label class="slider" id="nHw"><span class="tlabel">縫上點波源數</span><input type="range" id="nH" min="2" max="12" step="1" value="6"><output id="nHo"></output></label>
-        <label class="slider"><span class="tlabel">屏幕距離 L</span><input type="range" id="LH" min="30" max="90" step="1" value="80"><output id="LHo"></output></label>
+        <label class="slider"><span class="tlabel">屏幕距離 r</span><input type="range" id="LH" min="30" max="90" step="1" value="80"><output id="LHo"></output></label>
       </div>
       <p class="hint" id="hintH"></p>
     </div>
@@ -320,7 +332,7 @@
           <li><b>雙狹縫</b>：忽略狹縫的寬度，把兩條縫看成 <b>2 個點光源</b>，它們發出的波互相干涉。</li>
           <li>波峰遇波峰（●）連成的線是<b>腹線</b>，打到屏幕上就是<b>亮紋</b>；波峰遇波谷（●）連成的線是<b>節線</b>，打到屏幕上是<b>暗紋</b>。</li>
           <li><b>單狹縫</b>：依惠更斯原理，縫上每一點都是新的點波源；光通過單狹縫的繞射，可視為<b>無限多個點光源</b>的干涉結果。把點波源數調多，屏幕上的圖樣越接近真實（中央亮紋最寬）。</li>
-          <li>拖曳 S₁、S₂ 改變縫距，拖曳屏幕改變距離 L；切到 3D 也能直接拖。</li>
+          <li>拖曳 S₁、S₂ 改變縫距，拖曳屏幕改變距離 r；切到 3D 也能直接拖。</li>
         </ul>
       </section>
     </div>
@@ -389,6 +401,12 @@
         </ul>
       </section>
     </div>
+    <section class="panel box">
+      <h3>比較圖（講義圖 2-11、2-12） <small style="font-weight:400;color:var(--muted)">用上面現在的 d、r、縫寬 a 畫出來</small></h3>
+      <div class="toolbar" style="padding:4px 0"><span class="seg" id="cmp4seg"><button data-v="rgb">三種色光（同一組雙狹縫）</button><button data-v="sd">雙狹縫干涉 vs 單狹縫繞射</button></span></div>
+      <canvas id="cv4x" aria-label="條紋比較圖"></canvas>
+      <p class="note" id="cmp4note"></p>
+    </section>
   </section>
 
   <!-- ============ 5 薄膜干涉 ============ -->
@@ -448,7 +466,7 @@
           <li><b class="y">1678</b><span>惠更斯提出<b>波動說</b>（1690 出版《光論》）。</span></li>
           <li><b class="y">1704</b><span>牛頓《光學》：<b>微粒說</b>。靠著牛頓的聲望，十八世紀是微粒說的天下。</span></li>
           <li><b class="y">1803</b><span>楊氏雙狹縫干涉——粒子不會「互相抵消」，波才會。</span></li>
-          <li><b class="y">1819</b><span>菲涅耳用波動理論預言圓盤影子中央有亮點，阿拉戈用實驗證實。</span></li>
+          <li><b class="y">1818</b><span>菲涅耳提交波動理論；卜瓦松算出「圓盤影子正中央應該有亮點」想推翻它，阿拉戈親自做實驗，亮點真的出現（阿拉戈亮點，動畫在「2 繞射」下方）。</span></li>
           <li><b class="y">1849</b><span>斐索用旋轉齒輪測出光速約 3.1×10⁸ m/s。</span></li>
           <li><b class="y">1850</b><span>傅科、斐索測出<b>水中光速比空氣中慢</b>——微粒說的預測相反，出局。</span></li>
           <li><b class="y">1865</b><span>馬克士威：光是電磁波（1888 赫茲證實），不需要介質。</span></li>
@@ -530,7 +548,7 @@ function waveGraph(cv,parts,ph,sumLabel='合成'){if(cv._w!==cv.clientWidth||!cv
 // ================= bench switching / loop =================
 let bench='tank';const BENCHES=['tank','diffract','huyg','super','two','huy','young','film','nature'];
 const SIZE={},DRAW={},TICK={},UI={};
-function setBench(b,noHash){if(!BENCHES.includes(b))b='tank';bench=b;segSet($('benchSeg'),b);
+function setBench(b,noHash){const hm=/^huyg-(plane|circ|slit|edge|refl|refr)$/.exec(b);if(hm){b='huyg';setTimeout(()=>document.querySelector('#modeG [data-v="'+hm[1]+'"]').click(),0);}const ar=b==='arago';if(ar){b='diffract';setTimeout(()=>$('aragoBox').scrollIntoView({block:'start'}),350);}if(!BENCHES.includes(b))b='huyg';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();UI[b]&&UI[b]();kick();}
 segOn($('benchSeg'),v=>{hideStory();setBench(v);});
 let raf=0,lastT=0;
@@ -699,10 +717,10 @@ buildT();
 // =====================================================================
 // 1 繞射（水波槽）
 // =====================================================================
-const S1={mode:'slit',f:8,h:.8,a:6,run:true,ph:0,sh:true,P:{fx:.8,fy:.2}};
+const S1={mode:'slit',f:8,h:.8,a:6,run:true,ph:0,sh:true,cmp:false,P:{fx:.8,fy:.2}};
 const cv1=$('cv1'),g1=cv1.getContext('2d');let W1=800,H1=400;const F1=Field();let dirty1=true,amp1P=0;
 const TANK=60;
-SIZE.diffract=()=>{const r=fit(cv1,.5,300,520);W1=r.W;H1=r.H;fieldResize(F1,W1,H1,W1<600?4:3);dirty1=true;};
+SIZE.diffract=()=>{if(S1.cmp)sizeC();else{const r=fit(cv1,.5,300,520);W1=r.W;H1=r.H;fieldResize(F1,W1,H1,W1<600?4:3);dirty1=true;}sizeAr();};
 function geo1(){const ppc=W1/TANK,v=Math.sqrt(980*S1.h),lamC=v/S1.f,lam=lamC*ppc,xb=Math.round(W1*.3),yc=H1/2,a=S1.a*ppc;return{ppc,v,lamC,lam,k:TAU/lam,xb,yc,a};}
 function open1(G){const ext=H1*.8;if(S1.mode==='slit')return[[G.yc-G.a/2,G.yc+G.a/2]];if(S1.mode==='edge')return[[-ext,G.yc]];return[[-ext,G.yc-G.a/2],[G.yc+G.a/2,H1+ext]];}
 function closed1(G){if(S1.mode==='slit')return[[0,G.yc-G.a/2],[G.yc+G.a/2,H1]];if(S1.mode==='edge')return[[G.yc,H1]];return[[G.yc-G.a/2,G.yc+G.a/2]];}
@@ -717,7 +735,7 @@ function compute1(){const G=geo1(),P=pts1(G),F=F1,cl=closed1(G);let mx=0;
   const boost=clamp(.9/Math.max(mx,1e-3),1,3);
   for(let j=0;j<F.h;j++)for(let i=0;i<F.w;i++){if((i+.5)*F.cell>G.xb){const o=j*F.w+i;F.re[o]*=boost;F.im[o]*=boost;}}
   const px=S1.P.fx*W1,py=S1.P.fy*H1,A=hz1(G,P,px,py);amp1P=Math.hypot(A[0],A[1]);}
-DRAW.diffract=()=>{const g=g1,G=geo1();if(dirty1){compute1();dirty1=false;uiRead1();}
+DRAW.diffract=()=>{if(S1.cmp){drawC();return;}const g=g1,G=geo1();if(dirty1){compute1();dirty1=false;uiRead1();}
   fieldDraw(g,F1,S1.ph,'w');
   g.fillStyle='#2b3138';for(const[a,b]of closed1(G))g.fillRect(G.xb-4,a,8,b-a);
   if(S1.sh){const es=S1.mode==='edge'?[G.yc]:[G.yc-G.a/2,G.yc+G.a/2];
@@ -735,7 +753,9 @@ DRAW.diffract=()=>{const g=g1,G=geo1();if(dirty1){compute1();dirty1=false;uiRead
 TICK.diffract=dt=>{if(!S1.run)return false;S1.ph+=dt*TAU*.8;return true;};
 function uiRead1(){const G=geo1(),r=S1.a/G.lamC;
   $('f1o').textContent=S1.f+' Hz';$('h1o').textContent=f2(S1.h)+' cm';$('a1o').textContent=f1(S1.a)+' cm';
-  $('a1w').hidden=S1.mode==='edge';$('a1l').textContent=S1.mode==='block'?'障礙物寬':'縫寬';
+  $('a1w').hidden=S1.mode==='edge'||S1.cmp;$('a1l').textContent=S1.mode==='block'?'障礙物寬':'縫寬';$('cmp1').checked=S1.cmp;$('mode1').hidden=S1.cmp;
+  $('hint1').textContent=S1.cmp?'水波槽俯視圖（慢動作）：同一列直線波，左邊通過寬縫、右邊通過窄縫。黃色虛線是「如果波只會直線前進」的陰影邊界。':'水波槽俯視圖（慢動作）：亮的是波峰、暗的是波谷，直線波從左邊射來。拖曳橘色的 P 點，看它在陰影區裡有沒有跟著上下振動。';
+  if(S1.cmp){uiCmp1(G);return;}
   segSet($('mode1'),S1.mode);$('sh1').checked=S1.sh;playTxt($('play1'),S1.run);
   const pct=Math.round(amp1P*100);
   if(S1.mode==='slit')$('r1big').innerHTML=`縫寬 ÷ 波長 ＝ <span class="mono">${f1(r)}</span>`;
@@ -752,9 +772,9 @@ function uiRead1(){const G=geo1(),r=S1.a/G.lamC;
   L.push([pct>=25?'ok':'info',`P 點振幅約為入射波的 <b>${pct}%</b>${pct<8?'（幾乎不動）':''}。拖曳 P 到陰影區裡看看。`]);
   L.push(['info','繞射前後<b>波長不變</b>：比較縫左右兩側的波峰間距。']);
   checks($('r1c'),L);}
-UI.diffract=()=>{uiRead1();};
-function set1(o){Object.assign(S1,o);dirty1=true;uiRead1();kick();}
-let pend1=0;const req1=o=>{Object.assign(S1,o);if(!pend1)pend1=requestAnimationFrame(()=>{pend1=0;dirty1=true;uiRead1();kick();});};
+UI.diffract=()=>{uiRead1();if(cvAr.clientWidth&&cvAr._w!==cvAr.clientWidth){cvAr._w=cvAr.clientWidth;sizeAr();}};
+function set1(o){const was=S1.cmp;Object.assign(S1,{cmp:false},o);if(was!==S1.cmp)showCmp1();dirty1=true;dirtyC=true;uiRead1();kick();}
+let pend1=0;const req1=o=>{Object.assign(S1,o);if(!pend1)pend1=requestAnimationFrame(()=>{pend1=0;dirty1=true;dirtyC=true;uiRead1();kick();});};
 $('f1').addEventListener('input',e=>req1({f:+e.target.value}));
 $('h1').addEventListener('input',e=>req1({h:+e.target.value}));
 $('a1').addEventListener('input',e=>req1({a:+e.target.value}));
@@ -762,8 +782,73 @@ segOn($('mode1'),v=>set1({mode:v}));
 $('sh1').addEventListener('change',e=>{S1.sh=e.target.checked;kick();});
 $('play1').addEventListener('click',()=>{S1.run=!S1.run;playTxt($('play1'),S1.run);kick();});
 dragger(cv1,()=>[{x:S1.P.fx*W1,y:S1.P.fy*H1,r:28,move:(x,y)=>{S1.P.fx=clamp(x/W1,.02,.98);S1.P.fy=clamp(y/H1,.03,.97);const G=geo1(),A=hz1(G,pts1(G),x,y);amp1P=Math.hypot(A[0],A[1]);uiRead1();}}],kick);
-const PRE1=[['縫寬 ≫ 波長',{mode:'slit',a:24,f:12,h:.8}],['縫寬 ≈ 波長',{mode:'slit',a:3.5,f:8,h:.8}],['縫寬 < 波長',{mode:'slit',a:1.5,f:6,h:.8}],['擋板邊緣',{mode:'edge',f:8,h:.8,P:{fx:.78,fy:.75}}],['小障礙物（阿拉戈亮點）',{mode:'block',a:4,f:8,h:.8,P:{fx:.82,fy:.5}}]];
+const PRE1=[['並排比較（講義圖 2-7）',{cmp:true,mode:'slit',f:8,h:.8}],['縫寬 ≫ 波長',{mode:'slit',a:24,f:12,h:.8}],['縫寬 ≈ 波長',{mode:'slit',a:3.5,f:8,h:.8}],['縫寬 < 波長',{mode:'slit',a:1.5,f:6,h:.8}],['擋板邊緣',{mode:'edge',f:8,h:.8,P:{fx:.78,fy:.75}}],['小障礙物（阿拉戈亮點）',{mode:'block',a:4,f:8,h:.8,P:{fx:.82,fy:.5}}]];
 PRE1.forEach(([n,o])=>{const b=document.createElement('button');b.className='chip';b.textContent=n;b.addEventListener('click',()=>set1(JSON.parse(JSON.stringify(o))));$('pre1').appendChild(b);});
+// ----- 並排比較：寬縫 vs 窄縫（講義圖 2-7） -----
+const cv1c=$('cv1c'),g1c=cv1c.getContext('2d'),FC=[Field(),Field()],CMPA=[16,3],CMPT=44;let WC=800,HC=320,dirtyC=true,layC=null;
+function sizeC(){const w=cv1c.clientWidth||cv1.clientWidth||800,nar=w<640;const r=fit(cv1c,nar?1.25:.36,nar?420:260,nar?640:440);WC=r.W;HC=r.H;
+  const gap=10,pw=nar?WC:(WC-gap)/2,ph=nar?(HC-gap)/2:HC;layC={nar,pw,ph,pos:nar?[[0,0],[0,ph+gap]]:[[0,0],[pw+gap,0]]};
+  FC.forEach(F=>fieldResize(F,pw,ph,pw<500?3:3));dirtyC=true;}
+function geoC(){const ppc=layC.pw/CMPT,v=Math.sqrt(980*S1.h),lamC=v/S1.f,lam=lamC*ppc;return{ppc,lamC,lam,k:TAU/lam,xb:Math.round(layC.pw*.3),yc:layC.ph/2};}
+function computeC(){const G=geoC();FC.forEach((F,n)=>{const a=CMPA[n]*G.ppc,y0=G.yc-a/2,y1=G.yc+a/2,sp=Math.max(1.5,G.lam/7),m=Math.max(1,Math.round(a/sp)),st=a/m,P=[];for(let i=0;i<m;i++)P.push(y0+(i+.5)*st);
+  let mx=0;for(let j=0;j<F.h;j++){const y=(j+.5)*F.cell;for(let i=0;i<F.w;i++){const x=(i+.5)*F.cell,o=j*F.w+i;F.mask[o]=(Math.abs(x-G.xb)<=4&&(y<y0||y>y1))?1:0;
+    if(x<=G.xb){const q=G.k*(x-G.xb);F.re[o]=Math.cos(q);F.im[o]=Math.sin(q);continue;}
+    let re=0,im=0;const dx=x-G.xb;for(const yp of P){const dy=y-yp,r=Math.max(Math.hypot(dx,dy),st*.6),am=st/Math.sqrt(G.lam*r)*(1+dx/r)/2,q=G.k*r-Math.PI/4;re+=am*Math.cos(q);im+=am*Math.sin(q);}
+    F.re[o]=re;F.im[o]=im;if(x>G.xb+2*G.lam){const mg=Math.hypot(re,im);if(mg>mx)mx=mg;}}}
+  const boost=clamp(.9/Math.max(mx,1e-3),1,3);for(let j=0;j<F.h;j++)for(let i=0;i<F.w;i++){if((i+.5)*F.cell>G.xb){const o=j*F.w+i;F.re[o]*=boost;F.im[o]*=boost;}}});}
+const descC=r=>r>3.5?'縫寬 ≫ 波長：大部分直線前進':r>1.3?'縫寬是波長的幾倍：有繞射，但集中在正前方':'縫寬 ≈ 波長（或更小）：繞射明顯';
+function drawC(){if(!layC)sizeC();if(dirtyC){computeC();dirtyC=false;}const g=g1c,G=geoC();g.clearRect(0,0,WC,HC);
+  FC.forEach((F,n)=>{const[px,py]=layC.pos[n],a=CMPA[n]*G.ppc,y0=G.yc-a/2,y1=G.yc+a/2;g.save();g.translate(px,py);g.beginPath();g.rect(0,0,layC.pw,layC.ph);g.clip();
+    fieldDraw(g,F,S1.ph,'w');g.fillStyle='#2b3138';g.fillRect(G.xb-4,0,8,y0);g.fillRect(G.xb-4,y1,8,layC.ph-y1);
+    if(S1.sh){[y0,y1].forEach(e=>line(g,G.xb,e,layC.pw,e,'rgba(255,214,120,.95)',1.4,[7,5]));}
+    line(g,G.xb-14,y0,G.xb-14,y1,'#ffb39a',2);line(g,G.xb-19,y0,G.xb-9,y0,'#ffb39a',2);line(g,G.xb-19,y1,G.xb-9,y1,'#ffb39a',2);
+    const r=CMPA[n]/G.lamC;text(g,`(${'ab'[n]}) ${descC(r)}`,10,22,{col:'#fff',size:layC.pw<420?12:14,bold:true,bg:'#0a2a4a'});
+    text(g,`縫寬 ${CMPA[n]} cm ÷ 波長 ${f1(G.lamC)} cm ＝ ${f1(r)}`,10,layC.ph-12,{col:'#fff',size:12,bold:true,bg:'#0a2a4a'});g.restore();});}
+function uiCmp1(G){const lamC=G.lamC,r0=CMPA[0]/lamC,r1=CMPA[1]/lamC;
+  $('r1big').innerHTML='同樣的波，縫越窄（相對波長）繞得越開';
+  $('r1f').innerHTML=`波速 v＝${f1(G.v)} cm/s（水深 ${f2(S1.h)} cm 決定）　λ＝v÷f＝${f1(G.v)}÷${S1.f}＝${f1(lamC)} cm`;
+  checks($('r1c'),[['info',`(a) 縫寬 ${CMPA[0]} cm ＝ <b>${f1(r0)} 個波長</b>：${descC(r0)}。`],[r1<=1.3?'ok':'info',`(b) 縫寬 ${CMPA[1]} cm ＝ <b>${f1(r1)} 個波長</b>：${descC(r1)}。`],
+    ['info','兩邊的縫寬固定。拉「起波器頻率」或「水深」改變波長，兩邊一起變：<b>頻率降低 → 波長變長 → 兩邊都繞得更開</b>（隨堂練習第 27 題）。'],['info','繞射前後<b>波長不變</b>：比較縫左右兩側的波峰間距。']]);}
+function showCmp1(){cv1.hidden=S1.cmp;cv1c.hidden=!S1.cmp;if(S1.cmp)sizeC();else SIZE.diffract();}
+$('cmp1').addEventListener('change',e=>{hideStory();set1({cmp:e.target.checked,mode:'slit'});});
+
+// ----- 阿拉戈亮點：圓盤的菲涅耳繞射 -----
+const AR={lam:650,D:2,L:1,part:false,prof:null,N:0};const cvAr=$('cvAr'),gAr=cvAr.getContext('2d');let WA=800,HA=300;const AR_S=2.5,AR_N=320;
+function besJ0(x){const ax=Math.abs(x);if(ax<8){const y=x*x;return(57568490574+y*(-13362590354+y*(651619640.7+y*(-11214424.18+y*(77392.33017+y*(-184.9052456))))))/(57568490411+y*(1029532985+y*(9494680.718+y*(59272.64853+y*(267.8532712+y)))));}
+  const z=8/ax,y=z*z,xx=ax-.785398164;return Math.sqrt(.636619772/ax)*(Math.cos(xx)*(1+y*(-.1098628627e-2+y*(.2734510407e-4+y*(-.2073370639e-5+y*.2093887211e-6))))-z*Math.sin(xx)*(-.1562499995e-1+y*(.1430488765e-3+y*(-.6911147651e-5+y*(.7621095161e-6-y*.934935152e-7)))));}
+function computeAr(){const a=AR.D/2*1e-3,N=a*a/(AR.lam*1e-9*AR.L);AR.N=N;const M=Math.max(600,Math.ceil(N*160))*2,pr=new Float32Array(AR_N+1),cu=new Float32Array(M+1),su=new Float32Array(M+1);
+  for(let m=0;m<=M;m++){const u=m/M,w=(m===0||m===M?1:m%2?4:2)*u/(3*M),q=Math.PI*N*u*u;cu[m]=Math.cos(q)*w;su[m]=Math.sin(q)*w;}
+  for(let i=0;i<=AR_N;i++){const sv=AR_S*i/AR_N,kk=TAU*N*sv;let re=0,im=0;for(let m=1;m<=M;m++){const j=besJ0(kk*m/M);re+=cu[m]*j;im+=su[m]*j;}
+    const q=Math.PI*N*sv*sv,c=Math.cos(q),sn=Math.sin(q),er=re*c-im*sn,ei=re*sn+im*c;const ur=1-TAU*N*ei,ui=TAU*N*er;pr[i]=ur*ur+ui*ui;}
+  AR.prof=pr;}
+const arI=sv=>{if(AR.part)return sv<1?0:1;const x=Math.min(sv,AR_S)/AR_S*AR_N,i=Math.min(AR_N-1,Math.floor(x)),f=x-i;return AR.prof[i]*(1-f)+AR.prof[i+1]*f;};
+function sizeAr(){if(!cvAr.clientWidth)return;const nar=cvAr.clientWidth<640;const r=fit(cvAr,nar?1.45:.34,nar?480:250,nar?700:380);WA=r.W;HA=r.H;drawAr();}
+function drawAr(){if(!AR.prof)computeAr();const g=gAr,nar=WA<640;g.clearRect(0,0,WA,HA);const a=AR.D/2,half=AR_S*a;
+  const S=Math.round(nar?Math.min(WA,HA*.5):HA),ix=nar?(WA-S)/2:0,base=nmRGBa(AR.lam);
+  const im=g.createImageData(S,S),d=im.data;for(let y=0;y<S;y++)for(let x=0;x<S;x++){const sv=Math.hypot(x+.5-S/2,y+.5-S/2)/(S/2)*AR_S,v=Math.pow(clamp(arI(sv)/1.5,0,1),.7),o=(y*S+x)*4;d[o]=255*base[0]*v+40*v*v;d[o+1]=255*base[1]*v+40*v*v;d[o+2]=255*base[2]*v+40*v*v;d[o+3]=255;}
+  const dp=DPR();const oc=drawAr.oc||(drawAr.oc=document.createElement('canvas'));oc.width=S;oc.height=S;oc.getContext('2d').putImageData(im,0,0);g.drawImage(oc,ix,0);
+  g.strokeStyle='rgba(255,255,255,.55)';g.setLineDash([4,4]);g.lineWidth=1;g.beginPath();g.arc(ix+S/2,S/2,S/2/AR_S,0,TAU);g.stroke();g.setLineDash([]);
+  text(g,'正面看屏幕（虛線圈＝圓盤的幾何陰影）',ix+8,18,{col:'#fff',size:12,bold:true,bg:'#000'});
+  if(!AR.part){line(g,ix+S/2+S*.2,S/2-S*.2,ix+S/2+6,S/2-6,'#fff',1.5);head(g,ix+S/2+5,S/2-5,Math.PI*.75,'#fff',8);text(g,'中央亮點',ix+S/2+S*.2+4,S/2-S*.2-2,{col:'#fff',size:13,bold:true,bg:'#000'});}
+  // 強度曲線
+  const gx=nar?46:S+56,gy=nar?S+24:14,gw=WA-gx-14,gh=HA-gy-34,X=x=>gx+(x+half)/(2*half)*gw,Y=v=>gy+gh-v/1.75*gh;
+  g.fillStyle=C['accent-soft'];g.fillRect(X(-a),gy,X(a)-X(-a),gh);
+  line(g,gx,gy+gh,gx+gw,gy+gh,C.muted,1);line(g,gx,gy,gx,gy+gh,C.muted,1);
+  for(let v=0;v<=1.5;v+=.5){line(g,gx,Y(v),gx+gw,Y(v),C.grid,1);text(g,v.toFixed(1),gx-5,Y(v)+4,{col:C.muted,size:10,align:'right'});}
+  const tk=half>3?2:1;for(let x=-Math.floor(half/tk)*tk;x<=half;x+=tk)text(g,String(x),X(x),gy+gh+14,{col:C.muted,size:10,align:'center'});
+  text(g,'離影子中心的距離（mm）',gx+gw,gy+gh+30,{col:C.muted,size:11,align:'right'});text(g,'相對亮度（沒有圓盤時＝1）',gx+6,gy+12,{col:C.muted,size:11,bg:C.panel});
+  text(g,'圓盤的幾何陰影區',X(0),gy+gh-6,{col:C.accent,size:11,align:'center',bold:true});
+  g.strokeStyle=nmCol(AR.lam);g.lineWidth=2.2;g.beginPath();for(let i=0;i<=400;i++){const x=-half+2*half*i/400,v=arI(Math.abs(x)/a);i?g.lineTo(X(x),Y(v)):g.moveTo(X(x),Y(v));}g.stroke();
+  if(!AR.part){text(g,'波動說：中央有亮點！',X(0)+10,Y(arI(0))+2,{col:C.ink,size:12,bold:true,bg:C.panel});g.fillStyle=C.ink;g.beginPath();g.arc(X(0),Y(arI(0)),3.5,0,TAU);g.fill();}
+  else text(g,'微粒說：影子裡應該全暗',X(0),Y(.25),{col:C.ink,size:12,bold:true,align:'center',bg:C.panel});
+  $('arDo').textContent=f1(AR.D)+' mm';$('arLo').textContent=f1(AR.L)+' m';segSet($('arCol'),AR.lam);$('arP').checked=AR.part;
+  $('arNote').innerHTML=AR.part?'微粒說：光粒子直線前進，被圓盤擋住的地方全暗、影子邊界清楚。把勾選拿掉，看波動理論算出來的結果。':
+    `依波動理論計算（雷射 ${AR.lam} nm、圓盤直徑 ${f1(AR.D)} mm、屏幕在 ${f1(AR.L)} m 外）。從圓盤邊緣各處繞進來的光，到影子<b>正中央</b>的路程都一樣長，全部互相加強，所以中央一定是亮的——而且和沒有圓盤時幾乎一樣亮；影子外面還有一圈圈明暗條紋。1818 年卜瓦松算出這個結果想推翻波動說，阿拉戈做實驗卻真的看到亮點。圓盤愈小、屏幕愈遠，亮點愈寬。`;}
+segOn($('arCol'),v=>{AR.lam=+v;AR.prof=null;drawAr();});
+$('arD').addEventListener('input',e=>{AR.D=+e.target.value;AR.prof=null;drawAr();});
+$('arL').addEventListener('input',e=>{AR.L=+e.target.value;AR.prof=null;drawAr();});
+$('arP').addEventListener('change',e=>{AR.part=e.target.checked;drawAr();});
+
 
 // =====================================================================
 // 惠更斯作圖：波前上每一點都是新的點波源，子波的包絡線是新的波前
@@ -1170,8 +1255,21 @@ function ui4(){segSet($('src4'),S4.src);segSet($('type4'),S4.type);segSet($('ori
   else if(!S4.cov)L.push(['info','雙狹縫：亮紋幾乎<b>等寬、等間隔</b>；外圍亮度受單縫繞射的包絡影響（縫寬 a 越窄，包絡越寬）。']);
   L.push(['info',`條紋排列方向與狹縫<b>垂直</b>：${S4.ori==='v'?'直的狹縫 → 一條條直的亮紋沿水平方向排開。':'橫的狹縫 → 一條條橫的亮紋沿鉛直方向排開。'}`]);
   checks($('r4c'),L);drawPhasor4();segSet($('view4'),S4.view);$('pha4').checked=S4.pha;$('zm4').checked=S4.zoom;segSet($('beam4'),S4.beam);$('ex4').value=S4.exp;$('ex4o').textContent=S4.exp;$('anim4').textContent=S4.anim?'❚❚ 停止縫寬變化':'▶ 縫寬慢慢變化';
-  $('tab4').innerHTML=S4.rec.map(r=>`<tr><td>${r.l}</td><td>${r.m}</td><td>${f2(r.d)}</td><td>${f1(r.r)}</td><td>${r.dy}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted);font-family:var(--f-body)">還沒有記錄</td></tr>';}
+  $('tab4').innerHTML=S4.rec.map(r=>`<tr><td>${r.l}</td><td>${r.m}</td><td>${f2(r.d)}</td><td>${f1(r.r)}</td><td>${r.dy}</td></tr>`).join('')||'<tr><td colspan="5" style="color:var(--muted);font-family:var(--f-body)">還沒有記錄</td></tr>';drawCmp4();}
 UI.young=ui4;
+// ----- 比較圖：三種色光／雙狹縫 vs 單狹縫（講義圖 2-11、2-12） -----
+S4.cmpx='rgb';const cv4x=$('cv4x'),g4x=cv4x.getContext('2d');
+function Ix4(y,lam,type){const lm=lam*1e-6/S4.n,rm=S4.r*1000,be=Math.PI*S4.a*y/(lm*rm),env=Math.abs(be)<1e-6?1:(Math.sin(be)/be)**2;if(type==='single')return env;const al=Math.PI*S4.d*y/(lm*rm);return env*Math.cos(al)**2;}
+function drawCmp4(){if(!cv4x.clientWidth)return;segSet($('cmp4seg'),S4.cmpx);const rgb=S4.cmpx==='rgb',rows=rgb?[[650,'double','紅光 650 nm'],[532,'double','綠光 532 nm'],[450,'double','藍光 450 nm']]:(()=>{const l=white4()?550:S4.lam;return[[l,'double','雙狹縫干涉：亮紋等寬、等間隔'],[l,'single','單狹縫繞射：中央亮紋最寬（約 2 倍）、最亮']];})();
+  const w=cv4x.clientWidth,sh=rgb?44:40,ch=rgb?0:74,rh=sh+ch+26,hh=rows.length*rh+40;cv4x.style.height=hh+'px';const dp=DPR();cv4x.width=Math.round(w*dp);cv4x.height=Math.round(hh*dp);const g=g4x;g.setTransform(dp,0,0,dp,0,0);g.clearRect(0,0,w,hh);
+  const L=8,R=w-8,X=y=>L+(y+YMM)/(2*YMM)*(R-L);
+  rows.forEach(([lam,type,label],k)=>{const y0=k*rh;text(g,label+(type==='double'?`　Δy＝${f2(dy4(lam))} mm`:`　中央亮紋寬 ${f1(2*S4.r*lam/S4.n/S4.a*1e-3)} mm`),L,y0+16,{size:13,bold:true,col:rgb?nmCol(lam):C.ink});
+    const base=nmRGBa(lam);for(let px=L;px<R;px++){const y=(px+.5-L)/(R-L)*2*YMM-YMM,v=Ix4(y,lam,type);g.fillStyle=toneStr(base.map(c=>c*v));g.fillRect(px,y0+22,1.2,sh);}
+    if(ch){g.strokeStyle=nmCol(lam);g.lineWidth=1.6;g.beginPath();for(let px=L;px<=R;px++){const y=(px-L)/(R-L)*2*YMM-YMM,v=Ix4(y,lam,type),yy=y0+22+sh+ch-4-v*(ch-10);px===L?g.moveTo(px,yy):g.lineTo(px,yy);}g.stroke();line(g,L,y0+22+sh+ch-4,R,y0+22+sh+ch-4,C.line,1);}});
+  const yb=rows.length*rh;for(let m=-30;m<=30;m+=10){line(g,X(m),yb,X(m),yb+5,C.muted,1);text(g,String(m),X(m),yb+18,{col:C.muted,size:10,align:'center'});}text(g,'屏幕上的位置（mm，中央為 0）',(L+R)/2,yb+34,{col:C.muted,size:11,align:'center'});
+  $('cmp4note').innerHTML=rgb?'同一組雙狹縫（d、r 不變）：波長越長，條紋越寬——紅光最寬、藍光最窄（Δy＝rλ／d）。改上面的 d 或 r，三條一起變。':'雙狹縫：亮紋幾乎等寬、等間隔，各亮紋亮度相近。單狹縫（同樣的縫寬 a）：中央亮紋約為其他亮紋的 2 倍寬，往兩側迅速變暗。共同點：都是光波動性的證據；波長越長，條紋越寬。（縫寬 a 太窄時，單狹縫的中央亮紋會寬到佔滿整個屏幕，所以切到這張圖時會自動把 a 調寬一點。）';}
+segOn($('cmp4seg'),v=>{S4.cmpx=v;if(v==='sd'&&2*S4.r*(white4()?550:S4.lam)/S4.n/S4.a*1e-3>24){set4({a:Math.min(.2,Math.ceil(2*S4.r*(white4()?550:S4.lam)/S4.n/20*1e-3*100)/100)});}drawCmp4();});
+
 function set4(o){Object.assign(S4,o);S4.Py=clamp(S4.Py,-YMM,YMM);ui4();if(S4.view==='3d')upd3Y();if(S4.view==='cmp')updCmp();kick();}
 segOn($('src4'),v=>set4(v==='white'?{src:'white'}:{src:v,lam:+v}));
 segOn($('type4'),v=>set4(v==='single'?{type:v,a:.12}:{type:v,a:.05}));segOn($('ori4'),v=>set4({ori:v}));segOn($('n4'),v=>set4({n:+v}));
@@ -1380,11 +1478,11 @@ function uiH(){segSet($('modeH'),H.mode);segSet($('viewH'),H.view);segSet($('col
   $('cvH').hidden=H.view==='3d';$('cvH3').hidden=H.view!=='3d';$('h3tip').hidden=H.view!=='3d';
   $('hintH').textContent=H.mode==='double'?'仿課本畫法：每條縫當成一個點光源，實線是波峰、虛線是波谷。波峰遇波峰、波谷遇波谷都是加強（振動最劇烈，連起來就是腹線，打到屏幕是亮紋）；「瞬間位移」的底色只是這一瞬間的高低：加強處此刻若是波谷就顯示成暗色，下半週期就變亮。改成「振動強弱」看時間平均的亮暗。拖曳 S₁ 或 S₂ 改變縫距，拖曳屏幕下方的橘點改變屏幕距離。（長度單位任意）':H.mode==='single'?'縫上每一點都是新的點波源（惠更斯原理）。把「縫上點波源數」調多，屏幕上的圖樣越接近單狹縫繞射；拖曳任一個點波源可以改變縫寬。':'沒有擋板：點波源可以放在任何地方、拖到任何位置，最多 6 個；兩個時會畫出交點。';
   const S=srcH(),L=[];
-  if(H.mode==='double'){const dy=H.L*H.lam/H.d;$('rHbig').innerHTML=`亮紋間距 Δy ≈ <span class="mono">${f1(dy)}</span>`;$('rHf').innerHTML=`Δy ≈ Lλ／d＝${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.d)}＝${f1(dy)}（d 比 L 小很多時才準）`;
+  if(H.mode==='double'){const dy=H.L*H.lam/H.d;$('rHbig').innerHTML=`亮紋間距 Δy ≈ <span class="mono">${f1(dy)}</span>`;$('rHf').innerHTML=`Δy ≈ rλ／d＝${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.d)}＝${f1(dy)}（d 比 r 小很多時才準）`;
     L.push(['info','忽略狹縫寬度，把兩條縫看成 <b>2 個點光源</b>；它們的波互相干涉。']);
     L.push(['ok','黑點（3D 是黃點，波峰遇波峰）連成的線打到屏幕上是<b>亮紋</b>；紅點（波峰遇波谷）連成的線打到屏幕上是<b>暗紋</b>。']);
     const nN=2*Math.floor(H.d/H.lam+.5);L.push(['info',`縫距 ÷ 波長＝${f1(H.d/H.lam)}：節線共 ${nN} 條。把縫距拉大或波長變短，條紋變多變密。`]);}
-  else if(H.mode==='single'){const w=2*H.L*H.lam/H.a;$('rHbig').innerHTML=`中央亮紋寬 ≈ <span class="mono">${f1(w)}</span>`;$('rHf').innerHTML=`中央亮紋寬 ≈ 2Lλ／a＝2 × ${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.a)}＝${f1(w)}`;
+  else if(H.mode==='single'){const w=2*H.L*H.lam/H.a;$('rHbig').innerHTML=`中央亮紋寬 ≈ <span class="mono">${f1(w)}</span>`;$('rHf').innerHTML=`中央亮紋寬 ≈ 2rλ／a＝2 × ${Math.round(H.L)} × ${f1(H.lam)} ÷ ${f1(H.a)}＝${f1(w)}`;
     L.push(['info',`縫上放了 <b>${H.n} 個</b>點波源。光通過單狹縫的繞射，可視為<b>無限多個點光源</b>的干涉結果——點波源越多，圖樣越接近真實。`]);
     L.push(['ok','中央亮紋最寬（約為其他亮紋的 2 倍）、最亮，往兩側快速變暗。']);
     L.push(['info',H.a<H.lam*1.5?'縫寬比波長還小：幾乎像一個點波源，波向四面八方散開，中央亮紋寬到超出屏幕。':'縫越窄，中央亮紋越寬（繞射越明顯）。']);}
@@ -1565,7 +1663,7 @@ const VERD={
   refract:{big:'都能解釋偏折方向——但預測的速率相反！',p:['ok','水面吸引粒子，垂直速度變大 → 偏向法線，<b>水中變快</b>'],w:['ok','波前進入水中變慢 → 偏向法線，<b>水中變慢</b>'],c:[['info','避免誤解：微粒說<b>也能</b>解釋折射的偏折方向，它錯在預測的速率。'],['info','要分勝負，就得量水中光速——看「水中光速」。']]},
   speed:{big:'1850 傅科：水中光速比較慢 → 微粒說出局',p:['no','預測水中較快（約 1.33 倍）——與實驗相反'],w:['ok','預測水中較慢（約 c÷1.33）——與實驗相符'],c:[['ok','決定勝負的是「預測 → 實驗檢驗」。'],['info','常考陷阱：「微粒說預測光在水中較快」是對的敘述；「微粒說預測水中較慢」是錯的。']]},
   interf:{big:'1803 楊氏雙狹縫：粒子不會互相抵消',p:['no','只會在兩縫後方出現兩條亮帶'],w:['ok','明暗相間、等間隔的干涉條紋'],c:[['ok','暗紋是兩道光波峰遇波谷抵消，粒子做不到。'],['info','看第 4 台的楊氏雙狹縫實驗。']]},
-  diff:{big:'繞射：光會繞到障礙物後方',p:['no','影子邊界應該很清楚，光不會擴散'],w:['ok','縫越窄，光越向兩側擴散，出現明暗條紋'],c:[['ok','1819 年阿拉戈亮點：連圓盤影子中央都是亮的——波動說的戲劇性勝利。'],['info','看第 1 台的「小障礙物」。']]},
+  diff:{big:'繞射：光會繞到障礙物後方',p:['no','影子邊界應該很清楚，光不會擴散'],w:['ok','縫越窄，光越向兩側擴散，出現明暗條紋'],c:[['ok','1818 年阿拉戈亮點：連圓盤影子中央都是亮的——波動說的戲劇性勝利。'],['info','看第 1 台的「小障礙物」。']]},
   photo:{big:'1905 光電效應：波動說也解釋不了',p:['ok','光子說（愛因斯坦）：每個光子能量 E＝hf，頻率夠高才打得出電子'],w:['no','波動說預測：光夠亮（能量夠多）就能打出電子，與顏色無關'],c:[['ok','結果：紅光再亮也打不出電子；紫光再暗也立刻打出電子。'],['info','最後的答案：光同時具有<b>波動性與粒子性</b>（下一章）。']]},
   gear:{big:'1849 斐索：旋轉齒輪測光速',p:['info','720 齒、鏡子在 8633 m 外'],w:['info','轉速加快到某一值，回來的光恰好被下一個齒擋住'],c:[]}};
 DRAW.nature=()=>{const g=g6;g.clearRect(0,0,W6,H6);g.fillStyle=C.panel;g.fillRect(0,0,W6,H6);const t=S6.t;
@@ -1733,7 +1831,7 @@ const QS=[{g:'講義隨堂練習（2-1、2-5、2-6）',items:[
 
 // ================= start =================
 let lastWW=0;new ResizeObserver(()=>{const w=document.querySelector('.wrap').clientWidth;if(w===lastWW)return;lastWW=w;SIZE[bench]();UI[bench]&&UI[bench]();kick();}).observe(document.querySelector('.wrap'));
-setBench((location.hash||'#tank').slice(1),true);
+setBench((location.hash||'#huyg').slice(1),true);
 window.addEventListener('hashchange',()=>setBench(location.hash.slice(1),true));
 </script>
 </body>
