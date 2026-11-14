@@ -60,7 +60,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 波動（水波槽）</div>
       <h1>水波槽實驗</h1>
     </div>
-    <p>四個實驗台：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射、兩點波源干涉時白紙上不動的灰線。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
+    <p>四個實驗台（每一個都可以切換 2D 與 3D 立體）：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射、兩點波源干涉時白紙上不動的灰線。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -134,6 +134,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
     <section class="panel">
       <div class="toolbar">
         <button class="btn primary" id="rPlay">❚❚ 暫停</button><button class="btn" id="rBack">◂ 上一格</button><button class="btn" id="rStep">下一格 ▸</button>
+        <span class="seg" id="rV3"><button data-v="2d" aria-pressed="true">2D 俯視</button><button data-v="3d">3D 立體</button></span>
         <span class="tlabel">淺水區（玻璃板）</span>
         <span class="seg" id="rShape"><button data-v="half" aria-pressed="true">斜的邊界</button><button data-v="slab" aria-pressed="false">長條形</button><button data-v="prism" aria-pressed="false">三角形</button><button data-v="lensx" aria-pressed="false">凸透鏡形</button><button data-v="lensv" aria-pressed="false">凹透鏡形</button></span>
         <label class="tog" id="rSwapW"><input type="checkbox" id="rSwap"> 反過來：淺水 → 深水</label>
@@ -144,8 +145,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="rLam" checked> 標出波長</label>
         <span class="seg" id="rSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.1" aria-pressed="true">慢動作</button><button data-v="0.25" aria-pressed="false">快</button></span>
         <span class="tlabel">每格</span><span class="seg fgseg" id="rFg"><button data-v="0.125">⅛ 週期</button><button data-v="0.25" aria-pressed="true">¼ 週期</button><button data-v="0.5">½ 週期</button></span><span class="stepinfo" id="rInfo"></span>
+        <span id="rCamW" style="display:none"><span class="tlabel">視角</span><span class="seg" id="rCam"><button data-v="tilt" aria-pressed="true">斜上方</button><button data-v="top">正上方</button><button data-v="low">貼近水面</button></span><button class="btn" id="rFS">⛶ 全螢幕</button></span>
       </div>
-      <div class="cbox"><canvas class="cv" id="cvR" aria-label="水波槽俯視：直線波由深水區進入淺水區"></canvas></div>
+      <div class="cbox"><canvas class="cv" id="cvR" aria-label="水波槽俯視：直線波由深水區進入淺水區"></canvas><div class="st3" id="st3r" hidden><div class="ov3" id="ov3r"></div><div class="tip3">拖曳旋轉・滾輪或雙指縮放</div><div class="load3" id="load3r">3D 畫面載入中…</div></div></div>
       <div class="toolbar">
         <div class="slider" id="rIw"><span class="tlabel">入射角</span><input type="range" id="rI" min="0" max="70" step="1" value="40"><output id="rIo"></output></div>
         <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="rF" min="4" max="16" step="0.5" value="8"><output id="rFo"></output></div>
@@ -182,6 +184,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="toolbar">
         <button class="btn primary" id="tPlay">❚❚ 暫停</button>
         <span id="tStepW"><button class="btn" id="tBack">◂ 上一格</button><button class="btn" id="tStep">下一格 ▸</button></span>
+        <span class="seg" id="tV3"><button data-v="2d" aria-pressed="true">2D 俯視</button><button data-v="3d">3D 立體</button></span>
         <span class="tlabel">畫面</span>
         <span class="seg" id="tMode"><button data-v="now" aria-pressed="true">瞬間（像閃頻器定住）</button><button data-v="avg" aria-pressed="false">肉眼看到的（時間平均）</button></span>
         <span class="seg" id="tView"><button data-v="paper" aria-pressed="true">白紙上的畫面</button><button data-v="water" aria-pressed="false">水面高度</button></span>
@@ -190,8 +193,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="tNode" checked> 標出節線與腹線</label>
         <span class="seg" id="tSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.12" aria-pressed="true">慢動作</button><button data-v="0.3" aria-pressed="false">快</button></span>
         <span class="tlabel">每格</span><span class="seg fgseg" id="tFg"><button data-v="0.125">⅛ 週期</button><button data-v="0.25" aria-pressed="true">¼ 週期</button><button data-v="0.5">½ 週期</button></span><span class="stepinfo" id="tInfo"></span>
+        <span id="tCamW" style="display:none"><span class="tlabel">視角</span><span class="seg" id="tCam"><button data-v="tilt" aria-pressed="true">斜上方</button><button data-v="top">正上方</button><button data-v="low">貼近水面</button></span><button class="btn" id="tFS">⛶ 全螢幕</button></span>
       </div>
-      <div class="cbox"><canvas class="cv" id="cvT" aria-label="兩點波源干涉時白紙上的亮紋、暗紋與灰線"></canvas></div>
+      <div class="cbox"><canvas class="cv" id="cvT" aria-label="兩點波源干涉時白紙上的亮紋、暗紋與灰線"></canvas><div class="st3" id="st3t" hidden><div class="ov3" id="ov3t"></div><div class="tip3">拖曳旋轉・滾輪或雙指縮放</div><div class="load3" id="load3t">3D 畫面載入中…</div></div></div>
       <div class="toolbar">
         <div class="slider"><span class="tlabel">兩波源間距</span><input type="range" id="tD" min="2" max="16" step="0.5" value="8"><output id="tDo"></output></div>
         <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="tF" min="4" max="16" step="0.5" value="8"><output id="tFo"></output></div>
@@ -221,6 +225,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
     <section class="panel">
       <div class="toolbar">
         <button class="btn primary" id="mPlay">❚❚ 暫停</button><button class="btn" id="mBack">◂ 上一格</button><button class="btn" id="mStep">下一格 ▸</button>
+        <span class="seg" id="mV3"><button data-v="2d" aria-pressed="true">2D 俯視</button><button data-v="3d">3D 立體</button></span>
         <span class="tlabel">障礙物</span>
         <span class="seg" id="mShape"><button data-v="line" aria-pressed="true">直線擋板</button><button data-v="concave" aria-pressed="false">凹面（拋物面）</button><button data-v="convex" aria-pressed="false">凸面</button></span>
         <span class="tlabel">起波器</span>
@@ -233,8 +238,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="mRef" checked> 反射波</label>
         <span class="seg" id="mSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.1" aria-pressed="true">慢動作</button><button data-v="0.25" aria-pressed="false">快</button></span>
         <span class="tlabel">每格</span><span class="seg fgseg" id="mFg"><button data-v="0.125">⅛ 週期</button><button data-v="0.25" aria-pressed="true">¼ 週期</button><button data-v="0.5">½ 週期</button></span><span class="stepinfo" id="mInfo"></span>
+        <span id="mCamW" style="display:none"><span class="tlabel">視角</span><span class="seg" id="mCam"><button data-v="tilt" aria-pressed="true">斜上方</button><button data-v="top">正上方</button><button data-v="low">貼近水面</button></span><button class="btn" id="mFS">⛶ 全螢幕</button></span>
       </div>
-      <div class="cbox"><canvas class="cv" id="cvM" aria-label="水波槽俯視：水波遇到障礙物反射"></canvas></div>
+      <div class="cbox"><canvas class="cv" id="cvM" aria-label="水波槽俯視：水波遇到障礙物反射"></canvas><div class="st3" id="st3m" hidden><div class="ov3" id="ov3m"></div><div class="tip3">拖曳旋轉・滾輪或雙指縮放</div><div class="load3" id="load3m">3D 畫面載入中…</div></div></div>
       <div class="toolbar">
         <div class="slider" id="mIw"><span class="tlabel" id="mIl">入射角</span><input type="range" id="mI" min="0" max="65" step="1" value="30"><output id="mIo"></output></div>
         <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="mF" min="4" max="16" step="0.5" value="8"><output id="mFo"></output></div>
