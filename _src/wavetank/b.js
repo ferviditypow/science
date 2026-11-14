@@ -159,7 +159,7 @@ document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='INPUT'|
 // ======================================================================
 // 1 的 3D 立體圖（Three.js，切開的水槽：正面切口就是側視圖）
 // ======================================================================
-const S3D={ren:null,loading:false,fail:false},K3=.25,TZ=26,AP3=14,NX3=160,NZ3=56,NR3=44;   // 1 cm＝0.25 單位；波高放大 14 倍
+const S3D={ren:null,loading:false,fail:false},K3=.25,TZ=26,AP3=18,NX3=160,NZ3=56,NR3=44;   // 1 cm＝0.25 單位；波高放大 14 倍
 S1.view='3d';S1.cam='tilt';
 const eta3=(x,z,t,W)=>S1.src==='line'?eta1(x,t,W):eta1(TL/2+Math.hypot(x-TL/2,z),t,W);
 async function init3S(){if(S3D.ren||S3D.loading||S3D.fail)return;S3D.loading=true;
@@ -172,16 +172,22 @@ async function init3S(){if(S3D.ren||S3D.loading||S3D.fail)return;S3D.loading=tru
     const sg=new THREE.PlaneGeometry(TL*K3,TZ*K3,NX3,NZ3);sg.rotateX(-Math.PI/2);sg.setAttribute('color',new THREE.BufferAttribute(new Float32Array(sg.attributes.position.count*3),3));
     R.surf=new THREE.Mesh(sg,new THREE.MeshPhongMaterial({vertexColors:true,shininess:100,specular:0xbfe8ff,transparent:true,opacity:.86,side:THREE.DoubleSide}));R.surf.renderOrder=3;scene.add(R.surf);
     // 四面切口
-    const wm=new THREE.MeshBasicMaterial({color:0x4aa3d8,transparent:true,opacity:.42,side:THREE.DoubleSide,depthWrite:false});
-    const mkWall=(n,fn)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array((n+1)*6),3));const idx=[];for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+2,a+1,a+3);}g.setIndex(idx);const m=new THREE.Mesh(g,wm);m.renderOrder=2;scene.add(m);return{g,n,fn};};
+    const wm=new THREE.MeshBasicMaterial({vertexColors:true,transparent:true,opacity:.66,side:THREE.DoubleSide,depthWrite:false});
+    const WT=new THREE.Color(0x8fdcf2),WB=new THREE.Color(0x0a4260);
+    const mkWall=(n,fn)=>{const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(new Float32Array((n+1)*6),3));
+      const c=new Float32Array((n+1)*6);for(let i=0;i<=n;i++){c.set([WT.r,WT.g,WT.b],i*6);c.set([WB.r,WB.g,WB.b],i*6+3);}
+      g.setAttribute('color',new THREE.BufferAttribute(c,3));const idx=[];for(let i=0;i<n;i++){const a=i*2;idx.push(a,a+1,a+2,a+2,a+1,a+3);}g.setIndex(idx);
+      const m=new THREE.Mesh(g,wm);m.renderOrder=2;scene.add(m);return{g,n,fn};};
     R.walls=[mkWall(NX3,u=>[u*TL,TZ/2]),mkWall(NX3,u=>[u*TL,-TZ/2]),mkWall(NZ3,u=>[0,-TZ/2+u*TZ]),mkWall(NZ3,u=>[TL,-TZ/2+u*TZ])];
     const pg=new THREE.BufferGeometry();pg.setAttribute('position',new THREE.BufferAttribute(new Float32Array((NX3+1)*3),3));R.prof=new THREE.Line(pg,new THREE.LineBasicMaterial({color:0x10202e}));R.prof.renderOrder=5;scene.add(R.prof);
     const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.BufferAttribute(new Float32Array((NX3+1)*3),3));R.ghost=new THREE.Line(gg,new THREE.LineDashedMaterial({color:0x6b7785,dashSize:.22,gapSize:.16}));R.ghost.renderOrder=5;scene.add(R.ghost);
     // 玻璃底板與槽壁
+    {const fg=new THREE.PlaneGeometry(TL*K3,TZ*K3);fg.rotateX(-Math.PI/2);R.floor=new THREE.Mesh(fg,new THREE.MeshBasicMaterial({color:0x0d4f6e,transparent:true,opacity:.72,side:THREE.DoubleSide,depthWrite:false}));R.floor.renderOrder=1;scene.add(R.floor);}
     R.glass=new THREE.Mesh(new THREE.BoxGeometry(TL*K3+.5,.12,TZ*K3+.5),new THREE.MeshPhongMaterial({color:0xcfe3f2,transparent:true,opacity:.4,depthWrite:false}));scene.add(R.glass);
     R.rim=new THREE.LineSegments(new THREE.EdgesGeometry(new THREE.BoxGeometry(TL*K3+.5,1.3,TZ*K3+.5)),new THREE.LineBasicMaterial({color:0x7c8894}));scene.add(R.rim);
     // 海綿條
-    R.sponge=new THREE.Group();const sm=new THREE.MeshLambertMaterial({color:0xd9b36c});[[0,-TZ*K3/2+.12,TL*K3,.24],[-TL*K3/2+.12,0,.24,TZ*K3],[TL*K3/2-.12,0,.24,TZ*K3]].forEach(([x,z,w,d])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,.5,d),sm);m.position.set(x,.12,z);R.sponge.add(m);});scene.add(R.sponge);
+    R.sponge=new THREE.Group();const sm=new THREE.MeshLambertMaterial({color:0xd9b36c});R.spn=[];
+    [[0,-TZ*K3/2+.12,TL*K3,.24],[-TL*K3/2+.12,0,.24,TZ*K3],[TL*K3/2-.12,0,.24,TZ*K3]].forEach(([x,z,w,d])=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,1,d),sm);m.position.set(x,0,z);R.sponge.add(m);R.spn.push(m);});scene.add(R.sponge);
     // 起波器
     const dark=new THREE.MeshLambertMaterial({color:0x2b3138});R.genL=new THREE.Group();R.genP=new THREE.Group();
     {const bar=new THREE.Mesh(new THREE.BoxGeometry(.28,.34,TZ*K3*.9),dark);R.genL.add(bar);const rod=new THREE.Mesh(new THREE.CylinderGeometry(.05,.05,2.2,8),dark);rod.position.y=1.1;R.genL.add(rod);const mot=new THREE.Mesh(new THREE.BoxGeometry(.8,.55,.8),new THREE.MeshLambertMaterial({color:0x59626d}));mot.position.y=2.4;R.genL.add(mot);}
@@ -204,24 +210,26 @@ async function init3S(){if(S3D.ren||S3D.loading||S3D.fail)return;S3D.loading=tru
     Object.assign(S3D,R);$('load3').hidden=true;size3S();cam3S();kick();}
   catch(e){console.warn('3D 無法啟動，改用 2D',e);S3D.fail=true;S1.view='2d';UI.setup();kick();}
   S3D.loading=false;}
-function size3S(){if(!S3D.ren)return;const st=$('st3'),fs=document.fullscreenElement===st,w=Math.max(200,st.clientWidth),h=fs?Math.min(innerHeight,Math.round(w*.62)):w<600?clamp(Math.round(w*1.05),320,520):clamp(Math.round(w*.58),320,640);
+function size3S(){if(!S3D.ren)return;const st=$('st3'),fs=document.fullscreenElement===st,w=Math.max(200,st.clientWidth),h=fs?Math.min(innerHeight,Math.round(w*.62)):w<600?clamp(Math.round(w*1.2),340,560):clamp(Math.round(w*.74),380,780);
   S3D.ren.setSize(w,h,false);S3D.cv.style.height=h+'px';S3D.cam.aspect=w/h;S3D.cam.updateProjectionMatrix();S3D.w=w;S3D.h=h;}
-function ext3S(){const M=(S1.Hl+S1.Hs)/S1.Hl,yL=S1.Hl*K3,yP=-(S1.h+S1.Hs)*K3,wd=M*TL*K3,dp=M*TZ*K3;return{M,yL,yP,wd,dp};}
+const dep3=()=>Math.max(.65,S1.h*1.7);   // 水深也放大，讓水看起來是一塊有厚度的水體
+function ext3S(){const M=(S1.Hl+S1.Hs)/S1.Hl,yL=S1.Hl*K3,yP=-(dep3()+S1.Hs*K3),wd=M*TL*K3,dp=M*TZ*K3;return{M,yL,yP,wd,dp};}
 function cam3S(){if(!S3D.ren)return;const E=ext3S(),hh=E.yL-E.yP+2,t34=Math.tan(17*D2R),a=S3D.cam.aspect,cy=(E.yL+E.yP)/2;let dir,tg,dist;
   if(S1.cam==='side'){dir=[0,.06,1];tg=[0,cy-1,0];dist=Math.max((hh+E.dp*.12)/2/t34,(E.wd+2)/2/t34/a)*1.12+E.dp/2;}
   else if(S1.cam==='paper'){dir=[.25,.75,.62];tg=[0,E.yP,0];dist=Math.max((E.dp+E.wd*.3)/2/t34,(E.wd+2)/2/t34/a)*1.1;}
-  else{dir=[.52,.3,.8];tg=[0,cy,0];dist=Math.max((hh+E.dp*.35)/2/t34,(E.wd*.95+E.dp*.5)/2/t34/a)*1.02;}
+  else{dir=[.52,.3,.8];tg=[0,cy,0];dist=Math.max((hh+E.dp*.3)/2/t34,(E.wd*.95+E.dp*.5)/2/t34/a)*.94;}
   const l=Math.hypot(...dir);S3D.cam.position.set(tg[0]+dir[0]/l*dist,tg[1]+dir[1]/l*dist,tg[2]+dir[2]/l*dist);S3D.ctl.target.set(...tg);S3D.ctl.minDistance=6;S3D.ctl.maxDistance=dist*3;S3D.ctl.update();}
 function upd3S(W){const R=S3D;if(R.lost)return;if(!R.w||Math.abs(R.w-$('st3').clientWidth)>1)size3S();
-  const E=ext3S(),t=S1.t,hb=-S1.h*K3,wx=x=>(x-TL/2)*K3,A=AP3*K3;
+  const E=ext3S(),t=S1.t,hb=-dep3(),wx=x=>(x-TL/2)*K3,A=AP3*K3;
   // 水面
   const p=R.surf.geometry.attributes.position,c=R.surf.geometry.attributes.color,amp=Math.max(W.A*AP3*K3,1e-6);
-  for(let i=0;i<p.count;i++){const x=p.getX(i)/K3+TL/2,z=p.getZ(i)/K3,e=eta3(x,z,t,W)*A;p.setY(i,e);const u=clamp(.5+.5*e/amp/1.6,0,1);c.setXYZ(i,.16+.62*u,.5+.42*u,.74+.24*u);}
+  for(let i=0;i<p.count;i++){const x=p.getX(i)/K3+TL/2,z=p.getZ(i)/K3,e=eta3(x,z,t,W)*A;p.setY(i,e);const u=clamp(.5+.5*e/amp/1.6,0,1);c.setXYZ(i,.09+.46*u,.41+.40*u,.62+.33*u);}
   p.needsUpdate=true;c.needsUpdate=true;R.surf.geometry.computeVertexNormals();
   R.walls.forEach(w=>{const a=w.g.attributes.position;for(let i=0;i<=w.n;i++){const[x,z]=w.fn(i/w.n),e=eta3(x,z,t,W)*A;a.setXYZ(i*2,wx(x),hb,z*K3);a.setXYZ(i*2+1,wx(x),e,z*K3);}a.needsUpdate=true;w.g.computeBoundingSphere();});
   const zf=TZ/2*K3+.01,pp=R.prof.geometry.attributes.position;for(let i=0;i<=NX3;i++){const x=i/NX3*TL;pp.setXYZ(i,wx(x),eta3(x,TZ/2,t,W)*A,zf);}pp.needsUpdate=true;
   R.ghost.visible=S1.ghost!=null;if(R.ghost.visible){const q=R.ghost.geometry.attributes.position;for(let i=0;i<=NX3;i++){const x=i/NX3*TL;q.setXYZ(i,wx(x),eta3(x,TZ/2,S1.ghost,W)*A,zf);}q.needsUpdate=true;R.ghost.computeLineDistances();}
-  R.glass.position.y=hb-.06;R.rim.position.y=hb+.65;R.sponge.visible=S1.sponge;R.sponge.position.y=hb*.5;
+  R.floor.position.y=hb+.01;R.glass.position.y=hb-.06;R.rim.scale.y=(dep3()+.9)/1.3;R.rim.position.y=hb+(dep3()+.9)/2;
+  R.sponge.visible=S1.sponge;const sh=Math.min(dep3()*.6+.35,1.5);R.spn.forEach(m=>{m.scale.y=sh;m.position.y=.2-sh/2;});
   const bob=Math.sin(-W.w*t)*W.A*A;R.genL.visible=S1.src==='line';R.genP.visible=S1.src==='point';R.genL.position.set(wx(1.5),bob,0);R.genP.position.set(0,bob,0);
   R.lamp.position.set(0,E.yL,0);R.glow.position.set(0,E.yL,0);
   // 白紙
