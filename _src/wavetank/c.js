@@ -24,6 +24,7 @@ function shadeShallow(g,G){ // 把淺水區塗深一點（形狀或大小改變�
 TICK.refr=dt=>{if(!R2.run)return false;R2.T+=dt*R2.spd;return true;};
 DRAW.refr=()=>{if(R2.dirty)prep2();const cv=$('cvR'),G=tankGeo(cv),g=cv.getContext('2d'),{X,Y,k}=G,v1=vOf(R2.h1),v2=vOf(R2.h2),l1=v1/R2.f,l2=v2/R2.f;
   const sh0=R2.shape;tankBase(g,G);g.save();g.beginPath();g.rect(G.ox,G.oy,TW*k,TH*k);g.clip();shadeShallow(g,G);
+  if(R2.ghost!=null)drawCrests(g,R2.rays,R2.ghost,1/R2.f,X,Y,{lw:1,ghost:true});
   drawCrests(g,R2.rays,R2.T,1/R2.f,X,Y,{lw:clamp(l2*k*.16,1.6,4.5)});
   if(R2.ray)drawRays(g,R2.rays,X,Y,R2.shape==='half'||R2.shape==='slab'?16:7,'#ffd27a');
   const mid=R2.rays[R2.mid],ev=mid.ev[0];let iA=0,rA=0,tir=false;
@@ -72,7 +73,6 @@ segOn($('rShape'),v=>{hideStory();const o={shape:v};if(v==='prism'||v==='lensx'|
 $('rSwap').addEventListener('change',e=>{hideStory();set2({swap:e.target.checked});});
 ['rRay','rAng','rLam'].forEach((id,i)=>$(id).addEventListener('change',e=>{R2[['ray','ang','lam'][i]]=e.target.checked;kick();}));
 segOn($('rSpd'),v=>{R2.spd=+v;});
-$('rPlay').addEventListener('click',()=>{R2.run=!R2.run;playTxt($('rPlay'),R2.run);kick();});
 const setRI=sliderBind('rI',v=>{R2.inc=v;R2.dirty=true;},v=>v+'°'),setRF=sliderBind('rF',v=>{R2.f=v;},v=>v+' Hz'),
   setRH1=sliderBind('rH1',v=>{R2.h1=v;if(R2.h2>v-.2){R2.h2=Math.round((v-.2)*20)/20;setRH2(R2.h2);}R2.dirty=true;},v=>nf(v,1)+' cm'),
   setRH2=sliderBind('rH2',v=>{R2.h2=Math.min(v,R2.h1-.2);R2.dirty=true;if(R2.h2!==v)setRH2(R2.h2);},v=>nf(v,2)+' cm');
@@ -88,7 +88,8 @@ TICK.refl=dt=>{if(!M3.run)return false;M3.T+=dt*M3.spd;return true;};
 let G3=null;
 DRAW.refl=()=>{if(M3.dirty)prep3();const cv=$('cvM'),G=tankGeo(cv),g=cv.getContext('2d'),{X,Y,k}=G,v=vOf(M3.h),lam=v/M3.f;G3=G;
   tankBase(g,G);g.save();g.beginPath();g.rect(G.ox,G.oy,TW*k,TH*k);g.clip();
-  drawCrests(g,M3.rays,M3.T,1/M3.f,X,Y,{lw:clamp(lam*k*.1,1.6,4),closed:M3.src==='point',gap:M3.src==='point'?2.2:1.4,inc:M3.sinc,ref:M3.sref});
+  const co={lw:clamp(lam*k*.1,1.6,4),closed:M3.src==='point',gap:M3.src==='point'?2.2:1.4,inc:M3.sinc,ref:M3.sref};if(M3.ghost!=null)drawCrests(g,M3.rays,M3.ghost,1/M3.f,X,Y,{...co,ghost:true});
+  drawCrests(g,M3.rays,M3.T,1/M3.f,X,Y,co);
   if(M3.ray)drawRays(g,M3.rays,X,Y,M3.src==='line'?(M3.shape==='line'?16:8):12,'#ffd27a');
   // 障礙物
   g.fillStyle='#2b3138';g.beginPath();g.moveTo(X(wallX(-1)),Y(-1));for(let y=-1;y<=TH+1;y+=.25)g.lineTo(X(wallX(y)),Y(y));g.lineTo(X(TW+2),Y(TH+1));g.lineTo(X(TW+2),Y(-1));g.closePath();g.fill();
@@ -122,7 +123,6 @@ segOn($('mShape'),v=>{hideStory();set3({shape:v,P:{x:v==='concave'?14:12,y:CY}})
 segOn($('mSrc'),v=>{hideStory();const o={src:v};if(v==='point'&&M3.shape==='line'){o.inc=0;o.P={x:17,y:CY};setMI(0);}set3(o);});
 ['mRay','mAng','mInc','mRef'].forEach((id,i)=>$(id).addEventListener('change',e=>{M3[['ray','ang','sinc','sref'][i]]=e.target.checked;kick();}));
 segOn($('mSpd'),v=>{M3.spd=+v;});
-$('mPlay').addEventListener('click',()=>{M3.run=!M3.run;playTxt($('mPlay'),M3.run);kick();});
 const setMI=sliderBind('mI',v=>{M3.inc=v;M3.dirty=true;},v=>v+'°'),setMF=sliderBind('mF',v=>{M3.f=v;},v=>v+' Hz'),setMH=sliderBind('mH',v=>{M3.h=v;M3.dirty=true;},v=>nf(v,1)+' cm');
 dragger($('cvM'),()=>G3&&M3.src==='point'?[{x:G3.X(M3.P.x),y:G3.Y(M3.P.y),r:30,move(x,y){let wx=clamp((x-G3.ox)/G3.k,1,TW-1),wy=clamp((y-G3.oy)/G3.k,1,TH-1);wx=Math.min(wx,wallX(wy)-1);
   if(M3.shape==='concave'&&Math.hypot(wx-(35-FOC),wy-CY)<.9){wx=35-FOC;wy=CY;}M3.P={x:wx,y:wy};M3.dirty=true;hideStory();}}]:[],kick);
