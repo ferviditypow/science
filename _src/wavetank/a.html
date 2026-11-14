@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>水波槽實驗</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js" data-nav="waves"></script>
+<style>
+:root{--ray:#d98a00;--inc:#1c7ed6;--out:#2b8a3e;--water:#8ec5ee;--glass:#7c8894}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--ray:#ffc44d;--inc:#5aa9ff;--out:#51cf66;--water:#2f6f9f;--glass:#9aa7b4;color-scheme:dark}}
+:root[data-theme="dark"]{--ray:#ffc44d;--inc:#5aa9ff;--out:#51cf66;--water:#2f6f9f;--glass:#9aa7b4;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.bench[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box h3 small{color:var(--muted);font-weight:400}
+.box p{margin:0 0 6px;font-size:.95rem}
+.box ul{margin:4px 0 0;padding-left:1.2em;font-size:.95rem}
+.box li{margin:3px 0}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl .slider{min-width:0;flex:none}
+canvas.cv{display:block;width:100%;touch-action:none;border-radius:8px}
+.formula2{font-family:var(--f-mono);font-size:.93rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.7}
+dl.fk{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:6px 0 0;align-items:baseline}
+dl.fk dt{color:var(--muted);font-size:13px}
+dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.story p{white-space:pre-line}
+.ptitle2{margin:0;padding:8px 12px 0;font-weight:700;font-size:.95rem}
+.ptitle2 small{font-weight:400;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 波動（水波槽）</div>
+      <h1>水波槽實驗</h1>
+    </div>
+    <p>三個實驗台：水波槽的裝置與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射。下方畫面都是「白紙上看到的樣子」：亮線＝波峰（波前）。最下方有一中、二中考古題的情境。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="setup" aria-pressed="true"><span class="n">1</span>裝置與亮暗紋</button>
+      <button data-v="refr" aria-pressed="false"><span class="n">2</span>深水與淺水：折射</button>
+      <button data-v="refl" aria-pressed="false"><span class="n">3</span>障礙物：反射</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ===== 1 裝置與亮暗紋 ===== -->
+  <section class="bench" id="b-setup">
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="sPlay">❚❚ 暫停</button>
+        <span class="tlabel">起波器</span>
+        <span class="seg" id="sSrc"><button data-v="line" aria-pressed="true">長木條（直線波）</button><button data-v="point" aria-pressed="false">小圓球（圓形波）</button></span>
+        <label class="tog"><input type="checkbox" id="sSponge" checked> 四周圍海綿條</label>
+        <label class="tog"><input type="checkbox" id="sRays" checked> 畫出光線</label>
+        <label class="tog"><input type="checkbox" id="sLab" checked> 標示說明</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvS" aria-label="水波槽側視圖：燈光穿過水波投到白紙上"></canvas></div>
+      <p class="hint" style="margin:0 12px">側視圖（水波的高低放大很多倍）。起波器接在小馬達上，用可變電阻調轉速，就是在調頻率。</p>
+      <p class="ptitle2">白紙上看到的畫面 <small>從正上方看白紙；尺的刻度是白紙上的公分</small></p>
+      <div class="cbox"><canvas class="cv" id="cvS2" aria-label="白紙上的亮暗紋"></canvas></div>
+      <div class="toolbar">
+        <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="sF" min="3" max="20" step="0.5" value="8"><output id="sFo"></output></div>
+        <div class="slider"><span class="tlabel">水深</span><input type="range" id="sH" min="0.3" max="2" step="0.1" value="1"><output id="sHo"></output></div>
+        <div class="slider"><span class="tlabel">水波振幅</span><input type="range" id="sA" min="0" max="1.5" step="0.1" value="0.6"><output id="sAo"></output></div>
+        <div class="slider"><span class="tlabel">燈到水面</span><input type="range" id="sHl" min="20" max="80" step="5" value="40"><output id="sHlo"></output></div>
+        <div class="slider"><span class="tlabel">水槽到白紙</span><input type="range" id="sHs" min="5" max="80" step="5" value="40"><output id="sHso"></output></div>
+      </div>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>量到的和實際的</h3>
+        <dl class="fk" id="sNow"></dl>
+        <div class="verdict" id="sSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>水波槽的每個零件在做什麼</h3>
+        <ul>
+          <li><b>燈</b>：從上方照下來，穿過水和玻璃底板，投到下方的白紙上。</li>
+          <li><b>波峰</b>的水面向上凸，像<b>凸透鏡</b>把光會聚 → 白紙上的<b>亮紋</b>；<b>波谷</b>向下凹，像<b>凹透鏡</b>把光發散 → <b>暗紋</b>。</li>
+          <li><b>起波器</b>：長木條產生直線波，小圓球（點波源）產生圓形波。接馬達，用<b>可變電阻</b>改變轉速，也就是改變<b>頻率</b>。</li>
+          <li><b>海綿條</b>：吸收傳到邊緣的水波，避免<b>反射</b>回來干擾畫面（不是為了維持頻率）。</li>
+          <li>燈光是散開的，白紙上的影像被<b>放大</b>：亮紋間距 ＝ 放大率 × 波長，所以白紙上量到的間距不等於真正的波長。</li>
+          <li>水深不變時波速不變（v ∝ √(g·水深)）；頻率由起波器決定。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== 2 折射 ===== -->
+  <section class="bench" id="b-refr" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="rPlay">❚❚ 暫停</button>
+        <span class="tlabel">淺水區（玻璃板）</span>
+        <span class="seg" id="rShape"><button data-v="half" aria-pressed="true">斜的邊界</button><button data-v="slab" aria-pressed="false">長條形</button><button data-v="prism" aria-pressed="false">三角形</button><button data-v="lensx" aria-pressed="false">凸透鏡形</button><button data-v="lensv" aria-pressed="false">凹透鏡形</button></span>
+        <label class="tog" id="rSwapW"><input type="checkbox" id="rSwap"> 反過來：淺水 → 深水</label>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="rRay" checked> 行進方向（射線）</label>
+        <label class="tog"><input type="checkbox" id="rAng" checked> 法線與角度</label>
+        <label class="tog"><input type="checkbox" id="rLam" checked> 標出波長</label>
+        <span class="seg" id="rSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.1" aria-pressed="true">慢動作</button><button data-v="0.25" aria-pressed="false">快</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvR" aria-label="水波槽俯視：直線波由深水區進入淺水區"></canvas></div>
+      <div class="toolbar">
+        <div class="slider" id="rIw"><span class="tlabel">入射角</span><input type="range" id="rI" min="0" max="70" step="1" value="40"><output id="rIo"></output></div>
+        <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="rF" min="4" max="16" step="0.5" value="8"><output id="rFo"></output></div>
+        <div class="slider"><span class="tlabel">深水區水深</span><input type="range" id="rH1" min="0.6" max="2" step="0.1" value="1.2"><output id="rH1o"></output></div>
+        <div class="slider"><span class="tlabel">淺水區水深</span><input type="range" id="rH2" min="0.1" max="1" step="0.05" value="0.4"><output id="rH2o"></output></div>
+      </div>
+      <p class="ptitle2">沿著中間那條射線切開看 <small>側視：水深與波形（上下方向放大）</small></p>
+      <div class="cbox"><canvas class="cv" id="cvRS" aria-label="沿行進方向的剖面：水深與波長"></canvas></div>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>深水區和淺水區比一比</h3>
+        <table class="dtab2" id="rTab" style="width:100%;border-collapse:collapse;font-size:.92rem"></table>
+        <div class="formula2" id="rF2"></div>
+        <div class="verdict" id="rSay"></div>
+      </section>
+      <section class="panel box">
+        <h3>水波的折射</h3>
+        <ul>
+          <li>水愈深，波速愈快：v ∝ √(g × 水深)。把玻璃板墊在水底，那一區就是<b>淺水區</b>，波速較慢。</li>
+          <li><b>頻率不變</b>（由起波器決定，每秒進去幾個波峰就出來幾個）。波速變慢 → <b>波長變短</b>（λ＝v／f），白紙上的亮紋變密。</li>
+          <li>波前斜斜進入淺水區：先進去的一端先變慢，波前轉向，行進方向<b>偏向法線</b>（折射角＜入射角）。由淺進深則偏離法線。</li>
+          <li><b>入射角</b>＝行進方向和法線的夾角＝<b>波前和邊界的夾角</b>。考題常只畫波前，要會從波前讀角度。</li>
+          <li>折射定律：sin i／sin r ＝ v₁／v₂ ＝ λ₁／λ₂。</li>
+          <li>和光比較：光進入水或玻璃（光速較慢）也偏向法線；想一格一格作圖看 <a href="../interference/#huyg-refr">惠更斯作圖（折射）</a>。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== 3 反射 ===== -->
+  <section class="bench" id="b-refl" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="mPlay">❚❚ 暫停</button>
+        <span class="tlabel">障礙物</span>
+        <span class="seg" id="mShape"><button data-v="line" aria-pressed="true">直線擋板</button><button data-v="concave" aria-pressed="false">凹面（拋物面）</button><button data-v="convex" aria-pressed="false">凸面</button></span>
+        <span class="tlabel">起波器</span>
+        <span class="seg" id="mSrc"><button data-v="line" aria-pressed="true">直線波</button><button data-v="point" aria-pressed="false">圓形波</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="mRay" checked> 行進方向（射線）</label>
+        <label class="tog"><input type="checkbox" id="mAng" checked> 法線與角度</label>
+        <label class="tog"><input type="checkbox" id="mInc" checked> 入射波</label>
+        <label class="tog"><input type="checkbox" id="mRef" checked> 反射波</label>
+        <span class="seg" id="mSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.1" aria-pressed="true">慢動作</button><button data-v="0.25" aria-pressed="false">快</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvM" aria-label="水波槽俯視：水波遇到障礙物反射"></canvas></div>
+      <div class="toolbar">
+        <div class="slider" id="mIw"><span class="tlabel" id="mIl">入射角</span><input type="range" id="mI" min="0" max="65" step="1" value="30"><output id="mIo"></output></div>
+        <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="mF" min="4" max="16" step="0.5" value="8"><output id="mFo"></output></div>
+        <div class="slider"><span class="tlabel">水深</span><input type="range" id="mH" min="0.4" max="2" step="0.1" value="1"><output id="mHo"></output></div>
+      </div>
+      <p class="hint" id="mHint"></p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3 id="mTitle">反射定律</h3>
+        <dl class="fk" id="mNow"></dl>
+        <div class="verdict" id="mSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>水波的反射</h3>
+        <ul>
+          <li>反射定律：<b>入射角＝反射角</b>。角度是「行進方向」和<b>法線</b>的夾角。</li>
+          <li>波前和行進方向互相垂直，所以<b>入射波前和擋板的夾角也等於入射角</b>；反射波前和擋板的夾角等於反射角。</li>
+          <li>反射前後在同一區水裡：<b>波速、頻率、波長都不變</b>，只改變行進方向。</li>
+          <li>圓形波遇到直線擋板：反射波像是從擋板後面、和波源對稱的<b>像點</b>發出來的圓形波。</li>
+          <li>拋物面擋板：直線波反射後會聚到<b>焦點</b>；把點波源放在焦點，反射後變成直線波（碟型天線、手電筒反光罩的原理）。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">考古題情境 <small>標示學校、學年-學期-次別與題號；答案都已驗算，需要看圖的題目都對過原卷的圖</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+
+  <div class="notes">
+    <div><h2>白紙上的亮暗紋</h2><p>亮紋是波峰把光會聚出來的，暗紋是波谷把光發散造成的。相鄰兩條亮紋對應相鄰兩個波峰，實際距離是一個波長；白紙上的間距還要乘上投影的放大率。</p></div>
+    <div><h2>什麼會變、什麼不變</h2><p>折射：頻率不變，波速、波長、行進方向改變。反射：波速、頻率、波長都不變，只有方向改變。繞射也不改變波長與頻率（見「繞射與干涉」）。</p></div>
+    <div><h2>常見誤解</h2><p>「淺水區波被擠在一起，所以頻率變高」：錯，頻率不變，是波長變短。「海綿是用來穩定頻率」：錯，是吸收邊緣的波避免反射。「亮紋間距就是波長」：要先除以放大率。</p></div>
+  </div>
+</div>
