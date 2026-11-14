@@ -35,7 +35,7 @@ const vOf=h=>Math.sqrt(980*h);   // 淺水波：v＝√(g·水深)，cm/s
 const PAPER='#87919a',WHITE='rgba(255,255,255,.92)',LBG='#1d2730';
 
 // ================= 實驗台切換與迴圈 =================
-let bench='setup';const BENCHES=['setup','refr','refl'];
+let bench='setup';const BENCHES=['setup','refr','refl','two'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='setup';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -147,11 +147,11 @@ UI.setup=()=>{segSet($('sSrc'),S1.src);$('sSponge').checked=S1.sponge;playTxt($(
 
 // ----- 逐格播放（三個實驗台共用） -----
 let STEPF=.25;
-const benchS=b=>b==='setup'?S1:b==='refr'?R2:M3,benchK=b=>b==='setup'?'t':'T';
-function stepInfo(){[['s','setup'],['r','refr'],['m','refl']].forEach(([p,b])=>{const S=benchS(b),n=S.nstep||0;$(p+'Info').textContent=n?`逐格：${n>0?'＋':'−'}${Math.abs(n)} 週期（波前${n>0?'前進':'後退'} ${Math.abs(n)} 個波長）`:'';});}
+const benchS=b=>b==='setup'?S1:b==='refr'?R2:b==='refl'?M3:T4,benchK=b=>b==='setup'?'t':'T';
+function stepInfo(){[['s','setup'],['r','refr'],['m','refl'],['t','two']].forEach(([p,b])=>{const S=benchS(b),n=S.nstep||0;$(p+'Info').textContent=n?`逐格：${n>0?'＋':'−'}${Math.abs(n)} 週期（波前${n>0?'前進':'後退'} ${Math.abs(n)} 個波長）`:'';});}
 function stepBench(b,dir){const S=benchS(b),k=benchK(b);S.run=false;S.ghost=S[k];S[k]+=dir*STEPF/S.f;S.nstep=Math.round(((S.nstep||0)+dir*STEPF)*1000)/1000;UI[b]&&UI[b]();stepInfo();hideStory();kick();}
 function playBench(b){const S=benchS(b);S.run=!S.run;if(S.run){S.ghost=null;S.nstep=0;}UI[b]&&UI[b]();stepInfo();kick();}
-[['s','setup'],['r','refr'],['m','refl']].forEach(([p,b])=>{$(p+'Back').addEventListener('click',()=>stepBench(b,-1));$(p+'Step').addEventListener('click',()=>stepBench(b,1));$(p+'Play').addEventListener('click',()=>playBench(b));
+[['s','setup'],['r','refr'],['m','refl'],['t','two']].forEach(([p,b])=>{$(p+'Back').addEventListener('click',()=>stepBench(b,-1));$(p+'Step').addEventListener('click',()=>stepBench(b,1));$(p+'Play').addEventListener('click',()=>playBench(b));
   segOn($(p+'Fg'),v=>{STEPF=+v;document.querySelectorAll('.fgseg').forEach(el=>segSet(el,v));});});
 document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.key==='ArrowRight'){stepBench(bench,1);e.preventDefault();}else if(e.key==='ArrowLeft'){stepBench(bench,-1);e.preventDefault();}else if(e.key===' '&&t!=='BUTTON'){playBench(bench);e.preventDefault();}});

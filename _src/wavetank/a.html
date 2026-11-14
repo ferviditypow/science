@@ -60,7 +60,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 波動（水波槽）</div>
       <h1>水波槽實驗</h1>
     </div>
-    <p>三個實驗台：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
+    <p>四個實驗台：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射、兩點波源干涉時白紙上不動的灰線。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -69,6 +69,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="setup" aria-pressed="true"><span class="n">1</span>裝置與亮暗紋</button>
       <button data-v="refr" aria-pressed="false"><span class="n">2</span>深水與淺水：折射</button>
       <button data-v="refl" aria-pressed="false"><span class="n">3</span>障礙物：反射</button>
+      <button data-v="two" aria-pressed="false"><span class="n">4</span>兩點波源干涉：灰線</button>
     </span>
   </nav>
 
@@ -176,6 +177,46 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   </section>
 
   <!-- ===== 3 反射 ===== -->
+  <section class="bench" id="b-two" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="tPlay">❚❚ 暫停</button>
+        <span id="tStepW"><button class="btn" id="tBack">◂ 上一格</button><button class="btn" id="tStep">下一格 ▸</button></span>
+        <span class="tlabel">畫面</span>
+        <span class="seg" id="tMode"><button data-v="now" aria-pressed="true">瞬間（像閃頻器定住）</button><button data-v="avg" aria-pressed="false">肉眼看到的（時間平均）</button></span>
+        <span class="seg" id="tView"><button data-v="paper" aria-pressed="true">白紙上的畫面</button><button data-v="water" aria-pressed="false">水面高度</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="tNode" checked> 標出節線與腹線</label>
+        <span class="seg" id="tSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.12" aria-pressed="true">慢動作</button><button data-v="0.3" aria-pressed="false">快</button></span>
+        <span class="tlabel">每格</span><span class="seg fgseg" id="tFg"><button data-v="0.125">⅛ 週期</button><button data-v="0.25" aria-pressed="true">¼ 週期</button><button data-v="0.5">½ 週期</button></span><span class="stepinfo" id="tInfo"></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvT" aria-label="兩點波源干涉時白紙上的亮紋、暗紋與灰線"></canvas></div>
+      <div class="toolbar">
+        <div class="slider"><span class="tlabel">兩波源間距</span><input type="range" id="tD" min="2" max="16" step="0.5" value="8"><output id="tDo"></output></div>
+        <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="tF" min="4" max="16" step="0.5" value="8"><output id="tFo"></output></div>
+        <div class="slider"><span class="tlabel">水深</span><input type="range" id="tH" min="0.4" max="2" step="0.1" value="1"><output id="tHo"></output></div>
+      </div>
+      <p class="hint">同一個馬達帶兩根針，產生兩列同相的圓形波。白紙上的畫面是用水面的曲率算出來的：水面凸起會聚光（亮）、凹下發散光（暗）、平的地方亮度不變（灰）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>現在的數值</h3>
+        <dl class="fk" id="tNow"></dl>
+        <div class="verdict" id="tSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>為什麼灰線看得到、亮暗紋看不清楚</h3>
+        <ul>
+          <li><b>節線</b>（破壞性干涉）：兩波到這裡的<b>路程差＝半波長的奇數倍</b>，永遠互相抵消，水面幾乎不動、一直是平的 → 光不會聚也不發散 → 白紙上是<b>一條不動的灰線</b>，肉眼就看得到。</li>
+          <li><b>腹線</b>（建設性干涉）：路程差＝波長的整數倍，水面振幅最大，亮紋暗紋在這裡交替出現、一圈圈往外跑；跑得太快，肉眼只看到比較亮的一片。</li>
+          <li>所以「灰線」是<b>振幅最小</b>的位置，不是振幅最大、也不是振動最快的位置。</li>
+          <li>直線波（沒有干涉）其實也有灰色的地帶——在波峰和波谷中間——但它會跟著波一起跑，肉眼看不出來，要用<b>閃頻器</b>定住才看得到。</li>
+          <li>節線條數由 <span class="mono">兩波源間距 ÷ 波長</span> 決定：間距愈大或波長愈短，節線愈多、愈密。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
   <section class="bench" id="b-refl" hidden>
     <section class="panel">
       <div class="toolbar">

@@ -60,7 +60,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一基礎物理 · 波動（水波槽）</div>
       <h1>水波槽實驗</h1>
     </div>
-    <p>三個實驗台：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
+    <p>四個實驗台：水波槽的裝置（3D 立體，可旋轉）與白紙上亮暗紋的成因、深水區與淺水區的折射、遇到障礙物的反射、兩點波源干涉時白紙上不動的灰線。每個實驗台都可以暫停後按「上一格／下一格」（或鍵盤 ← →）一步一步看，空白鍵播放／暫停。最下方有一中、二中考古題的情境。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -69,6 +69,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="setup" aria-pressed="true"><span class="n">1</span>裝置與亮暗紋</button>
       <button data-v="refr" aria-pressed="false"><span class="n">2</span>深水與淺水：折射</button>
       <button data-v="refl" aria-pressed="false"><span class="n">3</span>障礙物：反射</button>
+      <button data-v="two" aria-pressed="false"><span class="n">4</span>兩點波源干涉：灰線</button>
     </span>
   </nav>
 
@@ -176,6 +177,46 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   </section>
 
   <!-- ===== 3 反射 ===== -->
+  <section class="bench" id="b-two" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="tPlay">❚❚ 暫停</button>
+        <span id="tStepW"><button class="btn" id="tBack">◂ 上一格</button><button class="btn" id="tStep">下一格 ▸</button></span>
+        <span class="tlabel">畫面</span>
+        <span class="seg" id="tMode"><button data-v="now" aria-pressed="true">瞬間（像閃頻器定住）</button><button data-v="avg" aria-pressed="false">肉眼看到的（時間平均）</button></span>
+        <span class="seg" id="tView"><button data-v="paper" aria-pressed="true">白紙上的畫面</button><button data-v="water" aria-pressed="false">水面高度</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="tNode" checked> 標出節線與腹線</label>
+        <span class="seg" id="tSpd"><button data-v="0.04" aria-pressed="false">很慢</button><button data-v="0.12" aria-pressed="true">慢動作</button><button data-v="0.3" aria-pressed="false">快</button></span>
+        <span class="tlabel">每格</span><span class="seg fgseg" id="tFg"><button data-v="0.125">⅛ 週期</button><button data-v="0.25" aria-pressed="true">¼ 週期</button><button data-v="0.5">½ 週期</button></span><span class="stepinfo" id="tInfo"></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvT" aria-label="兩點波源干涉時白紙上的亮紋、暗紋與灰線"></canvas></div>
+      <div class="toolbar">
+        <div class="slider"><span class="tlabel">兩波源間距</span><input type="range" id="tD" min="2" max="16" step="0.5" value="8"><output id="tDo"></output></div>
+        <div class="slider"><span class="tlabel">起波器頻率</span><input type="range" id="tF" min="4" max="16" step="0.5" value="8"><output id="tFo"></output></div>
+        <div class="slider"><span class="tlabel">水深</span><input type="range" id="tH" min="0.4" max="2" step="0.1" value="1"><output id="tHo"></output></div>
+      </div>
+      <p class="hint">同一個馬達帶兩根針，產生兩列同相的圓形波。白紙上的畫面是用水面的曲率算出來的：水面凸起會聚光（亮）、凹下發散光（暗）、平的地方亮度不變（灰）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>現在的數值</h3>
+        <dl class="fk" id="tNow"></dl>
+        <div class="verdict" id="tSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>為什麼灰線看得到、亮暗紋看不清楚</h3>
+        <ul>
+          <li><b>節線</b>（破壞性干涉）：兩波到這裡的<b>路程差＝半波長的奇數倍</b>，永遠互相抵消，水面幾乎不動、一直是平的 → 光不會聚也不發散 → 白紙上是<b>一條不動的灰線</b>，肉眼就看得到。</li>
+          <li><b>腹線</b>（建設性干涉）：路程差＝波長的整數倍，水面振幅最大，亮紋暗紋在這裡交替出現、一圈圈往外跑；跑得太快，肉眼只看到比較亮的一片。</li>
+          <li>所以「灰線」是<b>振幅最小</b>的位置，不是振幅最大、也不是振動最快的位置。</li>
+          <li>直線波（沒有干涉）其實也有灰色的地帶——在波峰和波谷中間——但它會跟著波一起跑，肉眼看不出來，要用<b>閃頻器</b>定住才看得到。</li>
+          <li>節線條數由 <span class="mono">兩波源間距 ÷ 波長</span> 決定：間距愈大或波長愈短，節線愈多、愈密。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
   <section class="bench" id="b-refl" hidden>
     <section class="panel">
       <div class="toolbar">
@@ -268,7 +309,7 @@ const vOf=h=>Math.sqrt(980*h);   // 淺水波：v＝√(g·水深)，cm/s
 const PAPER='#87919a',WHITE='rgba(255,255,255,.92)',LBG='#1d2730';
 
 // ================= 實驗台切換與迴圈 =================
-let bench='setup';const BENCHES=['setup','refr','refl'];
+let bench='setup';const BENCHES=['setup','refr','refl','two'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='setup';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -380,11 +421,11 @@ UI.setup=()=>{segSet($('sSrc'),S1.src);$('sSponge').checked=S1.sponge;playTxt($(
 
 // ----- 逐格播放（三個實驗台共用） -----
 let STEPF=.25;
-const benchS=b=>b==='setup'?S1:b==='refr'?R2:M3,benchK=b=>b==='setup'?'t':'T';
-function stepInfo(){[['s','setup'],['r','refr'],['m','refl']].forEach(([p,b])=>{const S=benchS(b),n=S.nstep||0;$(p+'Info').textContent=n?`逐格：${n>0?'＋':'−'}${Math.abs(n)} 週期（波前${n>0?'前進':'後退'} ${Math.abs(n)} 個波長）`:'';});}
+const benchS=b=>b==='setup'?S1:b==='refr'?R2:b==='refl'?M3:T4,benchK=b=>b==='setup'?'t':'T';
+function stepInfo(){[['s','setup'],['r','refr'],['m','refl'],['t','two']].forEach(([p,b])=>{const S=benchS(b),n=S.nstep||0;$(p+'Info').textContent=n?`逐格：${n>0?'＋':'−'}${Math.abs(n)} 週期（波前${n>0?'前進':'後退'} ${Math.abs(n)} 個波長）`:'';});}
 function stepBench(b,dir){const S=benchS(b),k=benchK(b);S.run=false;S.ghost=S[k];S[k]+=dir*STEPF/S.f;S.nstep=Math.round(((S.nstep||0)+dir*STEPF)*1000)/1000;UI[b]&&UI[b]();stepInfo();hideStory();kick();}
 function playBench(b){const S=benchS(b);S.run=!S.run;if(S.run){S.ghost=null;S.nstep=0;}UI[b]&&UI[b]();stepInfo();kick();}
-[['s','setup'],['r','refr'],['m','refl']].forEach(([p,b])=>{$(p+'Back').addEventListener('click',()=>stepBench(b,-1));$(p+'Step').addEventListener('click',()=>stepBench(b,1));$(p+'Play').addEventListener('click',()=>playBench(b));
+[['s','setup'],['r','refr'],['m','refl'],['t','two']].forEach(([p,b])=>{$(p+'Back').addEventListener('click',()=>stepBench(b,-1));$(p+'Step').addEventListener('click',()=>stepBench(b,1));$(p+'Play').addEventListener('click',()=>playBench(b));
   segOn($(p+'Fg'),v=>{STEPF=+v;document.querySelectorAll('.fgseg').forEach(el=>segSet(el,v));});});
 document.addEventListener('keydown',e=>{const t=e.target.tagName;if(t==='INPUT'||t==='TEXTAREA'||t==='SELECT'||e.ctrlKey||e.metaKey||e.altKey)return;
   if(e.key==='ArrowRight'){stepBench(bench,1);e.preventDefault();}else if(e.key==='ArrowLeft'){stepBench(bench,-1);e.preventDefault();}else if(e.key===' '&&t!=='BUTTON'){playBench(bench);e.preventDefault();}});
@@ -520,6 +561,77 @@ function drawRays(g,rays,X,Y,step,col){g.save();g.strokeStyle=col;g.lineWidth=1.
 function angArc(g,px,py,ax,ay,bx,by,r,col,label){const a0=Math.atan2(ay,ax),a1=Math.atan2(by,bx);let d=a1-a0;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;g.strokeStyle=col;g.lineWidth=2;g.beginPath();g.arc(px,py,r,a0,a0+d,d<0);g.stroke();
   const am=a0+d*.72;text(g,label,px+Math.cos(am)*(r+34),py+Math.sin(am)*(r+34),{size:13,bold:true,col:'#fff',align:'center',base:'middle',bg:LBG});}
 const angOf=(ax,ay,bx,by)=>Math.acos(clamp(ax*bx+ay*by,-1,1))/D2R;
+</script>
+<script>
+// ======================================================================
+// 4 兩點波源干涉：白紙上的亮紋、暗紋與不動的灰線（節線）
+// ======================================================================
+const T4={f:8,h:1,d:8,amp:.6,Hl:40,Hs:40,run:!reduced,T:0,spd:.12,avg:false,node:true,xs:10,dirty:true,ghost:null,nstep:0};
+const IW4=320,IH4=Math.round(IW4*TH/TW);let im4=null,buf4=null,oc4=null;
+const w4=()=>{const v=vOf(T4.h),lam=v/T4.f;return{v,lam,k:TAU/lam,w:TAU*T4.f,A:T4.amp/10,
+  b:(N_W-1)*(T4.h/N_W+T4.Hs)/((T4.Hl+T4.Hs)/T4.Hl)};};
+const srcs4=()=>[[T4.xs,TH/2-T4.d/2],[T4.xs,TH/2+T4.d/2]];
+// 水面高度與二階導數（極座標展開後相加）
+function fld4(x,z,t,W,S){let e=0,hxx=0,hzz=0,hxz=0;
+  for(let s=0;s<2;s++){const dx=x-S[s][0],dz=z-S[s][1];let r=Math.sqrt(dx*dx+dz*dz);if(r<.35)r=.35;
+    const rm=Math.max(r,1.4),a=W.A*(1-Math.exp(-r*r/1.5))/Math.sqrt(rm/2),ps=W.k*r-W.w*t,si=Math.sin(ps),co=Math.cos(ps),
+      ap=-a/(2*rm),app=3*a/(4*rm*rm),
+      P=ap*si+a*W.k*co, Q=app*si+2*ap*W.k*co-a*W.k*W.k*si, ux=dx/r,uz=dz/r,pr=P/r;
+    e+=a*si;hxx+=Q*ux*ux+pr*(1-ux*ux);hzz+=Q*uz*uz+pr*(1-uz*uz);hxz+=(Q-pr)*ux*uz;}
+  return[e,hxx,hzz,hxz];}
+const bright4=(x,z,t,W,S)=>{const[,xx,zz,xz]=fld4(x,z,t,W,S),b=W.b,
+  det=(1+b*xx)*(1+b*zz)-b*b*xz*xz;return Math.min(4,1/Math.max(.08,Math.abs(det)));};
+function paint4(){const W=w4(),S=srcs4(),t=T4.T;
+  if(!im4){oc4=document.createElement('canvas');oc4.width=IW4;oc4.height=IH4;im4=oc4.getContext('2d').createImageData(IW4,IH4);buf4=new Float32Array(IW4*IH4);}
+  const NP=T4.avg?8:1;buf4.fill(0);
+  for(let p=0;p<NP;p++){const tt=T4.avg?p/NP/T4.f:t;
+    for(let j=0;j<IH4;j++){const z=(j+.5)/IH4*TH;
+      for(let i=0;i<IW4;i++){const x=(i+.5)/IW4*TW;buf4[j*IW4+i]+=bright4(x,z,tt,W,S);}}}
+  const d=im4.data;for(let n=0;n<buf4.length;n++){const I=buf4[n]/NP,v=Math.round(255*clamp(.70+.62*(I-1),0,1)),o=n*4;
+    if(T4.view==='water'){const e=0;d[o]=v;d[o+1]=v;d[o+2]=v;}else{d[o]=v;d[o+1]=v;d[o+2]=Math.min(255,v+3);}d[o+3]=255;}
+  if(T4.view==='water'){const amp=W.A*1.9;for(let j=0;j<IH4;j++){const z=(j+.5)/IH4*TH;for(let i=0;i<IW4;i++){const x=(i+.5)/IW4*TW,
+      e=T4.avg?Math.abs(fld4(x,z,0,W,S)[0])+Math.abs(fld4(x,z,.25/T4.f,W,S)[0]):fld4(x,z,t,W,S)[0],
+      u=clamp(T4.avg?e/(2*amp):.5+.5*e/amp,0,1),o=(j*IW4+i)*4;
+      d[o]=Math.round(26+210*u);d[o+1]=Math.round(90+150*u);d[o+2]=Math.round(140+110*u);d[o+3]=255;}}}
+  oc4.getContext('2d').putImageData(im4,0,0);T4.dirty=false;T4.key=[T4.avg,T4.view,T4.f,T4.h,T4.d,T4.amp,T4.avg?0:t].join();}
+DRAW.two=()=>{const cv=$('cvT'),G=tankGeo(cv),g=cv.getContext('2d'),{X,Y,k}=G,W=w4(),S=srcs4();
+  const key=[T4.avg,T4.view,T4.f,T4.h,T4.d,T4.amp,T4.avg?0:T4.T].join();if(key!==T4.key)paint4();
+  tankBase(g,G);g.save();g.imageSmoothingEnabled=true;g.drawImage(oc4,G.ox,G.oy,TW*k,TH*k);g.restore();
+  // 節線（雙曲線：|r1−r2| ＝ (m+½)λ）
+  g.save();g.beginPath();g.rect(G.ox,G.oy,TW*k,TH*k);g.clip();
+  if(T4.node){const zc=TH/2,hd=T4.d/2;
+    for(let m=0;;m++){const A=(m+.5)*W.lam/2;if(A>=hd-.05)break;const B=Math.sqrt(hd*hd-A*A);
+      [1,-1].forEach(sg=>{g.strokeStyle=C.accent;g.lineWidth=2;g.setLineDash([7,5]);g.beginPath();
+        for(let u=-3;u<=3.001;u+=.04){const z=zc+sg*A*Math.cosh(u),x=T4.xs+B*Math.sinh(u);
+          if(u===-3)g.moveTo(X(x),Y(z));else g.lineTo(X(x),Y(z));}g.stroke();g.setLineDash([]);});}
+    for(let m=1;;m++){const A=m*W.lam/2;if(A>=hd-.05)break;const B=Math.sqrt(hd*hd-A*A);
+      [1,-1].forEach(sg=>{g.strokeStyle='rgba(60,140,80,.75)';g.lineWidth=1.6;g.beginPath();
+        for(let u=-3;u<=3.001;u+=.04){const z=zc+sg*A*Math.cosh(u),x=T4.xs+B*Math.sinh(u);
+          if(u===-3)g.moveTo(X(x),Y(z));else g.lineTo(X(x),Y(z));}g.stroke();});}
+    g.strokeStyle='rgba(60,140,80,.75)';g.lineWidth=1.6;g.beginPath();g.moveTo(X(T4.xs),Y(TH/2));g.lineTo(X(TW),Y(TH/2));g.stroke();
+  }
+  g.restore();
+  // 波源
+  S.forEach(([x,z])=>{g.fillStyle='#2b3138';g.beginPath();g.arc(X(x),Y(z),5,0,TAU);g.fill();
+    g.strokeStyle=WHITE;g.lineWidth=1.5;g.stroke();});
+  text(g,'兩個同相點波源',X(T4.xs),Y(TH/2-T4.d/2)-14,{size:11,col:'#fff',bg:LBG,align:'center'});
+  if(T4.node){text(g,'橘虛線＝節線（白紙上的灰線）',G.ox+8,G.oy+TH*k-24,{size:11,col:'#fff',bg:LBG});
+    text(g,'綠線＝腹線（振幅最大）',G.ox+8,G.oy+TH*k-7,{size:11,col:'#fff',bg:LBG});}
+  tankFrame(g,G);
+  const n=Math.floor(T4.d/W.lam*2)+1;
+  $('tNow').innerHTML=`<div><dt>波速</dt><dd>${nf(W.v,1)} cm/s</dd></div><div><dt>波長</dt><dd>${nf(W.lam,2)} cm</dd></div><div><dt>兩波源間距</dt><dd>${nf(T4.d,1)} cm ＝ ${nf(T4.d/W.lam,2)} λ</dd></div><div><dt>節線條數</dt><dd>${2*Math.ceil(T4.d/W.lam-.5)} 條</dd></div>`;
+  $('tSay').innerHTML=T4.avg
+    ?'這是<b>肉眼看到的</b>樣子（對時間平均）：會動的亮暗紋糊掉了，只剩下幾條<b>不動的灰線</b>——那就是節線。灰線上水面幾乎不動，光不會聚也不發散，所以維持原來的亮度。'
+    :'現在是<b>瞬間</b>的畫面：亮紋暗紋會一圈圈往外跑，但橘色虛線（節線）上永遠是灰的、不動。切到「肉眼看到的」就只剩灰線。';}
+TICK.two=dt=>{if(!T4.run)return false;T4.T+=dt*T4.spd;return true;};
+UI.two=()=>{playTxt($('tPlay'),T4.run);$('tNode').checked=T4.node;segSet($('tView'),T4.view);segSet($('tMode'),T4.avg?'avg':'now');segSet($('tSpd'),T4.spd);
+  $('tStepW').style.display=T4.avg?'none':'';};
+const setTD=sliderBind('tD',v=>{T4.d=v;},v=>nf(v,1)+' cm'),setTF=sliderBind('tF',v=>{T4.f=v;},v=>v+' Hz'),setTH4=sliderBind('tH',v=>{T4.h=v;},v=>nf(v,1)+' cm');
+segOn($('tView'),v=>{T4.view=v;hideStory();kick();});
+segOn($('tMode'),v=>{T4.avg=v==='avg';UI.two();hideStory();kick();});
+segOn($('tSpd'),v=>{T4.spd=+v;});
+$('tNode').addEventListener('change',e=>{T4.node=e.target.checked;kick();});
+function goT(o){setBench('two');Object.assign(T4,o);setTD(T4.d);setTF(T4.f);setTH4(T4.h);UI.two();}
 </script>
 <script>
 // ======================================================================
@@ -661,7 +773,8 @@ const QG=[
   {t:'一中 112-2-3 第 26 題（水波槽各個裝置的功用）',go(){goS({src:'line',f:8,h:1,amp:.6,Hl:40,Hs:40,sponge:true,rays:true,lab:true});},p:'(A) 長木條起波器產生直線波 ✓。\n(B) 可變電阻是用來改變起波器馬達的轉速（頻率），不是調整燈光亮度 ✗。\n(C) 燈光是散開的，白紙上的影像被放大：亮紋間距 ＝ 放大率 × 波長，不等於波長 ✗（看下方「量到的和實際的」）。\n(D) 海綿條是吸收邊緣的水波、避免反射，和頻率無關 ✗（把「四周圍海綿條」取消看看）。\n(E) 波谷的水面下凹，像凹透鏡使光發散，白紙上是暗紋 ✓。\n答案 <b>AE</b>。'},
   {t:'一中 110-2-3 第 1 題（筆尖點水、投影放大 2 倍，求實際波長）',go(){goS({src:'point',f:4,h:.3,amp:.6,Hl:40,Hs:40,sponge:true,rays:true,lab:false});},p:'每秒輕觸 4 次 → f ＝ 4 Hz。影像在 4.0 秒內向外移動 48 cm → 白紙上的速率 12 cm/s；放大率 2 倍 → 水波的實際波速 ＝ 12 ÷ 2 ＝ 6 cm/s。\nλ ＝ v ÷ f ＝ 6 ÷ 4 ＝ 1.5 cm，答案 <b>(E)</b>。\n畫面：圓形波、4 Hz、燈到水面和水槽到白紙等距（放大率約 2 倍）。畫面裡的水比題目深、波速比較快，但算法相同：白紙上量到的距離、速率都要先除以放大率。'},
   {t:'一中 112-2-3 第 1 題（因次分析：波速和 g、水深 D）',go(){goR({shape:'half',inc:0,h1:1.6,h2:.4,f:8});},p:'v 的單位是 m/s；g 是 m/s²、D 是 m。g × D 的單位是 m²/s²，開根號才是 m/s，所以 v 正比於 √(gD)，答案 <b>(C)</b>。\n畫面：深水區 1.6 cm、淺水區 0.4 cm。水深 4 倍 → 波速 2 倍 → 波長 2 倍（頻率相同）。'},
-  {t:'一中 113-2-3 第 4 題（深水到淺水；干涉時的灰線）',go(){goR({shape:'half',inc:30,h1:1.2,h2:.4,f:8});},p:'深水 → 淺水：波速變慢、頻率不變，所以深水區的波長較大：(B) ✓，(A)(C) ✗。\n干涉時白紙上的灰線是節線：那裡的水面幾乎不動，沒有波峰、波谷去會聚或發散光線，亮度維持不變（灰色）。節線的振幅最小、振動速度也最小，(D)(E) ✗。\n答案 <b>(B)</b>。'},
+  {t:'一中 113-2-3 第 4 題（深水到淺水的波長）',go(){goR({shape:'half',inc:30,h1:1.2,h2:.4,f:8});},p:'深水 → 淺水：波速變慢、頻率不變，所以深水區的波長較大：(B) ✓，(A)(C) ✗。\n(D)(E) 講的是干涉時白紙上的灰線，請看下一顆按鈕的實驗台。\n答案 <b>(B)</b>。'},
+  {t:'一中 113-2-3 第 4 題（干涉時白紙上的灰線）',go(){goT({avg:true,d:8,f:8,h:1,node:true,view:'paper'});},p:'白紙上肉眼看得到的灰線就是<b>節線</b>：兩列波到那裡的路程差是半波長的奇數倍，永遠互相抵消，水面幾乎不動、一直是平的。平的水面不會像凸透鏡會聚光、也不會像凹透鏡發散光，所以亮度維持原狀＝灰色。\n節線上<b>振幅最小、振動速度也最小</b>，所以 (D)(E) 都 ✗。\n切到「瞬間」可以看到亮紋暗紋一圈圈往外跑，但橘色虛線（節線）始終是灰的、不會動；切回「肉眼看到的」，會動的紋路糊掉，就只剩下那幾條灰線。\n答案 <b>(B)</b>。'},
  ]},
  {h:'深水與淺水：折射',q:[
   {t:'二中 114-2-3 第 2 題（水波由深水區進入淺水區）',go(){goR({shape:'half',inc:45,h1:1.2,h2:.4,f:8});},p:'(A) 深水區波速快，波長較長 ✓。\n(B) 頻率由起波器決定，兩區相同 ✗。\n(C) 進入淺水區波速變慢 ✓。\n(D) 波速變慢，行進方向偏向法線 ✓。\n(E) 偏向法線，所以折射角小於入射角 ✗。\n答案 <b>ACD</b>。'},
