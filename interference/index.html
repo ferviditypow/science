@@ -175,6 +175,18 @@
       <canvas id="cvAr" aria-label="圓盤影子的光強度分布：正面看屏幕與強度曲線"></canvas>
       <p class="note" id="arNote"></p>
     </section>
+    <section class="panel box" id="edgeBox">
+      <h3>光經過不透光擋板的邊緣：牆上的亮度 <small style="font-weight:400;color:var(--muted)">一中 114-1-3 第 19 題的情境</small></h3>
+      <div class="toolbar" style="padding:4px 0">
+        <label class="slider"><span class="tlabel">光的波長</span><input type="range" id="egLam" min="400" max="700" step="10" value="650"><output id="egLamo"></output></label>
+        <label class="slider"><span class="tlabel">擋板到牆 N</span><input type="range" id="egL" min="0.5" max="4" step="0.1" value="1"><output id="egLo"></output></label>
+        <label class="tog"><input type="checkbox" id="egCmp">同時畫紅光(700)與藍光(400)</label>
+        <label class="tog"><input type="checkbox" id="egP">微粒說的預測（y &lt; 0 全黑）</label>
+      </div>
+      <canvas id="cvEg" aria-label="光經過擋板邊緣後照在牆上的亮度分布"></canvas>
+      <p class="note" id="egNote"></p>
+      <ul class="checks" id="egC"></ul>
+    </section>
   </section>
 
   <!-- ============ 惠更斯作圖 ============ -->
@@ -548,7 +560,7 @@ function waveGraph(cv,parts,ph,sumLabel='合成'){if(cv._w!==cv.clientWidth||!cv
 // ================= bench switching / loop =================
 let bench='tank';const BENCHES=['tank','diffract','huyg','super','two','huy','young','film','nature'];
 const SIZE={},DRAW={},TICK={},UI={};
-function setBench(b,noHash){const hm=/^huyg-(plane|circ|slit|edge|refl|refr)$/.exec(b);if(hm){b='huyg';setTimeout(()=>document.querySelector('#modeG [data-v="'+hm[1]+'"]').click(),0);}const ar=b==='arago';if(ar){b='diffract';setTimeout(()=>$('aragoBox').scrollIntoView({block:'start'}),350);}if(!BENCHES.includes(b))b='huyg';bench=b;segSet($('benchSeg'),b);
+function setBench(b,noHash){const hm=/^huyg-(plane|circ|slit|edge|refl|refr)$/.exec(b);if(hm){b='huyg';setTimeout(()=>document.querySelector('#modeG [data-v="'+hm[1]+'"]').click(),0);}const ar=b==='arago'||b==='edge19';if(ar){const el=b==='edge19'?'edgeBox':'aragoBox';b='diffract';setTimeout(()=>$(el).scrollIntoView({block:'start'}),350);}if(!BENCHES.includes(b))b='huyg';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);SIZE[b]();UI[b]&&UI[b]();kick();}
 segOn($('benchSeg'),v=>{hideStory();setBench(v);});
 let raf=0,lastT=0;
@@ -720,7 +732,7 @@ buildT();
 const S1={mode:'slit',f:8,h:.8,a:6,run:true,ph:0,sh:true,cmp:false,P:{fx:.8,fy:.2}};
 const cv1=$('cv1'),g1=cv1.getContext('2d');let W1=800,H1=400;const F1=Field();let dirty1=true,amp1P=0;
 const TANK=60;
-SIZE.diffract=()=>{if(S1.cmp)sizeC();else{const r=fit(cv1,.5,300,520);W1=r.W;H1=r.H;fieldResize(F1,W1,H1,W1<600?4:3);dirty1=true;}sizeAr();};
+SIZE.diffract=()=>{if(S1.cmp)sizeC();else{const r=fit(cv1,.5,300,520);W1=r.W;H1=r.H;fieldResize(F1,W1,H1,W1<600?4:3);dirty1=true;}sizeAr();sizeEg();};
 function geo1(){const ppc=W1/TANK,v=Math.sqrt(980*S1.h),lamC=v/S1.f,lam=lamC*ppc,xb=Math.round(W1*.3),yc=H1/2,a=S1.a*ppc;return{ppc,v,lamC,lam,k:TAU/lam,xb,yc,a};}
 function open1(G){const ext=H1*.8;if(S1.mode==='slit')return[[G.yc-G.a/2,G.yc+G.a/2]];if(S1.mode==='edge')return[[-ext,G.yc]];return[[-ext,G.yc-G.a/2],[G.yc+G.a/2,H1+ext]];}
 function closed1(G){if(S1.mode==='slit')return[[0,G.yc-G.a/2],[G.yc+G.a/2,H1]];if(S1.mode==='edge')return[[G.yc,H1]];return[[G.yc-G.a/2,G.yc+G.a/2]];}
@@ -772,7 +784,7 @@ function uiRead1(){const G=geo1(),r=S1.a/G.lamC;
   L.push([pct>=25?'ok':'info',`P 點振幅約為入射波的 <b>${pct}%</b>${pct<8?'（幾乎不動）':''}。拖曳 P 到陰影區裡看看。`]);
   L.push(['info','繞射前後<b>波長不變</b>：比較縫左右兩側的波峰間距。']);
   checks($('r1c'),L);}
-UI.diffract=()=>{uiRead1();if(cvAr.clientWidth&&cvAr._w!==cvAr.clientWidth){cvAr._w=cvAr.clientWidth;sizeAr();}};
+UI.diffract=()=>{uiRead1();if(cvAr.clientWidth&&cvAr._w!==cvAr.clientWidth){cvAr._w=cvAr.clientWidth;sizeAr();}if(cvEg.clientWidth&&cvEg._w!==cvEg.clientWidth){cvEg._w=cvEg.clientWidth;sizeEg();}};
 function set1(o){const was=S1.cmp;Object.assign(S1,{cmp:false},o);if(was!==S1.cmp)showCmp1();dirty1=true;dirtyC=true;uiRead1();kick();}
 let pend1=0;const req1=o=>{Object.assign(S1,o);if(!pend1)pend1=requestAnimationFrame(()=>{pend1=0;dirty1=true;dirtyC=true;uiRead1();kick();});};
 $('f1').addEventListener('input',e=>req1({f:+e.target.value}));
@@ -822,6 +834,84 @@ function computeAr(){const a=AR.D/2*1e-3,N=a*a/(AR.lam*1e-9*AR.L);AR.N=N;const M
     const q=Math.PI*N*sv*sv,c=Math.cos(q),sn=Math.sin(q),er=re*c-im*sn,ei=re*sn+im*c;const ur=1-TAU*N*ei,ui=TAU*N*er;pr[i]=ur*ur+ui*ui;}
   AR.prof=pr;}
 const arI=sv=>{if(AR.part)return sv<1?0:1;const x=Math.min(sv,AR_S)/AR_S*AR_N,i=Math.min(AR_N-1,Math.floor(x)),f=x-i;return AR.prof[i]*(1-f)+AR.prof[i+1]*f;};
+// ---- 擋板邊緣：牆上的亮度（一中 114-1-3 #19）----
+const EG={lam:650,L:1,cmp:false,part:false},cvEg=$('cvEg'),gEg=cvEg.getContext('2d');let WE=800,HE=320;
+const EGN=560,EGV=5,egC=new Float32Array(EGN+1),egS=new Float32Array(EGN+1);
+(()=>{let c=0,s2=0;const dv=EGV/EGN;for(let i=0;i<=EGN;i++){const v=i*dv;if(i){const v0=v-dv,vm=v-dv/2;
+  c+=dv/6*(Math.cos(Math.PI/2*v0*v0)+4*Math.cos(Math.PI/2*vm*vm)+Math.cos(Math.PI/2*v*v));
+  s2+=dv/6*(Math.sin(Math.PI/2*v0*v0)+4*Math.sin(Math.PI/2*vm*vm)+Math.sin(Math.PI/2*v*v));}
+  egC[i]=c;egS[i]=s2;}})();
+function egCS(v){const a=Math.abs(v),x=Math.min(a,EGV)/EGV*EGN,i=Math.min(EGN-1,Math.floor(x)),f=x-i;
+  let c=egC[i]*(1-f)+egC[i+1]*f,s2=egS[i]*(1-f)+egS[i+1]*f;if(a>EGV){c=.5;s2=.5;}return v<0?[-c,-s2]:[c,s2];}
+const egI=(ymm,lam,L)=>{if(EG.part)return ymm>=0?1:0;const v=ymm*1e-3*Math.sqrt(2/(lam*1e-9*L));const[c,s2]=egCS(v);return .5*((c+.5)*(c+.5)+(s2+.5)*(s2+.5));};
+const egHalf=(lam,L)=>Math.sqrt(lam*1e-9*L)*1000;          // 1 個「菲涅耳尺度」＝√(λL)，單位 mm
+function sizeEg(){if(!cvEg.clientWidth)return;const nar=cvEg.clientWidth<640;const r=fit(cvEg,nar?.92:.33,nar?300:280,nar?420:400);WE=r.W;HE=r.H;drawEg();}
+function drawEg(){const g=gEg,W=WE,H=HE,nar=W<640;g.clearRect(0,0,W,H);
+  const yt=30,yb=H-40,xM=nar?70:96,xW=Math.round(W*(nar?.5:.47)),wt=9,x0=nar?14:22;
+  const sMM=egHalf(650,EG.L),span=5*sMM,pm=(yb-yt)/span,y0=yt+(yb-yt)*.4,Y=m=>y0-m*pm,
+        yAt=p=>(y0-p)/pm;
+  g.fillStyle=C.panel;g.fillRect(0,0,W,H);
+  // 入射光區（擋板上方）
+  g.fillStyle='rgba(245,180,60,.13)';g.fillRect(x0,yt,xW-x0,y0-yt);
+  // 幾何陰影區
+  g.fillStyle='rgba(40,50,60,.10)';g.fillRect(xM,y0,xW-xM,yb-y0);
+  // 水平光線
+  const OR='#e0a32a';
+  for(let k=1;k<=7;k++){const y=yt+(y0-yt)*k/8;line(g,x0,y,xW-wt,y,OR,1.5);arrow(g,xM-30,y,xM-8,y,OR,1.5);}
+  for(let k=1;k<=3;k++){const y=y0+(yb-y0)*k/4;line(g,x0,y,xM-5,y,OR,1.5);arrow(g,x0+16,y,x0+38,y,OR,1.5);}
+  // 繞射扇形（示意：從擋板頂端散入陰影）
+  const gr=g.createRadialGradient(xM,y0,2,xM,y0,Math.min(xW-xM,yb-y0)*1.25);
+  gr.addColorStop(0,'rgba(245,180,60,.45)');gr.addColorStop(1,'rgba(245,180,60,0)');
+  g.save();g.beginPath();g.rect(xM,y0,xW-xM-wt,yb-y0);g.clip();g.fillStyle=gr;g.fillRect(xM,y0,xW-xM,yb-y0);g.restore();
+  // 擋板 M
+  g.fillStyle=C.muted;g.fillRect(xM-5,y0,10,yb-y0+6);
+  text(g,'擋板 M',xM,yb+18,{bold:true,align:'center',size:12});
+  // 虛線延伸線
+  line(g,xM,y0,xW+(nar?38:54),y0,C.ink,1.2,[6,5]);
+  // 牆 N 與亮度條
+  for(let p=yt;p<=yb;p++){const I=egI(yAt(p),EG.lam,EG.L),u=Math.round(255*clamp(I*.86,0,1));
+    g.fillStyle=`rgb(${u},${Math.round(u*.97)},${Math.round(u*.84)})`;g.fillRect(xW-wt,p,wt+1,1);}
+  g.strokeStyle=C.line;g.lineWidth=1;g.strokeRect(xW-wt+.5,yt+.5,wt,yb-yt);
+  text(g,'牆 N',xW-wt/2,yt-12,{bold:true,align:'center',size:12});
+  // y 軸刻度
+  const tick=sMM>1.2?1:.5;
+  for(let m=-Math.ceil(3*sMM/tick)*tick;m<=2*sMM+1e-9;m+=tick){const p=Y(m);if(p<yt-1||p>yb+1||Math.abs(m)<1e-9)continue;
+    line(g,xW+(nar?38:54),p,xW+(nar?44:60),p,C.line,1);
+    text(g,(m>0?'+':'')+f1(m),xW+(nar?36:52),p+4,{col:C.muted,align:'right',size:10.5});}
+  text(g,'y (mm)',xW+(nar?36:52),yt-(nar?25:10),{col:C.muted,align:'right',size:10.5});
+  text(g,'y = 0',xW+(nar?36:52),Y(0)-6,{bold:true,align:'right',size:11});
+  // 亮度曲線
+  const cx0=xW+(nar?48:66),cx1=W-10,cw=cx1-cx0,IX=I=>cx0+clamp(I,0,1.4)/1.4*cw;
+  line(g,cx0,yt,cx0,yb,C.line,1);
+  [[0,'0'],[.25,'¼'],[1,'1']].forEach(([I,t])=>{line(g,IX(I),yt,IX(I),yb,'rgba(128,140,150,.35)',1,[3,4]);text(g,t,IX(I),yb+16,{col:C.muted,align:'center',size:10.5});});
+  text(g,'牆 N 上的亮度',cx1,yb+32,{col:C.muted,align:'right',size:10.5});
+  text(g,'光（水平行進）',x0+2,yt-12,{col:'#b8791a',bold:true,size:11.5});
+  text(g,'幾何陰影區',xM+10,y0+20,{col:C.muted,size:11.5});
+  const curve=(lam,col,lw)=>{g.strokeStyle=col;g.lineWidth=lw;g.beginPath();
+    for(let p=yt;p<=yb;p++){const x=IX(egI(yAt(p),lam,EG.L));p===yt?g.moveTo(x,p):g.lineTo(x,p);}g.stroke();};
+  if(EG.cmp&&!EG.part){curve(700,'#d94f3d',1.6);curve(400,'#3f6ee0',1.6);
+    text(g,'紅 700 nm',cx1,yt+12,{col:'#d94f3d',bold:true,align:'right',size:11});text(g,'藍 400 nm',cx1,yt+26,{col:'#3f6ee0',bold:true,align:'right',size:11});}
+  else curve(EG.lam,C.accent,2.2);
+  // 說明
+  const dark=EG.part?0:(()=>{let m=0;for(;m>-3*sMM;m-=.005)if(egI(m,EG.lam,EG.L)<.01)break;return m;})();
+  $('egNote').innerHTML=EG.part
+    ?'<b>微粒說的預測</b>：光如果只是沿直線行進的粒子，牆上 y &lt; 0 就是完全黑的、而且邊界非常銳利——實際量到的不是這樣。'
+    :`λ = ${EG.lam} nm、擋板到牆 ${f1(EG.L)} m：y = 0（幾何陰影邊界）處亮度只剩 <b>¼</b>；陰影裡 y ≈ ${f2(dark)} mm 才幾乎全黑，<b>光確實繞進了 y &lt; 0</b>。亮區則出現忽明忽暗的條紋，最亮處約為原來的 1.37 倍。`;
+  checks($('egC'),[
+    ['ok','<b>(A) 光因繞射而可能進入 y &lt; 0</b>　正確——波會繞過擋板邊緣，陰影的邊界是漸變的，不是一刀切。'],
+    ['no','<b>(B) 因折射而進入 y &lt; 0</b>　錯——光自始至終都在空氣中，沒有通過兩介質的界面，談不上折射。'],
+    ['ok','<b>(C) 波長愈長，偏進 y &lt; 0 愈多</b>　正確——偏折的尺度 ∝ √(λL)，繞射角 ∝ λ ÷ 障礙物尺寸。勾上「同時畫紅光與藍光」就看得到紅光偏得比較多。'],
+    ['no','<b>(D) 光是粒子沿直線行進，y &lt; 0 亮度為零</b>　錯——陰影裡量得到光，不是零；這正是微粒說解釋不了的地方。'],
+    ['no','<b>(E) 頻率愈高能量愈大，偏得愈多</b>　錯——頻率愈高波長愈短，繞射反而愈不明顯；光子能量大小與偏折無關。']
+  ]);}
+function egUI(){$('egLamo').textContent=EG.lam+' nm';$('egLo').textContent=f1(EG.L)+' m';$('egLam').value=EG.lam;$('egL').value=EG.L;$('egCmp').checked=EG.cmp;$('egP').checked=EG.part;}
+$('egLam').addEventListener('input',e=>{EG.lam=+e.target.value;egUI();drawEg();});
+$('egL').addEventListener('input',e=>{EG.L=+e.target.value;egUI();drawEg();});
+$('egCmp').addEventListener('change',e=>{EG.cmp=e.target.checked;drawEg();});
+$('egP').addEventListener('change',e=>{EG.part=e.target.checked;drawEg();});
+function setEg(o){Object.assign(EG,o);egUI();drawEg();}
+egUI();
+
 function sizeAr(){if(!cvAr.clientWidth)return;const nar=cvAr.clientWidth<640;const r=fit(cvAr,nar?1.45:.34,nar?480:250,nar?700:380);WA=r.W;HA=r.H;drawAr();}
 function drawAr(){if(!AR.prof)computeAr();const g=gAr,nar=WA<640;g.clearRect(0,0,WA,HA);const a=AR.D/2,half=AR_S*a;
   const S=Math.round(nar?Math.min(WA,HA*.5):HA),ix=nar?(WA-S)/2:0,base=nmRGBa(AR.lam);
@@ -1800,7 +1890,7 @@ const QS=[{g:'講義隨堂練習（2-1、2-5、2-6）',items:[
   {n:'第 34 題　斐索齒輪測光速',pg:'p.28',b:'nature',set:()=>set6({ph:'gear',rps:4}),t:'第 34 題　答案 (C)',
    p:'齒＋縫一組佔 1/720 圈；光「第一次被擋」代表光往返期間齒輪恰好轉了半組：t＝1／(2×720×12.6)≈5.5×10⁻⁵ s。\nc≈2×8633 ÷ 5.5×10⁻⁵≈3.1×10⁸ m/s。拖動轉速，找到回來的光第一次變暗的位置。'}]},
  {g:'考古題情境（台中一中、二中）',items:[
-  {n:'擋板邊緣繞射進入陰影區',pg:'一中 112-2-3 #32、114-1-3 #19、114-2-3 #24',b:'diffract',set:()=>set1({mode:'edge',f:8,h:.8,P:{fx:.75,fy:.72}}),t:'擋板邊緣的繞射',
+  {n:'擋板邊緣繞射進入陰影區',pg:'一中 112-2-3 #32、114-1-3 #19、114-2-3 #24',b:'diffract',set:()=>{set1({mode:'edge',f:8,h:.8,P:{fx:.75,fy:.72}});setEg({lam:650,L:1,cmp:false,part:false});setTimeout(()=>$('edgeBox').scrollIntoView({block:'start',behavior:'smooth'}),400);},t:'擋板邊緣的繞射',
    p:'光（或波）經過擋板邊緣，會繞進幾何陰影區；越深入越弱。\n波長越長，偏折進陰影區的角度越大：把頻率降低（波長變長）看看陰影區的波。光的波長很短，所以只在影子邊緣看到極窄的明暗條紋。'},
   {n:'水波過狹縫：讓陰影區的點振動',pg:'一中 113-1-3 #13',b:'diffract',set:()=>set1({mode:'slit',a:8,f:12,h:.8,P:{fx:.72,fy:.2}}),t:'讓陰影區的 P 點振動起來',
    p:'P 點在幾何陰影區裡，現在幾乎不動。想讓它振動：① 降低頻率；② 加深水深（波速變快，λ＝v／f 變長）；③ 把縫變窄。三者都讓「縫寬 ÷ 波長」變小、繞射更明顯。'},
