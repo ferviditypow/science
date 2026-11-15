@@ -30,9 +30,9 @@
   overflow: hidden;
 }
 .bench svg { display: block; width: 100%; height: auto; user-select: none; -webkit-user-select: none; }
-#obj { cursor: grab; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; }
-#obj:active { cursor: grabbing; }
-#obj:focus-visible .grip { stroke: var(--ink); stroke-width: 3; }
+#obj, #obj2 { cursor: grab; touch-action: none; outline: none; -webkit-tap-highlight-color: transparent; }
+#obj:active, #obj2:active { cursor: grabbing; }
+#obj:focus-visible .grip, #obj2:focus-visible .grip { stroke: var(--ink); stroke-width: 3; }
 /* 字級由程式依螢幕寬度設定，手機上會自動放大 */
 .svg-label { font-family: var(--f-mono); fill: var(--ink); }
 .svg-small { font-family: var(--f-mono); fill: var(--muted); }
@@ -107,6 +107,8 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--lens); outl
       <g id="dyn" clip-path="url(#clip)"></g>
       <!-- 物體（可拖曳） -->
       <g id="obj" tabindex="0" role="slider" aria-label="物體位置，用方向鍵調整"></g>
+      <!-- 第二個物體（乙，可拖曳） -->
+      <g id="obj2" tabindex="0" role="slider" aria-label="乙的位置，用方向鍵調整" style="display:none"></g>
     </svg>
   </div>
 
@@ -299,10 +301,10 @@ function readColors() {
 // ===== 物體的圖形元素只建立一次 =====
 // 拖曳時手指按著的元素必須一直存在，手機瀏覽器才不會誤判成捲動頁面而卡頓
 const SVGNS = 'http://www.w3.org/2000/svg';
-function mk(tag, attrs) {
+function mk(tag, attrs, host) {
   const el = document.createElementNS(SVGNS, tag);
   setAttrs(el, attrs);
-  objG.appendChild(el);
+  (host || objG).appendChild(el);
   return el;
 }
 function setAttrs(el, attrs) { for (const k in attrs) el.setAttribute(k, attrs[k]); }
@@ -315,6 +317,28 @@ const objEls = {
   label: mk('text', { class: 'svg-label', 'text-anchor': 'middle' }),
 };
 objEls.label.textContent = '物體';
+const obj2G = document.getElementById('obj2');
+const obj2Els = {
+  hitRect: mk('rect', { fill: 'transparent' }, obj2G),
+  hitCircle: mk('circle', { fill: 'transparent' }, obj2G),
+  stem: mk('line', { 'stroke-linecap': 'round' }, obj2G),
+  head: mk('polygon', { 'stroke-linejoin': 'round' }, obj2G),
+  grip: mk('circle', { class: 'grip', opacity: '0.3' }, obj2G),
+  label: mk('text', { class: 'svg-label', 'text-anchor': 'middle' }, obj2G),
+};
+obj2Els.label.textContent = '乙';
+function updateArrowEls(E, xo, yo, color, lab) {
+  const hit = 34 * K;
+  const head = Math.min(14 * K, Math.abs(AY - yo) * 0.6);
+  const half = head * 0.72, baseHead = yo + head;
+  setAttrs(E.hitRect, { x: xo - hit * 0.7, y: yo, width: hit * 1.4, height: AY - yo + 10 });
+  setAttrs(E.hitCircle, { cx: xo, cy: yo, r: hit });
+  setAttrs(E.stem, { x1: xo, y1: AY, x2: xo, y2: baseHead, stroke: color, 'stroke-width': 4 * Math.sqrt(K) });
+  setAttrs(E.head, { points: `${xo},${yo} ${xo - half},${baseHead} ${xo + half},${baseHead}`, fill: color, stroke: color, 'stroke-width': 2 * Math.sqrt(K) });
+  setAttrs(E.grip, { cx: xo, cy: yo, r: 10 * K, fill: color });
+  setAttrs(E.label, { x: xo, y: yo - 14 * K, 'font-size': 15 * K, style: `fill:${color}` });
+  E.label.textContent = lab;
+}
 function updateObject(xo, yo, color) {
   const hit = 34 * K;
   const head = Math.min(14 * K, Math.abs(AY - yo) * 0.6);
@@ -411,6 +435,7 @@ function render() {
     out += text(fx2, AY - 16 * K, isConcave() ? '光線好像從焦點發出' : '像：焦點上的一點', 'svg-label', { color: css('img') });
     dyn.innerHTML = out;
     objG.style.display = 'none';
+    obj2G.style.display = 'none';
     updateReadoutInf();
     return;
   }
@@ -480,9 +505,10 @@ function render() {
       out += arrow(xi2, yi2, C2i, v2 ? { dash: '7 5', hollow: true } : {});
       out += text(xi2, r2.hi > 0 ? yi2 - 10 * K : yi2 + 8 * K + 15 * K, '乙的像', 'svg-label', { color: C2i });
     }
-    out += arrow(xo2, yo2, C2);
-    out += text(xo2, yo2 - 10 * K, '乙', 'svg-label', { color: C2 });
-  }
+    updateArrowEls(obj2Els, xo2, yo2, C2, '乙');
+    obj2G.style.display = '';
+    obj2G.setAttribute('aria-valuetext', `乙的物距 ${fmt(p2)} 公分，物高 ${fmt(h2)} 公分`);
+  } else obj2G.style.display = 'none';
   if (mask !== 'none') out += maskRect(css);
   // 物體移近時留下的像
   if (show('trail')) for (const [tx, ty, tv] of trailPts) out += `<g opacity="0.28">${arrow(tx, ty, css('img'), tv ? { dash: '7 5', hollow: true } : {})}</g>`;
@@ -632,6 +658,40 @@ objG.addEventListener('pointercancel', endDrag);
 // 手指按在物體上時，讓瀏覽器不要捲動頁面
 objG.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
 objG.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+
+// ----- 第二個物體（乙）也可以拖曳 -----
+let drag2 = null;
+function setObject2(p, h) {
+  state2.p = snap(Math.min(240, Math.max(5, p)));
+  state2.h = Math.min(80, Math.max(10, h));
+  scheduleRender();
+}
+obj2G.addEventListener('pointerdown', e => {
+  const pt = svgPoint(e);
+  drag2 = { dx: (LX - state2.p * S) - pt.x, dy: (AY - state2.h * S) - pt.y };
+  obj2G.setPointerCapture(e.pointerId);
+  obj2G.focus({ preventScroll: true });
+  e.preventDefault();
+});
+obj2G.addEventListener('pointermove', e => {
+  if (!drag2) return;
+  const pt = svgPoint(e);
+  setObject2((LX - (pt.x + drag2.dx)) / S, lockH ? state2.h : (AY - (pt.y + drag2.dy)) / S);
+});
+const endDrag2 = () => { drag2 = null; };
+obj2G.addEventListener('pointerdown', () => stopSweep(), true);
+obj2G.addEventListener('pointerup', endDrag2);
+obj2G.addEventListener('pointercancel', endDrag2);
+obj2G.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+obj2G.addEventListener('touchmove', e => e.preventDefault(), { passive: false });
+obj2G.addEventListener('keydown', e => {
+  const step = e.shiftKey ? 10 : 2;
+  const moves = { ArrowLeft: [step, 0], ArrowRight: [-step, 0], ArrowUp: [0, step], ArrowDown: [0, -step] };
+  const m = moves[e.key];
+  if (!m) return;
+  e.preventDefault();
+  setObject2(state2.p + m[0], lockH ? state2.h : state2.h + m[1]);
+});
 
 // 鍵盤操作：左右調物距，上下調物高
 objG.addEventListener('keydown', e => {
