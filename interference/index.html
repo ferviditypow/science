@@ -135,6 +135,8 @@
         <button class="btn primary" id="play1">❚❚ 暫停</button>
         <span class="seg" id="mode1"><button data-v="slit">狹縫</button><button data-v="edge">擋板邊緣</button><button data-v="block">小障礙物</button></span>
         <label class="tog"><input type="checkbox" id="sh1" checked>直線傳播的陰影邊界</label>
+        <span class="seg" id="view1"><button data-v="w" aria-pressed="true">水面</button><button data-v="paper" aria-pressed="false">水波槽白紙</button></span>
+        <label class="tog" id="avg1W" hidden><input type="checkbox" id="avg1">肉眼看到的（時間平均）</label>
         <label class="tog"><input type="checkbox" id="cmp1">並排比較：寬縫 vs 窄縫（講義圖 2-7）</label>
       </div>
       <div class="cbox"><canvas id="cv1" aria-label="水波槽俯視圖，直線波通過狹縫或擋板"></canvas><canvas id="cv1c" hidden aria-label="寬縫與窄縫並排比較"></canvas></div>
@@ -268,7 +270,8 @@
         <button class="btn primary" id="play3">❚❚ 暫停</button>
         <button class="btn" id="step3">▸ ¼T</button>
         <span class="seg" id="kind3"><button data-v="water">水波</button><button data-v="sound">聲波（兩個喇叭）</button></span>
-        <span class="seg" id="view3"><button data-v="water">瞬間水面</button><button data-v="mag">振動強弱</button><button data-v="circles">課本畫法</button></span>
+        <span class="seg" id="view3"><button data-v="water">瞬間水面</button><button data-v="mag">振動強弱</button><button data-v="paper">水波槽白紙</button><button data-v="circles">課本畫法</button></span>
+        <label class="tog" id="avg3W" hidden><input type="checkbox" id="avg3">肉眼看到的（時間平均）</label>
       </div>
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="ln3" checked>節線</label>
@@ -542,6 +545,25 @@ const LUT_M=mkLUT([[0,[12,20,34]],[.45,[120,58,92]],[.75,[226,120,52]],[1,[255,2
 function Field(){return{cell:3,w:0,h:0,re:null,im:null,mag:null,mask:null,off:document.createElement('canvas'),img:null};}
 function fieldResize(F,W,H,cell){F.cell=cell;F.w=Math.ceil(W/cell);F.h=Math.ceil(H/cell);const n=F.w*F.h;F.re=new Float32Array(n);F.im=new Float32Array(n);F.mag=new Float32Array(n);F.mask=new Uint8Array(n);
   F.off.width=F.w;F.off.height=F.h;F.img=F.off.getContext('2d').createImageData(F.w,F.h);}
+// ---- 水波槽的白紙畫面：亮度由水面的二階曲率決定（凸起聚光＝亮、凹下發散＝暗、平的＝灰）----
+function fieldPaper(g,F,ph,lamPx,avg,key){const n=F.w*F.h,W=F.w,Hh=F.h,d=F.img.data;
+  const kk=[key,lamPx|0,avg?1:0,avg?0:Math.round(ph*60)].join();
+  if(F.pkey!==kk){F.pkey=kk;
+    const bb=1.15*lamPx*lamPx/(TAU*TAU*F.cell*F.cell),acc=F.acc&&F.acc.length===n?F.acc:(F.acc=new Float32Array(n)),re=F.re,im=F.im;
+    acc.fill(0);const NP=avg?8:1;
+    for(let p=0;p<NP;p++){const a=ph+(avg?p/NP*TAU:0),c=Math.cos(a),si=Math.sin(a);
+      for(let j=0;j<Hh;j++){const j0=Math.max(0,j-1)*W,j1=Math.min(Hh-1,j+1)*W,jc=j*W;
+        for(let i=0;i<W;i++){const i0=Math.max(0,i-1),i1=Math.min(W-1,i+1),
+          e=re[jc+i]*c+im[jc+i]*si,
+          exx=re[jc+i1]*c+im[jc+i1]*si-2*e+re[jc+i0]*c+im[jc+i0]*si,
+          ezz=re[j1+i]*c+im[j1+i]*si-2*e+re[j0+i]*c+im[j0+i]*si,
+          exz=((re[j1+i1]*c+im[j1+i1]*si)-(re[j1+i0]*c+im[j1+i0]*si)-(re[j0+i1]*c+im[j0+i1]*si)+(re[j0+i0]*c+im[j0+i0]*si))/4,
+          det=(1+bb*exx)*(1+bb*ezz)-bb*bb*exz*exz;
+          acc[jc+i]+=Math.min(4,1/Math.max(.08,Math.abs(det)));}}}
+    for(let o=0;o<n;o++){const q=o*4;if(F.mask[o]){d[q]=58;d[q+1]=64;d[q+2]=72;d[q+3]=255;continue;}
+      const v=Math.round(255*clamp(.70+.62*(acc[o]/NP-1),0,1));d[q]=v;d[q+1]=v;d[q+2]=Math.min(255,v+3);d[q+3]=255;}
+    F.off.getContext('2d').putImageData(F.img,0,0);}
+  g.imageSmoothingEnabled=true;g.drawImage(F.off,0,0,F.w*F.cell,F.h*F.cell);}
 function fieldDraw(g,F,ph,mode){const d=F.img.data,c=Math.cos(ph),s=Math.sin(ph),n=F.w*F.h,L=mode==='mag'?LUT_M:LUT_W;
   for(let i=0;i<n;i++){const o=i*4;if(F.mask[i]){d[o]=58;d[o+1]=64;d[o+2]=72;d[o+3]=255;continue;}
     const v=mode==='mag'?F.mag[i]*2-1:F.re[i]*c+F.im[i]*s;const k=Math.round((clamp(v,-1,1)+1)*127.5)*3;d[o]=L[k];d[o+1]=L[k+1];d[o+2]=L[k+2];d[o+3]=255;}
@@ -730,7 +752,7 @@ buildT();
 // =====================================================================
 // 1 繞射（水波槽）
 // =====================================================================
-const S1={mode:'slit',f:8,h:.8,a:6,run:true,ph:0,sh:true,cmp:false,P:{fx:.8,fy:.2}};
+const S1={mode:'slit',f:8,h:.8,a:6,run:true,ph:0,sh:true,cmp:false,view:'w',avg:false,P:{fx:.8,fy:.2}};
 const cv1=$('cv1'),g1=cv1.getContext('2d');let W1=800,H1=400;const F1=Field();let dirty1=true,amp1P=0;
 const TANK=60;
 SIZE.diffract=()=>{if(S1.cmp)sizeC();else{const r=fit(cv1,.5,300,520);W1=r.W;H1=r.H;fieldResize(F1,W1,H1,W1<600?4:3);dirty1=true;}sizeAr();sizeEg();};
@@ -749,19 +771,20 @@ function compute1(){const G=geo1(),P=pts1(G),F=F1,cl=closed1(G);let mx=0;
   for(let j=0;j<F.h;j++)for(let i=0;i<F.w;i++){if((i+.5)*F.cell>G.xb){const o=j*F.w+i;F.re[o]*=boost;F.im[o]*=boost;}}
   const px=S1.P.fx*W1,py=S1.P.fy*H1,A=hz1(G,P,px,py);amp1P=Math.hypot(A[0],A[1]);}
 DRAW.diffract=()=>{if(S1.cmp){drawC();return;}const g=g1,G=geo1();if(dirty1){compute1();dirty1=false;uiRead1();}
-  fieldDraw(g,F1,S1.ph,'w');
+  if(S1.view==='paper')fieldPaper(g,F1,S1.ph,G.lam,S1.avg,[S1.mode,S1.f,S1.h,S1.a,W1].join());else fieldDraw(g,F1,S1.ph,'w');
+  const TC=S1.view==='paper'?C.ink:'#fff',TB=S1.view==='paper'?'rgba(255,255,255,.75)':null;
   g.fillStyle='#2b3138';for(const[a,b]of closed1(G))g.fillRect(G.xb-4,a,8,b-a);
   if(S1.sh){const es=S1.mode==='edge'?[G.yc]:[G.yc-G.a/2,G.yc+G.a/2];
     es.forEach(e=>line(g,G.xb,e,W1,e,'rgba(255,214,120,.95)',1.6,[7,5]));
-    text(g,'直線傳播的陰影邊界',W1-8,(S1.mode==='slit'?G.yc-G.a/2:G.yc)-6,{col:'#ffe2a0',size:12,align:'right',bold:true});}
+    text(g,'直線傳播的陰影邊界',W1-8,(S1.mode==='slit'?G.yc-G.a/2:G.yc)-6,{col:S1.view==='paper'?'#b07a10':'#ffe2a0',size:12,align:'right',bold:true,bg:TB});}
   // λ 尺
   {const crest=x=>x;let x=G.xb+(S1.ph%TAU)/G.k;while(x>G.xb-1.2*G.lam)x-=G.lam;const y=22;if(x>4){line(g,x,y,x+G.lam,y,'#fff',2);line(g,x,y-6,x,y+6,'#fff',2);line(g,x+G.lam,y-6,x+G.lam,y+6,'#fff',2);
-    text(g,'λ＝'+f1(G.lamC)+' cm',x+G.lam/2,y-9,{col:'#fff',size:12,bold:true,align:'center'});}}
-  text(g,'入射直線波 →',10,H1-12,{col:'#fff',size:13,bold:true});
+    text(g,'λ＝'+f1(G.lamC)+' cm',x+G.lam/2,y-9,{col:TC,size:12,bold:true,align:'center',bg:TB});}}
+  text(g,'入射直線波 →',10,H1-12,{col:TC,size:13,bold:true,bg:TB});
   const px=S1.P.fx*W1,py=S1.P.fy*H1,A=hz1(G,pts1(G),px,py),disp=A[0]*Math.cos(S1.ph)+A[1]*Math.sin(S1.ph);
   g.strokeStyle='#fff';g.lineWidth=1.5;g.beginPath();g.arc(px,py,14,0,TAU);g.stroke();
   line(g,px+20,py,px+20,py-disp*16,C.accent,4);
-  handle(g,px,py,8);text(g,'P',px-12,py-14,{col:'#fff',size:13,bold:true,align:'right'});
+  handle(g,px,py,8);text(g,'P',px-12,py-14,{col:TC,size:13,bold:true,align:'right',bg:TB});
 };
 TICK.diffract=dt=>{if(!S1.run)return false;S1.ph+=dt*TAU*.8;return true;};
 function uiRead1(){const G=geo1(),r=S1.a/G.lamC;
@@ -770,6 +793,7 @@ function uiRead1(){const G=geo1(),r=S1.a/G.lamC;
   $('hint1').textContent=S1.cmp?'水波槽俯視圖（慢動作）：同一列直線波，左邊通過寬縫、右邊通過窄縫。黃色虛線是「如果波只會直線前進」的陰影邊界。':'水波槽俯視圖（慢動作）：亮的是波峰、暗的是波谷，直線波從左邊射來。拖曳橘色的 P 點，看它在陰影區裡有沒有跟著上下振動。';
   if(S1.cmp){uiCmp1(G);return;}
   segSet($('mode1'),S1.mode);$('sh1').checked=S1.sh;playTxt($('play1'),S1.run);
+  segSet($('view1'),S1.view);$('avg1').checked=S1.avg;$('avg1W').hidden=S1.view!=='paper';$('view1').hidden=S1.cmp;
   const pct=Math.round(amp1P*100);
   if(S1.mode==='slit')$('r1big').innerHTML=`縫寬 ÷ 波長 ＝ <span class="mono">${f1(r)}</span>`;
   else if(S1.mode==='edge')$('r1big').innerHTML=`擋板邊緣：P 點振幅 <span class="mono">${pct}%</span>`;
@@ -792,6 +816,8 @@ $('f1').addEventListener('input',e=>req1({f:+e.target.value}));
 $('h1').addEventListener('input',e=>req1({h:+e.target.value}));
 $('a1').addEventListener('input',e=>req1({a:+e.target.value}));
 segOn($('mode1'),v=>set1({mode:v}));
+segOn($('view1'),v=>set1({view:v}));
+$('avg1').addEventListener('change',e=>set1({avg:e.target.checked}));
 $('sh1').addEventListener('change',e=>{S1.sh=e.target.checked;kick();});
 $('play1').addEventListener('click',()=>{S1.run=!S1.run;playTxt($('play1'),S1.run);kick();});
 dragger(cv1,()=>[{x:S1.P.fx*W1,y:S1.P.fy*H1,r:28,move:(x,y)=>{S1.P.fx=clamp(x/W1,.02,.98);S1.P.fy=clamp(y/H1,.03,.97);const G=geo1(),A=hz1(G,pts1(G),x,y);amp1P=Math.hypot(A[0],A[1]);uiRead1();}}],kick);
@@ -1184,7 +1210,7 @@ $('reset2').addEventListener('click',()=>set2({t:0,run:false,ph:0}));
 // =====================================================================
 // 3 兩波源干涉
 // =====================================================================
-const S3={kind:'water',view:'water',ln:true,an:false,cr:[true,true],tr:[true,true],anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
+const S3={kind:'water',view:'water',avg:false,ln:true,an:false,cr:[true,true],tr:[true,true],anti:false,fW:8,dW:12,fS:500,dS:2,ph:0,run:true,P:{fx:.64,fy:.3},L:[{fx:.6,fy:.5},{fx:.72,fy:.27},{fx:.86,fy:.66}]};
 const cv3=$('cv3'),g3=cv3.getContext('2d');let W3=800,H3=420;const F3=Field();let dirty3=true;
 SIZE.two=()=>{const r=fit(cv3,.52,300,540);W3=r.W;H3=r.H;fieldResize(F3,W3,H3,W3<600?4:3);dirty3=true;};
 function geo3(){const sound=S3.kind==='sound',units=sound?12:TANK,ppu=W3/units,v=sound?340:28,f=sound?S3.fS:S3.fW,lamU=v/f,lam=lamU*ppu,d=(sound?S3.dS:S3.dW)*ppu,x0=W3*.12,y0=H3/2;
@@ -1201,7 +1227,7 @@ function hyper3(g,G,delta,col,w,dash,label){const c=G.d/2,a=Math.abs(delta)/2;g.
 function lines3(G){const N=[],A=[];const add=(arr,dl,lab)=>{if(Math.abs(dl)<G.d-1e-6)arr.push([dl,lab]);};
   for(let m=0;m<40;m++){const hn=(m+.5)*G.lam,hm=m*G.lam;if(!S3.anti){add(N,hn,'N'+(m+1));add(N,-hn,'N'+(m+1));if(m===0)add(A,0,'A0');else{add(A,hm,'A'+m);add(A,-hm,'A'+m);}}
     else{if(m===0)add(N,0,'N0');else{add(N,hm,'N'+m);add(N,-hm,'N'+m);}add(A,hn,'A'+(m+1));add(A,-hn,'A'+(m+1));}}return{N,A};}
-function speaker(g,x,y,lab){g.fillStyle=C.ink;g.fillRect(x-16,y-8,9,16);g.beginPath();g.moveTo(x-7,y-8);g.lineTo(x+4,y-15);g.lineTo(x+4,y+15);g.lineTo(x-7,y+8);g.closePath();g.fill();text(g,lab,x-18,y-12,{col:S3.view==='circles'?C.ink:'#fff',size:12,bold:true,align:'right'});}
+function speaker(g,x,y,lab){g.fillStyle=C.ink;g.fillRect(x-16,y-8,9,16);g.beginPath();g.moveTo(x-7,y-8);g.lineTo(x+4,y-15);g.lineTo(x+4,y+15);g.lineTo(x-7,y+8);g.closePath();g.fill();text(g,lab,x-18,y-12,{col:S3.view==='circles'||S3.view==='paper'?C.ink:'#fff',size:12,bold:true,align:'right'});}
 DRAW.two=()=>{const g=g3,G=geo3();if(dirty3){compute3();dirty3=false;}
   if(S3.view==='circles'){g.fillStyle=C.water;g.fillRect(0,0,W3,H3);const R=Math.hypot(W3,H3),off=((S3.ph/TAU)%1+1)%1;
     const dk=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);const cA=dk?'#5aa2ff':'#1a56c4',cB=dk?'#ff6b5e':'#d0302a';
@@ -1209,17 +1235,18 @@ DRAW.two=()=>{const g=g3,G=geo3();if(dirty3){compute3();dirty3=false;}
       if(S3.cr[si]&&rc>1){g.strokeStyle=col;g.lineWidth=2.2;g.setLineDash([]);g.beginPath();g.arc(s[0],s[1],rc,0,TAU);g.stroke();}
       if(S3.tr[si]){g.strokeStyle=col;g.lineWidth=1.4;g.setLineDash([4,5]);g.beginPath();g.arc(s[0],s[1],rt,0,TAU);g.stroke();g.setLineDash([]);}}});
     text(g,'實線：波峰　虛線：波谷　藍：S₁　紅：S₂',W3-8,18,{col:C.ink,size:12,bold:true,align:'right',bg:C.panel});}
+  else if(S3.view==='paper')fieldPaper(g,F3,S3.ph,G.lam,S3.avg,[S3.kind,S3.fW,S3.dW,S3.anti,W3].join());
   else fieldDraw(g,F3,S3.ph,S3.view==='mag'?'mag':'w');
   const L=lines3(G);
   if(S3.an)L.A.forEach(([dl,lab])=>hyper3(g,G,dl,'#ffd27a',1.6,null,lab));
   if(S3.ln){const nc=S3.view==='circles'?(matchMedia('(prefers-color-scheme: dark)').matches&&document.documentElement.dataset.theme!=='light'?'#c9a2ff':'#6b2fb3'):'#ff6b5e';L.N.forEach(([dl,lab])=>hyper3(g,G,dl,nc,2.4,[8,5],lab));}
   if(G.sound){speaker(g,G.s1[0],G.s1[1],'S₁');speaker(g,G.s2[0],G.s2[1],'S₂');}
-  else[G.s1,G.s2].forEach((s,i)=>{g.fillStyle=C.ink;g.beginPath();g.arc(s[0],s[1],6,0,TAU);g.fill();g.strokeStyle=(S3.view==='circles'?C.ink:'#fff');g.lineWidth=2;g.stroke();text(g,i?'S₂':'S₁',s[0]-10,s[1]+5,{col:(S3.view==='circles'?C.ink:'#fff'),size:13,bold:true,align:'right'});});
+  else[G.s1,G.s2].forEach((s,i)=>{g.fillStyle=C.ink;g.beginPath();g.arc(s[0],s[1],6,0,TAU);g.fill();g.strokeStyle=(S3.view==='circles'||S3.view==='paper'?C.ink:'#fff');g.lineWidth=2;g.stroke();text(g,i?'S₂':'S₁',s[0]-10,s[1]+5,{col:(S3.view==='circles'||S3.view==='paper'?C.ink:'#fff'),size:13,bold:true,align:'right'});});
   handle(g,G.s1[0],G.s1[1]-(G.sound?0:0),5);
   // 距離 d 標示
-  line(g,G.x0-28,G.s1[1],G.x0-28,G.s2[1],(S3.view==='circles'?C.ink:'#fff'),1.5);text(g,'d',G.x0-34,G.y0+4,{col:(S3.view==='circles'?C.ink:'#fff'),size:13,bold:true,align:'right'});
-  if(!G.sound){const px=S3.P.fx*W3,py=S3.P.fy*H3;{const pc=S3.view==='circles'?C.ink:'rgba(255,255,255,.75)';line(g,G.s1[0],G.s1[1],px,py,pc,1.3,[4,4]);line(g,G.s2[0],G.s2[1],px,py,pc,1.3,[4,4]);}
-    handle(g,px,py,8);text(g,'P',px+12,py-10,{col:(S3.view==='circles'?C.ink:'#fff'),size:14,bold:true});}
+  line(g,G.x0-28,G.s1[1],G.x0-28,G.s2[1],(S3.view==='circles'||S3.view==='paper'?C.ink:'#fff'),1.5);text(g,'d',G.x0-34,G.y0+4,{col:(S3.view==='circles'||S3.view==='paper'?C.ink:'#fff'),size:13,bold:true,align:'right'});
+  if(!G.sound){const px=S3.P.fx*W3,py=S3.P.fy*H3;{const pc=S3.view==='circles'||S3.view==='paper'?C.ink:'rgba(255,255,255,.75)';line(g,G.s1[0],G.s1[1],px,py,pc,1.3,[4,4]);line(g,G.s2[0],G.s2[1],px,py,pc,1.3,[4,4]);}
+    handle(g,px,py,8);text(g,'P',px+12,py-10,{col:(S3.view==='circles'||S3.view==='paper'?C.ink:'#fff'),size:14,bold:true});}
   else S3.L.forEach((l,i)=>{const x=l.fx*W3,y=l.fy*H3,q=src3(G,x,y),m=Math.hypot(q.re,q.im)/(q.a1+q.a2);
     g.fillStyle=C.panel;g.beginPath();g.arc(x,y,13,0,TAU);g.fill();g.strokeStyle=C.accent;g.lineWidth=3;g.stroke();text(g,'甲乙丙'[i],x,y+5,{col:C.ink,size:13,bold:true,align:'center'});
     g.fillStyle='rgba(0,0,0,.45)';g.fillRect(x+18,y-20,12,40);g.fillStyle=C.accent;g.fillRect(x+18,y+20-40*m,12,40*m);
@@ -1231,7 +1258,7 @@ function gUpd3(){if(S3.kind==='sound')return;const{G,q}=probe3();
   waveGraph($('cv3g'),[{a:q.a1,phi:G.k*q.r1,col:C.w1,label:'S₁ 傳來'},{a:q.a2,phi:G.k*q.r2+(S3.anti?Math.PI:0),col:C.w2,label:'S₂ 傳來'}],S3.ph,'P 點實際');}
 function classify(dl,anti){const fr=dl-Math.floor(dl),nearInt=Math.min(fr,1-fr)<.1,nearHalf=Math.abs(fr-.5)<.1;
   if(nearInt)return anti?['no','節線（破壞性）']:['ok','腹線（建設性）'];if(nearHalf)return anti?['ok','腹線（建設性）']:['no','節線（破壞性）'];return['info','介於節線與腹線之間'];}
-function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;['a','b'].forEach((k,i)=>{$('cr3'+k).checked=S3.cr[i];$('tr3'+k).checked=S3.tr[i];});$('crw3').hidden=S3.view!=='circles';playTxt($('play3'),S3.run);
+function ui3(){const G=geo3();segSet($('kind3'),S3.kind);segSet($('view3'),S3.view);segSet($('ph3'),S3.anti?'1':'0');$('ln3').checked=S3.ln;$('an3').checked=S3.an;['a','b'].forEach((k,i)=>{$('cr3'+k).checked=S3.cr[i];$('tr3'+k).checked=S3.tr[i];});$('crw3').hidden=S3.view!=='circles';$('avg3').checked=S3.avg;$('avg3W').hidden=S3.view!=='paper';$('view3').querySelector('[data-v=paper]').hidden=S3.kind==='sound';playTxt($('play3'),S3.run);
   const fi=$('f3'),di=$('d3');if(G.sound){fi.min=150;fi.max=1200;fi.step=10;fi.value=S3.fS;di.min=.5;di.max=4;di.step=.1;di.value=S3.dS;}else{fi.min=4;fi.max=20;fi.step=.5;fi.value=S3.fW;di.min=2;di.max=24;di.step=.5;di.value=S3.dW;}
   $('f3o').textContent=G.f+' Hz';$('d3o').textContent=(G.sound?f1(G.dU):f1(G.dU))+' '+G.unit;
   const L=lines3(G),nN=L.N.length;
@@ -1250,6 +1277,7 @@ $('f3').addEventListener('input',e=>req3(S3.kind==='sound'?{fS:+e.target.value}:
 $('d3').addEventListener('input',e=>req3(S3.kind==='sound'?{dS:+e.target.value}:{dW:+e.target.value}));
 segOn($('kind3'),v=>set3({kind:v,view:v==='sound'?'mag':'water'}));
 segOn($('view3'),v=>set3({view:v}));
+$('avg3').addEventListener('change',e=>set3({avg:e.target.checked}));
 segOn($('ph3'),v=>set3({anti:v==='1'}));
 $('ln3').addEventListener('change',e=>{S3.ln=e.target.checked;kick();});['a','b'].forEach((k,i)=>{$('cr3'+k).addEventListener('change',e=>{S3.cr[i]=e.target.checked;kick();});$('tr3'+k).addEventListener('change',e=>{S3.tr[i]=e.target.checked;kick();});});
 $('an3').addEventListener('change',e=>{S3.an=e.target.checked;kick();});
