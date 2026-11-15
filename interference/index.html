@@ -181,6 +181,7 @@
         <label class="slider"><span class="tlabel">光的波長</span><input type="range" id="egLam" min="400" max="700" step="10" value="650"><output id="egLamo"></output></label>
         <label class="slider"><span class="tlabel">擋板到牆 N</span><input type="range" id="egL" min="0.5" max="4" step="0.1" value="1"><output id="egLo"></output></label>
         <label class="tog"><input type="checkbox" id="egCmp">同時畫紅光(700)與藍光(400)</label>
+        <label class="tog"><input type="checkbox" id="egZ">把陰影區的亮度放大 20 倍</label>
         <label class="tog"><input type="checkbox" id="egP">微粒說的預測（y &lt; 0 全黑）</label>
       </div>
       <canvas id="cvEg" aria-label="光經過擋板邊緣後照在牆上的亮度分布"></canvas>
@@ -835,7 +836,7 @@ function computeAr(){const a=AR.D/2*1e-3,N=a*a/(AR.lam*1e-9*AR.L);AR.N=N;const M
   AR.prof=pr;}
 const arI=sv=>{if(AR.part)return sv<1?0:1;const x=Math.min(sv,AR_S)/AR_S*AR_N,i=Math.min(AR_N-1,Math.floor(x)),f=x-i;return AR.prof[i]*(1-f)+AR.prof[i+1]*f;};
 // ---- 擋板邊緣：牆上的亮度（一中 114-1-3 #19）----
-const EG={lam:650,L:1,cmp:false,part:false},cvEg=$('cvEg'),gEg=cvEg.getContext('2d');let WE=800,HE=320;
+const EG={lam:650,L:1,cmp:false,part:false,zoom:false},cvEg=$('cvEg'),gEg=cvEg.getContext('2d');let WE=800,HE=320;
 const EGN=560,EGV=5,egC=new Float32Array(EGN+1),egS=new Float32Array(EGN+1);
 (()=>{let c=0,s2=0;const dv=EGV/EGN;for(let i=0;i<=EGN;i++){const v=i*dv;if(i){const v0=v-dv,vm=v-dv/2;
   c+=dv/6*(Math.cos(Math.PI/2*v0*v0)+4*Math.cos(Math.PI/2*vm*vm)+Math.cos(Math.PI/2*v*v));
@@ -869,7 +870,8 @@ function drawEg(){const g=gEg,W=WE,H=HE,nar=W<640;g.clearRect(0,0,W,H);
   // 虛線延伸線
   line(g,xM,y0,xW+(nar?38:54),y0,C.ink,1.2,[6,5]);
   // 牆 N 與亮度條
-  for(let p=yt;p<=yb;p++){const I=egI(yAt(p),EG.lam,EG.L),u=Math.round(255*clamp(I*.86,0,1));
+  const ZG=EG.zoom&&!EG.part?20:1;
+  for(let p=yt;p<=yb;p++){const I=egI(yAt(p),EG.lam,EG.L)*ZG,u=Math.round(255*clamp(I*.86,0,1));
     g.fillStyle=`rgb(${u},${Math.round(u*.97)},${Math.round(u*.84)})`;g.fillRect(xW-wt,p,wt+1,1);}
   g.strokeStyle=C.line;g.lineWidth=1;g.strokeRect(xW-wt+.5,yt+.5,wt,yb-yt);
   text(g,'牆 N',xW-wt/2,yt-12,{bold:true,align:'center',size:12});
@@ -881,10 +883,10 @@ function drawEg(){const g=gEg,W=WE,H=HE,nar=W<640;g.clearRect(0,0,W,H);
   text(g,'y (mm)',xW+(nar?36:52),yt-(nar?25:10),{col:C.muted,align:'right',size:10.5});
   text(g,'y = 0',xW+(nar?36:52),Y(0)-6,{bold:true,align:'right',size:11});
   // 亮度曲線
-  const cx0=xW+(nar?48:66),cx1=W-10,cw=cx1-cx0,IX=I=>cx0+clamp(I,0,1.4)/1.4*cw;
+  const cx0=xW+(nar?48:66),cx1=W-10,cw=cx1-cx0,IX=I=>cx0+clamp(I*ZG,0,1.4)/1.4*cw;
   line(g,cx0,yt,cx0,yb,C.line,1);
-  [[0,'0'],[.25,'¼'],[1,'1']].forEach(([I,t])=>{line(g,IX(I),yt,IX(I),yb,'rgba(128,140,150,.35)',1,[3,4]);text(g,t,IX(I),yb+16,{col:C.muted,align:'center',size:10.5});});
-  text(g,'牆 N 上的亮度',cx1,yb+32,{col:C.muted,align:'right',size:10.5});
+  [[0,'0'],[.25/ZG,'¼'],[1/ZG,'1']].forEach(([I,t])=>{line(g,IX(I),yt,IX(I),yb,'rgba(128,140,150,.35)',1,[3,4]);text(g,t,IX(I),yb+16,{col:C.muted,align:'center',size:10.5});});
+  text(g,ZG>1?'牆 N 上的亮度（已放大 20 倍）':'牆 N 上的亮度',cx1,yb+32,{col:C.muted,align:'right',size:10.5});
   text(g,'光（水平行進）',x0+2,yt-12,{col:'#b8791a',bold:true,size:11.5});
   text(g,'幾何陰影區',xM+10,y0+20,{col:C.muted,size:11.5});
   const curve=(lam,col,lw)=>{g.strokeStyle=col;g.lineWidth=lw;g.beginPath();
@@ -892,11 +894,18 @@ function drawEg(){const g=gEg,W=WE,H=HE,nar=W<640;g.clearRect(0,0,W,H);
   if(EG.cmp&&!EG.part){curve(700,'#d94f3d',1.6);curve(400,'#3f6ee0',1.6);
     text(g,'紅 700 nm',cx1,yt+12,{col:'#d94f3d',bold:true,align:'right',size:11});text(g,'藍 400 nm',cx1,yt+26,{col:'#3f6ee0',bold:true,align:'right',size:11});}
   else curve(EG.lam,C.accent,2.2);
+  // 亮度剩 1% 的位置（會隨波長移動）
+  const d1=lam=>{let m=0;for(;m>-3*sMM;m-=.002)if(egI(m,lam,EG.L)<.01)break;return m;};
+  if(!EG.part){const mk=(lam,col,lab)=>{const m=d1(lam),p=Y(m);if(p>yb-2)return;
+      line(g,xM+6,p,xW-wt,p,col,1.4,[5,4]);
+      text(g,lab+' '+f2(m)+' mm',xM+10,p-5,{col,bold:true,size:11});};
+    if(EG.cmp){mk(700,'#d94f3d','紅光 1%：');mk(400,'#3f6ee0','藍光 1%：');}
+    else mk(EG.lam,C.accent,'亮度剩 1%：');}
   // 說明
-  const dark=EG.part?0:(()=>{let m=0;for(;m>-3*sMM;m-=.005)if(egI(m,EG.lam,EG.L)<.01)break;return m;})();
+  const dark=EG.part?0:d1(EG.lam);
   $('egNote').innerHTML=EG.part
     ?'<b>微粒說的預測</b>：光如果只是沿直線行進的粒子，牆上 y &lt; 0 就是完全黑的、而且邊界非常銳利——實際量到的不是這樣。'
-    :`λ = ${EG.lam} nm、擋板到牆 ${f1(EG.L)} m：y = 0（幾何陰影邊界）處亮度只剩 <b>¼</b>；陰影裡 y ≈ ${f2(dark)} mm 才幾乎全黑，<b>光確實繞進了 y &lt; 0</b>。亮區則出現忽明忽暗的條紋，最亮處約為原來的 1.37 倍。`;
+    :`λ = ${EG.lam} nm、擋板到牆 ${f1(EG.L)} m：y = 0（幾何陰影邊界）處亮度只剩 <b>¼</b>；要到 y ≈ <b>${f2(dark)} mm</b> 亮度才降到 1%，<b>光確實繞進了 y &lt; 0</b>。拉波長看這條線怎麼移動（λ 愈長，光鑽進陰影愈深，∝√λ）；陰影裡的光很微弱，勾「放大 20 倍」才看得清楚。亮區則出現忽明忽暗的條紋，最亮處約為原來的 1.37 倍。`;
   checks($('egC'),[
     ['ok','<b>(A) 光因繞射而可能進入 y &lt; 0</b>　正確——波會繞過擋板邊緣，陰影的邊界是漸變的，不是一刀切。'],
     ['no','<b>(B) 因折射而進入 y &lt; 0</b>　錯——光自始至終都在空氣中，沒有通過兩介質的界面，談不上折射。'],
@@ -904,10 +913,11 @@ function drawEg(){const g=gEg,W=WE,H=HE,nar=W<640;g.clearRect(0,0,W,H);
     ['no','<b>(D) 光是粒子沿直線行進，y &lt; 0 亮度為零</b>　錯——陰影裡量得到光，不是零；這正是微粒說解釋不了的地方。'],
     ['no','<b>(E) 頻率愈高能量愈大，偏得愈多</b>　錯——頻率愈高波長愈短，繞射反而愈不明顯；光子能量大小與偏折無關。']
   ]);}
-function egUI(){$('egLamo').textContent=EG.lam+' nm';$('egLo').textContent=f1(EG.L)+' m';$('egLam').value=EG.lam;$('egL').value=EG.L;$('egCmp').checked=EG.cmp;$('egP').checked=EG.part;}
+function egUI(){$('egZ').checked=EG.zoom;$('egLamo').textContent=EG.lam+' nm';$('egLo').textContent=f1(EG.L)+' m';$('egLam').value=EG.lam;$('egL').value=EG.L;$('egCmp').checked=EG.cmp;$('egP').checked=EG.part;}
 $('egLam').addEventListener('input',e=>{EG.lam=+e.target.value;egUI();drawEg();});
 $('egL').addEventListener('input',e=>{EG.L=+e.target.value;egUI();drawEg();});
 $('egCmp').addEventListener('change',e=>{EG.cmp=e.target.checked;drawEg();});
+$('egZ').addEventListener('change',e=>{EG.zoom=e.target.checked;drawEg();});
 $('egP').addEventListener('change',e=>{EG.part=e.target.checked;drawEg();});
 function setEg(o){Object.assign(EG,o);egUI();drawEg();}
 egUI();
