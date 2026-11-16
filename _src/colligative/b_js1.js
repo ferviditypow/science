@@ -106,8 +106,9 @@ function vpPe(T,geo){ // 每個表面水分子每秒逃出的機率，使純水 
 function vpStep(dt){const geo=VP.geo;if(!geo)return;VP.t+=dt;
   const pe=vpPe(VP.T,geo),sp=vpSpeed(VP.T);
   VP.box.forEach((b,bi)=>{const x0=geo.x[bi],g=b.grid;
-    // 液體內擴散
-    for(let k=0;k<70;k++){const i=Math.floor(Math.random()*g.length),r=Math.floor(i/COLS),c=i%COLS;const nb=[[r,c+1],[r,c-1],[r+1,c],[r-1,c]][Math.floor(Math.random()*4)];
+    // 液體內擴散：每個分子平均每 D 秒和鄰居換一次位置（和幀率無關）
+    b.dacc=(b.dacc||0)+g.length*0.55*dt;let ns=Math.floor(b.dacc);b.dacc-=ns;
+    for(let k=0;k<ns;k++){const i=Math.floor(Math.random()*g.length),r=Math.floor(i/COLS),c=i%COLS;const nb=[[r,c+1],[r,c-1],[r+1,c],[r-1,c]][Math.floor(Math.random()*4)];
       if(nb[0]<0||nb[0]>=ROWS||nb[1]<0||nb[1]>=COLS)continue;const j=nb[0]*COLS+nb[1];const tmp=g[i];g[i]=g[j];g[j]=tmp;}
     // 逃出液面（只有最上排）
     for(let c=0;c<COLS;c++){const ty=g[c];let p=0;if(ty==='w')p=pe;else if(ty==='v')p=pe*3.2;
@@ -130,11 +131,11 @@ DRAW.vp=()=>{if(VP.mode==='cups')return drawCups();
     g.fillStyle=C.panel;g.strokeStyle=C.glass;g.lineWidth=3;g.beginPath();g.roundRect(x0,geo.top,geo.cw,geo.bot-geo.top,6);g.stroke();
     g.fillStyle=C.liq;g.fillRect(x0+1.5,geo.surf,geo.cw-3,geo.bot-geo.surf-1.5);
     line(g,x0,geo.top,x0+geo.cw,geo.top,C.glass,5);
-    const tt=performance.now()/1000,cs=geo.cs,Z=VP.view==='zoom';
+    const tt=VP.t,cs=geo.cs,Z=VP.view==='zoom';
     if(Z){ // 把液面最上排畫成一格一格的「位置」
       for(let c=0;c<COLS;c++){const x=x0+c*cs,y=geo.surf;g.strokeStyle=C.line;g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(x+1,y+1,cs-2,cs-2);g.setLineDash([]);}
       line(g,x0+1.5,geo.surf,x0+geo.cw-1.5,geo.surf,C.glass,2);}
-    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=Math.sin(tt*5+i*1.7)*cs*.08,jy=Math.cos(tt*4.3+i*2.3)*cs*.08;
+    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=Math.sin(tt*.9+i*1.7)*cs*.05,jy=Math.cos(tt*.75+i*2.3)*cs*.05;
       const x=x0+(c+.5)*cs+jx,y=geo.surf+(r+.5)*cs+jy;const col=ty==='w'?C.water:ty==='s'?C.sol:ty==='a'?C.ion2:C.vol;
       dot(g,x,y,(ty==='w'?.3:.4)*cs*(Z?1.15:1),col);
       if(r===0&&ty!=='w'&&ty!=='v'){g.strokeStyle=C.ink;g.lineWidth=Z?2:1;g.beginPath();g.arc(x,y,cs*(Z?.5:.46),0,TAU);g.stroke();

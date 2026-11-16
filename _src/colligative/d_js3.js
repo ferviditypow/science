@@ -37,13 +37,13 @@ $('scDust').addEventListener('change',e=>{SC.dust=e.target.checked;kick();});
 const setSCB=sliderBind('scBath',v=>{SC.bath=v;},v=>v+' ℃');
 DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   const bx=14,by=10,bw=W-28,bh=H-20;g.fillStyle=C.liq;g.fillRect(bx,by,bw,bh);g.strokeStyle=C.glass;g.lineWidth=3;g.strokeRect(bx,by,bw,bh);
-  const cs=Math.max(9,Math.min(14,bw/60)),cols=Math.floor(bw/cs),rows=Math.floor(bh/cs),tt=performance.now()/1000;
+  const cs=Math.max(12,Math.min(20,bw/40)),cols=Math.floor(bw/cs),rows=Math.floor(bh/cs),tt=SC.t;
   // 結冰區（由成核點往外）
   let fr=null;if(SC.front){const R=Math.sqrt(SC.f)*Math.hypot(bw,bh)*0.75;fr={x:bx+SC.front.x*bw,y:by+SC.front.y*bh,R};}
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x0=bx+(c+.5)*cs,y0=by+(r+.5)*cs;
     const iced=SC.state==='ice'||(fr&&Math.hypot(x0-fr.x,y0-fr.y)<fr.R);
     if(iced){g.fillStyle=C.ice;g.fillRect(x0-cs*.38,y0-cs*.38,cs*.76,cs*.76);}
-    else{const k=r*cols+c;dot(g,x0+Math.sin(tt*6+k*1.3)*cs*.16,y0+Math.cos(tt*5.2+k*2.2)*cs*.16,cs*.26,C.water);}}
+    else{const k=r*cols+c;dot(g,x0+Math.sin(tt*.55+k*1.3)*cs*.05,y0+Math.cos(tt*.45+k*2.2)*cs*.05,cs*.3,C.water);}}
   // 灰塵
   if(SC.dust)SC.dustPts.forEach(p=>{g.fillStyle=C.muted;g.beginPath();g.ellipse(bx+p[0]*bw,by+p[1]*bh,cs*.9,cs*.55,.6,0,TAU);g.fill();});
   // 冰核
@@ -162,7 +162,7 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
     `兩邊的水分子都會穿過半透膜。溶液那邊膜上有一部分位置被溶質擋住，每秒穿過來的水分子比較少，所以水淨流入溶液，溶液液面上升。液面差產生的壓力把溶液那邊的水「壓」回去，直到兩方向一樣多（平衡）。平衡時 ρgh ＝ π${OS.P>0?' − 外加壓力':''}。`;};
 function drawCell(g,W,H){const cx=W/2,cy=H/2+6,R=Math.min(W,H)*.22*OS.sc;
   g.fillStyle=OS.ton==='hyper'?'rgba(232,89,12,.14)':C.liq;g.fillRect(10,10,W-20,H-20);g.strokeStyle=C.glass;g.lineWidth=3;g.strokeRect(10,10,W-20,H-20);
-  const obj=OS.obj,tt=performance.now()/1000;
+  const obj=OS.obj,tt=OS.t;
   if(obj==='rbc'){if(OS.burst>=1){g.fillStyle='rgba(201,42,42,.5)';for(let k=0;k<9;k++){const a=k/9*TAU+.3;g.beginPath();g.ellipse(cx+Math.cos(a)*R*.9,cy+Math.sin(a)*R*.7,R*.22,R*.08,a,0,TAU);g.fill();}text(g,'破裂（溶血）',cx,cy+4,{align:'center',size:15,bold:true,col:C.hot});}
     else{g.save();g.translate(cx,cy);g.fillStyle='#d9480f';g.strokeStyle='#8a2d0a';g.lineWidth=2;g.beginPath();const sp=OS.ton==='hyper'?Math.min(1,(1-OS.sc)/0.28):0;
       for(let k=0;k<=72;k++){const a=k/72*TAU;let rr=R*(1+sp*.12*Math.sin(a*12));const x=Math.cos(a)*rr,y=Math.sin(a)*rr*(OS.sc>1.15?0.95:0.62);k?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();g.fill();g.stroke();

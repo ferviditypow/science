@@ -107,7 +107,8 @@ function fpReset(){fpDims();const g=new Uint8Array(FPC*FPR),f=new Float32Array(F
 const PF=0.06; // 每個鄰近冰的水分子每秒凝固的機率
 function fpStep(dt){const g=FP.grid,f=FP.flash;FP.t+=dt;const pm=PF*Math.exp(FP.T/26);let fr=0,me=0;
   // 液體擴散
-  for(let k=0;k<FPC*FPR*.6;k++){const i=Math.floor(Math.random()*g.length);if(g[i]===2)continue;const r=Math.floor(i/FPC),c=i%FPC;const d=Math.floor(Math.random()*4);const rr=r+(d===2)-(d===3),cc=c+(d===0)-(d===1);
+  FP.dacc=(FP.dacc||0)+FPC*FPR*0.5*dt;let nsw=Math.floor(FP.dacc);FP.dacc-=nsw;
+  for(let k=0;k<nsw;k++){const i=Math.floor(Math.random()*g.length);if(g[i]===2)continue;const r=Math.floor(i/FPC),c=i%FPC;const d=Math.floor(Math.random()*4);const rr=r+(d===2)-(d===3),cc=c+(d===0)-(d===1);
     if(rr<0||rr>=FPR||cc<0||cc>=FPC)continue;const j=rr*FPC+cc;if(g[j]===2)continue;const tmp=g[i];g[i]=g[j];g[j]=tmp;}
   const toF=[],toM=[];let nF=0,nM=0;
   for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++){const i=r*FPC+c,v=g[i];
@@ -124,14 +125,14 @@ segOn($('fpView'),v=>{hideStory();FP.view=v;fpReset();kick();});
 $('fpMark').addEventListener('change',e=>{FP.mark=e.target.checked;kick();});
 $('fpReset').addEventListener('click',()=>{fpReset();kick();});
 DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.42,240,400),g=cv.getContext('2d');g.clearRect(0,0,W,H);
-  const cs=Math.min(W/FPC,(H-6)/FPR),ox=(W-cs*FPC)/2,oy=(H-cs*FPR)/2;const G=FP.grid,F=FP.flash,tt=performance.now()/1000;
+  const cs=Math.min(W/FPC,(H-6)/FPR),ox=(W-cs*FPC)/2,oy=(H-cs*FPR)/2;const G=FP.grid,F=FP.flash,tt=FP.t;
   g.fillStyle=C.icebg;g.fillRect(ox,oy,cs*FPC,cs*FPR);
   const Z=FP.view==='zoom';
   const adj=i=>{const r=Math.floor(i/FPC),c=i%FPC;return [c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].some(j=>j>=0&&G[j]===2);};
   for(let i=0;i<G.length;i++){const r=Math.floor(i/FPC),c=i%FPC,v=G[i];const fl=F[i];const age=fl>0?FP.t-fl:fl<0?FP.t+fl:9;
     if(v===2){const x=ox+c*cs+(r%2?cs*.25:-cs*.0),y=oy+r*cs;g.fillStyle=C.ice;g.fillRect(ox+c*cs+cs*.12,y+cs*.12,cs*.76,cs*.76);
       if(age<.6&&fl>0){g.strokeStyle=C.accent;g.lineWidth=2.5;g.strokeRect(ox+c*cs+1,y+1,cs-2,cs-2);}}
-    else{const jx=Math.sin(tt*6+i*1.3)*cs*.14,jy=Math.cos(tt*5.1+i*2.1)*cs*.14;const x=ox+(c+.5)*cs+jx,y=oy+(r+.5)*cs+jy;
+    else{const jx=Math.sin(tt*.8+i*1.3)*cs*.06,jy=Math.cos(tt*.65+i*2.1)*cs*.06;const x=ox+(c+.5)*cs+jx,y=oy+(r+.5)*cs+jy;
       g.fillStyle=C.panel;g.fillRect(ox+c*cs,oy+r*cs,cs+.5,cs+.5);
       if(FP.mark&&adj(i)){g.strokeStyle=v===1?C.muted:C.blue;g.lineWidth=Z?2:1.2;g.setLineDash(v===1?[3,3]:[]);g.beginPath();g.arc(ox+(c+.5)*cs,oy+(r+.5)*cs,cs*.46,0,TAU);g.stroke();g.setLineDash([]);}
       dot(g,x,y,(v===1?.42:.3)*cs*(Z?1.1:1),v===1?C.sol:C.water);if(age<.6&&fl<0){g.strokeStyle=C.hot;g.lineWidth=2.5;g.beginPath();g.arc(x,y,cs*.5,0,TAU);g.stroke();}}}
