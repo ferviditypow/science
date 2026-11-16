@@ -52,7 +52,11 @@ header p,.sub{margin:0;color:var(--muted);max-width:60ch;font-size:.92rem}
 .lab{font-weight:500;font-size:.78rem;letter-spacing:.1em;color:var(--muted);margin-bottom:6px}
 .ptitle small{font-weight:400;color:var(--muted);font-size:.78rem}
 .cbox{padding:8px 10px 6px}
-canvas{display:block;width:100%;touch-action:none;border-radius:7px}
+canvas{display:block;width:100%;touch-action:pinch-zoom;border-radius:7px}
+/* 觸控模式：預設「拖曳」(單指操作畫面、雙指縮放整頁)；切成「捲動」時單指捲動頁面 */
+html[data-touch="scroll"] canvas{touch-action:pan-y pinch-zoom}
+/* 3D 畫面由 OrbitControls 自己處理手勢 */
+.three3d canvas,canvas.three3d{touch-action:none!important}
 .hint,.note{font-size:.82rem;color:var(--muted);margin:0}
 .panel .hint{padding:0 12px 10px}
 

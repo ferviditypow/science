@@ -37,6 +37,13 @@ header .foldbtn{display:none}
 .grpnav a.u[aria-current="page"]{background:var(--ink);border-color:var(--ink);color:var(--panel)}
 .grpnav a.u[aria-current="page"] .no,.grpnav a.u[aria-current="page"] small{color:inherit;opacity:.75}
 @media (max-width:700px){.grpnav{gap:6px 10px}.grpnav>.tlabel{display:none}.grpnav .units{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px;scrollbar-width:thin}.grpnav a.u{white-space:nowrap;min-height:34px;padding:5px 11px}}
+
+  .touchbtn{position:fixed;right:10px;bottom:10px;z-index:60;padding:8px 12px;min-height:40px;
+    border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
+    font-size:.84rem;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.9}
+  .touchbtn[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+  .touchbtn:hover{opacity:1}
+  @media print{.touchbtn{display:none}}
 `;
   const st = document.createElement('style');
   st.textContent = css;
@@ -74,6 +81,23 @@ header .foldbtn{display:none}
     requestAnimationFrame(() => { const c = el.querySelector('a.u[aria-current]'); if (c) { const u = el.querySelector('.units'); u.scrollLeft = c.offsetLeft - u.offsetLeft - 12; } });
   }
 
-  function init() { fold(); nav(); }
+  // 觸控模式：單指拖曳畫面 ←→ 單指捲動頁面（雙指縮放整頁兩種模式都可以）
+  function touchMode() {
+    if (embedded || !navigator.maxTouchPoints) return;
+    if (document.querySelector('.touchbtn')) return;
+    const KEY = 'sci-touch';
+    const set = m => { document.documentElement.dataset.touch = m;
+      b.textContent = m === 'scroll' ? '↕ 單指捲動頁面' : '✋ 單指操作畫面';
+      b.setAttribute('aria-pressed', String(m === 'scroll'));
+      try { localStorage.setItem(KEY, m); } catch (e) {} };
+    const b = document.createElement('button');
+    b.type = 'button'; b.className = 'touchbtn'; b.title = '切換：單指在畫面上拖曳，或單指捲動頁面。兩種模式都可以用兩指縮放整個頁面。';
+    b.addEventListener('click', () => set(document.documentElement.dataset.touch === 'scroll' ? 'drag' : 'scroll'));
+    document.body.appendChild(b);
+    let m = 'drag'; try { m = localStorage.getItem(KEY) || 'drag'; } catch (e) {}
+    set(m);
+  }
+
+  function init() { fold(); nav(); touchMode(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

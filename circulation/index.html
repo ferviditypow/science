@@ -686,7 +686,7 @@ async function build(){if(built)return;built=true;
   const stage=document.getElementById('h3stage');
   const ren=new THREE.WebGLRenderer({antialias:true,alpha:true});ren.setPixelRatio(Math.min(devicePixelRatio,2));
   ren.toneMapping=THREE.ACESFilmicToneMapping;ren.toneMappingExposure=1.05;ren.outputColorSpace=THREE.SRGBColorSpace;
-  stage.prepend(ren.domElement);
+  ren.domElement.classList.add('three3d');stage.prepend(ren.domElement);
   const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.style.cssText='position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none';stage.appendChild(svg);
   const scene=new THREE.Scene();const cam=new THREE.PerspectiveCamera(32,1,.1,100);cam.position.set(-3.2,2.4,17.5);
   const ctl=new OrbitControls(cam,ren.domElement);ctl.target.set(.3,.9,-.9);ctl.enableDamping=true;ctl.minDistance=3;ctl.maxDistance=30;ctl.addEventListener('change',()=>kick());

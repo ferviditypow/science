@@ -84,7 +84,7 @@ const KB=0.52,KF=1.86;
 // ======================================================================
 // 1 蒸氣壓下降
 // ======================================================================
-const VP={mode:'part',view:'zoom',run:!reduced,type:'1',N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
+const VP={mode:'part',view:'zoom',run:!reduced,type:'1',arrow:true,N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
   cups:[],cupSet:'ex10',spd:.5,gmode:'n',flyers:[],ct:0};
 const VPV={zoom:{cols:12,rows:3},full:{cols:22,rows:9}};
 let COLS=12,ROWS=3;
@@ -113,13 +113,13 @@ function vpStep(dt){const geo=VP.geo;if(!geo)return;VP.t+=dt;
     for(let c=0;c<COLS;c++){const ty=g[c];let p=0;if(ty==='w')p=pe;else if(ty==='v')p=pe*3.2;
       if(p>0&&Math.random()<p*dt){const a=-Math.PI/2+(Math.random()-.5)*2.2;const mx=x0+(c+.5)*geo.cs;
         b.vap.push({x:mx,y:geo.surf-2,vx:sp*Math.cos(a),vy:sp*Math.sin(a),ty});b.esc++;
-        if(VP.view==='zoom')(b.fx=b.fx||[]).push({x:mx,y:geo.surf,up:1,t:0});}}
+        if(VP.view==='zoom'&&VP.arrow){b.fx=b.fx||[];b.fx.push({x:mx,y:geo.surf,up:1,t:0});if(b.fx.length>2)b.fx.shift();}}}
     // 氣體運動與回到液面
     for(let k=b.vap.length-1;k>=0;k--){const m=b.vap[k];m.x+=m.vx*dt;m.y+=m.vy*dt;
       if(m.x<x0+3){m.x=x0+3;m.vx=Math.abs(m.vx);}if(m.x>x0+geo.cw-3){m.x=x0+geo.cw-3;m.vx=-Math.abs(m.vx);}
       if(m.y<geo.top+3){m.y=geo.top+3;m.vy=Math.abs(m.vy);}
-      if(m.y>=geo.surf){b.vap.splice(k,1);b.cap++;if(VP.view==='zoom')(b.fx=b.fx||[]).push({x:m.x,y:geo.surf,up:-1,t:0});}}
-    if(b.fx){for(let k=b.fx.length-1;k>=0;k--){b.fx[k].t+=dt;if(b.fx[k].t>.8)b.fx.splice(k,1);}}
+      if(m.y>=geo.surf){b.vap.splice(k,1);b.cap++;if(VP.view==='zoom'&&VP.arrow){b.fx=b.fx||[];b.fx.push({x:m.x,y:geo.surf,up:-1,t:0});if(b.fx.length>2)b.fx.shift();}}}
+    if(b.fx){for(let k=b.fx.length-1;k>=0;k--){b.fx[k].t+=dt;if(b.fx[k].t>.55)b.fx.splice(k,1);}}
     b.avg+=(b.vap.length-b.avg)*Math.min(1,dt/2.5);});
   if(!VP.hist.length||VP.t-VP.hist[VP.hist.length-1][0]>0.1){VP.hist.push([VP.t,VP.box[0].vap.length,VP.box[1].vap.length,VP.box[1].esc,VP.box[1].cap]);if(VP.hist.length>900)VP.hist.shift();}}
 function vpXw(){const g=VP.box[1].grid;const w=g.filter(t=>t==='w').length;return w/g.length;}
@@ -140,8 +140,8 @@ DRAW.vp=()=>{if(VP.mode==='cups')return drawCups();
       if(r===0&&ty!=='w'&&ty!=='v'){g.strokeStyle=C.ink;g.lineWidth=Z?2:1;g.beginPath();g.arc(x,y,cs*(Z?.5:.46),0,TAU);g.stroke();
         if(Z)text(g,'佔住',x,y+cs*.5+12,{align:'center',size:10,col:C.muted});}});
     b.vap.forEach(m=>dot(g,m.x,m.y,cs*(Z?.3:.26),m.ty==='v'?C.vol:C.water));
-    if(b.fx)b.fx.forEach(f=>{const a=1-f.t/.8,L=cs*.9*(1+f.t*1.6);g.globalAlpha=a;
-      const col=f.up>0?C.red:C.blue;arrow(g,f.x,f.y-(f.up>0?0:L),f.x,f.y-(f.up>0?L:0),col,2.4);g.globalAlpha=1;});
+    if(b.fx&&VP.arrow)b.fx.forEach(f=>{const u=f.t/.55,L=cs*1.5;g.globalAlpha=.45*Math.sin(Math.PI*Math.min(1,u));
+      const col=f.up>0?C.red:C.blue;arrow(g,f.x,f.y-(f.up>0?0:L),f.x,f.y-(f.up>0?L:0),col,2.2);g.globalAlpha=1;});
     if(Z){text(g,`逃出 ${b.esc}`,x0+8,geo.top+18,{size:12,mono:true,col:C.red,bg:C.panel});
       text(g,`回來 ${b.cap}`,x0+8,geo.top+36,{size:12,mono:true,col:C.blue,bg:C.panel});}
     text(g,names[bi],x0+geo.cw/2,geo.top-10,{align:'center',bold:true,size:14});
@@ -174,6 +174,7 @@ const setVPN=sliderBind('vpN',v=>{if(VP.view==='zoom')VP.N=v;else VP.Nfull=v;vpR
 const setVPT=sliderBind('vpT',v=>{VP.T=v;VP.box.forEach(b=>b.vap.length=0);VP.hist=[];VP.t=0;},v=>v+' ℃');
 pbar('vp',VP,.4);
 segOn($('vpG'),v=>{VP.gmode=v;kick();});
+$('vpArrow').addEventListener('change',e=>{VP.arrow=e.target.checked;VP.box.forEach(b=>b.fx=[]);kick();});
 segOn($('vpView'),v=>{hideStory();if(v===VP.view)return;
   if(VP.view==='zoom')VP.N=+$('vpN').value;else VP.Nfull=+$('vpN').value;
   VP.view=v;vpDims();vpSetRange();vpReset();kick();});

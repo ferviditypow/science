@@ -25,7 +25,7 @@
 .box p{margin:0 0 6px;font-size:.95rem}
 .ctl{display:flex;flex-direction:column;gap:2px}
 .ctl .slider{min-width:0;flex:none}
-canvas.cv{display:block;width:100%;touch-action:none}
+canvas.cv{display:block;width:100%}
 .formula2{font-family:var(--f-mono);font-size:.93rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.7}
 dl.fk{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:6px 0 0;align-items:baseline}
 dl.fk dt{color:var(--muted);font-size:13px}
@@ -93,6 +93,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <span class="seg" id="vpType"><button data-v="1" aria-pressed="true">葡萄糖（不解離）</button><button data-v="2" aria-pressed="false">NaCl（i＝2）</button><button data-v="3" aria-pressed="false">CaCl₂（i＝3）</button><button data-v="vol" aria-pressed="false">酒精（會揮發）</button></span>
         <div class="slider"><span class="tlabel">溶質（化學式數）</span><input type="range" id="vpN" min="0" max="60" step="2" value="24"><output id="vpNo"></output></div>
         <div class="slider"><span class="tlabel">溫度</span><input type="range" id="vpT" min="20" max="100" step="5" value="60"><output id="vpTo"></output></div>
+        <label class="tog"><input type="checkbox" id="vpArrow" checked> 標出逃出／回來的箭頭</label>
       </div>
       <div id="vpCupCtl" class="toolbar" hidden>
         <span class="tlabel">情境</span>
