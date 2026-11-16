@@ -8,7 +8,9 @@ function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','water','wsoft','sol','ion2','vol','ice','icebg','glass','liq','membrane','hot'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
 function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
-  const h=Math.round(clamp(w*ratio,minH,maxH));cv.style.height=h+'px';const d=DPR();
+  let h=Math.round(clamp(w*ratio,minH,maxH));
+  if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
+  cv.style.height=h+'px';const d=DPR();
   if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
   cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
 function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
@@ -40,7 +42,7 @@ function chart(cv,{ratio=.55,minH=170,maxH=250,x0,x1,y0,y1,xl='',yl='',series=[]
   extra&&extra(g,X,Y,{W,H,l,t,gw,gh});}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='vp';const BENCHES=['vp','bp','fp','sc','os','yak'];
+let bench='vp';const BENCHES=['vp','bp','fp','sc','os'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='vp';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}

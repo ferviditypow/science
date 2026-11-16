@@ -239,7 +239,9 @@ function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','ke','ug','us','heat','tot','wood','wood2','steel','floor'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
 function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
-  const h=Math.round(clamp(w*ratio,minH,maxH));cv.style.height=h+'px';const d=DPR();
+  let h=Math.round(clamp(w*ratio,minH,maxH));
+  if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
+  cv.style.height=h+'px';const d=DPR();
   if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
   cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
 function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}

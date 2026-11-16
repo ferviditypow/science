@@ -27,7 +27,9 @@
 
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-html{-webkit-text-size-adjust:100%}
+/* 捲軸永遠佔位：否則「畫布高度依寬度算 → 內容變高 → 出現捲軸 → 寬度變小 → 畫布變矮 → 捲軸消失」
+   會變成每一幀都在跳的無窮迴圈（在大螢幕上看起來就是整頁爆閃） */
+html{-webkit-text-size-adjust:100%;overflow-y:scroll;scrollbar-gutter:stable}
 body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.6;
   padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:18px 40px}
 .wrap{max-width:1180px;margin:0 auto;display:flex;flex-direction:column;gap:12px}

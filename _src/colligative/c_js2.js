@@ -96,12 +96,12 @@ bhReset();
 // 3 凝固點下降：冰水交界面
 // ======================================================================
 let FPC=20,FPR=10;
-const FPV={zoom:[20,10],full:[64,34]};
+const FPV={zoom:[22,13],full:[56,34]};
 const FP={T:0,xs:0,view:'zoom',mark:true,run:!reduced,spd:.5,grid:null,flash:null,ev:[],t:0,cf:0,cm:0};
 function fpDims(){[FPC,FPR]=FPV[FP.view];}
 // 格子：0 水、1 溶質、2 冰
 function fpReset(){fpDims();const g=new Uint8Array(FPC*FPR),f=new Float32Array(FPC*FPR);
-  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=c<FPC*.42?2:0;
+  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=r<FPR*.38?2:0;   // 冰浮在上面
   const liq=[];g.forEach((v,i)=>{if(v===0)liq.push(i);});liq.sort(()=>Math.random()-.5);const ns=Math.round(liq.length*FP.xs/100);for(let k=0;k<ns;k++)g[liq[k]]=1;
   FP.grid=g;FP.flash=f;FP.ev=[];FP.t=0;FP.cf=0;FP.cm=0;}
 const PF=0.06; // 每個鄰近冰的水分子每秒凝固的機率

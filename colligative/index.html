@@ -74,7 +74,6 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="fp" aria-pressed="false"><span class="n">3</span>凝固點下降</button>
       <button data-v="sc" aria-pressed="false"><span class="n">4</span>過冷現象</button>
       <button data-v="os" aria-pressed="false"><span class="n">5</span>滲透壓</button>
-      <button data-v="yak" aria-pressed="false"><span class="n">6</span>養樂多結凍</button>
     </span>
   </nav>
 
@@ -156,6 +155,11 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 
   <!-- ===== 3 凝固點下降 ===== -->
   <section class="bench" id="b-fp" hidden>
+    <div class="toolbar" style="padding:0 0 2px">
+      <span class="tlabel">情境</span>
+      <span class="seg" id="fpScene"><button data-v="if" aria-pressed="true">冰水交界面：為什麼凝固點會下降</button><button data-v="yak" aria-pressed="false">應用：養樂多放冷凍庫，為什麼最下面最甜</button></span>
+    </div>
+    <div id="fpIce">
     <section class="panel">
       <div class="toolbar">
         <button class="btn primary" id="fpPlay">❚❚ 暫停</button>
@@ -188,6 +192,46 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <canvas class="cv" id="cvCC" aria-label="冷卻曲線"></canvas>
         <dl class="fk" id="ccNow"></dl>
       </section>
+    </div>
+    </div>
+    <div id="fpYak" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="ykPlay">▶ 放進冷凍庫</button>
+        <button class="btn" id="ykStep">下一步 ▸</button>
+        <span class="tlabel">速度</span><span class="seg spdseg" id="ykSpd"><button data-v="0.25">0.25×</button><button data-v="0.5" aria-pressed="true">0.5×</button><button data-v="1">1×</button><button data-v="2">2×</button></span>
+        <button class="btn" id="ykReset">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">怎麼凍</span>
+        <span class="seg" id="ykMode"><button data-v="slow" aria-pressed="true">慢慢凍（一般冷凍庫 −18 ℃）</button><button data-v="fast" aria-pressed="false">急速凍（−50 ℃）</button></span>
+        <div class="slider"><span class="tlabel">原本的糖量</span><input type="range" id="ykC" min="0.2" max="1.2" step="0.05" value="0.6"><output id="ykCo"></output></div>
+        <label class="tog"><input type="checkbox" id="ykDots" checked> 畫出糖分子</label>
+      </div>
+      <div class="grid2">
+        <div class="cbox"><canvas class="cv" id="cvYK" aria-label="養樂多在冷凍庫裡結冰的過程"></canvas></div>
+        <div class="cbox"><canvas class="cv" id="cvYKP" aria-label="糖濃度隨高度的分布"></canvas></div>
+      </div>
+      <p class="hint">冰晶只收水分子，糖會被擠出來留在還沒結冰的液體裡；糖水比較重會往下沉，而且糖愈多凝固點愈低、愈晚結冰——所以最後凍住的那一層（最下面）糖最多。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>吸一口看看</h3>
+        <div class="toolbar" style="padding:0 0 8px"><button class="btn" id="ykTop">吸上面那一層</button><button class="btn" id="ykBot">吸最下面那一層</button></div>
+        <dl class="fk" id="ykNow"></dl>
+        <div class="verdict" id="ykSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>為什麼最下面最甜</h3>
+        <ul>
+          <li><b>冰晶只收水分子</b>：水結冰時要排成規則的晶格，糖分子卡不進去，會被推到還沒結冰的液體裡（這叫<b>凍結濃縮</b>）。</li>
+          <li><b>剩下的液體愈來愈甜</b>：糖都擠在那裡，濃度一路上升。</li>
+          <li><b>糖水比較重會往下沉</b>，所以濃的部分集中在瓶子下半部。</li>
+          <li><b>凝固點下降</b>：Δ<i>T</i><sub>f</sub> ＝ <i>K</i><sub>f</sub>·<i>m</i>，糖愈濃凝固點愈低，所以下面那層<b>最晚才凍</b>，也最甜。</li>
+          <li>換成<b>急速凍</b>就不一樣了：水一下子全部凍住，糖來不及被推走也來不及下沉，整支會比較均勻——工廠做冰棒就是用這招避免「上面沒味道、下面太甜」。</li>
+        </ul>
+      </section>
+    </div>
     </div>
   </section>
 
@@ -232,45 +276,6 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 
   <!-- ===== 5 滲透壓 ===== -->
 
-  <section class="bench" id="b-yak" hidden>
-    <section class="panel">
-      <div class="toolbar">
-        <button class="btn primary" id="ykPlay">▶ 放進冷凍庫</button>
-        <button class="btn" id="ykStep">下一步 ▸</button>
-        <span class="tlabel">速度</span><span class="seg spdseg" id="ykSpd"><button data-v="0.25">0.25×</button><button data-v="0.5" aria-pressed="true">0.5×</button><button data-v="1">1×</button><button data-v="2">2×</button></span>
-        <button class="btn" id="ykReset">⟲ 重來</button>
-      </div>
-      <div class="toolbar">
-        <span class="tlabel">怎麼凍</span>
-        <span class="seg" id="ykMode"><button data-v="slow" aria-pressed="true">慢慢凍（一般冷凍庫 −18 ℃）</button><button data-v="fast" aria-pressed="false">急速凍（−50 ℃）</button></span>
-        <div class="slider"><span class="tlabel">原本的糖量</span><input type="range" id="ykC" min="0.2" max="1.2" step="0.05" value="0.6"><output id="ykCo"></output></div>
-        <label class="tog"><input type="checkbox" id="ykDots" checked> 畫出糖分子</label>
-      </div>
-      <div class="grid2">
-        <div class="cbox"><canvas class="cv" id="cvYK" aria-label="養樂多在冷凍庫裡結冰的過程"></canvas></div>
-        <div class="cbox"><canvas class="cv" id="cvYKP" aria-label="糖濃度隨高度的分布"></canvas></div>
-      </div>
-      <p class="hint">冰晶只收水分子，糖會被擠出來留在還沒結冰的液體裡；糖水比較重會往下沉，而且糖愈多凝固點愈低、愈晚結冰——所以最後凍住的那一層（最下面）糖最多。</p>
-    </section>
-    <div class="grid2">
-      <section class="panel box">
-        <h3>吸一口看看</h3>
-        <div class="toolbar" style="padding:0 0 8px"><button class="btn" id="ykTop">吸上面那一層</button><button class="btn" id="ykBot">吸最下面那一層</button></div>
-        <dl class="fk" id="ykNow"></dl>
-        <div class="verdict" id="ykSay" style="margin-top:8px"></div>
-      </section>
-      <section class="panel box">
-        <h3>為什麼最下面最甜</h3>
-        <ul>
-          <li><b>冰晶只收水分子</b>：水結冰時要排成規則的晶格，糖分子卡不進去，會被推到還沒結冰的液體裡（這叫<b>凍結濃縮</b>）。</li>
-          <li><b>剩下的液體愈來愈甜</b>：糖都擠在那裡，濃度一路上升。</li>
-          <li><b>糖水比較重會往下沉</b>，所以濃的部分集中在瓶子下半部。</li>
-          <li><b>凝固點下降</b>：Δ<i>T</i><sub>f</sub> ＝ <i>K</i><sub>f</sub>·<i>m</i>，糖愈濃凝固點愈低，所以下面那層<b>最晚才凍</b>，也最甜。</li>
-          <li>換成<b>急速凍</b>就不一樣了：水一下子全部凍住，糖來不及被推走也來不及下沉，整支會比較均勻——工廠做冰棒就是用這招避免「上面沒味道、下面太甜」。</li>
-        </ul>
-      </section>
-    </div>
-  </section>
   <section class="bench" id="b-os" hidden>
     <section class="panel">
       <div class="toolbar">
@@ -336,7 +341,9 @@ function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','water','wsoft','sol','ion2','vol','ice','icebg','glass','liq','membrane','hot'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
 function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
-  const h=Math.round(clamp(w*ratio,minH,maxH));cv.style.height=h+'px';const d=DPR();
+  let h=Math.round(clamp(w*ratio,minH,maxH));
+  if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
+  cv.style.height=h+'px';const d=DPR();
   if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
   cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
 function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
@@ -368,7 +375,7 @@ function chart(cv,{ratio=.55,minH=170,maxH=250,x0,x1,y0,y1,xl='',yl='',series=[]
   extra&&extra(g,X,Y,{W,H,l,t,gw,gh});}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='vp';const BENCHES=['vp','bp','fp','sc','os','yak'];
+let bench='vp';const BENCHES=['vp','bp','fp','sc','os'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='vp';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -655,12 +662,12 @@ bhReset();
 // 3 凝固點下降：冰水交界面
 // ======================================================================
 let FPC=20,FPR=10;
-const FPV={zoom:[20,10],full:[64,34]};
+const FPV={zoom:[22,13],full:[56,34]};
 const FP={T:0,xs:0,view:'zoom',mark:true,run:!reduced,spd:.5,grid:null,flash:null,ev:[],t:0,cf:0,cm:0};
 function fpDims(){[FPC,FPR]=FPV[FP.view];}
 // 格子：0 水、1 溶質、2 冰
 function fpReset(){fpDims();const g=new Uint8Array(FPC*FPR),f=new Float32Array(FPC*FPR);
-  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=c<FPC*.42?2:0;
+  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=r<FPR*.38?2:0;   // 冰浮在上面
   const liq=[];g.forEach((v,i)=>{if(v===0)liq.push(i);});liq.sort(()=>Math.random()-.5);const ns=Math.round(liq.length*FP.xs/100);for(let k=0;k<ns;k++)g[liq[k]]=1;
   FP.grid=g;FP.flash=f;FP.ev=[];FP.t=0;FP.cf=0;FP.cm=0;}
 const PF=0.06; // 每個鄰近冰的水分子每秒凝固的機率
@@ -1018,7 +1025,7 @@ function ykStep(dt){const fast=YK.mode==='fast',bath=fast?-50:-18;
       for(let q=k+1;q<YKY;q++)YK.c[q]+=push/left*(1+.5*(q-k-1)/Math.max(1,left-1));}
     YK.c[k]=YK.cf[k];YK.nf++;
     if(YK.nf>=YKY){YK.done='all';YK.run=false;$('ykPlay').textContent='▶ 再凍一次';}}}
-DRAW.yak=()=>{const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o.W,H=o.H;g.clearRect(0,0,W,H);
+function drawYak(){const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o.W,H=o.H;g.clearRect(0,0,W,H);
   const bw=Math.min(W*.46,H*.4),bh=H-56,bx=(W-bw)/2,by=32,ch=bh/YKY,cw=bw/YKX;
   const cmax=Math.max(YK.c0*3,...YK.c,...YK.cf);
   g.fillStyle=C.panel;g.strokeStyle=C.glass;g.lineWidth=3;g.beginPath();g.roundRect(bx-5,by-5,bw+10,bh+10,[16,16,10,10]);g.fill();g.stroke();
@@ -1064,8 +1071,16 @@ DRAW.yak=()=>{const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o
     :YK.done==='syrup'?`凍完了，但<b>最下面還是液體</b>：那一段的糖量 ${nf(ykLiq(),2)} 讓凝固點降到 ${nf(ykTf(ykLiq()),1)} ℃，比冷凍庫的 −18 ℃ 還低，所以凍不起來——那就是最甜、最濃的糖漿。下面比上面甜 <b>${nf(ratio,1)} 倍</b>。`
     :YK.done?`凍好了：最下面比最上面甜 <b>${nf(ratio,1)} 倍</b>。`
     :`結冰中：已經凍了 ${YK.nf} 層。剩下的液體糖量 ${nf(ykLiq(),2)}，凝固點已經降到 ${nf(ykTf(ykLiq()),1)} ℃，所以愈來愈難凍。`);};
-TICK.yak=dt=>{const d=sdt(YK,dt);if(d&&!YK.done){const n=2;for(let i=0;i<n;i++)ykStep(d*2/n);}return busy(YK);};
-UI.yak=()=>{playTxt($('ykPlay'),YK.run);segSet($('ykMode'),YK.mode);$('ykDots').checked=YK.dots;};
+function tickYak(dt){const d=sdt(YK,dt);if(d&&!YK.done){const n=2;for(let i=0;i<n;i++)ykStep(d*2/n);}return busy(YK);}
+function uiYak(){playTxt($('ykPlay'),YK.run);segSet($('ykMode'),YK.mode);$('ykDots').checked=YK.dots;}
+// 併進「凝固點下降」當第二個情境
+FP.scene='if';
+const _dfp=DRAW.fp,_tfp=TICK.fp,_ufp=UI.fp;
+DRAW.fp=()=>{if(FP.scene==='yak')drawYak();else _dfp();};
+TICK.fp=dt=>FP.scene==='yak'?tickYak(dt):_tfp(dt);
+UI.fp=()=>{const y=FP.scene==='yak';$('fpIce').hidden=y;$('fpYak').hidden=!y;segSet($('fpScene'),FP.scene);if(y)uiYak();else _ufp&&_ufp();};
+segOn($('fpScene'),v=>{FP.scene=v;hideStory();UI.fp();kick();});
+function goYak(o){setBench('fp');FP.scene='yak';if(o&&o.mode){YK.mode=o.mode;}if(o&&o.c0!=null){YK.c0=o.c0;setYKC(o.c0);}ykReset();UI.fp();kick();}
 $('ykPlay').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=!YK.run;playTxt($('ykPlay'),YK.run);if(!YK.run)$('ykPlay').textContent='▶ 繼續';hideStory();kick();});
 $('ykStep').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=false;playTxt($('ykPlay'),false);$('ykPlay').textContent='▶ 繼續';YK.pend=(YK.pend||0)+.4;kick();});
 segSet($('ykSpd'),YK.spd);segOn($('ykSpd'),v=>{YK.spd=+v;kick();});
@@ -1117,6 +1132,7 @@ const QG=[
   {t:'例 9 (1) CaCl₂·6H₂O 的解離度',go(){goBP({view:'lo',m:0.9,i:3});},p:'21.9／219 ＝ 0.1 mol，結晶水 10.8 克也變成溶劑：水共 110.8 克，Cm ＝ 0.903 m。4.7 ＝ 1.86 × 0.903 × i，i ＝ 2.8 ＝ 1＋2α，α ＝ 0.9 ＝ 90%。'},
   {t:'粒子模型：為什麼凝固點會下降',go(){goFP({xs:10,T:0});},p:'0 ℃ 時，純水的「凝固」和「熔化」一樣快。加了溶質後，冰面旁邊有些位置是溶質，溶質不會結成冰，每秒黏上冰的水分子變少；熔化不受影響。所以 0 ℃ 時冰會慢慢變少。把溫度往下拉，熔化變慢，找出兩個速率又相等的溫度——那就是溶液的凝固點。'},
   {t:'凝固點下降的應用：撒鹽、抗凍劑、海水結冰',go(){goFP({xs:12,T:-2});},p:'冬天在路上撒鹽，雪和鹽水接觸後凝固點下降，0 ℃ 以下也會熔化；汽車水箱加乙二醇防凍；海水結冰時析出的是純冰，可用來淡化海水。'},
+  {t:'應用：養樂多放冷凍庫，為什麼最下面最甜',go(){goYak({mode:'slow'});},p:'水結冰時要排成規則的晶格，糖分子卡不進去，會被推到還沒結冰的液體裡——這叫<b>凍結濃縮</b>。\n剩下的糖水愈來愈濃，凝固點又更低（ΔTf＝Kf·m），所以愈晚才凍；糖水又比較重會往下沉，於是最後凍住的最下層最甜。\n切到「急速凍」對照：整瓶幾乎同時結冰，糖來不及被推走就被關進冰裡，上下就差不多了——工廠做冰棒就是用這招。'},
  ]},
  {h:'過冷現象',q:[
   {t:'講義四：有過冷時，凝固點要讀哪一點？（答案 T<sub>B</sub>）',go(){goSC({bath:-14,m:1,auto:4});},p:'溶液冷卻時常常先過冷：溫度已經低於凝固點卻還沒結冰，一直掉到 T_D 才突然冒出冰核。\n結冰會放出凝固熱，溫度彈回 T_C；但這時已經有一部分水結成冰，剩下的溶液變濃，凝固點又更低，所以之後是沿著斜斜往下的「固液共存線」繼續降。\n要讀真正的凝固點，就把這條固液共存線往回延長，和冷卻曲線的交點＝<b>T_B</b>。\nT_A 只是延長線畫到縱軸的截距（沒有碰到冷卻曲線）；T_C 是放熱回升到的溫度，已經偏低；T_D 只是過冷的最低溫。\n在實驗台上把溶質拉到 1～2 m，按「開始冷卻」跑完一次，圖上會自動畫出 T_A～T_D。'},

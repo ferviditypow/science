@@ -22,7 +22,7 @@ function ykStep(dt){const fast=YK.mode==='fast',bath=fast?-50:-18;
       for(let q=k+1;q<YKY;q++)YK.c[q]+=push/left*(1+.5*(q-k-1)/Math.max(1,left-1));}
     YK.c[k]=YK.cf[k];YK.nf++;
     if(YK.nf>=YKY){YK.done='all';YK.run=false;$('ykPlay').textContent='▶ 再凍一次';}}}
-DRAW.yak=()=>{const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o.W,H=o.H;g.clearRect(0,0,W,H);
+function drawYak(){const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o.W,H=o.H;g.clearRect(0,0,W,H);
   const bw=Math.min(W*.46,H*.4),bh=H-56,bx=(W-bw)/2,by=32,ch=bh/YKY,cw=bw/YKX;
   const cmax=Math.max(YK.c0*3,...YK.c,...YK.cf);
   g.fillStyle=C.panel;g.strokeStyle=C.glass;g.lineWidth=3;g.beginPath();g.roundRect(bx-5,by-5,bw+10,bh+10,[16,16,10,10]);g.fill();g.stroke();
@@ -68,8 +68,16 @@ DRAW.yak=()=>{const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o
     :YK.done==='syrup'?`凍完了，但<b>最下面還是液體</b>：那一段的糖量 ${nf(ykLiq(),2)} 讓凝固點降到 ${nf(ykTf(ykLiq()),1)} ℃，比冷凍庫的 −18 ℃ 還低，所以凍不起來——那就是最甜、最濃的糖漿。下面比上面甜 <b>${nf(ratio,1)} 倍</b>。`
     :YK.done?`凍好了：最下面比最上面甜 <b>${nf(ratio,1)} 倍</b>。`
     :`結冰中：已經凍了 ${YK.nf} 層。剩下的液體糖量 ${nf(ykLiq(),2)}，凝固點已經降到 ${nf(ykTf(ykLiq()),1)} ℃，所以愈來愈難凍。`);};
-TICK.yak=dt=>{const d=sdt(YK,dt);if(d&&!YK.done){const n=2;for(let i=0;i<n;i++)ykStep(d*2/n);}return busy(YK);};
-UI.yak=()=>{playTxt($('ykPlay'),YK.run);segSet($('ykMode'),YK.mode);$('ykDots').checked=YK.dots;};
+function tickYak(dt){const d=sdt(YK,dt);if(d&&!YK.done){const n=2;for(let i=0;i<n;i++)ykStep(d*2/n);}return busy(YK);}
+function uiYak(){playTxt($('ykPlay'),YK.run);segSet($('ykMode'),YK.mode);$('ykDots').checked=YK.dots;}
+// 併進「凝固點下降」當第二個情境
+FP.scene='if';
+const _dfp=DRAW.fp,_tfp=TICK.fp,_ufp=UI.fp;
+DRAW.fp=()=>{if(FP.scene==='yak')drawYak();else _dfp();};
+TICK.fp=dt=>FP.scene==='yak'?tickYak(dt):_tfp(dt);
+UI.fp=()=>{const y=FP.scene==='yak';$('fpIce').hidden=y;$('fpYak').hidden=!y;segSet($('fpScene'),FP.scene);if(y)uiYak();else _ufp&&_ufp();};
+segOn($('fpScene'),v=>{FP.scene=v;hideStory();UI.fp();kick();});
+function goYak(o){setBench('fp');FP.scene='yak';if(o&&o.mode){YK.mode=o.mode;}if(o&&o.c0!=null){YK.c0=o.c0;setYKC(o.c0);}ykReset();UI.fp();kick();}
 $('ykPlay').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=!YK.run;playTxt($('ykPlay'),YK.run);if(!YK.run)$('ykPlay').textContent='▶ 繼續';hideStory();kick();});
 $('ykStep').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=false;playTxt($('ykPlay'),false);$('ykPlay').textContent='▶ 繼續';YK.pend=(YK.pend||0)+.4;kick();});
 segSet($('ykSpd'),YK.spd);segOn($('ykSpd'),v=>{YK.spd=+v;kick();});

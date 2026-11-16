@@ -331,7 +331,7 @@ const C={};
 function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','grid','accent','accent-soft','blue','green','red','purple','ray','mir','ai','ar'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
-function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);const h=Math.round(clamp(w*ratio,minH,maxH));
+function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);let h=Math.round(clamp(w*ratio,minH,maxH));if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;
   cv.style.height=h+'px';const d=DPR();cv.width=Math.round(w*d);cv.height=Math.round(h*d);cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
 function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
 function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
