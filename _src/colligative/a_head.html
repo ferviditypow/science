@@ -46,6 +46,14 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 .ctable th{font-family:var(--f-body);font-weight:500;color:var(--muted)}
 .mini{font-size:.85rem;color:var(--muted);margin:4px 0 0}
 .subseg{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+
+.checks{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:7px;font-size:.95rem}
+.checks li{display:grid;grid-template-columns:24px minmax(0,1fr);gap:8px;align-items:start}
+.checks li::before{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:13px;font-weight:700;color:#fff;margin-top:1px}
+.checks li.ok::before{content:'✓';background:var(--green)}
+.checks li.no::before{content:'✕';background:#c0453b}
+.checks li.info::before{content:'i';background:var(--blue)}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0}
 </style>
 </head>
 <body>
@@ -194,19 +202,25 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <button class="btn" id="scSeed">❄ 丟一顆冰晶</button>
         <button class="btn" id="scShake">↯ 搖一搖</button>
       </div>
+      <p class="hint" style="margin:2px 0 0">這一台在說：液體冷卻時常常<b>先過冷</b>（已經低於凝固點卻還沒結冰），所以<b>凝固點不能直接從冷卻曲線上讀</b>，要把固液共存線往回延長。上面的粒子畫面是在看「為什麼會過冷」：冰核要長過臨界大小才長得起來。</p>
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="scDust"> 水裡有灰塵（雜質）</label>
         <label class="tog"><input type="checkbox" id="scZoom" checked> 放大看最大的那顆冰核</label>
         <div class="slider"><span class="tlabel">冷卻槽溫度</span><input type="range" id="scBath" min="-25" max="-2" step="1" value="-20"><output id="scBatho"></output></div>
         <div class="slider"><span class="tlabel">冷卻速率</span><input type="range" id="scK" min="0.03" max="0.25" step="0.01" value="0.09"><output id="scKo"></output></div>
+        <div class="slider"><span class="tlabel">溶質（重量莫耳濃度）</span><input type="range" id="scM" min="0" max="2" step="0.1" value="0"><output id="scMo"></output></div>
+        <label class="tog"><input type="checkbox" id="scCons" checked> 圖上畫出固液共存線的延長線</label>
+        <label class="tog"><input type="checkbox" id="scZoomG" checked> 圖放大到凝固點附近</label>
+        <div class="slider"><span class="tlabel">過冷幾度時開始結冰</span><input type="range" id="scAuto" min="0" max="12" step="0.5" value="0"><output id="scAutoo"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvSC" aria-label="過冷水中冰核的形成"></canvas></div>
       <p class="hint">淡藍色的小團是水分子偶然排成冰的樣子（冰核）。比「臨界大小」小的冰核不穩定，很快又散掉；只要有一顆長過臨界大小，就會一路長大，整杯瞬間結冰。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
-        <h3>溫度–時間圖</h3>
+        <h3>溫度–時間圖 <small>有過冷時怎麼讀凝固點</small></h3>
         <canvas class="cv" id="cvSCG" aria-label="過冷水的溫度–時間圖"></canvas>
+        <ul class="checks" id="scABCD" style="margin-top:8px"></ul>
       </section>
       <section class="panel box">
         <h3>現在</h3>

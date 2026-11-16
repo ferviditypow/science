@@ -59,6 +59,7 @@ $('storyX').addEventListener('click',hideStory);
 $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const checks=(el,rows)=>{el.innerHTML=rows.map(([k,t])=>`<li class="${k}">${t}</li>`).join('');};
 const hjit=(i,k)=>((Math.sin(i*12.9898+k*78.233)*43758.5453)%1+1)%1-.5;   // 固定的隨機位移，不隨時間改變
 // ---- 共通播放列：▶/❚❚、下一步、速度（0.25／0.5／1／2×，預設 0.5×）----
 function playTxt(el,run){if(el)el.textContent=run?'❚❚ 暫停':'▶ 播放';}

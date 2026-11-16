@@ -2,14 +2,18 @@
 // ======================================================================
 // 4 過冷現象
 // ======================================================================
-const SC={T:15,bath:-20,k:.09,spd:.5,zoom:true,run:false,t:0,cl:[],f:0,front:null,dust:false,shake:0,hist:[[0,15]],state:'liq',maxN:0,dustPts:[]};
+const SC={T:15,bath:-20,k:.09,m:0,auto:0,cons:true,zg:true,spd:.5,zoom:true,run:false,t:0,cl:[],f:0,front:null,dust:false,shake:0,hist:[[0,15,0]],state:'liq',maxN:0,dustPts:[]};
+const scTf0=()=>-1.86*SC.m;                               // 原始溶液的凝固點（ΔTf ＝ Kf·m）
+const scTf=f=>-1.86*SC.m/Math.max(.08,1-f);                // 結冰後剩下的溶液愈濃，凝固點愈低＝固液共存線
 const nStar=(dT,het)=>dT<=0.05?1e9:Math.pow(30/dT,2)*(het?0.22:1);
-function scReset(){Object.assign(SC,{T:15,run:false,t:0,cl:[],f:0,front:null,shake:0,hist:[[0,15]],state:'liq',maxN:0,nucT:null});
+function scReset(){Object.assign(SC,{T:15,run:false,t:0,cl:[],f:0,front:null,shake:0,hist:[[0,15,0]],state:'liq',maxN:0,nucT:null});
   SC.dustPts=[...Array(7)].map(()=>[.1+.8*Math.random(),.15+.75*Math.random()]);$('scPlay').textContent='▶ 開始冷卻';}
-function scNucleate(c){SC.state='freezing';SC.front={x:c.x,y:c.y};SC.nucT=SC.t;const dT=Math.max(0,-SC.T);SC.f=Math.min(1,dT/80);SC.cl=[];}
+function scNucleate(c){SC.state='freezing';SC.front={x:c.x,y:c.y};SC.nucT=SC.t;const dT=Math.max(0,scTf0()-SC.T);SC.f=Math.min(1,dT/80);SC.cl=[];}
 let scAcc=0;
-function scStep(dt){SC.t+=dt;const dT=-SC.T;
+function scStep(dt){SC.t+=dt;const dT=scTf0()-SC.T;
   if(SC.state==='liq'){SC.T+=-SC.k*(SC.T-SC.bath)*dt;
+    // 設定「過冷幾度就開始結冰」時，到了就直接放一顆夠大的冰核（方便示範外插法）
+    if(SC.auto>0&&dT>=SC.auto){scNucleate({x:.5,y:.5});return;}
     // 冰核的誕生
     if(dT>0.3){const rate=20*Math.min(3,dT/6)*(SC.shake>0?8:1);let k=rate*dt;while(k>0){if(Math.random()<Math.min(1,k)){
         const het=SC.dust&&Math.random()<.5;let x,y;if(het){const p=SC.dustPts[Math.floor(Math.random()*SC.dustPts.length)];x=p[0];y=p[1];}else{x=.05+.9*Math.random();y=.08+.84*Math.random();}
@@ -20,21 +24,44 @@ function scStep(dt){SC.t+=dt;const dT=-SC.T;
         c.n+=Math.random()<pg?1:-1;if(c.n<=0){SC.cl.splice(i,1);continue;}
         if(ns<1e8&&c.n>=ns+6){scNucleate(c);break;}}}
     SC.shake=Math.max(0,SC.shake-dt);SC.maxN=SC.cl.reduce((a,c)=>Math.max(a,c.n),0);}
-  else if(SC.state==='freezing'){if(SC.T<0)SC.T=Math.min(0,SC.T+30*dt);else{SC.T=0;SC.f=Math.min(1,SC.f+SC.k*(0-SC.bath)*dt/80*2.2);if(SC.f>=1)SC.state='ice';}}
+  else if(SC.state==='freezing'){const Tc=scTf(SC.f);
+    if(SC.T<Tc-.02)SC.T=Math.min(Tc,SC.T+30*dt);          // 放出凝固熱，溫度回升到固液共存線
+    else{SC.T=Tc;SC.f=Math.min(1,SC.f+SC.k*(Tc-SC.bath)*dt/80*2.2);if(SC.f>=1)SC.state='ice';}}
   else{SC.T+=-SC.k*1.8*(SC.T-SC.bath)*dt;}
-  if(SC.t-SC.hist[SC.hist.length-1][0]>0.1)SC.hist.push([SC.t,SC.T]);
+  if(SC.t-SC.hist[SC.hist.length-1][0]>0.1)SC.hist.push([SC.t,SC.T,SC.f]);
   if(SC.t>260){SC.run=false;}}
 TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':'▶ 繼續';return busy(SC);};
 $('scPlay').addEventListener('click',()=>{if(SC.run){SC.run=false;$('scPlay').textContent='▶ 繼續';return;}if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=true;$('scPlay').textContent='❚❚ 暫停';kick();});
 $('scStep').addEventListener('click',()=>{if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=false;$('scPlay').textContent='▶ 繼續';SC.pend=(SC.pend||0)+.25;kick();});
 segSet($('scSpd'),SC.spd);segOn($('scSpd'),v=>{SC.spd=+v;kick();});
 $('scZoom').addEventListener('change',e=>{SC.zoom=e.target.checked;kick();});
+const setSCA=sliderBind('scAuto',v=>{SC.auto=v;},v=>v===0?'不自動（等它自己冒冰核）':'過冷 '+nf(v,1)+' ℃ 就結冰');
 const setSCK=sliderBind('scK',v=>{SC.k=v;},v=>v<.06?'很慢':v<.12?'普通':v<.19?'快':'很快');
+const setSCM=sliderBind('scM',v=>{SC.m=v;scReset();},v=>v===0?'純水':nf(v,1)+' m（凝固點 '+nf(-1.86*v,2)+' ℃）');
+$('scCons').addEventListener('change',e=>{SC.cons=e.target.checked;kick();});
+$('scZoomG').addEventListener('change',e=>{SC.zg=e.target.checked;kick();});
 $('scReset').addEventListener('click',()=>{scReset();kick();});
-$('scSeed').addEventListener('click',()=>{hideStory();if(SC.state!=='liq')return;const dT=-SC.T;const c={x:.5,y:.5,n:dT>0.05?Math.min(400,Math.ceil(nStar(dT,false))+8):6,het:false,seed:true};SC.cl.push(c);if(!SC.run){SC.run=true;$('scPlay').textContent='❚❚ 暫停';}kick();});
+$('scSeed').addEventListener('click',()=>{hideStory();if(SC.state!=='liq')return;const dT=scTf0()-SC.T;const c={x:.5,y:.5,n:dT>0.05?Math.min(400,Math.ceil(nStar(dT,false))+8):6,het:false,seed:true};SC.cl.push(c);if(!SC.run){SC.run=true;$('scPlay').textContent='❚❚ 暫停';}kick();});
 $('scShake').addEventListener('click',()=>{hideStory();SC.shake=1.5;if(!SC.run){SC.run=true;$('scPlay').textContent='❚❚ 暫停';}kick();});
 $('scDust').addEventListener('change',e=>{SC.dust=e.target.checked;kick();});
 const setSCB=sliderBind('scBath',v=>{SC.bath=v;},v=>v+' ℃');
+function scABCD(){const H=SC.hist;if(SC.nucT==null||H.length<8)return null;
+  const i0=H.findIndex(p=>p[0]>=SC.nucT);if(i0<2)return null;
+  // 過冷最低點 D：成核前後溫度的最低點
+  let di=i0;for(let i=Math.max(0,i0-3);i<Math.min(H.length,i0+6);i++)if(H[i][1]<H[di][1])di=i;
+  // 回升最高點 C
+  let ci=di;for(let i=di;i<Math.min(H.length,di+40);i++){if(H[i][1]>=H[ci][1])ci=i;else break;}
+  // 固液共存線：C 之後、還只凍了一小部分的那一段（外插法就是用這一段）
+  const seg=H.slice(ci+1).filter(p=>p[1]>SC.bath+1.2&&(p[2]==null||p[2]<=.32));if(seg.length<5)return null;
+  const n=seg.length,S=seg;
+  let sx=0,sy=0,sxx=0,sxy=0;S.forEach(([x,y])=>{sx+=x;sy+=y;sxx+=x*x;sxy+=x*y;});
+  const k=(n*sxy-sx*sy)/Math.max(1e-9,n*sxx-sx*sx),a=(sy-k*sx)/n;      // y ＝ k·x ＋ a
+  // B：延長線和冷卻曲線（成核之前那段）的交點
+  let bi=null;for(let i=1;i<=di;i++){const f0=H[i-1][1]-(k*H[i-1][0]+a),f1=H[i][1]-(k*H[i][0]+a);if(f0>0&&f1<=0){bi=i;break;}}
+  if(bi==null)return null;
+  const x1=H[bi-1][0],y1=H[bi-1][1],x2=H[bi][0],y2=H[bi][1];
+  const t=(y1-(k*x1+a))/((y1-(k*x1+a))-(y2-(k*x2+a))),bx=x1+(x2-x1)*t,by=k*bx+a;
+  return{k,a,bx,b:by,dx:H[di][0],d:H[di][1],cx:H[ci][0],c:H[ci][1],x2:S[n-1][0],y2:k*S[n-1][0]+a};}
 DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   const bx=14,by=10,bw=W-28,bh=H-20;g.fillStyle=C.liq;g.fillRect(bx,by,bw,bh);g.strokeStyle=C.glass;g.lineWidth=3;g.strokeRect(bx,by,bw,bh);
   const cs=Math.max(12,Math.min(20,bw/40)),cols=Math.floor(bw/cs),rows=Math.floor(bh/cs),tt=SC.t;
@@ -47,7 +74,7 @@ DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g
   // 灰塵
   if(SC.dust)SC.dustPts.forEach(p=>{g.fillStyle=C.muted;g.beginPath();g.ellipse(bx+p[0]*bw,by+p[1]*bh,cs*.9,cs*.55,.6,0,TAU);g.fill();});
   // 冰核
-  const dT=-SC.T;
+  const dT=scTf0()-SC.T;
   SC.cl.forEach(c=>{const ns=nStar(dT,c.het);const R=Math.sqrt(c.n)*cs*.62+cs*.3;const x=bx+c.x*bw,y=by+c.y*bh;
     g.fillStyle=C.panel;g.beginPath();g.arc(x,y,R+1,0,TAU);g.fill();
     const k=Math.ceil(R/cs);for(let i=-k;i<=k;i++)for(let j=-k;j<=k;j++){const px=x+i*cs*.9,py=y+j*cs*.9;if(Math.hypot(px-x,py-y)<=R){g.fillStyle=c.n>=ns*.7?C.accent:C.ice;g.fillRect(px-cs*.33,py-cs*.33,cs*.66,cs*.66);}}
@@ -69,11 +96,32 @@ DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g
       else text(g,'目前沒有冰核',ix+iw-8,iy+ih-10,{align:'right',size:11,col:C.muted});}
     else text(g,'0 ℃ 以上：臨界大小無限大，\n再大的冰核也會散掉'.split('\n')[0],ix+8,iy+ih/2+6,{size:11,col:C.muted});}
   // 圖
-  chart($('cvSCG'),{ratio:.55,x0:0,x1:Math.max(60,SC.t),y0:Math.min(-21,SC.bath-1),y1:16,xl:'時間（示意）',yl:'溫度（℃）',yfmt:v=>nf(v,0),
-    series:[{pts:SC.hist,col:C.water,w:2.6}],extra:(g,X,Y,o)=>{line(g,o.l,Y(0),o.l+o.gw,Y(0),C.muted,1,[4,4]);text(g,'0 ℃（凝固點）',o.l+o.gw-4,Y(0)-4,{align:'right',size:11,col:C.muted,bg:C.panel});
-      if(SC.nucT!=null){const r=SC.hist.find(p=>p[0]>=SC.nucT);if(r){dot(g,X(r[0]),Y(r[1]),4,C.accent);text(g,'開始結冰',X(r[0])+6,Y(r[1])+14,{size:11,bold:true,col:C.accent,bg:C.panel});}}}});
+  // 固液共存線的延長線，和它跟冷卻曲線的交點（講義圖的 TA～TD）
+  const P=scABCD();
+  const Z=SC.zg&&P,gx1=Z?Math.min(Math.max(60,SC.t),P.cx*2.4+6):Math.max(60,SC.t),
+        gy0=Z?Math.min(P.d-2.5,scTf0()-3):Math.min(-21,SC.bath-1),
+        gy1=Z?Math.max(P.a+1.5,scTf0()+Math.max(2.5,(P.c-P.d)*.9)):16;
+  chart($('cvSCG'),{ratio:.62,x0:0,x1:gx1,y0:gy0,y1:gy1,xl:'時間（示意）',yl:'溫度（℃）',yfmt:v=>nf(v,Math.abs(gy1-gy0)<14?1:0),
+    series:[{pts:SC.hist,col:C.water,w:2.6}],extra:(g,X,Y,o)=>{
+      const Tf0=scTf0();line(g,o.l,Y(Tf0),o.l+o.gw,Y(Tf0),C.muted,1,[4,4]);
+      text(g,(SC.m>0?nf(Tf0,2)+' ℃':'0 ℃')+'（理論凝固點）',o.l+o.gw-4,Y(Tf0)-4,{align:'right',size:11,col:C.muted,bg:C.panel});
+      if(SC.cons&&P){ // 延長線
+        line(g,X(0),Y(P.a),X(P.x2),Y(P.y2),C.red,1.6,[6,4]);
+        const mk=(x,y,lab,col,dx,dy)=>{dot(g,X(x),Y(y),5,col);text(g,lab,X(x)+dx,Y(y)+dy,{size:12.5,bold:true,col,bg:C.panel,align:dx<0?'right':'left'});};
+        dot(g,X(0),Y(P.a),4,C.red);text(g,'T_A',o.l-4,Y(P.a)+4,{align:'right',size:12.5,bold:true,col:C.red,bg:C.panel});
+        mk(P.bx,P.b,'T_B ＝ 凝固點',C.accent,-9,-7);
+        if(P.d!=null)mk(P.dx,P.d,'T_D 過冷最低溫',C.blue,8,14);
+        if(P.c!=null)mk(P.cx,P.c,'T_C 回升到這裡',C.green,9,-7);
+        text(g,'紅虛線＝固液共存線的延長線',o.l+o.gw-4,o.t+o.gh-6,{align:'right',size:11,col:C.red});}
+      else if(SC.nucT!=null){const r=SC.hist.find(p=>p[0]>=SC.nucT);if(r){dot(g,X(r[0]),Y(r[1]),4,C.accent);text(g,'開始結冰',X(r[0])+6,Y(r[1])+14,{size:11,bold:true,col:C.accent,bg:C.panel});}}}});
+  checks($('scABCD'),P?[
+    ['ok','<b>T_B ＝ 凝固點</b>　把「固液共存線」（開始結冰之後那段）往回延長，和冷卻曲線的交點就是凝固點：'+nf(P.b,2)+' ℃（理論值 '+nf(scTf0(),2)+' ℃）。'],
+    ['no','<b>T_A 不是</b>　那只是延長線畫到縱軸上的截距（'+nf(P.a,2)+' ℃），和冷卻曲線沒有交到。'],
+    ['no','<b>T_C 不是</b>　那是過冷解除、放出凝固熱後回升到的溫度（'+nf(P.c,2)+' ℃）；此時已經有一部分結冰，剩下的溶液變濃，所以比真正的凝固點低。'],
+    ['no','<b>T_D 不是</b>　那是過冷到最低的溫度（'+nf(P.d,2)+' ℃），只代表冰核還沒出現，和凝固點無關。']
+  ]:[['info','按「開始冷卻」跑完一次（建議把溶質拉到 1 m 以上，固液共存線才會明顯斜斜往下），圖上就會自動畫出 T_A～T_D。']]);
   const ns=nStar(dT,false);
-  $('scNow').innerHTML=[['水溫',nf(SC.T,2)+' ℃'],['過冷度（低於 0 ℃）',dT>0?nf(dT,1)+' ℃':'—'],['臨界大小（約幾個分子）',ns<1e8?nf(ns,0)+(SC.dust?'（灰塵上約 '+nf(nStar(dT,true),0)+'）':''):'無限大（0 ℃ 以上冰不穩定）'],
+  $('scNow').innerHTML=[['水溫',nf(SC.T,2)+' ℃'],['過冷度（低於凝固點 '+nf(scTf0(),2)+' ℃）',dT>0?nf(dT,1)+' ℃':'—'],['臨界大小（約幾個分子）',ns<1e8?nf(ns,0)+(SC.dust?'（灰塵上約 '+nf(nStar(dT,true),0)+'）':''):'無限大（0 ℃ 以上冰不穩定）'],
     ['現在的冰核數 ／ 最大的',SC.cl.length+' ／ '+SC.maxN],['已結冰',nf(SC.f*100,0)+'%']].map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
   $('scSay').textContent=SC.state==='liq'?(SC.T>0?'溫度高於 0 ℃：冰不穩定，偶爾聚在一起的分子馬上散開。':'已經低於 0 ℃ 卻還沒結冰——這就是過冷。冰要從一個小冰核長大，但很小的冰核表面分子比例高、不穩定，大多長沒幾個就散掉。溫度愈低，臨界大小愈小，愈容易有冰核剛好長過臨界大小。丟一顆冰晶、搖一搖或有灰塵，都能幫忙越過這一關。'):
     SC.state==='freezing'?'一顆冰核長過臨界大小後就一路長大。結冰會放出凝固熱，水溫立刻回升到 0 ℃，並停在 0 ℃ 直到全部結冰——所以冷卻曲線會先往下凹，再彈回凝固點。測凝固點時要把曲線外插回去讀。':'全部結冰後，冰的溫度才繼續往下降到冷卻槽的溫度。';};

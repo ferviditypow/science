@@ -5,7 +5,7 @@
 function goVP(o){setBench('vp');vpSetMode(o.cups?'cups':'part');if(o.cups){cupsLoad(o.cups);}else{if(o.type){VP.type=o.type;segSet($('vpType'),o.type);}if(o.N!=null){VP.N=o.N;setVPN(o.N);}vpReset();}VP.run=true;$('vpPlay').textContent='❚❚ 暫停';}
 function goBP(o){setBench('bp');if(o.view){BP.view=o.view;segSet($('bpView'),o.view);}if(o.i){BP.i=o.i;segSet($('bpI'),o.i);}if(o.m!=null){BP.m=o.m;setBPM(o.m);}BP.P=o.P||760;setBPP(BP.P);bhReset();}
 function goFP(o){setBench('fp');if(o.xs!=null){FP.xs=o.xs;setFPX(o.xs);fpReset();}if(o.T!=null){FP.T=o.T;setFPT(o.T);}if(o.m!=null){CC.m=o.m;setCCM(o.m);}if(o.sup!=null){CC.sup=o.sup;$('ccSuper').checked=o.sup;}ccReset();if(o.cc){CC.run=true;$('ccPlay').textContent='❚❚ 暫停';}}
-function goSC(o){setBench('sc');scReset();if(o.bath){SC.bath=o.bath;setSCB(o.bath);}if(o.dust!=null){SC.dust=o.dust;$('scDust').checked=o.dust;}SC.run=true;$('scPlay').textContent='❚❚ 暫停';}
+function goSC(o){setBench("sc");if(o&&o.m!=null){SC.m=o.m;setSCM(o.m);}if(o&&o.auto!=null){SC.auto=o.auto;setSCA(o.auto);}scReset();if(o.bath){SC.bath=o.bath;setSCB(o.bath);}if(o.dust!=null){SC.dust=o.dust;$('scDust').checked=o.dust;}SC.run=true;$('scPlay').textContent='❚❚ 暫停';}
 function goOS(o){setBench('os');OS.mode=o.cell?'cell':'u';segSet($('osMode'),OS.mode);$('osUCtl').hidden=OS.mode!=='u';$('osCCtl').hidden=OS.mode!=='cell';
   if(o.cell){OS.obj=o.cell;segSet($('osObj'),o.cell);OS.ton=o.ton||'iso';segSet($('osTon'),OS.ton);}
   if(o.C!=null){OS.C=o.C;setOSC(o.C);}if(o.i){OS.i=o.i;segSet($('osI'),o.i);}OS.P=o.P||0;setOSP(OS.P);osReset();OS.run=true;$('osPlay').textContent='❚❚ 暫停';}
@@ -40,7 +40,7 @@ const QG=[
   {t:'凝固點下降的應用：撒鹽、抗凍劑、海水結冰',go(){goFP({xs:12,T:-2});},p:'冬天在路上撒鹽，雪和鹽水接觸後凝固點下降，0 ℃ 以下也會熔化；汽車水箱加乙二醇防凍；海水結冰時析出的是純冰，可用來淡化海水。'},
  ]},
  {h:'過冷現象',q:[
-  {t:'講義四：用冷卻曲線求凝固點 T<sub>A</sub>',go(){goSC({bath:-20});},p:'冷卻時，溶劑常常先過冷，到 T 低於凝固點才突然開始結冰；結冰放出的熱讓溫度彈回凝固點。所以讀凝固點時，要取開始穩定凝固的溫度，或把斜線外插回去（凝固點下降實驗台的冷卻曲線）。'},
+  {t:'講義四：有過冷時，凝固點要讀哪一點？（答案 T<sub>B</sub>）',go(){goSC({bath:-14,m:1,auto:4});},p:'溶液冷卻時常常先過冷：溫度已經低於凝固點卻還沒結冰，一直掉到 T_D 才突然冒出冰核。\n結冰會放出凝固熱，溫度彈回 T_C；但這時已經有一部分水結成冰，剩下的溶液變濃，凝固點又更低，所以之後是沿著斜斜往下的「固液共存線」繼續降。\n要讀真正的凝固點，就把這條固液共存線往回延長，和冷卻曲線的交點＝<b>T_B</b>。\nT_A 只是延長線畫到縱軸的截距（沒有碰到冷卻曲線）；T_C 是放熱回升到的溫度，已經偏低；T_D 只是過冷的最低溫。\n在實驗台上把溶質拉到 1～2 m，按「開始冷卻」跑完一次，圖上會自動畫出 T_A～T_D。'},
   {t:'為什麼會過冷：冰核要夠大',go(){goSC({bath:-18});},p:'冰要從一小團排列整齊的分子開始長。小團的表面分子比例很高、不穩定，大多長沒幾個就散掉；只有剛好長過「臨界大小」的冰核才會繼續長。溫度愈低，臨界大小愈小，愈容易成功。乾淨、靜止的水可以過冷到 0 ℃ 以下很多。'},
   {t:'延伸：冷凍庫的瓶裝水一敲就結冰',go(){goSC({bath:-12});},p:'先讓水冷到 −8 ℃ 左右還沒結冰，再按「搖一搖」或「丟一顆冰晶」：瞬間出現大量冰晶，溫度跳回 0 ℃。灰塵、容器刮痕也能當作冰核的起點（勾「水裡有灰塵」比較）。'},
  ]},
