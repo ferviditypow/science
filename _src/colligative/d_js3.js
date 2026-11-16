@@ -30,7 +30,7 @@ function scStep(dt){SC.t+=dt;const dT=scTf0()-SC.T;
   else{SC.T+=-SC.k*1.8*(SC.T-SC.bath)*dt;}
   if(SC.t-SC.hist[SC.hist.length-1][0]>0.1)SC.hist.push([SC.t,SC.T,SC.f]);
   if(SC.t>260){SC.run=false;}}
-TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':'▶ 繼續';return busy(SC);};
+TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':SC.t<.05?'▶ 開始冷卻':'▶ 繼續';return busy(SC);};
 $('scPlay').addEventListener('click',()=>{if(SC.run){SC.run=false;$('scPlay').textContent='▶ 繼續';return;}if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=true;$('scPlay').textContent='❚❚ 暫停';kick();});
 $('scStep').addEventListener('click',()=>{if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=false;$('scPlay').textContent='▶ 繼續';SC.pend=(SC.pend||0)+.25;kick();});
 segSet($('scSpd'),SC.spd);segOn($('scSpd'),v=>{SC.spd=+v;kick();});
@@ -131,7 +131,7 @@ scReset();
 // ======================================================================
 // 5 滲透壓
 // ======================================================================
-const OS={mode:'u',view:'zoom',run:!reduced,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0};
+const OS={mode:'u',view:'zoom',run:false,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0};
 const piOf=()=>OS.i*(OS.C-OS.CL)*0.082*(OS.T+273);
 const piSide=c=>OS.i*c*0.082*(OS.T+273);
 const osNW=()=>OS.view==='zoom'?70:240;
@@ -156,7 +156,9 @@ function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
     // 維持兩邊數量（代表後面還有很多溶液），把多出來的水分子從遠端搬回
     const nL=R.filter(p=>p.s===-1).length;if(nL<NW){const c=R.filter(p=>p.s===1&&p.ty==='w'&&p.x>.8);for(let k=0;k<NW-nL&&k<c.length;k++){c[k].s=-1;c[k].x=.05+.1*Math.random();}}
     else if(nL>NW){const c=R.filter(p=>p.s===-1&&p.x<.2);for(let k=0;k<nL-NW&&k<c.length;k++){c[k].s=1;c[k].x=.85+.1*Math.random();}}
-    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-3)OS.ev.shift();}
+    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-3)OS.ev.shift();
+    const sp=Math.max(.5,Math.min(3,OS.t));
+    OS.flux=[OS.ev.reduce((a,e)=>a+e[1],0)/sp,OS.ev.reduce((a,e)=>a+e[2],0)/sp];}
   else{const tgt=OS.ton==='hypo'?(OS.obj==='rbc'?1.42:1.35):OS.ton==='hyper'?.72:1;OS.sc+=(tgt-OS.sc)*Math.min(1,dt*.5);
     if(OS.obj==='rbc'&&OS.ton==='hypo'&&OS.sc>1.33)OS.burst=Math.min(1,OS.burst+dt*.8);}}
 TICK.os=dt=>{const d=sdt(OS,dt);if(d){const n=3;for(let i=0;i<n;i++)osStep(d/n);}return busy(OS);};
@@ -181,21 +183,50 @@ $('osReset').addEventListener('click',()=>{osReset();kick();});
 DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42,nar?480:300,nar?640:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
   const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.48:H;
-  // ---- U 形管 ----
-  const cx=uw/2,tw=Math.min(54,uw*.16,uh*.13),gap=Math.min(110,uw*.34,uh*.26),lx=cx-gap/2-tw/2,rx=cx+gap/2+tw/2,Ro=gap/2+tw,bot=uh-Ro-22,top=26,base=(top+bot)/2+10;
-  const eq=(pi-OS.P)*1033.6;const sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1);const pxPerCm=((bot-top)*.42)/sMax;
-  const d=OS.dh*pxPerCm/2;const yl=base+d,yr=base-d;
-  g.strokeStyle=C.glass;g.lineWidth=3;
-  g.beginPath();g.moveTo(lx-tw/2,top);g.lineTo(lx-tw/2,bot);g.arc(cx,bot,(rx+tw/2)-cx,Math.PI,0,true);g.lineTo(rx+tw/2,top);g.stroke();
-  g.beginPath();g.moveTo(lx+tw/2,top);g.lineTo(lx+tw/2,bot);g.arc(cx,bot,cx-(lx+tw/2),Math.PI,0,true);g.lineTo(rx-tw/2,top);g.stroke();
-  // 液體
-  g.fillStyle=C.liq;g.fillRect(lx-tw/2+2,yl,tw-4,bot-yl);g.fillStyle=OS.C>0?'rgba(232,89,12,.18)':C.liq;g.fillRect(rx-tw/2+2,yr,tw-4,bot-yr);
-  g.fillStyle=C.liq;g.beginPath();g.arc(cx,bot,(rx+tw/2)-cx-2,0,Math.PI);g.arc(cx,bot,cx-(lx+tw/2)+2,Math.PI,0,true);g.fill();
-  line(g,cx,bot+((rx+tw/2)-cx)-tw,cx,bot+((rx+tw/2)-cx),C.membrane,4);
-  text(g,'純水',lx,top-8,{align:'center',size:12,bold:true,col:C.water});text(g,OS.C>0?'溶液':'純水',rx,top-8,{align:'center',size:12,bold:true,col:OS.C>0?C.sol:C.water});
-  if(OS.P>0){g.fillStyle=C.muted;g.fillRect(rx-tw/2+3,yr-10,tw-6,8);arrow(g,rx,yr-40,rx,yr-12,C.hot,2.4);}
+  // ---- 水槽＋半透膜＋活塞（課本的畫法）----
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?34:46,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;
+  const eq=(pi-OS.P)*1033.6,sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1),pxPerCm=(TH2*.5)/sMax;
+  const nw=Math.min(62,(x1-x0)*.14),nh=nar?40:54;                  // 上面兩根管子
+  const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
+  const d=OS.dh*pxPerCm/2,yl=ty-nh*.35+d,yr=ty-nh*.35-d;            // 液面（溶液高 → dh>0）
+  // 槽體
+  g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=5;g.beginPath();g.roundRect(x0,ty,x1-x0,TH2,12);g.fill();g.stroke();
+  g.save();g.beginPath();g.roundRect(x0+3,ty+3,x1-x0-6,TH2-6,10);g.clip();
+  g.fillStyle=C.liq;g.fillRect(x0,ty,cx-x0,TH2);
+  g.fillStyle=OS.C>0?'rgba(232,89,12,.14)':C.liq;g.fillRect(cx,ty,x1-cx,TH2);
+  // 溶質分子（固定位置，不閃）
+  if(OS.C>0){const n=Math.min(70,Math.round(6+OS.C*1400));
+    for(let i=0;i<n;i++)dot(g,cx+10+(x1-cx-20)*(hjit(i,21)+.5),ty+12+(TH2-24)*(hjit(i,22)+.5),4.6,C.sol);}
+  g.restore();
+  // 半透膜
+  g.fillStyle='rgba(255,255,255,.9)';g.fillRect(cx-5,ty+3,10,TH2-6);
+  g.strokeStyle=C.membrane;g.lineWidth=2;g.setLineDash([6,5]);line(g,cx,ty+4,cx,by-4,C.membrane,2,[6,5]);g.setLineDash([]);
+  text(g,'半透膜',cx,ty-8,{align:'center',size:12,bold:true,col:C.membrane});
+  text(g,'純水',x0+(cx-x0)/2,by-10,{align:'center',size:13,bold:true,col:C.water});
+  text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-10,{align:'center',size:13,bold:true,col:OS.C>0?C.sol:C.water});
+  // 兩個方向的水流（箭頭粗細＝流量）
+  {const a=OS.flux||[1,1],mxf=Math.max(a[0],a[1],.001),y1a=ty+TH2*.38,y2a=ty+TH2*.62,Lw=Math.min(96,(x1-x0)*.17);
+   const w1=3+9*a[0]/mxf,w2=3+9*a[1]/mxf;
+   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',w1);text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:12.5,bold:true,col:'#e0458a'});
+   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,w2);text(g,'H₂O',cx+Lw+8,y2a+5,{size:12.5,bold:true,col:C.blue});
+   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:11,mono:true,col:'#e0458a'});
+   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:11,mono:true,col:C.blue});}
+  // 上面兩根管子
+  [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
+    g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
+    const yy=clamp(y,ty-nh+10,ty+4);
+    g.fillStyle=isSol&&OS.C>0?'rgba(232,89,12,.14)':C.liq;g.fillRect(x-nw/2+2,yy,nw-4,ty-yy+4);
+    line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2);
+    if(isSol){g.fillStyle='#2b3138';g.fillRect(x-nw/2+2,yy-11,nw-4,11);g.fillRect(x-4,Math.max(2,ty-nh-18),8,yy-Math.max(2,ty-nh-18)-9);
+      text(g,'壓力活塞',x+nw/2+6,Math.max(12,ty-nh-6),{size:11.5,bold:true});}});
+  if(Math.abs(OS.dh)>.5){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
+    line(g,nlx,yl,cx,yl,C.muted,1,[3,3]);line(g,nrx,yr,cx,yr,C.muted,1,[3,3]);
+    arrow(g,cx,ya,cx,yb,C.purple,1.8);
+    text(g,'Δh ＝ '+(Math.abs(OS.dh)>=100?nf(OS.dh/100,2)+' m':nf(OS.dh,1)+' cm'),cx+6,(ya+yb)/2+4,{size:11.5,bold:true,col:C.purple,bg:C.panel});}
+
   // 壓力計：指針式，π 的位置有紅色刻度
-  {const pi=piOf(),R0=34,gx=Math.max(R0+14,lx-80),gy=top+R0+6,mx=Math.max(+$('osP').max,pi*1.15,.05);
+  {const pi=piOf(),R0=GR,gx=x1+14+R0,gy=ty+TH2*.42,mx=Math.max(+$('osP').max,pi*1.15,.05);
+   g.fillStyle='#8a97a3';g.fillRect(x1,gy-7,16,14);
    g.fillStyle=C.panel;g.strokeStyle=C.line;g.lineWidth=2;g.beginPath();g.arc(gx,gy,R0,0,TAU);g.fill();g.stroke();
    const a0=Math.PI*.82,a1=Math.PI*2.18,ang=v=>a0+(a1-a0)*clamp(v/mx,0,1);
    g.strokeStyle=C.line;g.lineWidth=5;g.beginPath();g.arc(gx,gy,R0-8,a0,a1);g.stroke();
@@ -203,13 +234,11 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
      text(g,'π',gx+Math.cos(ang(pi))*(R0+9),gy+Math.sin(ang(pi))*(R0+9)+4,{align:'center',size:11,bold:true,col:C.red});}
    const aa=ang(OS.P);line(g,gx,gy,gx+Math.cos(aa)*(R0-13),gy+Math.sin(aa)*(R0-13),C.hot,3);
    dot(g,gx,gy,4,C.ink);
+   text(g,'壓力計',gx,gy-R0-19,{align:'center',size:11,col:C.muted});
    text(g,nf(OS.P,3)+' atm',gx,gy+R0+15,{align:'center',size:12,bold:true,mono:true,col:C.hot});
    const near=Math.abs(OS.P-pi)<Math.max(.004,pi*.02);
    if(near)text(g,'＝ π，兩側等高',gx,gy+R0+30,{align:'center',size:11,bold:true,col:C.green});
-   else text(g,OS.P<pi?'小於 π：水還會往右滲':'大於 π：水被壓回左邊（逆滲透）',gx,gy+R0+30,{align:'center',size:10.5,col:C.muted});}
-  if(Math.abs(OS.dh)>0.5){line(g,lx,yl,rx+tw/2+8,yl,C.muted,1,[3,3]);line(g,rx+tw/2+4,yr,rx+tw/2+12,yr,C.muted,1.2);arrow(g,rx+tw/2+8,yl,rx+tw/2+8,yr,C.purple,1.6);
-    text(g,'Δh ＝ '+(Math.abs(OS.dh)>=100?nf(OS.dh/100,2)+' m':nf(OS.dh,1)+' cm'),rx+tw/2+14,(yl+yr)/2+4,{size:12,bold:true,col:C.purple,bg:C.panel});}
-  text(g,'半透膜',cx,bot+((rx+tw/2)-cx)+16,{align:'center',size:11,col:C.membrane});
+   else text(g,OS.P<pi?'＜ π：水還會滲過去':'＞ π：逆滲透',gx,gy+R0+30,{align:'center',size:10.5,col:C.muted});}
   // ---- 放大的半透膜 ----
   const zx=nar?10:uw+10,zy=nar?uh+8:14,zw=nar?W-20:W-uw-24,zh=nar?H-uh-16:H-28;
   g.strokeStyle=C.line;g.lineWidth=1;g.strokeRect(zx,zy,zw,zh);g.fillStyle=C.liq;g.fillRect(zx,zy,zw/2,zh);g.fillStyle=OS.C>0?'rgba(232,89,12,.10)':C.liq;g.fillRect(zx+zw/2,zy,zw/2,zh);

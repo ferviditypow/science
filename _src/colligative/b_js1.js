@@ -88,7 +88,7 @@ const KB=0.52,KF=1.86;
 // ======================================================================
 // 1 蒸氣壓下降
 // ======================================================================
-const VP={mode:'part',view:'zoom',run:!reduced,type:'1',arrow:true,N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
+const VP={mode:'part',view:'zoom',run:false,type:'1',arrow:true,N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
   cups:[],cupSet:'ex10',spd:.5,gmode:'n',flyers:[],ct:0};
 const VPV={zoom:{cols:12,rows:3},full:{cols:22,rows:9}};
 let COLS=12,ROWS=3;

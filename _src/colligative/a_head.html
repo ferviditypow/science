@@ -170,8 +170,12 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="toolbar">
         <span class="tlabel">畫面</span><span class="seg" id="fpView"><button data-v="zoom" aria-pressed="true">放大看冰面</button><button data-v="full" aria-pressed="false">整個交界面</button></span>
         <div class="slider"><span class="tlabel">溫度</span><input type="range" id="fpT" min="-20" max="5" step="0.5" value="0"><output id="fpTo"></output></div>
-        <div class="slider"><span class="tlabel">溶質粒子</span><input type="range" id="fpX" min="0" max="25" step="1" value="0"><output id="fpXo"></output></div>
         <label class="tog"><input type="checkbox" id="fpMark" checked> 標出冰面旁邊的位置</label>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">右杯的溶質</span>
+        <span class="seg" id="fpType"><button data-v="1" aria-pressed="true">非電解質（葡萄糖）</button><button data-v="2" aria-pressed="false">電解質 NaCl（i＝2）</button><button data-v="3" aria-pressed="false">電解質 CaCl₂（i＝3）</button><button data-v="vol" aria-pressed="false">揮發性（酒精）</button></span>
+        <div class="slider"><span class="tlabel">溶質（化學式單位）</span><input type="range" id="fpX" min="0" max="20" step="1" value="8"><output id="fpXo"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvFP" aria-label="冰與水交界面的粒子動畫"></canvas></div>
       <div class="legend"><span><i class="sq" style="background:var(--ice)"></i>冰（排列整齊）</span><span><i style="background:var(--water)"></i>液態水分子</span><span><i style="background:var(--sol)"></i>溶質粒子</span><span><i style="background:var(--accent)"></i>剛凝固／剛熔化</span></div>

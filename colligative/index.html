@@ -170,8 +170,12 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div class="toolbar">
         <span class="tlabel">畫面</span><span class="seg" id="fpView"><button data-v="zoom" aria-pressed="true">放大看冰面</button><button data-v="full" aria-pressed="false">整個交界面</button></span>
         <div class="slider"><span class="tlabel">溫度</span><input type="range" id="fpT" min="-20" max="5" step="0.5" value="0"><output id="fpTo"></output></div>
-        <div class="slider"><span class="tlabel">溶質粒子</span><input type="range" id="fpX" min="0" max="25" step="1" value="0"><output id="fpXo"></output></div>
         <label class="tog"><input type="checkbox" id="fpMark" checked> 標出冰面旁邊的位置</label>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">右杯的溶質</span>
+        <span class="seg" id="fpType"><button data-v="1" aria-pressed="true">非電解質（葡萄糖）</button><button data-v="2" aria-pressed="false">電解質 NaCl（i＝2）</button><button data-v="3" aria-pressed="false">電解質 CaCl₂（i＝3）</button><button data-v="vol" aria-pressed="false">揮發性（酒精）</button></span>
+        <div class="slider"><span class="tlabel">溶質（化學式單位）</span><input type="range" id="fpX" min="0" max="20" step="1" value="8"><output id="fpXo"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvFP" aria-label="冰與水交界面的粒子動畫"></canvas></div>
       <div class="legend"><span><i class="sq" style="background:var(--ice)"></i>冰（排列整齊）</span><span><i style="background:var(--water)"></i>液態水分子</span><span><i style="background:var(--sol)"></i>溶質粒子</span><span><i style="background:var(--accent)"></i>剛凝固／剛熔化</span></div>
@@ -421,7 +425,7 @@ const KB=0.52,KF=1.86;
 // ======================================================================
 // 1 蒸氣壓下降
 // ======================================================================
-const VP={mode:'part',view:'zoom',run:!reduced,type:'1',arrow:true,N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
+const VP={mode:'part',view:'zoom',run:false,type:'1',arrow:true,N:6,Nfull:24,T:60,box:[],geo:null,hist:[],t:0,
   cups:[],cupSet:'ex10',spd:.5,gmode:'n',flyers:[],ct:0};
 const VPV={zoom:{cols:12,rows:3},full:{cols:22,rows:9}};
 let COLS=12,ROWS=3;
@@ -661,61 +665,89 @@ bhReset();
 // ======================================================================
 // 3 凝固點下降：冰水交界面
 // ======================================================================
-let FPC=20,FPR=10;
-const FPV={zoom:[22,13],full:[56,34]};
-const FP={T:0,xs:0,view:'zoom',mark:true,run:!reduced,spd:.5,grid:null,flash:null,ev:[],t:0,cf:0,cm:0};
+let FPC=11,FPR=13;
+const FPV={zoom:[11,13],full:[24,28]},FPICE=3;   // 一開始冰只有最上面幾排
+const FP={T:0,xs:8,type:'1',view:'zoom',mark:true,run:false,spd:.5,box:[],t:0,scene:'if'};
+const fpI=()=>FP.type==='vol'?1:+FP.type;        // 一個化學式單位解離出幾個粒子
 function fpDims(){[FPC,FPR]=FPV[FP.view];}
-// 格子：0 水、1 溶質、2 冰
-function fpReset(){fpDims();const g=new Uint8Array(FPC*FPR),f=new Float32Array(FPC*FPR);
-  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=r<FPR*.38?2:0;   // 冰浮在上面
-  const liq=[];g.forEach((v,i)=>{if(v===0)liq.push(i);});liq.sort(()=>Math.random()-.5);const ns=Math.round(liq.length*FP.xs/100);for(let k=0;k<ns;k++)g[liq[k]]=1;
-  FP.grid=g;FP.flash=f;FP.ev=[];FP.t=0;FP.cf=0;FP.cm=0;}
-const PF=0.06; // 每個鄰近冰的水分子每秒凝固的機率
-function fpStep(dt){const g=FP.grid,f=FP.flash;FP.t+=dt;const pm=PF*Math.exp(FP.T/26);let fr=0,me=0;
-  // 液體擴散
-  FP.dacc=(FP.dacc||0)+FPC*FPR*0.5*dt;let nsw=Math.floor(FP.dacc);FP.dacc-=nsw;
-  for(let k=0;k<nsw;k++){const i=Math.floor(Math.random()*g.length);if(g[i]===2)continue;const r=Math.floor(i/FPC),c=i%FPC;const d=Math.floor(Math.random()*4);const rr=r+(d===2)-(d===3),cc=c+(d===0)-(d===1);
-    if(rr<0||rr>=FPR||cc<0||cc>=FPC)continue;const j=rr*FPC+cc;if(g[j]===2)continue;const tmp=g[i];g[i]=g[j];g[j]=tmp;}
-  const toF=[],toM=[];let nF=0,nM=0;
-  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++){const i=r*FPC+c,v=g[i];
-    const nb=[c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1];
-    if(v===0){if(nb.some(j=>j>=0&&g[j]===2)){nF++;if(Math.random()<PF*dt*10)toF.push(i);}}
-    else if(v===2){if(nb.some(j=>j>=0&&g[j]!==2)){nM++;if(Math.random()<pm*dt*10)toM.push(i);}}}
-  toF.forEach(i=>{g[i]=2;f[i]=FP.t;fr++;FP.cf++;});toM.forEach(i=>{if(g[i]===2){g[i]=0;f[i]=-FP.t;me++;FP.cm++;}});
-  FP.ev.push([FP.t,nF*PF*10,nM*pm*10]);while(FP.ev.length&&FP.ev[0][0]<FP.t-1.5)FP.ev.shift();}
+function fpMake(sol){const n=FPC*FPR,g=new Uint8Array(n),f=new Float32Array(n);
+  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=r<FPICE?2:0;    // 冰浮在上面
+  if(sol){const liq=[];g.forEach((v,i)=>{if(v===0)liq.push(i);});
+    for(let k=liq.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[liq[k],liq[j]]=[liq[j],liq[k]];}
+    const i=fpI(),want=Math.min(liq.length-FPC,FP.xs*i);
+    for(let k=0;k<want;k++)g[liq[k]]=(FP.type==='vol')?3:(k%i===0?1:4);}  // 1=溶質本體 4=解離出來的離子 3=揮發性分子
+  return{g,f,cf:0,cm:0,fr:0,me:0,dacc:0};}
+function fpReset(){fpDims();FP.box=[fpMake(false),fpMake(true)];FP.t=0;}
+const PF=0.06;                                   // 每個鄰近冰的水分子每秒凝固的機率
+function fpStepBox(b,dt){const g=b.g,f=b.f,pm=PF*Math.exp(FP.T/26);
+  b.dacc+=FPC*FPR*0.5*dt;let nsw=Math.floor(b.dacc);b.dacc-=nsw;
+  for(let k=0;k<nsw;k++){const i=Math.floor(Math.random()*g.length);if(g[i]===2)continue;
+    const r=Math.floor(i/FPC),c=i%FPC,d=Math.floor(Math.random()*4),rr=r+(d===2)-(d===3),cc=c+(d===0)-(d===1);
+    if(rr<0||rr>=FPR||cc<0||cc>=FPC)continue;const j=rr*FPC+cc;if(g[j]===2)continue;const t=g[i];g[i]=g[j];g[j]=t;}
+  // 以「冰面上的位置」為單位：每個位置都可能長一顆水分子上去，或掉一顆下來。
+  // 這樣兩杯的冰面大小就算不同也能公平比較——差別只在位置有沒有被溶質佔住。
+  const toF=[],toM=[];let nM=0,nw=0,nall=0;
+  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++){const i=r*FPC+c;if(g[i]!==2)continue;
+    const nb=[c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].filter(j=>j>=0&&g[j]!==2);
+    if(!nb.length)continue;nM++;nall+=nb.length;nb.forEach(j=>{if(g[j]===0)nw++;});
+    const j=nb[Math.floor(Math.random()*nb.length)];
+    if(g[j]===0&&Math.random()<PF*dt*10)toF.push(j);
+    if(Math.random()<pm*dt*10)toM.push(i);}
+  toF.forEach(i=>{if(g[i]===0){g[i]=2;f[i]=FP.t;b.cf++;}});
+  toM.forEach(i=>{if(g[i]===2){g[i]=0;f[i]=-FP.t;b.cm++;}});
+  const wf=nall?nw/nall:1;                       // 冰面旁邊有多少比例是「可以黏上去的水分子」
+  const fr=nM*PF*10*wf,me=nM*pm*10,k=Math.min(1,dt/1.5);   // 平滑 1.5 秒，數字才不會亂跳
+  b.wf=wf;b.fr=(b.fr||fr)+(fr-(b.fr||fr))*k;b.me=(b.me||me)+(me-(b.me||me))*k;}
+function fpStep(dt){FP.t+=dt;FP.box.forEach(b=>fpStepBox(b,dt));}
+const FPCOL=v=>v===1?C.sol:v===4?C.ion2:v===3?C.vol:C.water;
+DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.46,260,440),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const gap=18,bw=(W-gap*3)/2,top=30,bot=H-26,cs=Math.min(bw/FPC,(bot-top)/FPR),
+        ox0=[gap+(bw-cs*FPC)/2,gap*2+bw+(bw-cs*FPC)/2],oy=top+((bot-top)-cs*FPR)/2,Z=FP.view==='zoom';
+  FP.box.forEach((b,k)=>{const ox=ox0[k],G=b.g,F=b.f;
+    g.fillStyle=C.icebg;g.fillRect(ox,oy,cs*FPC,cs*FPR);
+    const adj=i=>{const r=Math.floor(i/FPC),c=i%FPC;return [c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].some(j=>j>=0&&G[j]===2);};
+    for(let i=0;i<G.length;i++){const r=Math.floor(i/FPC),c=i%FPC,v=G[i],fl=F[i],age=fl>0?FP.t-fl:fl<0?FP.t+fl:9;
+      if(v===2){const y=oy+r*cs;g.fillStyle=C.ice;g.fillRect(ox+c*cs+cs*.12,y+cs*.12,cs*.76,cs*.76);
+        if(age<.6&&fl>0){g.strokeStyle=C.accent;g.lineWidth=2.5;g.strokeRect(ox+c*cs+1,y+1,cs-2,cs-2);}}
+      else{const x=ox+(c+.5)*cs+hjit(i+k*977,3)*cs*.16,y=oy+(r+.5)*cs+hjit(i+k*977,4)*cs*.16;
+        if(FP.mark&&adj(i)){g.strokeStyle=v===0?C.blue:C.muted;g.lineWidth=Z?2:1.2;g.setLineDash(v===0?[]:[3,3]);
+          g.beginPath();g.arc(ox+(c+.5)*cs,oy+(r+.5)*cs,cs*.46,0,TAU);g.stroke();g.setLineDash([]);}
+        dot(g,x,y,(v===0?.3:.4)*cs*(Z?1.1:1),FPCOL(v));
+        if(age<.6&&fl<0){g.strokeStyle=C.hot;g.lineWidth=2.5;g.beginPath();g.arc(x,y,cs*.5,0,TAU);g.stroke();}}}
+    g.strokeStyle=C.line;g.lineWidth=1.5;g.strokeRect(ox+.5,oy+.5,cs*FPC,cs*FPR);
+    const nIce=G.reduce((a,v)=>a+(v===2),0);
+    text(g,k?'溶液':'純水',ox+cs*FPC/2,top-12,{align:'center',size:13,bold:true,col:k?C.sol:C.water});
+    text(g,`冰 ${nIce} 個`,ox+6,oy+15,{size:11.5,mono:true,bold:true,bg:C.panel});
+    text(g,`累計 凝固 ${b.cf}／熔化 ${b.cm}`,ox+cs*FPC-6,oy+15,{align:'right',size:11,mono:true,col:C.muted,bg:C.panel});
+    if(k&&b.wf!=null)text(g,`冰面旁邊有 ${nf((1-b.wf)*100,0)}% 的位置被溶質佔住`,ox+cs*FPC/2,bot+14,{align:'center',size:11.5,bold:true,col:C.sol});});
+  text(g,`溫度 ${nf(FP.T,1)} ℃`,W/2,top-12,{align:'center',size:12.5,mono:true,bold:true});
+  if(FP.mark)text(g,'藍圈＝可以黏上冰面的水分子；灰虛圈＝被溶質佔住的位置',W/2,H-5,{align:'center',size:11,col:C.muted});
+  // 速率比較
+  const c2=$('cvFPR'),o=fit(c2,.52,190,260),h=c2.getContext('2d');h.clearRect(0,0,o.W,o.H);
+  const mx=Math.max(8,...FP.box.map(b=>Math.max(b.fr,b.me)))*1.15,bx=96,bwid=o.W-bx-66;
+  FP.box.forEach((b,k)=>{const y0=14+k*86;
+    text(h,k?'溶液':'純水',4,y0+13,{size:12.5,bold:true,col:k?C.sol:C.water});
+    [['凝固（水→冰）',b.fr,C.ice],['熔化（冰→水）',b.me,C.hot]].forEach(([nm,v,col],q)=>{const y=y0+q*32;
+      text(h,nm,bx-8,y+15,{align:'right',size:11.5});h.fillStyle=col;h.fillRect(bx,y,Math.max(1,bwid*v/mx),22);
+      text(h,nf(v,1)+' 次/秒',bx+bwid*v/mx+6,y+15,{size:11.5,mono:true});});
+    const net=b.fr-b.me,thr=Math.max(.5,(b.fr+b.me)*.02);
+    text(h,net>thr?'→ 冰變多':net<-thr?'→ 冰變少':'→ 兩邊一樣快（平衡）',o.W-4,y0+13,{align:'right',size:11.5,bold:true,col:net>thr?C.ice:net<-thr?C.hot:C.green});});
+  const i=fpI(),np=FP.xs*i,nm2=['','非電解質','電解質 NaCl','電解質 CaCl₂'][FP.type==='vol'?1:+FP.type];
+  $('fpSay').innerHTML=FP.xs===0?'兩杯都是純水：0 ℃ 時凝固和熔化一樣快（動態平衡），冰不增不減。把右杯加一點溶質再比比看。'
+    :`右杯放了 <b>${FP.xs}</b> 個${FP.type==='vol'?'揮發性溶質分子（酒精）':nm2+'的化學式單位'}${i>1?`，解離成 <b>${np}</b> 個粒子（i＝${i}）`:''}。<br>
+      溶質不會變成冰，它佔住的位置讓水分子<b>黏不上冰面</b>，所以右杯的「凝固」比較慢；<b>熔化只看溫度</b>，兩杯一樣。<br>
+      ${FP.T>=-0.05?'所以 0 ℃ 時右杯熔化比凝固快、冰會融 —— 要再<b>降溫</b>才會平衡，這就是凝固點下降。'+(i>1?'相同莫耳數下，電解質解離出的粒子多，下降得更多。':''):'現在已經降溫了，看看右杯是不是回到兩邊一樣快。'}
+      ${FP.type==='vol'?'<br>（揮發性不影響凝固點：凝固點只看<b>溶質粒子數</b>，和會不會蒸發無關。）':''}`;
+  drawCC();};
 TICK.fp=dt=>{const d=sdt(FP,dt);if(d)fpStep(d);let more=busy(FP);if(CC.run){ccTick(dt);more=true;}return more;};
-const setFPT=sliderBind('fpT',v=>{FP.T=v;FP.ev=[];},v=>nf(v,1)+' ℃');
-const setFPX=sliderBind('fpX',v=>{FP.xs=v;fpReset();},v=>v===0?'純水':'液體的 '+v+'%');
+const setFPT=sliderBind('fpT',v=>{FP.T=v;},v=>nf(v,1)+' ℃');
+const setFPX=sliderBind('fpX',v=>{FP.xs=v;fpReset();},v=>v===0?'右杯也是純水':v+' 個（共 '+v*fpI()+' 個粒子）');
 pbar('fp',FP,.3);
+segOn($('fpType'),v=>{FP.type=v;setFPX(FP.xs);fpReset();hideStory();kick();});
 segOn($('fpView'),v=>{hideStory();FP.view=v;fpReset();kick();});
 $('fpMark').addEventListener('change',e=>{FP.mark=e.target.checked;kick();});
 $('fpReset').addEventListener('click',()=>{fpReset();kick();});
-DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.42,240,400),g=cv.getContext('2d');g.clearRect(0,0,W,H);
-  const cs=Math.min(W/FPC,(H-6)/FPR),ox=(W-cs*FPC)/2,oy=(H-cs*FPR)/2;const G=FP.grid,F=FP.flash,tt=FP.t;
-  g.fillStyle=C.icebg;g.fillRect(ox,oy,cs*FPC,cs*FPR);
-  const Z=FP.view==='zoom';
-  const adj=i=>{const r=Math.floor(i/FPC),c=i%FPC;return [c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].some(j=>j>=0&&G[j]===2);};
-  for(let i=0;i<G.length;i++){const r=Math.floor(i/FPC),c=i%FPC,v=G[i];const fl=F[i];const age=fl>0?FP.t-fl:fl<0?FP.t+fl:9;
-    if(v===2){const x=ox+c*cs+(r%2?cs*.25:-cs*.0),y=oy+r*cs;g.fillStyle=C.ice;g.fillRect(ox+c*cs+cs*.12,y+cs*.12,cs*.76,cs*.76);
-      if(age<.6&&fl>0){g.strokeStyle=C.accent;g.lineWidth=2.5;g.strokeRect(ox+c*cs+1,y+1,cs-2,cs-2);}}
-    else{const jx=hjit(i,3)*cs*.16,jy=hjit(i,4)*cs*.16;const x=ox+(c+.5)*cs+jx,y=oy+(r+.5)*cs+jy;
-      g.fillStyle=C.panel;g.fillRect(ox+c*cs,oy+r*cs,cs+.5,cs+.5);
-      if(FP.mark&&adj(i)){g.strokeStyle=v===1?C.muted:C.blue;g.lineWidth=Z?2:1.2;g.setLineDash(v===1?[3,3]:[]);g.beginPath();g.arc(ox+(c+.5)*cs,oy+(r+.5)*cs,cs*.46,0,TAU);g.stroke();g.setLineDash([]);}
-      dot(g,x,y,(v===1?.42:.3)*cs*(Z?1.1:1),v===1?C.sol:C.water);if(age<.6&&fl<0){g.strokeStyle=C.hot;g.lineWidth=2.5;g.beginPath();g.arc(x,y,cs*.5,0,TAU);g.stroke();}}}
-  const nIce=G.reduce((a,v)=>a+(v===2),0);
-  text(g,`冰 ${nIce} 個分子`,ox+8,oy+16,{size:12,mono:true,bold:true,bg:C.panel});text(g,`溫度 ${nf(FP.T,1)} ℃`,ox+cs*FPC-8,oy+16,{align:'right',size:12,mono:true,bold:true,bg:C.panel});
-  if(FP.mark)text(g,'藍圈＝冰面旁邊、可以黏上去的水分子；灰虛圈＝那個位置被溶質佔住了',ox+cs*FPC/2,oy+cs*FPR-6,{align:'center',size:11,col:C.muted,bg:C.panel});
-  // 速率圖
-  const ne=Math.max(1,FP.ev.length),fr=FP.ev.reduce((a,e)=>a+e[1],0)/ne,me=FP.ev.reduce((a,e)=>a+e[2],0)/ne;
-  const c2=$('cvFPR'),o=fit(c2,.4,150,200),h=c2.getContext('2d');h.clearRect(0,0,o.W,o.H);
-  const mx=Math.max(10,fr,me)*1.15,bx=110,bw=o.W-bx-60;
-  [['凝固（水→冰）',fr,C.ice],['熔化（冰→水）',me,C.hot]].forEach(([nm,v,col],k)=>{const y=20+k*46;text(h,nm,bx-8,y+15,{align:'right',size:12});h.fillStyle=col;h.fillRect(bx,y,bw*v/mx,24);text(h,nf(v,1)+' 次/秒',bx+bw*v/mx+6,y+16,{size:12,mono:true,bold:true});});
-  text(h,`累計：凝固 ${FP.cf} 次、熔化 ${FP.cm} 次`,bx,20+2*46+14,{size:12,mono:true,col:C.muted});
-  const net=fr-me,thr=Math.max(.6,(fr+me)*.015);text(h,net>thr?'淨結果：冰變多（溫度低於凝固點）':net<-thr?'淨結果：冰變少（溫度高於凝固點）':'兩個速率差不多：接近凝固點（平衡）',o.W/2,o.H-12,{align:'center',size:13,bold:true,col:Math.abs(net)<=thr?C.green:net>0?C.blue:C.hot});
-  $('fpSay').textContent=FP.xs===0?'純水：0 ℃ 時凝固與熔化的速率相等（動態平衡）。溫度愈低，冰上的分子愈不容易脫離，熔化變慢。':
-    `溶液：冰面旁邊有一部分位置是溶質，溶質不會變成冰，所以每秒「黏上冰」的水分子變少；熔化速率只和溫度有關，不受影響。0 ℃ 時熔化比較快，冰會變少——要降到更低溫，讓熔化也變慢，兩者才再次相等，這就是溶液的凝固點。（模擬中溫度效應放大，只看趨勢）`;
-  drawCC();};
-UI.fp=()=>{};
+UI.fp=()=>{segSet($('fpType'),FP.type);};
 fpReset();
 
 // ---- 冷卻曲線 ----
@@ -780,7 +812,7 @@ function scStep(dt){SC.t+=dt;const dT=scTf0()-SC.T;
   else{SC.T+=-SC.k*1.8*(SC.T-SC.bath)*dt;}
   if(SC.t-SC.hist[SC.hist.length-1][0]>0.1)SC.hist.push([SC.t,SC.T,SC.f]);
   if(SC.t>260){SC.run=false;}}
-TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':'▶ 繼續';return busy(SC);};
+TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':SC.t<.05?'▶ 開始冷卻':'▶ 繼續';return busy(SC);};
 $('scPlay').addEventListener('click',()=>{if(SC.run){SC.run=false;$('scPlay').textContent='▶ 繼續';return;}if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=true;$('scPlay').textContent='❚❚ 暫停';kick();});
 $('scStep').addEventListener('click',()=>{if(SC.state==='ice'&&SC.T<SC.bath+1)scReset();SC.run=false;$('scPlay').textContent='▶ 繼續';SC.pend=(SC.pend||0)+.25;kick();});
 segSet($('scSpd'),SC.spd);segOn($('scSpd'),v=>{SC.spd=+v;kick();});
@@ -881,7 +913,7 @@ scReset();
 // ======================================================================
 // 5 滲透壓
 // ======================================================================
-const OS={mode:'u',view:'zoom',run:!reduced,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0};
+const OS={mode:'u',view:'zoom',run:false,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0};
 const piOf=()=>OS.i*(OS.C-OS.CL)*0.082*(OS.T+273);
 const piSide=c=>OS.i*c*0.082*(OS.T+273);
 const osNW=()=>OS.view==='zoom'?70:240;
@@ -906,7 +938,9 @@ function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
     // 維持兩邊數量（代表後面還有很多溶液），把多出來的水分子從遠端搬回
     const nL=R.filter(p=>p.s===-1).length;if(nL<NW){const c=R.filter(p=>p.s===1&&p.ty==='w'&&p.x>.8);for(let k=0;k<NW-nL&&k<c.length;k++){c[k].s=-1;c[k].x=.05+.1*Math.random();}}
     else if(nL>NW){const c=R.filter(p=>p.s===-1&&p.x<.2);for(let k=0;k<nL-NW&&k<c.length;k++){c[k].s=1;c[k].x=.85+.1*Math.random();}}
-    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-3)OS.ev.shift();}
+    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-3)OS.ev.shift();
+    const sp=Math.max(.5,Math.min(3,OS.t));
+    OS.flux=[OS.ev.reduce((a,e)=>a+e[1],0)/sp,OS.ev.reduce((a,e)=>a+e[2],0)/sp];}
   else{const tgt=OS.ton==='hypo'?(OS.obj==='rbc'?1.42:1.35):OS.ton==='hyper'?.72:1;OS.sc+=(tgt-OS.sc)*Math.min(1,dt*.5);
     if(OS.obj==='rbc'&&OS.ton==='hypo'&&OS.sc>1.33)OS.burst=Math.min(1,OS.burst+dt*.8);}}
 TICK.os=dt=>{const d=sdt(OS,dt);if(d){const n=3;for(let i=0;i<n;i++)osStep(d/n);}return busy(OS);};
@@ -931,21 +965,50 @@ $('osReset').addEventListener('click',()=>{osReset();kick();});
 DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42,nar?480:300,nar?640:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
   const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.48:H;
-  // ---- U 形管 ----
-  const cx=uw/2,tw=Math.min(54,uw*.16,uh*.13),gap=Math.min(110,uw*.34,uh*.26),lx=cx-gap/2-tw/2,rx=cx+gap/2+tw/2,Ro=gap/2+tw,bot=uh-Ro-22,top=26,base=(top+bot)/2+10;
-  const eq=(pi-OS.P)*1033.6;const sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1);const pxPerCm=((bot-top)*.42)/sMax;
-  const d=OS.dh*pxPerCm/2;const yl=base+d,yr=base-d;
-  g.strokeStyle=C.glass;g.lineWidth=3;
-  g.beginPath();g.moveTo(lx-tw/2,top);g.lineTo(lx-tw/2,bot);g.arc(cx,bot,(rx+tw/2)-cx,Math.PI,0,true);g.lineTo(rx+tw/2,top);g.stroke();
-  g.beginPath();g.moveTo(lx+tw/2,top);g.lineTo(lx+tw/2,bot);g.arc(cx,bot,cx-(lx+tw/2),Math.PI,0,true);g.lineTo(rx-tw/2,top);g.stroke();
-  // 液體
-  g.fillStyle=C.liq;g.fillRect(lx-tw/2+2,yl,tw-4,bot-yl);g.fillStyle=OS.C>0?'rgba(232,89,12,.18)':C.liq;g.fillRect(rx-tw/2+2,yr,tw-4,bot-yr);
-  g.fillStyle=C.liq;g.beginPath();g.arc(cx,bot,(rx+tw/2)-cx-2,0,Math.PI);g.arc(cx,bot,cx-(lx+tw/2)+2,Math.PI,0,true);g.fill();
-  line(g,cx,bot+((rx+tw/2)-cx)-tw,cx,bot+((rx+tw/2)-cx),C.membrane,4);
-  text(g,'純水',lx,top-8,{align:'center',size:12,bold:true,col:C.water});text(g,OS.C>0?'溶液':'純水',rx,top-8,{align:'center',size:12,bold:true,col:OS.C>0?C.sol:C.water});
-  if(OS.P>0){g.fillStyle=C.muted;g.fillRect(rx-tw/2+3,yr-10,tw-6,8);arrow(g,rx,yr-40,rx,yr-12,C.hot,2.4);}
+  // ---- 水槽＋半透膜＋活塞（課本的畫法）----
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?34:46,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;
+  const eq=(pi-OS.P)*1033.6,sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1),pxPerCm=(TH2*.5)/sMax;
+  const nw=Math.min(62,(x1-x0)*.14),nh=nar?40:54;                  // 上面兩根管子
+  const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
+  const d=OS.dh*pxPerCm/2,yl=ty-nh*.35+d,yr=ty-nh*.35-d;            // 液面（溶液高 → dh>0）
+  // 槽體
+  g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=5;g.beginPath();g.roundRect(x0,ty,x1-x0,TH2,12);g.fill();g.stroke();
+  g.save();g.beginPath();g.roundRect(x0+3,ty+3,x1-x0-6,TH2-6,10);g.clip();
+  g.fillStyle=C.liq;g.fillRect(x0,ty,cx-x0,TH2);
+  g.fillStyle=OS.C>0?'rgba(232,89,12,.14)':C.liq;g.fillRect(cx,ty,x1-cx,TH2);
+  // 溶質分子（固定位置，不閃）
+  if(OS.C>0){const n=Math.min(70,Math.round(6+OS.C*1400));
+    for(let i=0;i<n;i++)dot(g,cx+10+(x1-cx-20)*(hjit(i,21)+.5),ty+12+(TH2-24)*(hjit(i,22)+.5),4.6,C.sol);}
+  g.restore();
+  // 半透膜
+  g.fillStyle='rgba(255,255,255,.9)';g.fillRect(cx-5,ty+3,10,TH2-6);
+  g.strokeStyle=C.membrane;g.lineWidth=2;g.setLineDash([6,5]);line(g,cx,ty+4,cx,by-4,C.membrane,2,[6,5]);g.setLineDash([]);
+  text(g,'半透膜',cx,ty-8,{align:'center',size:12,bold:true,col:C.membrane});
+  text(g,'純水',x0+(cx-x0)/2,by-10,{align:'center',size:13,bold:true,col:C.water});
+  text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-10,{align:'center',size:13,bold:true,col:OS.C>0?C.sol:C.water});
+  // 兩個方向的水流（箭頭粗細＝流量）
+  {const a=OS.flux||[1,1],mxf=Math.max(a[0],a[1],.001),y1a=ty+TH2*.38,y2a=ty+TH2*.62,Lw=Math.min(96,(x1-x0)*.17);
+   const w1=3+9*a[0]/mxf,w2=3+9*a[1]/mxf;
+   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',w1);text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:12.5,bold:true,col:'#e0458a'});
+   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,w2);text(g,'H₂O',cx+Lw+8,y2a+5,{size:12.5,bold:true,col:C.blue});
+   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:11,mono:true,col:'#e0458a'});
+   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:11,mono:true,col:C.blue});}
+  // 上面兩根管子
+  [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
+    g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
+    const yy=clamp(y,ty-nh+10,ty+4);
+    g.fillStyle=isSol&&OS.C>0?'rgba(232,89,12,.14)':C.liq;g.fillRect(x-nw/2+2,yy,nw-4,ty-yy+4);
+    line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2);
+    if(isSol){g.fillStyle='#2b3138';g.fillRect(x-nw/2+2,yy-11,nw-4,11);g.fillRect(x-4,Math.max(2,ty-nh-18),8,yy-Math.max(2,ty-nh-18)-9);
+      text(g,'壓力活塞',x+nw/2+6,Math.max(12,ty-nh-6),{size:11.5,bold:true});}});
+  if(Math.abs(OS.dh)>.5){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
+    line(g,nlx,yl,cx,yl,C.muted,1,[3,3]);line(g,nrx,yr,cx,yr,C.muted,1,[3,3]);
+    arrow(g,cx,ya,cx,yb,C.purple,1.8);
+    text(g,'Δh ＝ '+(Math.abs(OS.dh)>=100?nf(OS.dh/100,2)+' m':nf(OS.dh,1)+' cm'),cx+6,(ya+yb)/2+4,{size:11.5,bold:true,col:C.purple,bg:C.panel});}
+
   // 壓力計：指針式，π 的位置有紅色刻度
-  {const pi=piOf(),R0=34,gx=Math.max(R0+14,lx-80),gy=top+R0+6,mx=Math.max(+$('osP').max,pi*1.15,.05);
+  {const pi=piOf(),R0=GR,gx=x1+14+R0,gy=ty+TH2*.42,mx=Math.max(+$('osP').max,pi*1.15,.05);
+   g.fillStyle='#8a97a3';g.fillRect(x1,gy-7,16,14);
    g.fillStyle=C.panel;g.strokeStyle=C.line;g.lineWidth=2;g.beginPath();g.arc(gx,gy,R0,0,TAU);g.fill();g.stroke();
    const a0=Math.PI*.82,a1=Math.PI*2.18,ang=v=>a0+(a1-a0)*clamp(v/mx,0,1);
    g.strokeStyle=C.line;g.lineWidth=5;g.beginPath();g.arc(gx,gy,R0-8,a0,a1);g.stroke();
@@ -953,13 +1016,11 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
      text(g,'π',gx+Math.cos(ang(pi))*(R0+9),gy+Math.sin(ang(pi))*(R0+9)+4,{align:'center',size:11,bold:true,col:C.red});}
    const aa=ang(OS.P);line(g,gx,gy,gx+Math.cos(aa)*(R0-13),gy+Math.sin(aa)*(R0-13),C.hot,3);
    dot(g,gx,gy,4,C.ink);
+   text(g,'壓力計',gx,gy-R0-19,{align:'center',size:11,col:C.muted});
    text(g,nf(OS.P,3)+' atm',gx,gy+R0+15,{align:'center',size:12,bold:true,mono:true,col:C.hot});
    const near=Math.abs(OS.P-pi)<Math.max(.004,pi*.02);
    if(near)text(g,'＝ π，兩側等高',gx,gy+R0+30,{align:'center',size:11,bold:true,col:C.green});
-   else text(g,OS.P<pi?'小於 π：水還會往右滲':'大於 π：水被壓回左邊（逆滲透）',gx,gy+R0+30,{align:'center',size:10.5,col:C.muted});}
-  if(Math.abs(OS.dh)>0.5){line(g,lx,yl,rx+tw/2+8,yl,C.muted,1,[3,3]);line(g,rx+tw/2+4,yr,rx+tw/2+12,yr,C.muted,1.2);arrow(g,rx+tw/2+8,yl,rx+tw/2+8,yr,C.purple,1.6);
-    text(g,'Δh ＝ '+(Math.abs(OS.dh)>=100?nf(OS.dh/100,2)+' m':nf(OS.dh,1)+' cm'),rx+tw/2+14,(yl+yr)/2+4,{size:12,bold:true,col:C.purple,bg:C.panel});}
-  text(g,'半透膜',cx,bot+((rx+tw/2)-cx)+16,{align:'center',size:11,col:C.membrane});
+   else text(g,OS.P<pi?'＜ π：水還會滲過去':'＞ π：逆滲透',gx,gy+R0+30,{align:'center',size:10.5,col:C.muted});}
   // ---- 放大的半透膜 ----
   const zx=nar?10:uw+10,zy=nar?uh+8:14,zw=nar?W-20:W-uw-24,zh=nar?H-uh-16:H-28;
   g.strokeStyle=C.line;g.lineWidth=1;g.strokeRect(zx,zy,zw,zh);g.fillStyle=C.liq;g.fillRect(zx,zy,zw/2,zh);g.fillStyle=OS.C>0?'rgba(232,89,12,.10)':C.liq;g.fillRect(zx+zw/2,zy,zw/2,zh);
