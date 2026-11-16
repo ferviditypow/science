@@ -98,6 +98,18 @@ header .foldbtn{display:none}
     set(m);
   }
 
-  function init() { fold(); nav(); touchMode(); }
+  // 兩指縮放頁面後，重新通知各頁重畫（畫布要用新的解析度，否則放大後會糊）
+  function zoomRedraw() {
+    if (!window.visualViewport) return;
+    let t = 0, last = visualViewport.scale;
+    visualViewport.addEventListener('resize', () => {
+      if (Math.abs(visualViewport.scale - last) < 0.02) return;
+      last = visualViewport.scale;
+      clearTimeout(t);
+      t = setTimeout(() => window.dispatchEvent(new Event('resize')), 180);
+    });
+  }
+
+  function init() { fold(); nav(); touchMode(); zoomRedraw(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();

@@ -2,7 +2,7 @@
 // ================= 共用 =================
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),TAU=Math.PI*2;
-const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+const DPR=()=>Math.min((window.devicePixelRatio||1)*((window.visualViewport&&visualViewport.scale)||1),3);   // 兩指放大頁面時也要重畫，否則畫布會糊
 const C={};
 function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','water','wsoft','sol','ion2','vol','ice','icebg','glass','liq','membrane','hot'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}

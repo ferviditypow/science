@@ -96,38 +96,42 @@ bhReset();
 // 3 凝固點下降：冰水交界面
 // ======================================================================
 let FPC=11,FPR=13;
-const FPV={zoom:[11,13],full:[24,28]},FPICE=3;   // 一開始冰只有最上面幾排
-const FP={T:0,xs:8,type:'1',view:'zoom',mark:true,run:false,spd:.5,box:[],t:0,scene:'if'};
+const FPV={zoom:[11,13],full:[24,28]},FPTS=14;   // FPTS：熔化速率隨溫度變化的尺度（℃）
+const FP={T:-1,xs:8,type:'1',view:'zoom',mark:true,run:false,spd:.5,box:[],t:0,scene:'if'};
 const fpI=()=>FP.type==='vol'?1:+FP.type;        // 一個化學式單位解離出幾個粒子
 function fpDims(){[FPC,FPR]=FPV[FP.view];}
 function fpMake(sol){const n=FPC*FPR,g=new Uint8Array(n),f=new Float32Array(n);
-  for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++)g[r*FPC+c]=r<FPICE?2:0;    // 冰浮在上面
+  // 一開始全部都是液體，冰要自己從上面的冷板長出來
   if(sol){const liq=[];g.forEach((v,i)=>{if(v===0)liq.push(i);});
     for(let k=liq.length-1;k>0;k--){const j=Math.floor(Math.random()*(k+1));[liq[k],liq[j]]=[liq[j],liq[k]];}
-    const i=fpI(),want=Math.min(liq.length-FPC,FP.xs*i);
+    const i=fpI(),want=Math.min(liq.length-FPC*2,FP.xs*i);
     for(let k=0;k<want;k++)g[liq[k]]=(FP.type==='vol')?3:(k%i===0?1:4);}  // 1=溶質本體 4=解離出來的離子 3=揮發性分子
   return{g,f,cf:0,cm:0,fr:0,me:0,dacc:0};}
 function fpReset(){fpDims();FP.box=[fpMake(false),fpMake(true)];FP.t=0;}
 const PF=0.06;                                   // 每個鄰近冰的水分子每秒凝固的機率
-function fpStepBox(b,dt){const g=b.g,f=b.f,pm=PF*Math.exp(FP.T/26);
+function fpStepBox(b,dt){const g=b.g,f=b.f,pm=PF*Math.exp(FP.T/FPTS),cold=FP.T<0;
   b.dacc+=FPC*FPR*0.5*dt;let nsw=Math.floor(b.dacc);b.dacc-=nsw;
   for(let k=0;k<nsw;k++){const i=Math.floor(Math.random()*g.length);if(g[i]===2)continue;
     const r=Math.floor(i/FPC),c=i%FPC,d=Math.floor(Math.random()*4),rr=r+(d===2)-(d===3),cc=c+(d===0)-(d===1);
     if(rr<0||rr>=FPR||cc<0||cc>=FPC)continue;const j=rr*FPC+cc;if(g[j]===2)continue;const t=g[i];g[i]=g[j];g[j]=t;}
   // 以「冰面上的位置」為單位：每個位置都可能長一顆水分子上去，或掉一顆下來。
   // 這樣兩杯的冰面大小就算不同也能公平比較——差別只在位置有沒有被溶質佔住。
-  const toF=[],toM=[];let nM=0,nw=0,nall=0;
+  const toF=[],toM=[];let nS=0,nM=0,nw=0,nall=0;
+  // 冰面上的每個位置都可能長一顆水分子上去，或掉一顆下來
   for(let r=0;r<FPR;r++)for(let c=0;c<FPC;c++){const i=r*FPC+c;if(g[i]!==2)continue;
     const nb=[c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].filter(j=>j>=0&&g[j]!==2);
-    if(!nb.length)continue;nM++;nall+=nb.length;nb.forEach(j=>{if(g[j]===0)nw++;});
+    if(!nb.length)continue;nM++;nS++;nall+=nb.length;nb.forEach(j=>{if(g[j]===0)nw++;});
     const j=nb[Math.floor(Math.random()*nb.length)];
     if(g[j]===0&&Math.random()<PF*dt*10)toF.push(j);
     if(Math.random()<pm*dt*10)toM.push(i);}
+  // 最上面那一排貼著冷板：冷板低於 0 ℃ 時，冰可以直接從那裡長出來
+  if(cold)for(let c=0;c<FPC;c++){const i=c;if(g[i]===2)continue;nS++;
+    if(g[i]===0&&Math.random()<PF*dt*10)toF.push(i);}
   toF.forEach(i=>{if(g[i]===0){g[i]=2;f[i]=FP.t;b.cf++;}});
   toM.forEach(i=>{if(g[i]===2){g[i]=0;f[i]=-FP.t;b.cm++;}});
   const wf=nall?nw/nall:1;                       // 冰面旁邊有多少比例是「可以黏上去的水分子」
-  const fr=nM*PF*10*wf,me=nM*pm*10,k=Math.min(1,dt/1.5);   // 平滑 1.5 秒，數字才不會亂跳
-  b.wf=wf;b.fr=(b.fr||fr)+(fr-(b.fr||fr))*k;b.me=(b.me||me)+(me-(b.me||me))*k;}
+  const fr=nM*PF*10*wf,me=nM*pm*10,k=Math.min(1,dt/3);   // 比較的是「冰面上」的速率，不含冷板   // 平滑 1.5 秒，數字才不會亂跳
+  b.nM=nM;b.wf=nall?wf:null;b.fr=(b.fr||fr)+(fr-(b.fr||fr))*k;b.me=(b.me||me)+(me-(b.me||me))*k;}
 function fpStep(dt){FP.t+=dt;FP.box.forEach(b=>fpStepBox(b,dt));}
 const FPCOL=v=>v===1?C.sol:v===4?C.ion2:v===3?C.vol:C.water;
 DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.46,260,440),g=cv.getContext('2d');g.clearRect(0,0,W,H);
@@ -135,6 +139,7 @@ DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.46,260,440),g=cv.getContext('2d');
         ox0=[gap+(bw-cs*FPC)/2,gap*2+bw+(bw-cs*FPC)/2],oy=top+((bot-top)-cs*FPR)/2,Z=FP.view==='zoom';
   FP.box.forEach((b,k)=>{const ox=ox0[k],G=b.g,F=b.f;
     g.fillStyle=C.icebg;g.fillRect(ox,oy,cs*FPC,cs*FPR);
+    g.fillStyle=FP.T<0?'#9fb6c9':'#d7dee4';g.fillRect(ox,oy-7,cs*FPC,6);
     const adj=i=>{const r=Math.floor(i/FPC),c=i%FPC;return [c+1<FPC?i+1:-1,c>0?i-1:-1,r+1<FPR?i+FPC:-1,r>0?i-FPC:-1].some(j=>j>=0&&G[j]===2);};
     for(let i=0;i<G.length;i++){const r=Math.floor(i/FPC),c=i%FPC,v=G[i],fl=F[i],age=fl>0?FP.t-fl:fl<0?FP.t+fl:9;
       if(v===2){const y=oy+r*cs;g.fillStyle=C.ice;g.fillRect(ox+c*cs+cs*.12,y+cs*.12,cs*.76,cs*.76);
@@ -160,13 +165,16 @@ DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.46,260,440),g=cv.getContext('2d');
     [['凝固（水→冰）',b.fr,C.ice],['熔化（冰→水）',b.me,C.hot]].forEach(([nm,v,col],q)=>{const y=y0+q*32;
       text(h,nm,bx-8,y+15,{align:'right',size:11.5});h.fillStyle=col;h.fillRect(bx,y,Math.max(1,bwid*v/mx),22);
       text(h,nf(v,1)+' 次/秒',bx+bwid*v/mx+6,y+15,{size:11.5,mono:true});});
-    const net=b.fr-b.me,thr=Math.max(.5,(b.fr+b.me)*.02);
+    const net=b.fr-b.me,thr=Math.max(.15,(b.fr+b.me)*.012);
     text(h,net>thr?'→ 冰變多':net<-thr?'→ 冰變少':'→ 兩邊一樣快（平衡）',o.W-4,y0+13,{align:'right',size:11.5,bold:true,col:net>thr?C.ice:net<-thr?C.hot:C.green});});
   const i=fpI(),np=FP.xs*i,nm2=['','非電解質','電解質 NaCl','電解質 CaCl₂'][FP.type==='vol'?1:+FP.type];
-  $('fpSay').innerHTML=FP.xs===0?'兩杯都是純水：0 ℃ 時凝固和熔化一樣快（動態平衡），冰不增不減。把右杯加一點溶質再比比看。'
+  const wfS=FP.box[1].wf,tfS=wfS!=null&&wfS>0?FPTS*Math.log(wfS):0;
+  $('fpSay').innerHTML=FP.xs===0?'兩杯都是純水：溫度一降到 0 ℃ 以下，冰就從上面的冷板長下來；剛好 0 ℃ 時凝固和熔化一樣快（動態平衡）。把右杯加一點溶質再比比看。'
     :`右杯放了 <b>${FP.xs}</b> 個${FP.type==='vol'?'揮發性溶質分子（酒精）':nm2+'的化學式單位'}${i>1?`，解離成 <b>${np}</b> 個粒子（i＝${i}）`:''}。<br>
       溶質不會變成冰，它佔住的位置讓水分子<b>黏不上冰面</b>，所以右杯的「凝固」比較慢；<b>熔化只看溫度</b>，兩杯一樣。<br>
-      ${FP.T>=-0.05?'所以 0 ℃ 時右杯熔化比凝固快、冰會融 —— 要再<b>降溫</b>才會平衡，這就是凝固點下降。'+(i>1?'相同莫耳數下，電解質解離出的粒子多，下降得更多。':''):'現在已經降溫了，看看右杯是不是回到兩邊一樣快。'}
+      目前 ${nf(FP.T,1)} ℃：純水的冰<b>${FP.T<0?'一路往下長':FP.T>0?'長不起來':'不增不減'}</b>；
+      右杯${tfS<FP.T-0.05?`的冰<b>只停在貼著冷板的那一層，長不下去</b>——要降到大約 <b>${nf(tfS,1)} ℃</b> 以下才會繼續結冰，這就是<b>凝固點下降</b>。`:`已經低於它的凝固點（約 ${nf(tfS,1)} ℃），所以也開始往下結冰了。`}
+      ${i>1?'相同莫耳數下，電解質解離出的粒子多，佔住的位置更多，凝固點下降得更多。':''}
       ${FP.type==='vol'?'<br>（揮發性不影響凝固點：凝固點只看<b>溶質粒子數</b>，和會不會蒸發無關。）':''}`;
   drawCC();};
 TICK.fp=dt=>{const d=sdt(FP,dt);if(d)fpStep(d);let more=busy(FP);if(CC.run){ccTick(dt);more=true;}return more;};

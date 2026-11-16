@@ -266,7 +266,7 @@
 // ================= common =================
 const $=id=>document.getElementById(id);
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),lerp=(a,b,f)=>a+(b-a)*f,TAU=Math.PI*2,D2R=Math.PI/180;
-const DPR=()=>Math.min(window.devicePixelRatio||1,2);
+const DPR=()=>Math.min((window.devicePixelRatio||1)*((window.visualViewport&&visualViewport.scale)||1),3);   // 兩指放大頁面時也要重畫，否則畫布會糊
 const C={};
 function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','grid','accent','accent-soft','blue','green','red','purple','ray','mir','ai','ar','water','glass','dia','sand'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
