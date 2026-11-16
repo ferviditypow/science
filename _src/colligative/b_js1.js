@@ -40,7 +40,7 @@ function chart(cv,{ratio=.55,minH=170,maxH=250,x0,x1,y0,y1,xl='',yl='',series=[]
   extra&&extra(g,X,Y,{W,H,l,t,gw,gh});}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='vp';const BENCHES=['vp','bp','fp','sc','os'];
+let bench='vp';const BENCHES=['vp','bp','fp','sc','os','yak'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='vp';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -59,6 +59,7 @@ $('storyX').addEventListener('click',hideStory);
 $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const hjit=(i,k)=>((Math.sin(i*12.9898+k*78.233)*43758.5453)%1+1)%1-.5;   // 固定的隨機位移，不隨時間改變
 // ---- 共通播放列：▶/❚❚、下一步、速度（0.25／0.5／1／2×，預設 0.5×）----
 function playTxt(el,run){if(el)el.textContent=run?'❚❚ 暫停':'▶ 播放';}
 function pbar(p,S,stepDt){
@@ -135,7 +136,7 @@ DRAW.vp=()=>{if(VP.mode==='cups')return drawCups();
     if(Z){ // 把液面最上排畫成一格一格的「位置」
       for(let c=0;c<COLS;c++){const x=x0+c*cs,y=geo.surf;g.strokeStyle=C.line;g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(x+1,y+1,cs-2,cs-2);g.setLineDash([]);}
       line(g,x0+1.5,geo.surf,x0+geo.cw-1.5,geo.surf,C.glass,2);}
-    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=Math.sin(tt*.9+i*1.7)*cs*.05,jy=Math.cos(tt*.75+i*2.3)*cs*.05;
+    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=hjit(i,1)*cs*.14,jy=hjit(i,2)*cs*.14;
       const x=x0+(c+.5)*cs+jx,y=geo.surf+(r+.5)*cs+jy;const col=ty==='w'?C.water:ty==='s'?C.sol:ty==='a'?C.ion2:C.vol;
       dot(g,x,y,(ty==='w'?.3:.4)*cs*(Z?1.15:1),col);
       if(r===0&&ty!=='w'&&ty!=='v'){g.strokeStyle=C.ink;g.lineWidth=Z?2:1;g.beginPath();g.arc(x,y,cs*(Z?.5:.46),0,TAU);g.stroke();

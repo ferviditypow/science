@@ -66,6 +66,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="fp" aria-pressed="false"><span class="n">3</span>凝固點下降</button>
       <button data-v="sc" aria-pressed="false"><span class="n">4</span>過冷現象</button>
       <button data-v="os" aria-pressed="false"><span class="n">5</span>滲透壓</button>
+      <button data-v="yak" aria-pressed="false"><span class="n">6</span>養樂多結凍</button>
     </span>
   </nav>
 
@@ -216,6 +217,46 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   </section>
 
   <!-- ===== 5 滲透壓 ===== -->
+
+  <section class="bench" id="b-yak" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="ykPlay">▶ 放進冷凍庫</button>
+        <button class="btn" id="ykStep">下一步 ▸</button>
+        <span class="tlabel">速度</span><span class="seg spdseg" id="ykSpd"><button data-v="0.25">0.25×</button><button data-v="0.5" aria-pressed="true">0.5×</button><button data-v="1">1×</button><button data-v="2">2×</button></span>
+        <button class="btn" id="ykReset">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">怎麼凍</span>
+        <span class="seg" id="ykMode"><button data-v="slow" aria-pressed="true">慢慢凍（一般冷凍庫 −18 ℃）</button><button data-v="fast" aria-pressed="false">急速凍（−50 ℃）</button></span>
+        <div class="slider"><span class="tlabel">原本的糖量</span><input type="range" id="ykC" min="0.2" max="1.2" step="0.05" value="0.6"><output id="ykCo"></output></div>
+        <label class="tog"><input type="checkbox" id="ykDots" checked> 畫出糖分子</label>
+      </div>
+      <div class="grid2">
+        <div class="cbox"><canvas class="cv" id="cvYK" aria-label="養樂多在冷凍庫裡結冰的過程"></canvas></div>
+        <div class="cbox"><canvas class="cv" id="cvYKP" aria-label="糖濃度隨高度的分布"></canvas></div>
+      </div>
+      <p class="hint">冰晶只收水分子，糖會被擠出來留在還沒結冰的液體裡；糖水比較重會往下沉，而且糖愈多凝固點愈低、愈晚結冰——所以最後凍住的那一層（最下面）糖最多。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>吸一口看看</h3>
+        <div class="toolbar" style="padding:0 0 8px"><button class="btn" id="ykTop">吸上面那一層</button><button class="btn" id="ykBot">吸最下面那一層</button></div>
+        <dl class="fk" id="ykNow"></dl>
+        <div class="verdict" id="ykSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>為什麼最下面最甜</h3>
+        <ul>
+          <li><b>冰晶只收水分子</b>：水結冰時要排成規則的晶格，糖分子卡不進去，會被推到還沒結冰的液體裡（這叫<b>凍結濃縮</b>）。</li>
+          <li><b>剩下的液體愈來愈甜</b>：糖都擠在那裡，濃度一路上升。</li>
+          <li><b>糖水比較重會往下沉</b>，所以濃的部分集中在瓶子下半部。</li>
+          <li><b>凝固點下降</b>：Δ<i>T</i><sub>f</sub> ＝ <i>K</i><sub>f</sub>·<i>m</i>，糖愈濃凝固點愈低，所以下面那層<b>最晚才凍</b>，也最甜。</li>
+          <li>換成<b>急速凍</b>就不一樣了：水一下子全部凍住，糖來不及被推走也來不及下沉，整支會比較均勻——工廠做冰棒就是用這招避免「上面沒味道、下面太甜」。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
   <section class="bench" id="b-os" hidden>
     <section class="panel">
       <div class="toolbar">
@@ -309,7 +350,7 @@ function chart(cv,{ratio=.55,minH=170,maxH=250,x0,x1,y0,y1,xl='',yl='',series=[]
   extra&&extra(g,X,Y,{W,H,l,t,gw,gh});}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='vp';const BENCHES=['vp','bp','fp','sc','os'];
+let bench='vp';const BENCHES=['vp','bp','fp','sc','os','yak'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='vp';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -328,6 +369,7 @@ $('storyX').addEventListener('click',hideStory);
 $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
 const reduced=matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+const hjit=(i,k)=>((Math.sin(i*12.9898+k*78.233)*43758.5453)%1+1)%1-.5;   // 固定的隨機位移，不隨時間改變
 // ---- 共通播放列：▶/❚❚、下一步、速度（0.25／0.5／1／2×，預設 0.5×）----
 function playTxt(el,run){if(el)el.textContent=run?'❚❚ 暫停':'▶ 播放';}
 function pbar(p,S,stepDt){
@@ -404,7 +446,7 @@ DRAW.vp=()=>{if(VP.mode==='cups')return drawCups();
     if(Z){ // 把液面最上排畫成一格一格的「位置」
       for(let c=0;c<COLS;c++){const x=x0+c*cs,y=geo.surf;g.strokeStyle=C.line;g.lineWidth=1;g.setLineDash([3,3]);g.strokeRect(x+1,y+1,cs-2,cs-2);g.setLineDash([]);}
       line(g,x0+1.5,geo.surf,x0+geo.cw-1.5,geo.surf,C.glass,2);}
-    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=Math.sin(tt*.9+i*1.7)*cs*.05,jy=Math.cos(tt*.75+i*2.3)*cs*.05;
+    b.grid.forEach((ty,i)=>{const r=Math.floor(i/COLS),c=i%COLS;const jx=hjit(i,1)*cs*.14,jy=hjit(i,2)*cs*.14;
       const x=x0+(c+.5)*cs+jx,y=geo.surf+(r+.5)*cs+jy;const col=ty==='w'?C.water:ty==='s'?C.sol:ty==='a'?C.ion2:C.vol;
       dot(g,x,y,(ty==='w'?.3:.4)*cs*(Z?1.15:1),col);
       if(r===0&&ty!=='w'&&ty!=='v'){g.strokeStyle=C.ink;g.lineWidth=Z?2:1;g.beginPath();g.arc(x,y,cs*(Z?.5:.46),0,TAU);g.stroke();
@@ -630,7 +672,7 @@ DRAW.fp=()=>{const cv=$('cvFP'),{W,H}=fit(cv,.42,240,400),g=cv.getContext('2d');
   for(let i=0;i<G.length;i++){const r=Math.floor(i/FPC),c=i%FPC,v=G[i];const fl=F[i];const age=fl>0?FP.t-fl:fl<0?FP.t+fl:9;
     if(v===2){const x=ox+c*cs+(r%2?cs*.25:-cs*.0),y=oy+r*cs;g.fillStyle=C.ice;g.fillRect(ox+c*cs+cs*.12,y+cs*.12,cs*.76,cs*.76);
       if(age<.6&&fl>0){g.strokeStyle=C.accent;g.lineWidth=2.5;g.strokeRect(ox+c*cs+1,y+1,cs-2,cs-2);}}
-    else{const jx=Math.sin(tt*.8+i*1.3)*cs*.06,jy=Math.cos(tt*.65+i*2.1)*cs*.06;const x=ox+(c+.5)*cs+jx,y=oy+(r+.5)*cs+jy;
+    else{const jx=hjit(i,3)*cs*.16,jy=hjit(i,4)*cs*.16;const x=ox+(c+.5)*cs+jx,y=oy+(r+.5)*cs+jy;
       g.fillStyle=C.panel;g.fillRect(ox+c*cs,oy+r*cs,cs+.5,cs+.5);
       if(FP.mark&&adj(i)){g.strokeStyle=v===1?C.muted:C.blue;g.lineWidth=Z?2:1.2;g.setLineDash(v===1?[3,3]:[]);g.beginPath();g.arc(ox+(c+.5)*cs,oy+(r+.5)*cs,cs*.46,0,TAU);g.stroke();g.setLineDash([]);}
       dot(g,x,y,(v===1?.42:.3)*cs*(Z?1.1:1),v===1?C.sol:C.water);if(age<.6&&fl<0){g.strokeStyle=C.hot;g.lineWidth=2.5;g.beginPath();g.arc(x,y,cs*.5,0,TAU);g.stroke();}}}
@@ -725,7 +767,7 @@ DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x0=bx+(c+.5)*cs,y0=by+(r+.5)*cs;
     const iced=SC.state==='ice'||(fr&&Math.hypot(x0-fr.x,y0-fr.y)<fr.R);
     if(iced){g.fillStyle=C.ice;g.fillRect(x0-cs*.38,y0-cs*.38,cs*.76,cs*.76);}
-    else{const k=r*cols+c;dot(g,x0+Math.sin(tt*.55+k*1.3)*cs*.05,y0+Math.cos(tt*.45+k*2.2)*cs*.05,cs*.3,C.water);}}
+    else{const k=r*cols+c;dot(g,x0+hjit(k,5)*cs*.3,y0+hjit(k,6)*cs*.3,cs*.3,C.water);}}
   // 灰塵
   if(SC.dust)SC.dustPts.forEach(p=>{g.fillStyle=C.muted;g.beginPath();g.ellipse(bx+p[0]*bw,by+p[1]*bh,cs*.9,cs*.55,.6,0,TAU);g.fill();});
   // 冰核
@@ -864,6 +906,89 @@ function drawCell(g,W,H){const cx=W/2,cy=H/2+6,R=Math.min(W,H)*.22*OS.sc;
   $('osSay').textContent=OS.ton==='hypo'?'外面比細胞內稀（滲透壓小）：水由外往內淨流入，細胞膨脹；紅血球沒有細胞壁，會脹破（溶血）。去殼雞蛋泡清水會變大。':OS.ton==='hyper'?'外面比細胞內濃（滲透壓大）：水由內往外淨流出，細胞皺縮。醃菜、泡黃瓜就是這樣出水變軟；吃太鹹的食物也會讓組織間積水。':'內外滲透壓相等：水進出一樣多。靜脈注射的點滴一定要先調成和血液等張。';}
 UI.os=()=>{};
 osReset();
+</script>
+<script>
+// ======================================================================
+// 6 養樂多結凍：凍結濃縮——為什麼最下面最甜
+// ======================================================================
+const YKX=13,YKY=26,YK={mode:'slow',c0:.6,run:false,spd:.5,dots:true,T:5,t:0,nf:0,prog:0,c:null,cf:null,sip:null,done:false};
+const ykTf=c=>-1.86*c;                       // 凝固點下降：ΔTf ＝ Kf·m
+const ykIdx=(i,j)=>j*YKX+i;
+const YKTRACE=.03;                           // 冰裡只留一點點糖
+function ykReset(){YK.c=new Float32Array(YKY).fill(YK.c0);YK.cf=new Float32Array(YKY);YK.nf=0;YK.prog=0;YK.T=5;YK.t=0;YK.sip=null;YK.done=false;YK.run=false;$('ykPlay').textContent='▶ 放進冷凍庫';}
+const ykLiq=()=>YK.c.slice(YK.nf).reduce((a,b)=>a+b,0)/Math.max(1,YKY-YK.nf);   // 還沒結冰的部分有多甜
+function ykStep(dt){const fast=YK.mode==='fast',bath=fast?-50:-18;
+  YK.t+=dt;YK.T+=-(fast?.75:.16)*(YK.T-bath)*dt;
+  if(YK.nf>=YKY){YK.done='all';return;}
+  const j=YK.nf,dT=ykTf(YK.c[j])-YK.T;        // 這一層的凝固點比現在的溫度高多少
+  if(dT<=0){ if(Math.abs(YK.T-bath)<.4){YK.done='syrup';YK.run=false;$('ykPlay').textContent='▶ 再凍一次';} return; }
+  YK.prog+=Math.min(3,dT)*(fast?3.2:.85)*dt;
+  while(YK.prog>=1&&YK.nf<YKY){YK.prog-=1;
+    const k=YK.nf,left=YKY-k-1;
+    YK.cf[k]=fast?YK.c[k]*.75:YKTRACE;        // 急速凍：糖來不及被推走，直接被關進冰裡
+    if(!fast&&left>0){const push=YK.c[k]-YKTRACE;
+      // 冰晶只收水分子，糖被擠進下面還沒結冰的液體裡（對流會讓它混勻，愈下面愈濃）
+      for(let q=k+1;q<YKY;q++)YK.c[q]+=push/left*(1+.5*(q-k-1)/Math.max(1,left-1));}
+    YK.c[k]=YK.cf[k];YK.nf++;
+    if(YK.nf>=YKY){YK.done='all';YK.run=false;$('ykPlay').textContent='▶ 再凍一次';}}}
+DRAW.yak=()=>{const cv=$('cvYK'),o=fit(cv,.86,300,520),g=cv.getContext('2d'),W=o.W,H=o.H;g.clearRect(0,0,W,H);
+  const bw=Math.min(W*.46,H*.4),bh=H-56,bx=(W-bw)/2,by=32,ch=bh/YKY,cw=bw/YKX;
+  const cmax=Math.max(YK.c0*3,...YK.c,...YK.cf);
+  g.fillStyle=C.panel;g.strokeStyle=C.glass;g.lineWidth=3;g.beginPath();g.roundRect(bx-5,by-5,bw+10,bh+10,[16,16,10,10]);g.fill();g.stroke();
+  for(let j=0;j<YKY;j++){const frozen=j<YK.nf,c=frozen?YK.cf[j]:YK.c[j],u=clamp(c/cmax,0,1),y=by+j*ch;
+    g.fillStyle=frozen?`rgb(${Math.round(228-26*u)},${Math.round(241-26*u)},${Math.round(250-18*u)})`
+      :`rgb(${Math.round(255-16*u)},${Math.round(252-96*u)},${Math.round(246-196*u)})`;
+    g.fillRect(bx,y,bw,ch+.6);
+    if(frozen){g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1;
+      for(let i=0;i<YKX;i+=2){const x=bx+(i+.5)*cw;g.beginPath();g.moveTo(x-cw*.3,y+ch*.5);g.lineTo(x+cw*.3,y+ch*.5);g.moveTo(x,y+ch*.18);g.lineTo(x,y+ch*.82);g.stroke();}}
+    if(YK.dots){const n=Math.min(5,Math.round(c/cmax*6));
+      for(let q=0;q<n;q++)dot(g,bx+bw*(.08+.84*((hjit(j*9+q,11)+.5))),y+ch*(.5+hjit(j*9+q,12)*.7),Math.max(1.8,cw*.13),frozen?'rgba(232,126,4,.5)':C.sol);}}
+  // 結冰前緣
+  if(YK.nf>0&&YK.nf<YKY){const y=by+YK.nf*ch;line(g,bx,y,bx+bw,y,C.ice,2.5);text(g,'結冰前緣',bx+bw+8,y+4,{size:11,col:C.ice,bold:true});}
+  g.strokeStyle=C.glass;g.lineWidth=3;g.beginPath();g.roundRect(bx-5,by-5,bw+10,bh+10,[16,16,10,10]);g.stroke();
+  text(g,'養樂多',bx+bw/2,by-14,{align:'center',size:13,bold:true});
+  text(g,`瓶內 ${nf(YK.T,1)} ℃`,8,by-14,{size:12,mono:true,bold:true});
+  text(g,`冷凍庫 ${YK.mode==='fast'?'−50':'−18'} ℃`,W-8,by-14,{align:'right',size:12,col:C.muted});
+  if(YK.sip){const j=YK.sip==='top'?1:YKY-2,y=by+j*ch+ch/2;line(g,bx+bw+6,y,bx+bw+40,y,C.accent,3);
+    text(g,YK.sip==='top'?'吸上面':'吸下面',bx+bw+44,y+4,{size:12,bold:true,col:C.accent});}
+  text(g,'白藍＝冰（幾乎純水）　橘色愈深＝糖愈濃',W/2,H-8,{align:'center',size:11,col:C.muted});
+  // 右圖
+  const cv2=$('cvYKP'),o2=fit(cv2,.86,300,520),g2=cv2.getContext('2d'),W2=o2.W,H2=o2.H;g2.clearRect(0,0,W2,H2);
+  const L=56,R=W2-18,T=38,B=H2-40,rh=(B-T)/YKY,xm=cmax;
+  text(g2,'每一層的糖量',L,20,{size:13,bold:true});
+  for(let j=0;j<YKY;j++){const frozen=j<YK.nf,c=frozen?YK.cf[j]:YK.c[j],y=T+j*rh;
+    g2.fillStyle=frozen?'rgba(232,126,4,.42)':C.sol;g2.fillRect(L,y+.8,(R-L)*clamp(c/xm,0,1),rh-1.2);}
+  line(g2,L,T,L,B,C.line,1.5);
+  const x0=L+(R-L)*clamp(YK.c0/xm,0,1);line(g2,x0,T,x0,B,C.muted,1.5,[5,4]);
+  text(g2,'原本的糖量',x0+5,B+15,{size:11,col:C.muted});
+  text(g2,'瓶口',L-6,T+10,{align:'right',size:11,col:C.muted});text(g2,'瓶底',L-6,B,{align:'right',size:11,col:C.muted});
+  text(g2,'深橘＝還沒結冰　淡橘＝已經結成冰',R,T-10,{align:'right',size:11,col:C.muted});
+  text(g2,'愈長＝愈甜 →',R,B+15,{align:'right',size:11,col:C.muted});
+  const cur=j=>j<YK.nf?YK.cf[j]:YK.c[j],band=(a,b)=>{let s=0;for(let j=a;j<b;j++)s+=cur(j);return s/(b-a);};
+  const n3=Math.round(YKY/3),top=band(0,n3),bot=band(YKY-n3,YKY),ratio=bot/Math.max(top,1e-6);
+  $('ykNow').innerHTML=[['上面三分之一的糖量',nf(top,2)+'（原本的 '+nf(top/YK.c0,2)+' 倍）'],
+    ['最下面三分之一的糖量',nf(bot,2)+'（原本的 '+nf(bot/YK.c0,2)+' 倍）'],
+    ['下面比上面甜',nf(ratio,1)+' 倍'],
+    ['還沒結冰那一段的凝固點',YK.nf>=YKY?'—':nf(ykTf(ykLiq()),2)+' ℃']]
+    .map(([k,v])=>`<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  const sip=YK.sip==='top'?`<b>上面那一口</b>：糖量 ${nf(top,2)}，幾乎沒味道的冰。`:YK.sip==='bot'?`<b>最下面那一口</b>：糖量 ${nf(bot,2)}，是原本的 ${nf(bot/YK.c0,1)} 倍。`:'';
+  $('ykSay').innerHTML=(sip?sip+'<br>':'')+(YK.t<.3?'按「放進冷凍庫」，注意看橘色的糖怎麼被結冰前緣一路往下推。'
+    :YK.mode==='fast'?`急速凍：整瓶幾乎同時凍住，糖來不及被推走就被關進冰裡，上下差不多（${nf(ratio,1)} 倍）。`
+    :YK.done==='syrup'?`凍完了，但<b>最下面還是液體</b>：那一段的糖量 ${nf(ykLiq(),2)} 讓凝固點降到 ${nf(ykTf(ykLiq()),1)} ℃，比冷凍庫的 −18 ℃ 還低，所以凍不起來——那就是最甜、最濃的糖漿。下面比上面甜 <b>${nf(ratio,1)} 倍</b>。`
+    :YK.done?`凍好了：最下面比最上面甜 <b>${nf(ratio,1)} 倍</b>。`
+    :`結冰中：已經凍了 ${YK.nf} 層。剩下的液體糖量 ${nf(ykLiq(),2)}，凝固點已經降到 ${nf(ykTf(ykLiq()),1)} ℃，所以愈來愈難凍。`);};
+TICK.yak=dt=>{const d=sdt(YK,dt);if(d&&!YK.done){const n=2;for(let i=0;i<n;i++)ykStep(d*2/n);}return busy(YK);};
+UI.yak=()=>{playTxt($('ykPlay'),YK.run);segSet($('ykMode'),YK.mode);$('ykDots').checked=YK.dots;};
+$('ykPlay').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=!YK.run;playTxt($('ykPlay'),YK.run);if(!YK.run)$('ykPlay').textContent='▶ 繼續';hideStory();kick();});
+$('ykStep').addEventListener('click',()=>{if(YK.done)ykReset();YK.run=false;playTxt($('ykPlay'),false);$('ykPlay').textContent='▶ 繼續';YK.pend=(YK.pend||0)+.4;kick();});
+segSet($('ykSpd'),YK.spd);segOn($('ykSpd'),v=>{YK.spd=+v;kick();});
+segOn($('ykMode'),v=>{YK.mode=v;ykReset();kick();});
+$('ykReset').addEventListener('click',()=>{ykReset();kick();});
+$('ykDots').addEventListener('change',e=>{YK.dots=e.target.checked;kick();});
+$('ykTop').addEventListener('click',()=>{YK.sip='top';kick();});
+$('ykBot').addEventListener('click',()=>{YK.sip='bot';kick();});
+const setYKC=sliderBind('ykC',v=>{YK.c0=v;ykReset();},v=>v<.4?'少一點':v<.8?'一般養樂多':'很甜');
+ykReset();
 </script>
 <script>
 // ======================================================================

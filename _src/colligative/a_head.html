@@ -66,6 +66,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="fp" aria-pressed="false"><span class="n">3</span>凝固點下降</button>
       <button data-v="sc" aria-pressed="false"><span class="n">4</span>過冷現象</button>
       <button data-v="os" aria-pressed="false"><span class="n">5</span>滲透壓</button>
+      <button data-v="yak" aria-pressed="false"><span class="n">6</span>養樂多結凍</button>
     </span>
   </nav>
 
@@ -216,6 +217,46 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   </section>
 
   <!-- ===== 5 滲透壓 ===== -->
+
+  <section class="bench" id="b-yak" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="ykPlay">▶ 放進冷凍庫</button>
+        <button class="btn" id="ykStep">下一步 ▸</button>
+        <span class="tlabel">速度</span><span class="seg spdseg" id="ykSpd"><button data-v="0.25">0.25×</button><button data-v="0.5" aria-pressed="true">0.5×</button><button data-v="1">1×</button><button data-v="2">2×</button></span>
+        <button class="btn" id="ykReset">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">怎麼凍</span>
+        <span class="seg" id="ykMode"><button data-v="slow" aria-pressed="true">慢慢凍（一般冷凍庫 −18 ℃）</button><button data-v="fast" aria-pressed="false">急速凍（−50 ℃）</button></span>
+        <div class="slider"><span class="tlabel">原本的糖量</span><input type="range" id="ykC" min="0.2" max="1.2" step="0.05" value="0.6"><output id="ykCo"></output></div>
+        <label class="tog"><input type="checkbox" id="ykDots" checked> 畫出糖分子</label>
+      </div>
+      <div class="grid2">
+        <div class="cbox"><canvas class="cv" id="cvYK" aria-label="養樂多在冷凍庫裡結冰的過程"></canvas></div>
+        <div class="cbox"><canvas class="cv" id="cvYKP" aria-label="糖濃度隨高度的分布"></canvas></div>
+      </div>
+      <p class="hint">冰晶只收水分子，糖會被擠出來留在還沒結冰的液體裡；糖水比較重會往下沉，而且糖愈多凝固點愈低、愈晚結冰——所以最後凍住的那一層（最下面）糖最多。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>吸一口看看</h3>
+        <div class="toolbar" style="padding:0 0 8px"><button class="btn" id="ykTop">吸上面那一層</button><button class="btn" id="ykBot">吸最下面那一層</button></div>
+        <dl class="fk" id="ykNow"></dl>
+        <div class="verdict" id="ykSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>為什麼最下面最甜</h3>
+        <ul>
+          <li><b>冰晶只收水分子</b>：水結冰時要排成規則的晶格，糖分子卡不進去，會被推到還沒結冰的液體裡（這叫<b>凍結濃縮</b>）。</li>
+          <li><b>剩下的液體愈來愈甜</b>：糖都擠在那裡，濃度一路上升。</li>
+          <li><b>糖水比較重會往下沉</b>，所以濃的部分集中在瓶子下半部。</li>
+          <li><b>凝固點下降</b>：Δ<i>T</i><sub>f</sub> ＝ <i>K</i><sub>f</sub>·<i>m</i>，糖愈濃凝固點愈低，所以下面那層<b>最晚才凍</b>，也最甜。</li>
+          <li>換成<b>急速凍</b>就不一樣了：水一下子全部凍住，糖來不及被推走也來不及下沉，整支會比較均勻——工廠做冰棒就是用這招避免「上面沒味道、下面太甜」。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
   <section class="bench" id="b-os" hidden>
     <section class="panel">
       <div class="toolbar">

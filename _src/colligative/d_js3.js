@@ -43,7 +43,7 @@ DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g
   for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x0=bx+(c+.5)*cs,y0=by+(r+.5)*cs;
     const iced=SC.state==='ice'||(fr&&Math.hypot(x0-fr.x,y0-fr.y)<fr.R);
     if(iced){g.fillStyle=C.ice;g.fillRect(x0-cs*.38,y0-cs*.38,cs*.76,cs*.76);}
-    else{const k=r*cols+c;dot(g,x0+Math.sin(tt*.55+k*1.3)*cs*.05,y0+Math.cos(tt*.45+k*2.2)*cs*.05,cs*.3,C.water);}}
+    else{const k=r*cols+c;dot(g,x0+hjit(k,5)*cs*.3,y0+hjit(k,6)*cs*.3,cs*.3,C.water);}}
   // 灰塵
   if(SC.dust)SC.dustPts.forEach(p=>{g.fillStyle=C.muted;g.beginPath();g.ellipse(bx+p[0]*bw,by+p[1]*bh,cs*.9,cs*.55,.6,0,TAU);g.fill();});
   // 冰核
