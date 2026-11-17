@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>力矩與槓桿</title>
+<title>力矩、槓桿與簡單機械</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
 <script src="../shared/site.js"></script>
@@ -58,6 +58,8 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 .cls .on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
 .quizrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
 .wt td.bar{width:38%}
+#cvPul{max-width:700px;margin:0 auto}
+#cvInc{max-width:920px;margin:0 auto}
 .wt .b{height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
 </style>
 </head>
@@ -66,9 +68,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   <header>
     <div>
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國三 2-5、3-4 ／ <a href="../energy/">功與能</a></div>
-      <h1>力矩與槓桿</h1>
+      <h1>力矩、槓桿與簡單機械</h1>
     </div>
-    <p>三個實驗台：力矩（拖曳施力點與力的方向，看力臂怎麼變）、槓桿平衡（支點與砝碼都可以拖，左右力矩即時比較）、三類槓桿（十二種器具的支點與兩個力臂，附判斷練習）。橘色的東西可以拖曳。</p>
+    <p>五個實驗台：力矩（拖曳施力點與方向，看力臂怎麼變）、槓桿平衡（支點與砝碼都可以拖）、三類槓桿（十二種器具，附判斷練習）、滑輪（定滑輪、動滑輪、滑輪組，比較拉繩長度與上升高度）、斜面與輪軸。橘色的東西可以拖曳。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -77,6 +79,8 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <button data-v="tq" aria-pressed="true"><span class="n">1</span>力矩</button>
       <button data-v="lev" aria-pressed="false"><span class="n">2</span>槓桿平衡</button>
       <button data-v="cls" aria-pressed="false"><span class="n">3</span>三類槓桿</button>
+      <button data-v="pul" aria-pressed="false"><span class="n">4</span>滑輪</button>
+      <button data-v="inc" aria-pressed="false"><span class="n">5</span>斜面與輪軸</button>
     </span>
     <span class="lv"><span class="tlabel">重力 g</span><span class="seg" id="gSeg"><button data-v="9.8" aria-pressed="false">9.8</button><button data-v="10" aria-pressed="true">10</button></span></span>
   </nav>
@@ -198,6 +202,77 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
     </div>
   </section>
 
+
+  <!-- ============ 4 滑輪 ============ -->
+  <section class="bench" id="b-pul" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">器材</span>
+        <span class="seg" id="pType"><button data-v="fix" aria-pressed="true">定滑輪</button><button data-v="mov" aria-pressed="false">動滑輪</button><button data-v="blk" aria-pressed="false">滑輪組</button></span>
+        <span class="seg" id="pK" hidden><button data-v="1" aria-pressed="true">1 個動滑輪</button><button data-v="2" aria-pressed="false">2 個</button><button data-v="3" aria-pressed="false">3 個</button></span>
+        <button class="btn primary" id="pPlay">▶ 拉繩子</button>
+        <button class="btn" id="pReset">⟲ 回到地面</button>
+      </div>
+      <div class="toolbar">
+        <div class="slider"><span class="tlabel">重物</span><input type="range" id="pW" min="20" max="180" step="10" value="60"><output id="pWo"></output></div>
+        <label class="tog"><input type="checkbox" id="pPw"> 動滑輪本身也有重量（10 N）</label>
+        <label class="tog"><input type="checkbox" id="pSeg" checked> 標出吊著重物的繩子段數</label>
+      </div>
+      <div class="cbox" style="padding:0"><canvas class="cv" id="cvPul" aria-label="滑輪"></canvas></div>
+      <p class="hint">橘色箭頭是手拉的力。注意看「手拉下去的長度」和「重物上升的高度」差多少。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>省力與省距離</h3>
+        <div class="formula2" id="pFormula"></div>
+        <dl class="fk" id="pNow"></dl>
+        <div class="verdict" id="pSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>功：手作的功 vs 重物得到的功</h3>
+        <canvas class="cv" id="cvPG" aria-label="功的比較"></canvas>
+        <p class="mini">省力的機械一定要拉比較長的距離，兩邊相乘的「功」是一樣的（滑輪自己有重量時，手要多做一點功去抬動滑輪）——<b>省力不省功</b>。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 5 斜面與輪軸 ============ -->
+  <section class="bench" id="b-inc" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">器材</span>
+        <span class="seg" id="iType"><button data-v="inc" aria-pressed="true">斜面</button><button data-v="whl" aria-pressed="false">輪軸</button></span>
+        <button class="btn primary" id="iPlay">▶ 推上去</button>
+        <button class="btn" id="iReset">⟲ 回到起點</button>
+        <label class="tog"><input type="checkbox" id="iFric"> 有摩擦（μ＝0.2）</label>
+      </div>
+      <div class="toolbar" id="iRow1">
+        <div class="slider"><span class="tlabel">重物</span><input type="range" id="iW" min="20" max="200" step="10" value="100"><output id="iWo"></output></div>
+        <div class="slider"><span class="tlabel">斜面高</span><input type="range" id="iH" min="20" max="120" step="5" value="50"><output id="iHo"></output></div>
+        <div class="slider"><span class="tlabel">斜面長</span><input type="range" id="iL" min="60" max="300" step="10" value="200"><output id="iLo"></output></div>
+      </div>
+      <div class="toolbar" id="iRow2" hidden>
+        <div class="slider"><span class="tlabel">輪半徑 R</span><input type="range" id="iR" min="20" max="60" step="2" value="48"><output id="iRo"></output></div>
+        <div class="slider"><span class="tlabel">軸半徑 r</span><input type="range" id="iRr" min="6" max="30" step="2" value="16"><output id="iRro"></output></div>
+      </div>
+      <div class="cbox" style="padding:0"><canvas class="cv" id="cvInc" aria-label="斜面與輪軸"></canvas></div>
+      <p class="hint">斜面：愈長愈緩，推起來愈輕鬆，但要推的距離愈長。輪軸：手拉大輪、重物吊在小軸上，轉一圈手走 2πR、重物只升 2πr。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>算式</h3>
+        <div class="formula2" id="iFormula"></div>
+        <dl class="fk" id="iNow"></dl>
+        <div class="verdict" id="iSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>功的比較</h3>
+        <canvas class="cv" id="cvIG" aria-label="功的比較"></canvas>
+        <p class="mini">斜面把「抬高 h 需要的力」換成「沿著斜面推 L 的小力」；無摩擦時 W×h ＝ F×L，有摩擦時多出來的功變成熱。</p>
+      </section>
+    </div>
+  </section>
+
   <section class="panel" id="qpanel">
     <p class="ptitle">題目情境 <small>常見題型；之後補上講義頁碼與考古題題號</small></p>
     <div class="cbox" id="qbox"></div>
@@ -206,7 +281,8 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   <div class="notes">
     <div><h2>力矩</h2><p>力矩 ＝ 力 × 力臂，力臂是「轉軸到力的作用線的垂直距離」，不是轉軸到施力點的距離。同樣大的力，施力點愈遠、方向愈接近垂直，力矩愈大；力的方向對準轉軸時力臂為 0，完全轉不動。</p></div>
     <div><h2>槓桿</h2><p>槓桿平衡：施力 × 施力臂 ＝ 抗力 × 抗力臂。施力臂比抗力臂長就省力（但要拉比較長的距離），短就費力（但省距離）。不管哪一類，省力都不省功。</p></div>
-    <div><h2>常見誤解</h2><p>「力愈大力矩一定愈大」：方向不對時力矩還是 0。「第一類槓桿一定省力」：支點靠近施力點時反而費力（例如鑷子型的剪刀、剪鐵絲的位置）。「第三類槓桿沒有用」：它換到的是速度與靈活，例如筷子、鑷子、球棒。</p></div>
+    <div><h2>簡單機械</h2><p>定滑輪只改變施力方向；動滑輪與滑輪組看「吊著重物的繩子有幾段 n」，施力＝重物÷n，手要拉 n 倍長。斜面的省力倍數＝斜面長÷高；輪軸是會轉的槓桿，省力倍數＝R÷r。</p></div>
+    <div><h2>常見誤解</h2><p>「力愈大力矩一定愈大」：方向不對時力矩還是 0。「第一類槓桿一定省力」：支點靠近施力點時反而費力。「第三類槓桿沒有用」：它換到的是速度與靈活。「用機械可以省功」：不行，省力一定費距離，有摩擦時還要多做功。</p></div>
   </div>
 </div>
 <script>
@@ -249,7 +325,7 @@ let G=9.8;
 function sliderBind(id,fn,fmt){const el=$(id),o=$(id+'o');const up=()=>{o.textContent=fmt(+el.value);};el.addEventListener('input',()=>{fn(+el.value);up();hideStory();kick();});up();return v=>{el.value=v;o.textContent=fmt(v);};}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='tq';const BENCHES=['tq','lev','cls'];
+let bench='tq';const BENCHES=['tq','lev','cls','pul','inc'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='tq';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -632,10 +708,193 @@ $('cQnew').addEventListener('click',()=>{CL.qi=Math.floor(Math.random()*TOOLS.le
   $('cQans').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));});
 
 // ======================================================================
+// 4 滑輪
+// ======================================================================
+const PULL=60;                      // 每次都把繩子拉 60 公分，比較重物上升多少
+const P={type:'fix',k:1,W:60,pw:false,seg:true,run:false,pull:0};
+const pN=()=>P.type==='fix'?1:P.type==='mov'?2:2*P.k;
+const pF=()=>{const extra=P.pw&&P.type!=='fix'?10*(P.type==='mov'?1:P.k):0;return (P.W+extra)/pN();};
+const setPW=sliderBind('pW',v=>{P.W=v;},v=>v+' N');
+segOn($('pType'),v=>{P.type=v;segSet($('pType'),v);$('pK').hidden=v!=='blk';P.pull=0;P.run=false;hideStory();UI.pul();kick();});
+segOn($('pK'),v=>{P.k=+v;segSet($('pK'),v);P.pull=0;P.run=false;kick();});
+$('pPw').addEventListener('change',e=>{P.pw=e.target.checked;kick();});
+$('pSeg').addEventListener('change',e=>{P.seg=e.target.checked;kick();});
+$('pPlay').addEventListener('click',()=>{if(P.pull>=PULL)P.pull=0;P.run=!P.run;hideStory();UI.pul();kick();});
+$('pReset').addEventListener('click',()=>{P.pull=0;P.run=false;hideStory();UI.pul();kick();});
+UI.pul=()=>{$('pPlay').textContent=P.run?'⏸ 暫停':(P.pull>0&&P.pull<PULL?'▶ 繼續拉':'▶ 拉繩子');$('pK').hidden=P.type!=='blk';segSet($('pType'),P.type);segSet($('pK'),String(P.k));};
+TICK.pul=dt=>{if(!P.run)return false;P.pull=Math.min(PULL,P.pull+dt*22);
+  if(P.pull>=PULL){P.run=false;UI.pul();return false;}return true;};
+function wheel(g,x,y,R,col){g.fillStyle=C.panel;g.strokeStyle=col||C.steel;g.lineWidth=3;
+  g.beginPath();g.arc(x,y,R,0,TAU);g.fill();g.stroke();
+  g.fillStyle=col||C.steel;g.beginPath();g.arc(x,y,3.5,0,TAU);g.fill();}
+function loadBox(g,x,yTop,W){const bw=Math.max(44,30+W*.18),bh=30;
+  g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=1.6;
+  g.beginPath();g.roundRect(x-bw/2,yTop,bw,bh,4);g.fill();g.stroke();
+  text(g,W+' N',x,yTop+20,{col:C.ink,size:13,bold:true,align:'center'});}
+DRAW.pul=()=>{const cv=$('cvPul'),{W,H}=fit(cv,.52,330,470),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const n=pN(),F=pF(),h=P.pull/n,ppc=(H*.40)/PULL,R=Math.min(20,W*.03),cx=W*.40,ceil=18;
+  g.fillStyle=C.steel;g.fillRect(W*.06,ceil-10,W*.88,10);
+  for(let x=W*.06;x<W*.94;x+=14)line(g,x,ceil,x-7,ceil+8,C.ghost,1.2);
+  const rope=(x1,y1,x2,y2)=>line(g,x1,y1,x2,y2,C.accent,2.4);
+  const ropeC=C.accent;
+  let handX,handY,segs=[];
+  if(P.type==='fix'){const py=ceil+R+8;wheel(g,cx,py,R);
+    const yL=H*.80-h*ppc;rope(cx-R,py,cx-R,yL);segs=[cx-R];
+    g.beginPath();g.arc(cx,py,R,Math.PI,0,false);g.strokeStyle=ropeC;g.lineWidth=2.4;g.stroke();
+    loadBox(g,cx-R,yL,P.W);
+    handX=cx+R;handY=H*.42+P.pull*ppc;rope(cx+R,py,handX,handY);}
+  else if(P.type==='mov'){const yB=H*.60-h*ppc;wheel(g,cx,yB,R);
+    rope(cx-R,ceil,cx-R,yB);segs=[cx-R,cx+R];
+    g.beginPath();g.arc(cx,yB,R,0,Math.PI,false);g.strokeStyle=ropeC;g.lineWidth=2.4;g.stroke();
+    loadBox(g,cx,yB+R+10,P.W);line(g,cx,yB,cx,yB+R+10,C.steel,2);
+    handX=cx+R;handY=H*.58-60-P.pull*ppc;rope(cx+R,yB,handX,handY);}
+  else{const k=P.k,yT=ceil+R+8,yB=H*.62-h*ppc,xs=cx-(2*k)*R+R;
+    const X=j=>xs+j*2*R;
+    line(g,X(0),yB+R+2,X(2*k-2)+2*R,yB+R+2,C.steel,5);
+    for(let i=0;i<k;i++){wheel(g,X(2*i)+R,yB,R);wheel(g,X(2*i+1)+R,yT,R);}
+    for(let j=0;j<2*k;j++){const x=X(j);rope(x,j%2?yB:yT,x,j%2?yT:yB);segs.push(x);}
+    for(let i=0;i<k;i++){const xm=X(2*i)+R,xf=X(2*i+1)+R;g.strokeStyle=ropeC;g.lineWidth=2.4;
+      g.beginPath();g.arc(xm,yB,R,0,Math.PI,false);g.stroke();
+      g.beginPath();g.arc(xf,yT,R,Math.PI,0,false);g.stroke();}
+    const lx=(X(0)+X(2*k-1))/2+R;
+    line(g,lx,yB+R+2,lx,yB+R+16,C.steel,2);loadBox(g,lx,yB+R+16,P.W);
+    handX=X(2*k);handY=H*.42+P.pull*ppc;rope(handX,yT,handX,handY);}
+  // 手
+  arrow(g,handX,handY-(P.type==='mov'?-16:16),handX,handY,C.accent,3);
+  text(g,'手 '+nf(F,0)+' N',handX+8,handY+(P.type==='mov'?-6:14),{col:C.accent,size:13,bold:true,align:handX>W-80?'right':'left'});
+  // 段數標示
+  if(P.seg&&P.type!=='fix')segs.forEach((x,i)=>{const yy=P.type==='mov'?H*.60-h*ppc-R-8:H*.62-h*ppc-R-8;
+    text(g,String(i+1),x,yy,{col:C.blue,size:12,bold:true,align:'center',bg:C.panel});});
+  // 量尺：重物上升 vs 手拉下
+  const mx=W-104;
+  const bar=(x,v,col,lab)=>{const y0=H*.86,len=v*ppc;line(g,x,y0,x,y0-len,col,6);
+    line(g,x-8,y0,x+8,y0,C.line,1.2);text(g,lab,x,y0+15,{col:col,size:11,bold:true,align:'center'});
+    text(g,nf(v,0)+' cm',x,y0+28,{col:col,size:11,bold:true,align:'center',mono:true});};
+  bar(mx,P.pull,C.accent,'手拉');bar(mx+52,h,C.load,'重物升');
+  if(P.seg&&P.type!=='fix')text(g,'吊著重物的繩子有 '+n+' 段',W-6,ceil+22,{col:C.blue,size:12,bold:true,align:'right'});
+  // 文字
+  const extra=P.pw&&P.type!=='fix'?10*(P.type==='mov'?1:P.k):0;
+  $('pFormula').innerHTML=`吊著重物的繩子段數 n ＝ <b>${n}</b><br>`+
+    `施力 ＝ (重物 ${P.W}${extra?' ＋ 動滑輪 '+extra:''}) ÷ ${n} ＝ <b>${nf(F,1)} N</b><br>`+
+    `手拉的長度 ＝ ${n} × 重物上升的高度`;
+  $('pNow').innerHTML=`<dt>重物</dt><dd>${P.W} N</dd><dt>施力</dt><dd>${nf(F,1)} N</dd><dt>省力倍數</dt><dd>${nf(P.W/F,2)} 倍</dd><dt>手拉下</dt><dd>${nf(P.pull,0)} cm</dd><dt>重物上升</dt><dd>${nf(h,1)} cm</dd>`;
+  const wIn=F*P.pull/100,wOut=P.W*h/100;
+  $('pSay').textContent=P.type==='fix'?`定滑輪只改變力的方向（往下拉比較好施力），施力還是 ${P.W} N，拉多長重物就升多高，一點也不省力。`:
+    (extra?`省力 ${nf(P.W/F,2)} 倍，但手要拉 ${n} 倍長。動滑輪本身也要被抬起來，所以手多做了一點功，效率 ${nf(wOut/Math.max(wIn,1e-9)*100,0)}%。`:
+      `省力 ${nf(P.W/F,2)} 倍（只要 ${nf(F,1)} N），但手要拉 ${n} 倍長的繩子。手作的功和重物得到的功一樣多——省力不省功。`);
+  // 功長條圖
+  const cg=$('cvPG'),G2=fit(cg,.44,120,190),gg=cg.getContext('2d');
+  gg.clearRect(0,0,G2.W,G2.H);
+  const mxw=Math.max(wIn,wOut,.1),y0=G2.H-26,bw2=G2.W*.22;
+  [[wIn,'手作的功',C.accent,G2.W*.3],[wOut,'重物得到的功',C.load,G2.W*.7]].forEach(([v,nm,col,x])=>{
+    const hh=(y0-26)*v/mxw;gg.fillStyle=col;gg.fillRect(x-bw2/2,y0-hh,bw2,hh);
+    text(gg,nf(v,2)+' J',x,y0-hh-6,{col:col,size:12,bold:true,align:'center',mono:true});
+    text(gg,nm,x,y0+15,{col:C.muted,size:12,align:'center'});});
+  line(gg,0,y0,G2.W,y0,C.line,1.4);};
+
+// ======================================================================
+// 5 斜面與輪軸
+// ======================================================================
+const I={type:'inc',W:100,h:50,L:200,R:48,r:16,fric:false,run:false,d:0,th:0};
+const setIW=sliderBind('iW',v=>{I.W=v;},v=>v+' N');
+const setIH=sliderBind('iH',v=>{I.h=Math.min(v,I.L-10);},v=>v+' 公分');
+const setIL=sliderBind('iL',v=>{I.L=Math.max(v,I.h+10);},v=>v+' 公分');
+const setIR=sliderBind('iR',v=>{I.R=Math.max(v,I.r+8);},v=>v+' 公分');
+const setIRr=sliderBind('iRr',v=>{I.r=Math.min(v,I.R-8);},v=>v+' 公分');
+segOn($('iType'),v=>{I.type=v;segSet($('iType'),v);$('iRow1').hidden=v!=='inc';$('iRow2').hidden=v!=='whl';I.d=0;I.th=0;I.run=false;hideStory();UI.inc();kick();});
+$('iFric').addEventListener('change',e=>{I.fric=e.target.checked;kick();});
+$('iPlay').addEventListener('click',()=>{if(I.type==='inc'&&I.d>=I.L)I.d=0;I.run=!I.run;hideStory();UI.inc();kick();});
+$('iReset').addEventListener('click',()=>{I.d=0;I.th=0;I.run=false;hideStory();UI.inc();kick();});
+UI.inc=()=>{$('iPlay').textContent=I.run?'⏸ 暫停':(I.type==='inc'?(I.d>0&&I.d<I.L?'▶ 繼續推':'▶ 推上去'):'▶ 轉輪子');
+  $('iRow1').hidden=I.type!=='inc';$('iRow2').hidden=I.type!=='whl';segSet($('iType'),I.type);};
+TICK.inc=dt=>{if(!I.run)return false;
+  if(I.type==='inc'){I.d=Math.min(I.L,I.d+dt*I.L*.25);if(I.d>=I.L){I.run=false;UI.inc();return false;}}
+  else{I.th+=dt*1.1;if(I.th>TAU){I.th=TAU;I.run=false;UI.inc();return false;}}
+  return true;};
+const iSin=()=>I.h/I.L,iCos=()=>Math.sqrt(Math.max(0,1-iSin()**2));
+const iF=()=>I.type==='inc'?I.W*(iSin()+(I.fric?.2*iCos():0)):I.W*I.r/I.R;
+DRAW.inc=()=>{const cv=$('cvInc'),{W,H}=fit(cv,.36,290,360),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  if(I.type==='inc'){
+    const b=I.L*iCos(),ppc=Math.min((W*.70)/Math.max(b,1),(H*.60)/I.h),x0=W*.14,y0=H*.84;
+    const x1=x0+b*ppc,y1=y0-I.h*ppc,Lp=Math.hypot(x1-x0,y1-y0),ux=(x1-x0)/Lp,uy=(y1-y0)/Lp,nx=uy,ny=-ux;
+    g.fillStyle=C.floor;g.globalAlpha=.5;g.fillRect(0,y0,W,H-y0);g.globalAlpha=1;
+    g.fillStyle=C.bar;g.globalAlpha=.4;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y0);g.lineTo(x1,y1);g.closePath();g.fill();g.globalAlpha=1;
+    g.strokeStyle=C.bar2;g.lineWidth=2.6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();
+    line(g,x0,y0,x1,y0,C.muted,1.4,[5,4]);line(g,x1,y0,x1,y1,C.load,2.4);
+    text(g,'高 '+I.h+' cm',x1+8,(y0+y1)/2,{col:C.load,size:12,bold:true});
+    text(g,'斜面長 '+I.L+' cm',x0+(x1-x0)*.26+nx*16,y0+(y1-y0)*.26+ny*16,{col:C.bar2,size:12,bold:true,align:'center'});
+    text(g,'底 '+nf(b,0)+' cm',(x0+x1)/2,y0+16,{col:C.muted,size:11,align:'center'});
+    const t=I.d/I.L,bx=x0+(x1-x0)*t,by=y0+(y1-y0)*t,bw=32,F=iF();
+    const cxb=bx+nx*bw*.5,cyb=by+ny*bw*.5;
+    g.save();g.translate(bx,by);g.rotate(Math.atan2(y1-y0,x1-x0));
+    g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=1.6;
+    g.beginPath();g.roundRect(-bw/2,-bw,bw,bw,4);g.fill();g.stroke();g.restore();
+    const lf=Math.min(66,16+F*.32);
+    arrow(g,cxb-ux*(18+lf),cyb-uy*(18+lf),cxb-ux*16,cyb-uy*16,C.accent,3);
+    text(g,'施力 '+nf(F,0)+' N',cxb-ux*(22+lf),cyb-uy*(22+lf)-4,{col:C.accent,size:12,bold:true,align:'right'});
+    const lw=Math.min(70,18+I.W*.22);
+    arrow(g,cxb,cyb,cxb,cyb+lw,C.load,2.6);
+    text(g,'重力 '+I.W+' N',cxb+6,cyb+lw+12,{col:C.load,size:12,bold:true});
+    if(I.fric){const lu=Math.min(48,12+.2*I.W*iCos()*.3);
+      arrow(g,cxb+ux*(16+lu),cyb+uy*(16+lu),cxb+ux*14,cyb+uy*14,C.purple,2.2);
+      text(g,'摩擦 '+nf(.2*I.W*iCos(),0)+' N',cxb+ux*(20+lu),cyb+uy*(20+lu)+12,{col:C.purple,size:11,bold:true});}
+    g.strokeStyle=C.blue;g.lineWidth=1.6;g.beginPath();g.arc(x0,y0,34,Math.atan2(y1-y0,x1-x0),0,false);g.stroke();
+    text(g,nf(Math.asin(iSin())/D2R,0)+'°',x0+42,y0-10,{col:C.blue,size:12,bold:true});
+    const mx=W-104,yb=H*.84;
+    const bar=(x,v,mxv,col,lab)=>{const len=(H*.52)*v/Math.max(mxv,1);line(g,x,yb,x,yb-len,col,6);
+      text(g,lab,x,yb+15,{col:col,size:11,bold:true,align:'center'});
+      text(g,nf(v,0)+' cm',x,yb+28,{col:col,size:11,bold:true,align:'center',mono:true});};
+    bar(mx,I.d,I.L,C.accent,'推的距離');bar(mx+56,I.d*iSin(),I.L,C.load,'升高');
+    $('iFormula').innerHTML=`省力倍數 ＝ 斜面長 ÷ 高 ＝ ${I.L} ÷ ${I.h} ＝ <b>${nf(I.L/I.h,2)} 倍</b><br>`+
+      `施力 ＝ 重力 × 高 ÷ 斜面長 ＝ ${I.W} × ${I.h} ÷ ${I.L} ＝ <b>${nf(I.W*iSin(),1)} N</b>`+
+      (I.fric?`<br>加上摩擦力 0.2 × ${I.W} × cos${nf(Math.asin(iSin())/D2R,0)}° ＝ ${nf(.2*I.W*iCos(),1)} N → 共 <b>${nf(F,1)} N</b>`:'');
+    $('iNow').innerHTML=`<dt>斜面傾角</dt><dd>${nf(Math.asin(iSin())/D2R,1)}°</dd><dt>施力</dt><dd>${nf(F,1)} N</dd><dt>已推上</dt><dd>${nf(I.d,0)} cm</dd><dt>升高</dt><dd>${nf(I.d*iSin(),1)} cm</dd>`;
+    $('iSay').textContent=I.fric?`有摩擦時要多出 ${nf(.2*I.W*iCos(),1)} N，多做的功變成熱，效率 ${nf(I.W*iSin()/F*100,0)}%。`:
+      `斜面愈長愈緩，施力愈小：現在只要 ${nf(F,1)} N 就能把 ${I.W} N 的東西推上去，但要推 ${I.L} 公分才升高 ${I.h} 公分。`;
+    pulBar($('cvIG'),F*I.d/100,I.W*I.d*iSin()/100,'手作的功','重物得到的位能');}
+  else{
+    const sc=Math.min((W*.26)/I.R,(H*.34)/I.R),R=I.R*sc,r=I.r*sc,th=I.th;
+    const wx=W*.30,ax=wx+R+r+56,cy=H*.42;
+    // 共用的軸
+    line(g,wx,cy,ax,cy,C.steel,7);
+    g.fillStyle=C.panel;g.strokeStyle=C.bar2;g.lineWidth=3;g.beginPath();g.arc(wx,cy,R,0,TAU);g.fill();g.stroke();
+    for(let i=0;i<8;i++){const a2=th+i*TAU/8;line(g,wx+Math.cos(a2)*6,cy+Math.sin(a2)*6,wx+Math.cos(a2)*R,cy+Math.sin(a2)*R,C.bar2,1.4);}
+    g.fillStyle=C.panel;g.strokeStyle=C.steel;g.lineWidth=3;g.beginPath();g.arc(ax,cy,r,0,TAU);g.fill();g.stroke();
+    for(let i=0;i<4;i++){const a2=th+i*TAU/4;line(g,ax,cy,ax+Math.cos(a2)*r,cy+Math.sin(a2)*r,C.steel,1.2);}
+    text(g,'輪 R ＝ '+I.R+' cm',wx,cy-R-10,{col:C.bar2,size:12,bold:true,align:'center'});
+    text(g,'軸 r ＝ '+I.r+' cm',ax,cy-r-10,{col:C.steel,size:12,bold:true,align:'center'});
+    const mvH=I.R*th,mvL=I.r*th,hy=Math.min(H-34,cy+R+24+mvH*sc),ly=Math.max(cy+r+18,cy+R+26-mvL*sc);
+    line(g,wx-R,cy,wx-R,hy,C.accent,2.6);arrow(g,wx-R,hy-18,wx-R,hy,C.accent,3);
+    text(g,'手 '+nf(iF(),1)+' N',wx-R+8,hy-4,{col:C.accent,size:13,bold:true});
+    line(g,ax+r,cy,ax+r,ly,C.load,2.4);loadBox(g,ax+r,ly,I.W);
+    const mx=W-104,yb=H*.86;
+    const bar=(x,v,col,lab)=>{const mxv=Math.max(I.R*TAU,1),len=(H*.5)*v/mxv;line(g,x,yb,x,yb-len,col,6);
+      text(g,lab,x,yb+15,{col:col,size:11,bold:true,align:'center'});
+      text(g,nf(v,0)+' cm',x,yb+28,{col:col,size:11,bold:true,align:'center',mono:true});};
+    bar(mx,mvH,C.accent,'手走');bar(mx+56,mvL,C.load,'重物升');
+    $('iFormula').innerHTML=`施力 × R ＝ 重力 × r（力矩相等，軸心是支點）<br>施力 ＝ ${I.W} × ${I.r} ÷ ${I.R} ＝ <b>${nf(iF(),1)} N</b><br>`+
+      `轉一圈：手走 2πR ＝ ${nf(TAU*I.R,0)} cm，重物只升 2πr ＝ ${nf(TAU*I.r,0)} cm`;
+    $('iNow').innerHTML=`<dt>省力倍數</dt><dd>${nf(I.R/I.r,2)} 倍</dd><dt>施力</dt><dd>${nf(iF(),1)} N</dd><dt>手走了</dt><dd>${nf(mvH,0)} cm</dd><dt>重物上升</dt><dd>${nf(mvL,0)} cm</dd>`;
+    $('iSay').textContent=`輪軸就是可以一直轉的槓桿：軸心是支點，R 是施力臂、r 是抗力臂，所以省力 ${nf(I.R/I.r,2)} 倍，但手要走 ${nf(I.R/I.r,2)} 倍遠。門把、方向盤、水龍頭、螺絲起子都是輪軸。`;
+    pulBar($('cvIG'),iF()*mvH/100,I.W*mvL/100,'手作的功','重物得到的位能');}};
+function pulBar(cg,a,b,na,nb){const G2=fit(cg,.44,120,190),gg=cg.getContext('2d');
+  gg.clearRect(0,0,G2.W,G2.H);
+  const mxw=Math.max(a,b,.1),y0=G2.H-26,bw2=G2.W*.22;
+  [[a,na,C.accent,G2.W*.3],[b,nb,C.load,G2.W*.7]].forEach(([v,nm,col,x])=>{
+    const hh=(y0-26)*v/mxw;gg.fillStyle=col;gg.fillRect(x-bw2/2,y0-hh,bw2,hh);
+    text(gg,nf(v,2)+' J',x,y0-hh-6,{col:col,size:12,bold:true,align:'center',mono:true});
+    text(gg,nm,x,y0+15,{col:C.muted,size:12,align:'center'});});
+  line(gg,0,y0,G2.W,y0,C.line,1.4);}
+
+// ======================================================================
 // 題目情境
 // ======================================================================
 function goT(o){setBench('tq');Object.assign(T,{run:false,phi:0},o);setTF(T.F);setTR(T.r);setTTh(T.th);segSet($('tScene'),T.scene);UI.tq();kick();}
 function goL(o){setBench('lev');Object.assign(L2,{ang:0},o);$('lBarW').checked=!!L2.barW;$('lFree').checked=!!L2.free;UI.lev();kick();}
+function goP(o){setBench('pul');Object.assign(P,{pull:0,run:false},o);P.run=!!o.play;setPW(P.W);$('pPw').checked=!!P.pw;UI.pul();kick();}
+function goI(o){setBench('inc');Object.assign(I,{d:0,th:0,run:false},o);I.run=!!o.play;setIW(I.W);setIH(I.h);setIL(I.L);setIR(I.R);setIRr(I.r);$('iFric').checked=!!I.fric;UI.inc();kick();}
 function goC(o){setBench('cls');CL.tool=TOOLS.findIndex(t=>t.id===o.id);if(CL.tool<0)CL.tool=0;CL.mid=o.mid!=null?o.mid:null;CL.ph=0;CL.run=!!o.play;UI.cls();kick();}
 const QG=[
  {g:'力矩（實驗台 1）',q:[
@@ -652,6 +911,20 @@ const QG=[
   ['扁擔挑兩桶水，肩膀要放哪裡','扁擔','兩桶一樣重時肩膀放中間；若一邊比較重，肩膀要往重的那一邊移，兩邊力矩才相等。',()=>goL({mode:'arm',fx:50,barW:false,ws:[{x:10,m:3},{x:90,m:2}]})],
   ['棒子自己的重量要不要算','算進棒重 2 kg','棒子的重量集中在重心（均勻棒的中點）。支點在中點時它的力臂 ＝ 0 可以不管；支點偏掉以後就要算。',()=>goL({mode:'wt',fx:30,barW:true,ws:[{x:95,m:1}]})],
   ['一邊掛兩個砝碼','多個力矩相加','同一邊有好幾個重物時，把每一個的「重量 × 力臂」加起來再比較。',()=>goL({mode:'wt',fx:50,barW:false,ws:[{x:20,m:1},{x:35,m:2},{x:90,m:2}]})]]},
+ {g:'滑輪（實驗台 4）',q:[
+  ['定滑輪到底有什麼用','定滑輪','定滑輪不省力（施力＝重物重量），也不省距離，它只把「往上提」變成「往下拉」，方向改變後比較好施力，還能站在地面上把東西吊到高處。',()=>goP({type:'fix',W:60,play:true})],
+  ['動滑輪為什麼省一半力','動滑輪','動滑輪被兩段繩子吊著，每段只分擔一半，所以施力＝重物的一半；但手要拉 2 倍長的繩子。',()=>goP({type:'mov',W:60,play:true})],
+  ['滑輪組：2 個動滑輪省幾倍','滑輪組 n＝4','吊著重物的繩子有 4 段，所以施力＝重物 ÷ 4，手要拉 4 倍長。看繩子段數就知道省幾倍力。',()=>goP({type:'blk',k:2,W:120,play:true})],
+  ['最省力的組法','滑輪組 n＝6','3 個動滑輪 → 6 段繩子，120 N 的東西只要 20 N 就拉得動，但手要拉 60 公分重物才升 10 公分。',()=>goP({type:'blk',k:3,W:120,play:true})],
+  ['動滑輪本身的重量要不要算','動滑輪有重量','要。手也要把動滑輪一起抬起來，所以施力＝(重物＋動滑輪)÷段數，手多做的功就是抬動滑輪用掉的，效率小於 100%。',()=>goP({type:'mov',W:60,pw:true,play:true})],
+  ['省力不省功','比較兩根長條','手拉的長度 × 施力 ＝ 重物上升的高度 × 重量。省幾倍力就要拉幾倍長，功完全沒有省到。',()=>goP({type:'blk',k:2,W:120,play:true})]]},
+ {g:'斜面與輪軸（實驗台 5）',q:[
+  ['斜面為什麼省力','斜面 200 cm／高 50 cm','省力倍數＝斜面長÷高＝4 倍，施力＝重力×高÷長。要把 100 N 的東西搬到 50 公分高，直接抬要 100 N，沿斜面推只要 25 N，但要推 200 公分。',()=>goI({type:'inc',W:100,h:50,L:200,fric:false,play:true})],
+  ['同樣的高度，斜面變短會怎樣','斜面縮短成 100 cm','斜面愈短愈陡，省力倍數只剩 2 倍，施力變成 50 N。盤山公路繞來繞去就是把斜面拉長。',()=>goI({type:'inc',W:100,h:50,L:100,fric:false,play:true})],
+  ['有摩擦的斜面','μ＝0.2','推力要再加上摩擦力 0.2×重力×cosθ，多做的功變成熱，所以效率小於 100%。',()=>goI({type:'inc',W:100,h:50,L:200,fric:true,play:true})],
+  ['輪軸是哪一種槓桿','輪軸 R＝48、r＝16','輪軸是「會一直轉的槓桿」：軸心是支點、輪半徑 R 是施力臂、軸半徑 r 是抗力臂，施力×R＝重力×r，省力 R÷r 倍。',()=>goI({type:'whl',W:100,R:48,r:16,play:true})],
+  ['轉一圈，手和重物各走多遠','轉一圈','手走 2πR、重物只升 2πr，比值剛好等於省力倍數 R÷r——還是省力不省功。',()=>goI({type:'whl',W:100,R:48,r:12,play:true})],
+  ['生活中的輪軸','門把、方向盤','門把、方向盤、水龍頭、螺絲起子、腳踏車的齒輪都是輪軸：手握的地方半徑愈大愈省力。',()=>goI({type:'whl',W:60,R:60,r:8,play:true})]]},
  {g:'三類槓桿（實驗台 3）',q:[
   ['獨輪車為什麼省力，貨物要放前面還是後面','獨輪車','輪子是支點、貨物在中間、手在最遠端，是第二類槓桿，一定省力。貨物愈靠近輪子（抗力臂愈短）愈省力。',()=>goC({id:'barrow',play:true})],
   ['鑷子夾東西明明很小，為什麼說它費力','鑷子','施力點在中間，施力臂比抗力臂短，所以施力一定大於抗力，是第三類槓桿。它換到的是靈巧與移動距離。',()=>goC({id:'twee',play:true})],
@@ -668,7 +941,7 @@ $('qbox').addEventListener('click',e=>{const b=e.target.closest('.qchip');if(!b)
   showStory(q[0],q[2]);});
 
 // ================= 啟動 =================
-UI.tq();UI.lev();UI.cls();
+UI.tq();UI.lev();UI.cls();UI.pul();UI.inc();
 setBench((location.hash||'').replace('#','')||'tq',true);
 kick();
 })();
