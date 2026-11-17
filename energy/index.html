@@ -194,6 +194,8 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <button class="btn" id="cStep">▸ 0.1 秒</button>
         <span class="seg" id="cTrack"><button data-v="pend" aria-pressed="true">單擺</button><button data-v="bowl" aria-pressed="false">光滑軌道</button><button data-v="ramp" aria-pressed="false">斜面滑下</button><button data-v="throw" aria-pressed="false">鉛直上拋</button><button data-v="spring" aria-pressed="false">彈簧</button></span>
         <span class="seg" id="cTs"><button data-v="1" aria-pressed="true">1×</button><button data-v="0.25" aria-pressed="false">¼×</button></span>
+        <label class="tog"><input type="checkbox" id="cFg"> 標出重力</label>
+        <label class="tog"><input type="checkbox" id="cFc"> 標出向心力</label>
       </div>
       <div class="cbox"><canvas class="cv" id="cvCons" aria-label="力學能守恆動畫與能量長條圖"></canvas></div>
       <p class="hint" id="cHint">拖曳橘色的球改變起點；拖曳虛線可以改變「位能為 0」的高度（高中）。</p>
@@ -565,7 +567,7 @@ kSetMode('ke');
 // ======================================================================
 // 4 力學能守恆
 // ======================================================================
-const C4={track:'pend',m:1,mu:0,v0:10,k:50,s0:0,s:0,v:0,t:0,run:false,Q:0,zero:0,hist:[],ts:1,marks:null,E0:0};
+const C4={track:'pend',m:1,mu:0,v0:10,k:50,s0:0,s:0,v:0,t:0,run:false,Q:0,zero:0,hist:[],ts:1,marks:null,E0:0,fg:false,fc:false,drag:false};
 const TRK={
   pend:{L:2,amax:80,label:'單擺：擺長 2 m'},
   bowl:{label:'光滑軌道'},
@@ -620,6 +622,21 @@ TICK.cons=dt=>{if(!C4.run)return false;const T=dt*C4.ts,n=40;for(let i=0;i<n;i++
   return C4.run;};
 $('cPlay').addEventListener('click',()=>{if(C4.run){C4.run=false;$('cPlay').textContent='▶ 繼續';return;}if(!C4.run&&C4.t===0)cReset();C4.run=true;$('cPlay').textContent='❚❚ 暫停';kick();});
 $('cReset').addEventListener('click',()=>{cReset();kick();});
+$('cFg').addEventListener('change',e=>{C4.fg=e.target.checked;kick();});
+$('cFc').addEventListener('change',e=>{C4.fc=e.target.checked;kick();});
+// 曲率半徑與圓心（單擺就是擺長與吊點；其他軌道用軌跡上三點外接圓）
+function cCurv(s){const n=C4.track;
+  if(n==='pend'){const L=TRK.pend.L,p=at(s);return{R:L,cx:0,cy:L};}
+  if(n==='throw'||n==='spring')return null;
+  const ds=.15,a1=at(clamp(s-ds,0,TR.len)),b1=at(s),c1=at(clamp(s+ds,0,TR.len));
+  const d=2*(a1.x*(b1.y-c1.y)+b1.x*(c1.y-a1.y)+c1.x*(a1.y-b1.y));
+  if(Math.abs(d)<1e-9)return null;
+  const ux=((a1.x*a1.x+a1.y*a1.y)*(b1.y-c1.y)+(b1.x*b1.x+b1.y*b1.y)*(c1.y-a1.y)+(c1.x*c1.x+c1.y*c1.y)*(a1.y-b1.y))/d;
+  const uy=((a1.x*a1.x+a1.y*a1.y)*(c1.x-b1.x)+(b1.x*b1.x+b1.y*b1.y)*(a1.x-c1.x)+(c1.x*c1.x+c1.y*c1.y)*(b1.x-a1.x))/d;
+  const R=Math.hypot(b1.x-ux,b1.y-uy);
+  if(!isFinite(R)||R>60)return null;
+  return{R,cx:ux,cy:uy};}
+function cFcN(){const c=cCurv(C4.s);if(!c)return 0;return C4.m*C4.v*C4.v/c.R;}
 $('cStep').addEventListener('click',()=>{C4.run=false;$('cPlay').textContent='▶ 繼續';for(let i=0;i<40;i++)cStep(0.1/40);cRec();kick();});
 segOn($('cTs'),v=>{C4.ts=+v;segSet($('cTs'),v);});
 function cSetTrack(n){C4.track=n;segSet($('cTrack'),n);TR=buildTrack(n);cDefaults();C4.zero=0;
@@ -661,6 +678,23 @@ DRAW.cons=()=>{const cv=$('cvCons'),nar=cv.clientWidth<600,{W,H}=fit(cv,nar?1.15
   else{const r=10+C4.m*2;g.fillStyle=C.accent;g.beginPath();g.arc(bxp,byp-(n==='pend'?0:r),r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();
     // 速度箭頭
     if(Math.abs(C4.v)>0.05){const sc=Math.min(60,6*Math.abs(C4.v))*Math.sign(C4.v);arrow(g,bxp,byp-(n==='pend'?0:r),bxp+b.tx*sc,byp-(n==='pend'?0:r)-b.ty*sc,C.ke,2);}}
+  // 力的標示（可分開選擇）
+  if((C4.fg||C4.fc)&&n!=='spring'){const r2=10+C4.m*2,cxp=bxp,cyp=byp-(n==='pend'?0:r2);
+    const mg=C4.m*G,fc=cFcN(),fsc=Math.min(6,70/Math.max(mg,fc,1));
+    if(C4.fg){arrow(g,cxp,cyp,cxp,cyp+mg*fsc,C.ug,2.8);
+      text(g,'重力 '+nf(mg,1)+' N',cxp-8,cyp+mg*fsc+12,{size:11.5,col:C.ug,bold:true,align:'right'});}
+    if(C4.fc){const c=cCurv(C4.s);
+      if(c&&fc>0.05){const dx=X(c.cx)-cxp,dy=Y(c.cy)-cyp,L0=Math.hypot(dx,dy)||1,ex=cxp+dx/L0*fc*fsc,ey=cyp+dy/L0*fc*fsc;
+        arrow(g,cxp,cyp,ex,ey,C.purple,2.8);
+        const lx2=cxp+dx/L0*(fc*fsc+26),ly2=cyp+dy/L0*(fc*fsc+26);
+        text(g,'向心力 '+nf(fc,1)+' N',lx2,ly2-4,{size:11.5,col:C.purple,bold:true,align:dx>0?'left':'right'});}
+      else text(g,'向心力 ＝ 0（現在速率 0）',cxp+10,cyp-14,{size:11,col:C.purple,bold:true});}}
+  // 拖曳時的即時讀數
+  if(C4.drag&&n!=='spring'){const ymin=Math.min(...TR.pts.map(p=>p[1])),Kb=C4.m*G*(b.y-ymin);
+    const tx=bxp+(bxp>sceneW*.6?-14:14),al=bxp>sceneW*.6?'right':'left',ty0=byp-86;
+    text(g,'位能 '+J(cU()),tx,ty0,{size:12,col:C.ug,bold:true,align:al,bg:C.panel});
+    text(g,'動能 '+J(cK()),tx,ty0+16,{size:12,col:C.ke,bold:true,align:al,bg:C.panel});
+    text(g,'放手後最低點動能 '+J(Kb),tx,ty0+32,{size:11.5,col:C.muted,bold:true,align:al,bg:C.panel});}
   // 高度標示
   if(n!=='spring'&&n!=='pend'||n==='pend'){const hz=b.y-C4.zero;if(Math.abs(hz)>0.02){line(g,bxp+26,Y(C4.zero),bxp+26,byp,C.ug,1.2);text(g,'h＝'+nf(hz,2)+' m',bxp+30,(Y(C4.zero)+byp)/2,{size:11,col:C.ug,mono:true});}}
   cGeo={X,Y,k,ox,oy};
@@ -677,12 +711,12 @@ DRAW.cons=()=>{const cv=$('cvCons'),nar=cv.clientWidth<600,{W,H}=fit(cv,nar?1.15
   cNowPanel();drawCG();};
 dragger($('cvCons'),()=>{if(!cGeo)return[];const L=[];const b=at(C4.s);const n=C4.track;
   const r=10+C4.m*2;const bx=cGeo.X(b.x),by=n==='spring'?cGeo.Y(0)-20:cGeo.Y(b.y)-(n==='pend'?0:r);
-  if(n!=='throw')L.push({x:bx,y:by,r:30,move(x,y){C4.run=false;const wx=(x-cGeo.ox)/cGeo.k,wy=(cGeo.oy-y)/cGeo.k;let s=n==='spring'?sNear(clamp(wx,-1,1),0):sNear(wx,wy);
+  if(n!=='throw')L.push({x:bx,y:by,r:30,start(){C4.drag=true;},end(){C4.drag=false;},move(x,y){C4.run=false;const wx=(x-cGeo.ox)/cGeo.k,wy=(cGeo.oy-y)/cGeo.k;let s=n==='spring'?sNear(clamp(wx,-1,1),0):sNear(wx,wy);
     if(n==='pend'){const p=at(s);}C4.s0=s;C4.marks=C4.marks;cReset();hideStory();}});
   if(n!=='spring'&&LV==='sh'){const zy=cGeo.Y(C4.zero);const cw0=$('cvCons').clientWidth;L.push({x:cw0<600?cw0-14:cw0-Math.min(230,cw0*.3)-20-14,y:zy,r:22,move(x,y){C4.zero=Math.round(((cGeo.oy-y)/cGeo.k)*2)/2;cReset();}});}
   return L;},kick);
 function cNowPanel(){const p=at(C4.s);const K=cK(),U=cU(),Us=cUs();
-  $('cNow').innerHTML=[['高度（離零位能線）',nf(p.y-C4.zero,2)+' m'],['速率',nf(Math.abs(C4.v),2)+' m/s'],['動能 ½mv²',J(K)],['重力位能 mgh',J(U)]].concat(C4.track==='spring'?[['彈力位能 ½kx²',J(Us)],['伸長量 x',nf(p.x*100,1)+' cm']]:[]).concat([['熱能',J(C4.Q)],['力學能',J(K+U+Us)],['總能量',J(K+U+Us+C4.Q)]]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
+  $('cNow').innerHTML=[['高度（離零位能線）',nf(p.y-C4.zero,2)+' m'],['速率',nf(Math.abs(C4.v),2)+' m/s'],['動能 ½mv²',J(K)],['重力位能 mgh',J(U)]].concat(C4.fg?[['重力 mg',nf(C4.m*G,1)+' N']]:[]).concat(C4.fc&&cCurv(C4.s)?[['向心力 mv²/r',nf(cFcN(),1)+' N'],['曲率半徑 r',nf(cCurv(C4.s).R,2)+' m']]:[]).concat(C4.track==='spring'?[['彈力位能 ½kx²',J(Us)],['伸長量 x',nf(p.x*100,1)+' cm']]:[]).concat([['熱能',J(C4.Q)],['力學能',J(K+U+Us)],['總能量',J(K+U+Us+C4.Q)]]).map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
   let say='';const n=C4.track;
   if(C4.mu===0)say=n==='spring'?'沒有摩擦：動能和彈力位能互相轉換，力學能維持不變。物體經過 O 點（原長）時動能最大；在兩端速度為 0，彈力位能最大。':
     n==='throw'?'上升時動能減少、重力位能增加；到最高點速度為 0，動能全部變成位能（最高點 ＝ v₀²／2g）。下落時再換回來，回到手中速率和拋出時一樣。':

@@ -101,6 +101,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <button class="btn primary" id="tPlay">▶ 放手看它轉</button>
         <label class="tog"><input type="checkbox" id="tArm" checked> 畫出力臂</label>
         <label class="tog"><input type="checkbox" id="tComp"> 把力分解</label>
+        <label class="tog"><input type="checkbox" id="tLine" checked> 畫出力的作用線</label>
       </div>
       <div class="cbox"><canvas class="cv" id="cvTq" aria-label="力矩與力臂"></canvas></div>
       <p class="hint">拖曳橘色圓點：靠近螺帽的那個改「施力點到轉軸的距離 r」，箭頭尖端改「力的大小與方向」。綠色虛線是力臂（轉軸到力的作用線的垂直距離）。</p>
@@ -109,7 +110,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <section class="panel box">
         <h3>設定</h3>
         <div class="ctl">
-          <div class="slider"><span class="tlabel">施力 F</span><input type="range" id="tF" min="0" max="50" step="1" value="20"><output id="tFo"></output></div>
+          <div class="slider"><span class="tlabel">施力 F</span><input type="range" id="tF" min="0" max="200" step="2" value="20"><output id="tFo"></output></div>
           <div class="slider"><span class="tlabel">距離 r</span><input type="range" id="tR" min="5" max="50" step="1" value="30"><output id="tRo"></output></div>
           <div class="slider"><span class="tlabel">力的方向 θ</span><input type="range" id="tTh" min="0" max="180" step="5" value="90"><output id="tTho"></output></div>
         </div>
@@ -147,7 +148,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="lArm" checked> 畫出力臂</label>
       </div>
       <div class="cbox"><canvas class="cv" id="cvLev" aria-label="槓桿平衡"></canvas></div>
-      <p class="hint">點棒子上的空位會掛上一個砝碼；拖曳砝碼可以左右移動，拖到棒子外面就移除。藍色三角形的支點也可以拖。</p>
+      <p class="hint">從左下角的<b>砝碼盤拖一個砝碼到棒子上</b>；拖到已經有砝碼的位置，就會掛在它下面疊成一串。拖曳棒上的砝碼可以移動，拖到棒子外面放手就移除，藍色三角形的支點也可以拖。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -348,13 +349,15 @@ $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior
 // ======================================================================
 // 1 力矩
 // ======================================================================
-const T={F:20,r:30,th:90,scene:'wrench',arm:true,comp:false,phi:0,run:false,rows:[]};
+const T={F:20,r:30,th:90,scene:'wrench',arm:true,comp:false,ln:true,phi:0,run:false,rows:[]};
+const TFS=1.25;   // 畫面上每 1 N 的箭頭長度（px）
 const setTF=sliderBind('tF',v=>{T.F=v;T.phi=0;T.run=false;},v=>v+' N');
 const setTR=sliderBind('tR',v=>{T.r=v;T.phi=0;T.run=false;},v=>v+' 公分');
 const setTTh=sliderBind('tTh',v=>{T.th=v;T.phi=0;T.run=false;},v=>v+'°');
 segOn($('tScene'),v=>{T.scene=v;T.phi=0;T.run=false;segSet($('tScene'),v);hideStory();kick();});
 $('tArm').addEventListener('change',e=>{T.arm=e.target.checked;kick();});
 $('tComp').addEventListener('change',e=>{T.comp=e.target.checked;kick();});
+$('tLine').addEventListener('change',e=>{T.ln=e.target.checked;kick();});
 $('tPlay').addEventListener('click',()=>{if(T.run){T.run=false;}else{T.phi=0;T.run=true;}UI.tq();kick();});
 $('tRec').addEventListener('click',()=>{const d=T.r*Math.sin(T.th*D2R);T.rows.push({r:T.r,th:T.th,F:T.F,d:d,t:T.F*d/100});if(T.rows.length>8)T.rows.shift();tTab();});
 $('tClr').addEventListener('click',()=>{T.rows=[];tTab();});
@@ -362,7 +365,7 @@ function tTab(){const el=$('tTable');if(!T.rows.length){el.innerHTML='<tr><td cl
   el.innerHTML='<tr><th class="n">F (N)</th><th class="n">r (cm)</th><th class="n">θ</th><th class="n">力臂 (cm)</th><th class="n">力矩 (N・m)</th></tr>'+
     T.rows.map(r=>`<tr><td class="n">${r.F}</td><td class="n">${r.r}</td><td class="n">${r.th}°</td><td class="n">${nf(r.d,1)}</td><td class="n">${nf(r.t,2)}</td></tr>`).join('');}
 const TQSC={wrench:{ax:'螺帽',arm:'扳手',pt:'手握的位置'},door:{ax:'門軸（鉸鏈）',arm:'門',pt:'推的位置'},bolt:{ax:'軸心',arm:'曲柄',pt:'踩踏板的位置'}};
-UI.tq=()=>{$('tPlay').textContent=T.run?'■ 停':'▶ 放手看它轉';$('tArm').checked=T.arm;$('tComp').checked=T.comp;tTab();};
+UI.tq=()=>{$('tPlay').textContent=T.run?'■ 停':'▶ 放手看它轉';$('tArm').checked=T.arm;$('tComp').checked=T.comp;$('tLine').checked=T.ln;tTab();};
 TICK.tq=dt=>{if(!T.run)return false;const d=T.r*Math.sin(T.th*D2R),tq=T.F*d/100;
   if(Math.abs(tq)<1e-3){return true;}
   T.phi+=Math.sign(tq)*Math.min(2.4,.25+Math.abs(tq)*.5)*dt;
@@ -389,8 +392,8 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   const ux=Math.cos(th),uy=-Math.sin(th),px=rp,py=0;
   const tfoot=-(px*ux+py*uy),fx=px+tfoot*ux,fy=py+tfoot*uy;
   const dcm=Math.abs(T.r*Math.sin(th)),tq=T.F*dcm/100;
-  const Lf=16+T.F*2.7;
-  if(T.F>0){line(g,px-ux*430,py-uy*430,px+ux*430,py+uy*430,C.ghost,1,[4,5]);}
+  const Lf=16+T.F*TFS;
+  if(T.F>0&&T.ln){line(g,px-ux*430,py-uy*430,px+ux*430,py+uy*430,C.ghost,1,[4,5]);}
   if(T.arm&&T.F>0&&dcm>.3){line(g,0,0,fx,fy,C.arm,2.6,[7,5]);
     text(g,'力臂 '+nf(dcm,1)+' cm',(fx)/2,(fy)/2-12,{col:C.arm,size:12,bold:true,align:'center',bg:C.panel});
     g.strokeStyle=C.arm;g.lineWidth=1.6;const s2=9,a1=Math.atan2(fy,fx);
@@ -402,10 +405,10 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   if(T.F>0){arrow(g,px,py,px+ux*Lf,py+uy*Lf,C.accent,3.4);
     text(g,'F ＝ '+T.F+' N',px+ux*Lf+(ux>=0?8:-8),py+uy*Lf-6,{col:C.accent,size:13,bold:true,align:ux>=0?'left':'right'});
     if(T.comp){const fpar=T.F*Math.cos(th),fper=T.F*Math.sin(th);
-      arrow(g,px,py,px+Math.sign(fpar)*Math.abs(fpar)*2.7,py,C.ghost,2.4);
-      arrow(g,px,py,px,py-fper*2.7,C.green,2.6);
-      text(g,'有效：F sinθ ＝ '+nf(fper,1)+' N',px+6,py-fper*2.7-4,{col:C.green,size:12,bold:true});
-      if(Math.abs(fpar)>.5)text(g,'沒用：F cosθ ＝ '+nf(fpar,1)+' N',px+Math.sign(fpar)*Math.abs(fpar)*2.7+(fpar>0?6:-6),py+16,{col:C.muted,size:12,align:fpar>0?'left':'right'});}
+      arrow(g,px,py,px+fpar*TFS,py,C.ghost,2.4);
+      arrow(g,px,py,px,py-fper*TFS,C.green,2.6);
+      text(g,'有效：F sinθ ＝ '+nf(fper,1)+' N',px+6,py-fper*TFS-4,{col:C.green,size:12,bold:true});
+      if(Math.abs(fpar)>.5)text(g,'沒用：F cosθ ＝ '+nf(fpar,1)+' N',px+fpar*TFS+(fpar>0?6:-6),py+16,{col:C.muted,size:12,align:fpar>0?'left':'right'});}
     // 角度弧
     if(T.th>2&&T.th<178){g.strokeStyle=C.blue;g.lineWidth=1.6;g.beginPath();g.arc(px,py,26,-th,0,false);g.stroke();
       text(g,'θ '+T.th+'°',px+30*Math.cos(-th/2),py+30*Math.sin(-th/2),{col:C.blue,size:12,bold:true});}}
@@ -436,10 +439,10 @@ dragger($('cvTq'),()=>{const cv=$('cvTq'),W=cv.clientWidth,H=cv._fh||300;
   const sc=(W*.52)/55,ox=W*.27,oy=H*.6,th=T.th*D2R,phi=T.phi;
   const c=Math.cos(-phi),s=Math.sin(-phi),rp=T.r*sc;
   const pxs=ox+c*rp,pys=oy+s*rp;
-  const ux=Math.cos(th),uy=-Math.sin(th),Lf=16+T.F*2.7;
+  const ux=Math.cos(th),uy=-Math.sin(th),Lf=16+T.F*TFS;
   const hx=pxs+(c*ux-s*uy)*Lf,hy=pys+(s*ux+c*uy)*Lf;
   return [{x:hx,y:hy,r:30,move:(x,y)=>{const dx=x-pxs,dy=y-pys;const lx=c*dx+s*dy,ly=-s*dx+c*dy;
-      let F=clamp(Math.round((Math.hypot(lx,ly)-16)/2.7),0,50),a=Math.atan2(-ly,lx)/D2R;
+      let F=clamp(Math.round((Math.hypot(lx,ly)-16)/TFS/2)*2,0,200),a=Math.atan2(-ly,lx)/D2R;
       if(a<0)a+=360;if(a>180)a=a>270?0:180;
       T.F=F;T.th=Math.round(a/5)*5;setTF(T.F);setTTh(T.th);T.phi=0;T.run=false;}},
     {x:pxs,y:pys,r:26,move:(x,y)=>{const dx=x-ox,dy=y-oy;const lx=c*dx+s*dy;
@@ -449,7 +452,7 @@ dragger($('cvTq'),()=>{const cv=$('cvTq'),W=cv.clientWidth,H=cv._fh||300;
 // 2 槓桿平衡
 // ======================================================================
 const LBAR=100;
-const L2={mode:'wt',fx:50,barW:false,free:true,arm:true,add:1,ws:[{x:20,m:2},{x:80,m:1}],ang:0,tgt:0};
+const L2={mode:'wt',fx:50,barW:false,free:true,arm:true,add:1,ws:[{x:20,m:2},{x:80,m:1}],ang:0,tgt:0,nw:null,sel:-1};
 const l2def=()=>JSON.parse(JSON.stringify([{x:20,m:2},{x:80,m:1}]));
 segOn($('lMode'),v=>{L2.mode=v;segSet($('lMode'),v);
   if(v==='arm'){L2.fx=50;L2.ws=[{x:15,m:3},{x:85,m:3}];}else if(v==='see'){L2.fx=50;L2.ws=[{x:15,m:3},{x:80,m:2}];}
@@ -465,24 +468,38 @@ const lSide=s=>{let t=0;L2.ws.forEach(w=>{const d=(L2.fx-w.x);if(s<0?d>0:d<0)t+=
   if(L2.barW){const d=L2.fx-LBAR/2;if(s<0?d>0:d<0)t+=2*G*Math.abs(d)/100;}return t;};
 UI.lev=()=>{segSet($('lMode'),L2.mode);segSet($('lAdd'),L2.add);};
 TICK.lev=dt=>{const net=lNet();
-  L2.tgt=(!L2.free)?0:(Math.abs(net)<.02?0:Math.sign(net)*.17);
+  L2.tgt=(!L2.free)?0:(Math.abs(net)<.02?0:-Math.sign(net)*.17);   // net>0＝左邊力矩大＝左邊下沉（螢幕座標要用負角）
   const d=L2.tgt-L2.ang;if(Math.abs(d)<.002){L2.ang=L2.tgt;return false;}
   L2.ang+=d*Math.min(1,dt*5);return true;};
 function lGeom(cv,W,H){const bx=W*.5,by=H*.46,bw=Math.min(W*.74,760);return{bx,by,bw,sc:bw/LBAR,px:x=>bx+(x-L2.fx)*(bw/LBAR)};}
-function loadIcon(g,x,y,m,mode,sel,k){const s=(10+m*3.2)*(k||1);
-  if(mode==='see'){g.fillStyle=C.blue;g.beginPath();g.arc(x,y+s*.55,s*.42,0,TAU);g.fill();
-    g.beginPath();g.roundRect(x-s*.42,y+s*.9,s*.84,s*1.1,4);g.fill();}
-  else if(mode==='arm'){g.strokeStyle=C.steel;g.lineWidth=1.6;line(g,x,y,x,y+14,C.steel,1.6);
-    g.fillStyle=C.blue;g.beginPath();g.moveTo(x-s*.5,y+14);g.lineTo(x+s*.5,y+14);g.lineTo(x+s*.36,y+14+s);g.lineTo(x-s*.36,y+14+s);g.closePath();g.fill();}
-  else{line(g,x,y,x,y+12,C.steel,1.6);g.fillStyle=C.bar2;g.strokeStyle=C.ink;g.lineWidth=1;
-    g.beginPath();g.roundRect(x-s*.5,y+12,s,s*.78,3);g.fill();}
-  text(g,m+' kg',x,y+(mode==='wt'?12+s*.78+13:14+s+13),{col:C.ink,size:12,bold:true,align:'center'});
-  if(sel){g.strokeStyle=C.accent;g.lineWidth=2;g.strokeRect(x-s*.6,y+8,s*1.2,s*1.2);}}
-DRAW.lev=()=>{const cv=$('cvLev'),{W,H}=fit(cv,.40,280,360),g=cv.getContext('2d');
+function loadIcon(g,x,y,m,mode,sel,k,first){const s=(10+m*3.2)*(k||1);let hgt;
+  if(mode==='see'){if(first!==false)line(g,x,y,x,y+6,C.steel,1.6);
+    g.fillStyle=C.blue;g.beginPath();g.arc(x,y+6+s*.42,s*.42,0,TAU);g.fill();
+    g.beginPath();g.roundRect(x-s*.42,y+6+s*.84,s*.84,s*1.0,4);g.fill();hgt=6+s*1.84;}
+  else if(mode==='arm'){if(first!==false)line(g,x,y,x,y+14,C.steel,1.6);else y-=8;
+    g.fillStyle=C.blue;g.beginPath();g.moveTo(x-s*.5,y+14);g.lineTo(x+s*.5,y+14);g.lineTo(x+s*.36,y+14+s);g.lineTo(x-s*.36,y+14+s);g.closePath();g.fill();hgt=14+s;}
+  else{if(first!==false)line(g,x,y,x,y+12,C.steel,1.6);else y-=10;
+    g.fillStyle=C.bar2;g.strokeStyle=C.ink;g.lineWidth=1;
+    g.beginPath();g.roundRect(x-s*.5,y+12,s,s*.78,3);g.fill();g.stroke();
+    text(g,m+' kg',x,y+12+s*.52,{col:C.panel,size:Math.min(13,s*.42),bold:true,align:'center'});hgt=12+s*.78;}
+  if(mode!=='wt')text(g,m+' kg',x,y+hgt+12,{col:C.ink,size:12,bold:true,align:'center'});
+  if(sel){g.strokeStyle=C.accent;g.lineWidth=2;g.strokeRect(x-s*.62,y+6,s*1.24,hgt);}
+  return hgt+(first===false?10:0);}
+// 砝碼盤（可以拖到棒子上）
+const TRAY=[1,2,3,5];
+function trayGeom(W,H){const y=H-40,x0=14,dx=Math.min(60,W*.09);return{y,x0,dx,r:18};}
+function drawTray(g,W,H){const{y,x0,dx}=trayGeom(W,H);
+  text(g,'砝碼盤（拖到棒子上）',x0,y-26,{col:C.muted,size:11,bold:true});
+  TRAY.forEach((m,i)=>{const x=x0+16+i*dx,s=14+m*2.6;
+    g.fillStyle=C.bar2;g.strokeStyle=C.ink;g.lineWidth=1;
+    g.beginPath();g.roundRect(x-s*.5,y-s*.4,s,s*.78,3);g.fill();g.stroke();
+    text(g,m+'',x,y+s*.02,{col:C.panel,size:11,bold:true,align:'center'});
+    text(g,'kg',x,y+s*.62,{col:C.muted,size:10,align:'center'});});}
+DRAW.lev=()=>{const cv=$('cvLev'),{W,H}=fit(cv,.44,300,400),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const{bx,by,bw,sc,px}=lGeom(cv,W,H);
   const gy=by+62;
-  g.fillStyle=C.floor;g.globalAlpha=.45;g.fillRect(0,gy,W,H-gy);g.globalAlpha=1;
+  g.fillStyle=C.floor;g.globalAlpha=.55;g.fillRect(bx-90,gy,180,9);g.globalAlpha=1;
   const a=L2.ang;
   // 支柱
   g.fillStyle=C.fulc;g.beginPath();g.moveTo(bx,by+6);g.lineTo(bx-26,gy);g.lineTo(bx+26,gy);g.closePath();g.fill();
@@ -500,12 +517,19 @@ DRAW.lev=()=>{const cv=$('cvLev'),{W,H}=fit(cv,.40,280,360),g=cv.getContext('2d'
   if(L2.arm){L2.ws.forEach(w=>{const X=(w.x-L2.fx)*sc;if(Math.abs(X)<2)return;
     line(g,0,bh/2+5,X,bh/2+5,X>0?C.load:C.fulc,2,[6,4]);});}
   g.restore();
-  // 重物（鉛直掛著，不跟著棒子轉）
-  L2.ws.forEach((w,i)=>{const X=(w.x-L2.fx)*sc,ca=Math.cos(a),sa=Math.sin(a);
-    const px2=bx+X*ca,py2=by+X*sa+bh/2,k=clamp(W/620,1,2.1),s2=(10+w.m*3.2)*k;
-    loadIcon(g,px2,py2,w.m,L2.mode,L2.sel===i,k);
-    const yb=py2+(L2.mode==='wt'?12+s2*.78:14+s2)+16;
-    arrow(g,px2,yb,px2,yb+Math.min(56,14+w.m*7),C.load,2.2);});
+  // 重物（鉛直掛著，不跟著棒子轉；同一個位置會往下疊）
+  const ca=Math.cos(a),sa2=Math.sin(a),kk=clamp(W/620,1,2.1),gps={};
+  L2.ws.forEach((w,i)=>{(gps[w.x]=gps[w.x]||[]).push(i);});
+  Object.keys(gps).forEach(kx=>{const X=(+kx-L2.fx)*sc,px2=bx+X*ca,py2=by+X*sa2+bh/2;let yy=py2;
+    gps[kx].forEach((idx,j)=>{const w=L2.ws[idx];yy+=loadIcon(g,px2,yy,w.m,L2.mode,L2.sel===idx,kk,j===0);});
+    const tm=gps[kx].reduce((t,i)=>t+L2.ws[i].m,0);
+    arrow(g,px2,yy+8,px2,yy+8+Math.min(56,14+tm*5),C.load,2.2);
+    if(gps[kx].length>1)text(g,'共 '+tm+' kg',px2,yy+8+Math.min(56,14+tm*5)+13,{col:C.load,size:11,bold:true,align:'center'});});
+  drawTray(g,W,H);
+  if(L2.nw)
+    {const s2=(10+L2.nw.m*3.2)*kk;g.globalAlpha=.85;g.fillStyle=C.bar2;g.strokeStyle=C.accent;g.lineWidth=2;
+     g.beginPath();g.roundRect(L2.nw.x-s2*.5,L2.nw.y-s2*.4,s2,s2*.78,3);g.fill();g.stroke();
+     text(g,L2.nw.m+' kg',L2.nw.x,L2.nw.y+s2*.1,{col:C.panel,size:11,bold:true,align:'center'});g.globalAlpha=1;}
   handle(g,bx,by+2,8);
   const net=lNet();
   const bal=Math.abs(net)<.02;
@@ -536,23 +560,37 @@ DRAW.lev=()=>{const cv=$('cvLev'),{W,H}=fit(cv,.40,280,360),g=cv.getContext('2d'
     const h=(y0-18)*v/mx;gg.fillStyle=col;gg.fillRect(cx-bw2/2,y0-h,bw2,h);
     text(gg,nm+' '+nf(v,2),cx,y0+15,{col:col,size:12,bold:true,align:'center'});});
   line(gg,0,y0,G2.W,y0,C.line,1.4);};
-// 指標操作
-(function(){const cv=$('cvLev');let drag=null,moved=false;
+// 指標操作（拖曳支點、拖曳砝碼、從砝碼盤拖新的砝碼上來）
+(function(){const cv=$('cvLev');let drag=null;
   const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
   const inv=(x,y)=>{const W=cv.clientWidth,H=cv._fh||300,{bx,by,sc}=lGeom(cv,W,H);
     const dx=x-bx,dy=y-by,a=-L2.ang,lx=Math.cos(a)*dx-Math.sin(a)*dy,ly=Math.sin(a)*dx+Math.cos(a)*dy;
-    return{cm:L2.fx+lx/sc,ly,bx,by,sc};};
-  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const q=inv(x,y);moved=false;
+    return{cm:L2.fx+lx/sc,ly,bx,by,sc,W,H};};
+  const onBar=q=>q.ly>-90&&q.ly<170&&q.cm>=-3&&q.cm<=LBAR+3;
+  const snap=cm=>{const nx=clamp(Math.round(cm/5)*5,0,LBAR);
+    let best=nx,bd=1e9;L2.ws.forEach(w=>{const d=Math.abs(w.x-cm);if(d<bd){bd=d;best=w.x;}});
+    return bd<=4?best:nx;};                       // 靠近既有砝碼就疊上去
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const q=inv(x,y);
+    // 砝碼盤
+    const{y:ty,x0,dx}=trayGeom(q.W,q.H);
+    for(let i=0;i<TRAY.length;i++){const tx=x0+16+i*dx;
+      if(Math.abs(x-tx)<22&&Math.abs(y-ty)<24){drag={t:'new',m:TRAY[i]};L2.nw={x,y,m:TRAY[i]};
+        cv.setPointerCapture(ev.pointerId);ev.preventDefault();hideStory();kick();return;}}
     if(Math.hypot(x-q.bx,y-q.by)<24){drag={t:'f'};cv.setPointerCapture(ev.pointerId);ev.preventDefault();return;}
     let best=-1,bd=1e9;L2.ws.forEach((w,i)=>{const d=Math.abs(q.cm-w.x);if(d<bd){bd=d;best=i;}});
-    if(best>=0&&bd*q.sc<26&&q.ly>-14&&q.ly<70){drag={t:'w',i:best};L2.sel=best;cv.setPointerCapture(ev.pointerId);ev.preventDefault();kick();return;}
-    if(q.ly>-22&&q.ly<28&&q.cm>=0&&q.cm<=LBAR){const nx=clamp(Math.round(q.cm/5)*5,0,LBAR);
-      if(!L2.ws.some(w=>Math.abs(w.x-nx)<3)){L2.ws.push({x:nx,m:L2.add});hideStory();kick();}}});
-  cv.addEventListener('pointermove',ev=>{if(!drag)return;const[x,y]=pos(ev);const q=inv(x,y);moved=true;
-    if(drag.t==='f'){L2.fx=clamp(Math.round(q.cm/5)*5,5,LBAR-5);}
-    else{const w=L2.ws[drag.i];if(!w)return;w.x=clamp(Math.round(q.cm/5)*5,-20,LBAR+20);w.off=(q.ly>95||w.x<0||w.x>LBAR);}
+    if(best>=0&&bd*q.sc<30&&q.ly>-14&&q.ly<220){
+      // 同一疊的最下面那個先被拿走
+      const same=L2.ws.map((w,i)=>[w,i]).filter(([w])=>w.x===L2.ws[best].x);
+      drag={t:'w',i:same[same.length-1][1]};L2.sel=drag.i;cv.setPointerCapture(ev.pointerId);ev.preventDefault();kick();return;}
+    if(q.ly>-22&&q.ly<28&&q.cm>=0&&q.cm<=LBAR){L2.ws.push({x:snap(q.cm),m:L2.add});hideStory();kick();}});
+  cv.addEventListener('pointermove',ev=>{if(!drag)return;const[x,y]=pos(ev);const q=inv(x,y);
+    if(drag.t==='new'){L2.nw={x,y,m:drag.m};}
+    else if(drag.t==='f'){L2.fx=clamp(Math.round(q.cm/5)*5,5,LBAR-5);}
+    else{const w=L2.ws[drag.i];if(!w)return;w.x=onBar(q)?snap(q.cm):clamp(Math.round(q.cm/5)*5,-20,LBAR+20);w.off=!onBar(q);}
     hideStory();kick();});
-  const up=()=>{if(drag&&drag.t==='w'){const w=L2.ws[drag.i];if(w&&(w.off||w.x<0||w.x>LBAR))L2.ws.splice(drag.i,1);else if(w)delete w.off;}
+  const up=ev=>{if(drag&&drag.t==='new'){const[x,y]=pos(ev||{clientX:0,clientY:0});const q=inv(x,y);
+      if(onBar(q))L2.ws.push({x:snap(q.cm),m:drag.m});L2.nw=null;}
+    else if(drag&&drag.t==='w'){const w=L2.ws[drag.i];if(w&&(w.off||w.x<0||w.x>LBAR))L2.ws.splice(drag.i,1);else if(w)delete w.off;}
     drag=null;L2.sel=-1;kick();};
   cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);})();
 
