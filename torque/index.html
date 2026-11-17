@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>力矩與槓桿</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js"></script>
+<style>
+:root{--bar:#c9a26b;--bar2:#8a6a3f;--fulc:#1c7ed6;--load:#c92a2a;--arm:#2f9e44;--steel:#8d99a6;--floor:#d9dde2;--ghost:#aab2bb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--bar:#a8875a;--bar2:#6e5434;--fulc:#5aa9ff;--load:#ff6b6b;--arm:#51cf66;--steel:#7a8794;--floor:#3a4048;--ghost:#6b7480;color-scheme:dark}}
+:root[data-theme="dark"]{--bar:#a8875a;--bar2:#6e5434;--fulc:#5aa9ff;--load:#ff6b6b;--arm:#51cf66;--steel:#7a8794;--floor:#3a4048;--ghost:#6b7480;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.benchbar .lv{margin-left:auto;display:flex;gap:8px;align-items:center}
+.bench{display:flex;flex-direction:column;gap:12px}
+.bench[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+.box p{margin:0 0 6px;font-size:.95rem}
+.ctl{display:flex;flex-direction:column;gap:2px}
+.ctl .slider{min-width:0;flex:none}
+canvas.cv{display:block;width:100%}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.75}
+.wt{border-collapse:collapse;width:100%;font-size:.92rem;margin-top:4px}
+.wt th,.wt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+.wt td.n,.wt th.n{font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.wt tr.sum td{font-weight:700;border-top:2px solid var(--line)}
+.wt tr.ccw td:first-child{color:var(--fulc)}
+.wt tr.cw td:first-child{color:var(--load)}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+.legend{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:.85rem;color:var(--muted);margin:4px 0 0}
+.legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+.mini{font-size:.85rem;color:var(--muted);margin:4px 0 0}
+dl.fk{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:8px 0 0;align-items:baseline}
+dl.fk dt{color:var(--muted);font-size:13px}
+dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
+.tools{display:flex;flex-wrap:wrap;gap:7px;margin:2px 0 6px}
+.tbtn{border:1px solid var(--line);background:var(--panel);border-radius:10px;min-height:40px;padding:4px 12px;cursor:pointer;font-size:.92rem;color:var(--ink)}
+.tbtn:hover{border-color:var(--accent)}
+.tbtn[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.tbtn .c{font-family:var(--f-mono);font-size:.78rem;opacity:.7;margin-left:5px}
+.tbtn[aria-pressed="true"] .c{opacity:.85}
+.cls{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.cls .c1,.cls .c2,.cls .c3{border-radius:8px;padding:6px 10px;font-size:.88rem;border:1px solid var(--line);flex:1 1 150px}
+.cls .on{border-color:var(--accent);background:var(--accent-soft);font-weight:700}
+.quizrow{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:6px}
+.wt td.bar{width:38%}
+.wt .b{height:12px;border-radius:3px;display:inline-block;vertical-align:middle}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國三 2-5、3-4 ／ <a href="../energy/">功與能</a></div>
+      <h1>力矩與槓桿</h1>
+    </div>
+    <p>三個實驗台：力矩（拖曳施力點與力的方向，看力臂怎麼變）、槓桿平衡（支點與砝碼都可以拖，左右力矩即時比較）、三類槓桿（十二種器具的支點與兩個力臂，附判斷練習）。橘色的東西可以拖曳。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="tq" aria-pressed="true"><span class="n">1</span>力矩</button>
+      <button data-v="lev" aria-pressed="false"><span class="n">2</span>槓桿平衡</button>
+      <button data-v="cls" aria-pressed="false"><span class="n">3</span>三類槓桿</button>
+    </span>
+    <span class="lv"><span class="tlabel">重力 g</span><span class="seg" id="gSeg"><button data-v="9.8" aria-pressed="false">9.8</button><button data-v="10" aria-pressed="true">10</button></span></span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- ============ 1 力矩 ============ -->
+  <section class="bench" id="b-tq">
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="tScene"><button data-v="wrench" aria-pressed="true">扳手轉螺帽</button><button data-v="door" aria-pressed="false">推門（俯視）</button><button data-v="bolt" aria-pressed="false">腳踏車踏板</button></span>
+        <button class="btn primary" id="tPlay">▶ 放手看它轉</button>
+        <label class="tog"><input type="checkbox" id="tArm" checked> 畫出力臂</label>
+        <label class="tog"><input type="checkbox" id="tComp"> 把力分解</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvTq" aria-label="力矩與力臂"></canvas></div>
+      <p class="hint">拖曳橘色圓點：靠近螺帽的那個改「施力點到轉軸的距離 r」，箭頭尖端改「力的大小與方向」。綠色虛線是力臂（轉軸到力的作用線的垂直距離）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>設定</h3>
+        <div class="ctl">
+          <div class="slider"><span class="tlabel">施力 F</span><input type="range" id="tF" min="0" max="50" step="1" value="20"><output id="tFo"></output></div>
+          <div class="slider"><span class="tlabel">距離 r</span><input type="range" id="tR" min="5" max="50" step="1" value="30"><output id="tRo"></output></div>
+          <div class="slider"><span class="tlabel">力的方向 θ</span><input type="range" id="tTh" min="0" max="180" step="5" value="90"><output id="tTho"></output></div>
+        </div>
+        <div class="toolbar" style="margin-top:8px">
+          <button class="btn" id="tRec">＋ 記錄這一組</button>
+          <button class="btn" id="tClr">⟲ 清除記錄</button>
+        </div>
+        <table class="wt" id="tTable"></table>
+        <p class="mini">想比較「只改 r」或「只改 θ」時，固定其他滑桿再記錄，就是控制變因的練習。</p>
+      </section>
+      <section class="panel box">
+        <h3>力矩 <small style="color:var(--muted);font-weight:400">τ ＝ 力 × 力臂</small></h3>
+        <div class="formula2" id="tFormula"></div>
+        <dl class="fk" id="tNow"></dl>
+        <div class="verdict" id="tSay"></div>
+        <p class="mini">力矩的單位是牛頓・公尺（N・m）。力的方向通過轉軸（θ＝0° 或 180°）時力臂為 0，再大的力也轉不動。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 2 槓桿平衡 ============ -->
+  <section class="bench" id="b-lev" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">器材</span>
+        <span class="seg" id="lMode"><button data-v="wt" aria-pressed="true">砝碼與棒子</button><button data-v="see" aria-pressed="false">蹺蹺板</button><button data-v="arm" aria-pressed="false">提水桶的扁擔</button></span>
+        <label class="tog"><input type="checkbox" id="lBarW"> 棒子本身有重量（2 kg）</label>
+        <label class="tog"><input type="checkbox" id="lFree" checked> 放手（不平衡就會傾斜）</label>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">加掛</span>
+        <span class="seg" id="lAdd"><button data-v="1" aria-pressed="true">1 kg</button><button data-v="2" aria-pressed="false">2 kg</button><button data-v="3" aria-pressed="false">3 kg</button><button data-v="5" aria-pressed="false">5 kg</button></span>
+        <button class="btn" id="lDel">－ 移除最後一個</button>
+        <button class="btn" id="lReset">⟲ 回復預設</button>
+        <label class="tog"><input type="checkbox" id="lArm" checked> 畫出力臂</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvLev" aria-label="槓桿平衡"></canvas></div>
+      <p class="hint">點棒子上的空位會掛上一個砝碼；拖曳砝碼可以左右移動，拖到棒子外面就移除。藍色三角形的支點也可以拖。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>每個重物的力矩</h3>
+        <table class="wt" id="lTable"></table>
+        <div class="verdict" id="lSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>要平衡的話</h3>
+        <div class="formula2" id="lFormula"></div>
+        <p class="mini">左邊力矩總和 ＝ 右邊力矩總和 時，棒子才會平衡。支點不在中點時，棒子自己的重量（重心在中點）也要算進去。</p>
+        <h3 style="margin-top:12px">力矩長條圖</h3>
+        <canvas class="cv" id="cvLG" aria-label="左右力矩比較"></canvas>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 3 三類槓桿 ============ -->
+  <section class="bench" id="b-cls" hidden>
+    <section class="panel">
+      <p class="ptitle">器具 <small>點一下看它的支點、施力點、抗力點</small></p>
+      <div class="tools" id="tlList"></div>
+      <div class="toolbar">
+        <button class="btn primary" id="cPlay">▶ 操作一次</button>
+        <label class="tog"><input type="checkbox" id="cArm" checked> 畫出兩個力臂</label>
+        <label class="tog"><input type="checkbox" id="cSch" checked> 同時畫示意圖</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvCls" aria-label="槓桿器具與示意圖"></canvas></div>
+      <p class="hint">藍色三角形 △ 是支點，橘色箭頭是施力（我們出的力），紅色箭頭是抗力（要克服的力）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3 id="cName"></h3>
+        <div class="cls" id="cCls">
+          <div class="c1"><b>第一類</b><br>支點在中間<br><small>可省力也可費力</small></div>
+          <div class="c2"><b>第二類</b><br>抗力點在中間<br><small>一定省力、費距離</small></div>
+          <div class="c3"><b>第三類</b><br>施力點在中間<br><small>一定費力、省距離</small></div>
+        </div>
+        <div class="formula2" id="cFormula"></div>
+        <div class="verdict" id="cSay"></div>
+      </section>
+      <section class="panel box">
+        <h3>判斷練習</h3>
+        <p class="mini" id="cQ">按「出一題」開始。</p>
+        <div class="quizrow">
+          <button class="btn primary" id="cQnew">出一題</button>
+          <span class="seg" id="cQans"><button data-v="1" aria-pressed="false">第一類</button><button data-v="2" aria-pressed="false">第二類</button><button data-v="3" aria-pressed="false">第三類</button></span>
+        </div>
+        <div class="verdict" id="cQsay" style="margin-top:8px">答對 0 ／ 共 0 題</div>
+        <p class="mini">訣竅：先找支點，再看「抗力點」和「施力點」哪一個夾在中間。抗力在中間就是第二類（省力），施力在中間就是第三類（費力）。</p>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>常見題型；之後補上講義頁碼與考古題題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+
+  <div class="notes">
+    <div><h2>力矩</h2><p>力矩 ＝ 力 × 力臂，力臂是「轉軸到力的作用線的垂直距離」，不是轉軸到施力點的距離。同樣大的力，施力點愈遠、方向愈接近垂直，力矩愈大；力的方向對準轉軸時力臂為 0，完全轉不動。</p></div>
+    <div><h2>槓桿</h2><p>槓桿平衡：施力 × 施力臂 ＝ 抗力 × 抗力臂。施力臂比抗力臂長就省力（但要拉比較長的距離），短就費力（但省距離）。不管哪一類，省力都不省功。</p></div>
+    <div><h2>常見誤解</h2><p>「力愈大力矩一定愈大」：方向不對時力矩還是 0。「第一類槓桿一定省力」：支點靠近施力點時反而費力（例如鑷子型的剪刀、剪鐵絲的位置）。「第三類槓桿沒有用」：它換到的是速度與靈活，例如筷子、鑷子、球棒。</p></div>
+  </div>
+</div>
+<script>
+(()=>{
+
+// ================= 共用 =================
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),TAU=Math.PI*2,D2R=Math.PI/180;
+const DPR=()=>Math.min((window.devicePixelRatio||1)*((window.visualViewport&&visualViewport.scale)||1),3);   // 兩指放大頁面時也要重畫，否則畫布會糊
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','bar','bar2','fulc','load','arm','steel','floor','ghost'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
+  let h=Math.round(clamp(w*ratio,minH,maxH));
+  if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
+  cv.style.height=h+'px';const d=DPR();
+  if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
+  cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null,mono=false}={}){
+  g.font=`${bold?700:500} ${size}px ${mono?'"IBM Plex Mono",monospace':FONT}`;g.textAlign=align;g.textBaseline=base;
+  const w=g.measureText(s).width,cw=g.canvas.clientWidth||1e9;let px=align==='center'?x-w/2:align==='right'?x-w:x;x+=Math.max(4-px,0)+Math.min(cw-4-(px+w),0);
+  if(bg){px=align==='center'?x-w/2:align==='right'?x-w:x;const py=base==='middle'?y-size/2-1:base==='top'?y-1:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-3,py-2,w+6,size+5);g.restore();}
+  g.fillStyle=col;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
+function head(g,x,y,ang,col,size=10){g.fillStyle=col;g.beginPath();g.moveTo(x,y);g.lineTo(x-size*Math.cos(ang-.42),y-size*Math.sin(ang-.42));g.lineTo(x-size*Math.cos(ang+.42),y-size*Math.sin(ang+.42));g.closePath();g.fill();}
+function arrow(g,x1,y1,x2,y2,col,w=2.4){const L=Math.hypot(x2-x1,y2-y1);if(L<2)return;const a=Math.atan2(y2-y1,x2-x1);line(g,x1,y1,x2-Math.cos(a)*5,y2-Math.sin(a)*5,col,w);head(g,x2,y2,a,col,Math.min(11,L*.6));}
+function handle(g,x,y,r=9){g.fillStyle=C.accent;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const h of handles()){const d=h.hit?h.hit(x,y):Math.hypot(x-h.x,y-h.y);if(d<(h.r||26)&&d<bd){bd=d;best=h;}}return best;};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const h=pick(x,y);if(!h)return;cur={h,dx:h.free?0:h.x-x,dy:h.free?0:h.y-y};h.start&&h.start();cv.setPointerCapture(ev.pointerId);ev.preventDefault();});
+  cv.addEventListener('pointermove',ev=>{const[x,y]=pos(ev);if(!cur){cv.style.cursor=pick(x,y)?'grab':'default';return;}cur.h.move(x+cur.dx,y+cur.dy);after();});
+  const up=()=>{if(cur&&cur.h.end)cur.h.end();cur=null;after();};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const nf=(x,d=1)=>{const r=(Math.round(x*Math.pow(10,d))/Math.pow(10,d));return (Object.is(r,-0)?0:r).toFixed(d);};
+const J=x=>{const a=Math.abs(x);return a>=1e5?(x/1000).toFixed(0)+' kJ':a>=100?x.toFixed(0)+' J':a>=10?x.toFixed(1)+' J':x.toFixed(2)+' J';};
+let G=9.8;
+function sliderBind(id,fn,fmt){const el=$(id),o=$(id+'o');const up=()=>{o.textContent=fmt(+el.value);};el.addEventListener('input',()=>{fn(+el.value);up();hideStory();kick();});up();return v=>{el.value=v;o.textContent=fmt(v);};}
+
+// ================= 實驗台切換與迴圈 =================
+let bench='tq';const BENCHES=['tq','lev','cls'];
+const DRAW={},TICK={},UI={};
+function setBench(b,noHash){if(!BENCHES.includes(b))b='tq';bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+segOn($('gSeg'),v=>{G=+v;segSet($('gSeg'),v);kick();});
+G=10;
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+new MutationObserver(()=>{readColors();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+addEventListener('resize',kick);
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;$('story').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideStory(){$('story').hidden=true;document.querySelectorAll('.qchip[aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+
+// ======================================================================
+// 1 力矩
+// ======================================================================
+const T={F:20,r:30,th:90,scene:'wrench',arm:true,comp:false,phi:0,run:false,rows:[]};
+const setTF=sliderBind('tF',v=>{T.F=v;T.phi=0;T.run=false;},v=>v+' N');
+const setTR=sliderBind('tR',v=>{T.r=v;T.phi=0;T.run=false;},v=>v+' 公分');
+const setTTh=sliderBind('tTh',v=>{T.th=v;T.phi=0;T.run=false;},v=>v+'°');
+segOn($('tScene'),v=>{T.scene=v;T.phi=0;T.run=false;segSet($('tScene'),v);hideStory();kick();});
+$('tArm').addEventListener('change',e=>{T.arm=e.target.checked;kick();});
+$('tComp').addEventListener('change',e=>{T.comp=e.target.checked;kick();});
+$('tPlay').addEventListener('click',()=>{if(T.run){T.run=false;}else{T.phi=0;T.run=true;}UI.tq();kick();});
+$('tRec').addEventListener('click',()=>{const d=T.r*Math.sin(T.th*D2R);T.rows.push({r:T.r,th:T.th,F:T.F,d:d,t:T.F*d/100});if(T.rows.length>8)T.rows.shift();tTab();});
+$('tClr').addEventListener('click',()=>{T.rows=[];tTab();});
+function tTab(){const el=$('tTable');if(!T.rows.length){el.innerHTML='<tr><td class="mini" style="color:var(--muted)">還沒有記錄</td></tr>';return;}
+  el.innerHTML='<tr><th class="n">F (N)</th><th class="n">r (cm)</th><th class="n">θ</th><th class="n">力臂 (cm)</th><th class="n">力矩 (N・m)</th></tr>'+
+    T.rows.map(r=>`<tr><td class="n">${r.F}</td><td class="n">${r.r}</td><td class="n">${r.th}°</td><td class="n">${nf(r.d,1)}</td><td class="n">${nf(r.t,2)}</td></tr>`).join('');}
+const TQSC={wrench:{ax:'螺帽',arm:'扳手',pt:'手握的位置'},door:{ax:'門軸（鉸鏈）',arm:'門',pt:'推的位置'},bolt:{ax:'軸心',arm:'曲柄',pt:'踩踏板的位置'}};
+UI.tq=()=>{$('tPlay').textContent=T.run?'■ 停':'▶ 放手看它轉';$('tArm').checked=T.arm;$('tComp').checked=T.comp;tTab();};
+TICK.tq=dt=>{if(!T.run)return false;const d=T.r*Math.sin(T.th*D2R),tq=T.F*d/100;
+  if(Math.abs(tq)<1e-3){return true;}
+  T.phi+=Math.sign(tq)*Math.min(2.4,.25+Math.abs(tq)*.5)*dt;
+  if(Math.abs(T.phi)>1.4){T.phi=Math.sign(T.phi)*1.4;T.run=false;UI.tq();return false;}
+  return true;};
+DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const sc=(W*.52)/55;
+  const ox=W*.27,oy=H*.6,th=T.th*D2R,phi=T.phi;
+  // 背景
+  if(T.scene==='door'){g.fillStyle=C.floor;g.globalAlpha=.5;g.fillRect(0,0,W,H);g.globalAlpha=1;
+    g.fillStyle=C.steel;g.fillRect(ox-26,oy-H*.42,20,H*.84);text(g,'牆',ox-16,oy-H*.42+14,{col:C.panel,size:12,align:'center',bold:true});}
+  else{g.fillStyle=C.floor;g.globalAlpha=.45;g.fillRect(0,H*.86,W,H*.14);g.globalAlpha=1;}
+  g.save();g.translate(ox,oy);g.rotate(-phi);
+  const rp=T.r*sc;
+  // 轉軸與桿
+  if(T.scene==='door'){g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=2;const dh=Math.max(26,H*.1);
+    g.beginPath();g.rect(0,-dh/2,Math.max(rp+28,50*sc),dh);g.fill();g.stroke();}
+  else if(T.scene==='bolt'){g.strokeStyle=C.steel;g.lineWidth=11;g.lineCap='round';g.beginPath();g.moveTo(0,0);g.lineTo(rp,0);g.stroke();g.lineCap='butt';
+    g.fillStyle=C.bar2;g.fillRect(rp-13,-9,26,18);}
+  else{g.fillStyle=C.steel;g.strokeStyle=C.bar2;g.lineWidth=1.5;
+    g.beginPath();g.roundRect(-6,-9,Math.max(rp+22,20),18,5);g.fill();g.stroke();}
+  // 力臂與作用線（在旋轉座標內畫）
+  const ux=Math.cos(th),uy=-Math.sin(th),px=rp,py=0;
+  const tfoot=-(px*ux+py*uy),fx=px+tfoot*ux,fy=py+tfoot*uy;
+  const dcm=Math.abs(T.r*Math.sin(th)),tq=T.F*dcm/100;
+  const Lf=16+T.F*2.7;
+  if(T.F>0){line(g,px-ux*430,py-uy*430,px+ux*430,py+uy*430,C.ghost,1,[4,5]);}
+  if(T.arm&&T.F>0&&dcm>.3){line(g,0,0,fx,fy,C.arm,2.6,[7,5]);
+    text(g,'力臂 '+nf(dcm,1)+' cm',(fx)/2,(fy)/2-12,{col:C.arm,size:12,bold:true,align:'center',bg:C.panel});
+    g.strokeStyle=C.arm;g.lineWidth=1.6;const s2=9,a1=Math.atan2(fy,fx);
+    g.beginPath();g.moveTo(fx-ux*s2,fy-uy*s2);g.lineTo(fx-ux*s2-Math.cos(a1)*s2,fy-uy*s2-Math.sin(a1)*s2);g.lineTo(fx-Math.cos(a1)*s2,fy-Math.sin(a1)*s2);g.stroke();}
+  // r 標示
+  line(g,0,22,px,22,C.muted,1.4,[3,4]);
+  text(g,'r ＝ '+T.r+' cm',px/2,36,{col:C.muted,size:12,align:'center'});
+  // 力
+  if(T.F>0){arrow(g,px,py,px+ux*Lf,py+uy*Lf,C.accent,3.4);
+    text(g,'F ＝ '+T.F+' N',px+ux*Lf+(ux>=0?8:-8),py+uy*Lf-6,{col:C.accent,size:13,bold:true,align:ux>=0?'left':'right'});
+    if(T.comp){const fpar=T.F*Math.cos(th),fper=T.F*Math.sin(th);
+      arrow(g,px,py,px+Math.sign(fpar)*Math.abs(fpar)*2.7,py,C.ghost,2.4);
+      arrow(g,px,py,px,py-fper*2.7,C.green,2.6);
+      text(g,'有效：F sinθ ＝ '+nf(fper,1)+' N',px+6,py-fper*2.7-4,{col:C.green,size:12,bold:true});
+      if(Math.abs(fpar)>.5)text(g,'沒用：F cosθ ＝ '+nf(fpar,1)+' N',px+Math.sign(fpar)*Math.abs(fpar)*2.7+(fpar>0?6:-6),py+16,{col:C.muted,size:12,align:fpar>0?'left':'right'});}
+    // 角度弧
+    if(T.th>2&&T.th<178){g.strokeStyle=C.blue;g.lineWidth=1.6;g.beginPath();g.arc(px,py,26,-th,0,false);g.stroke();
+      text(g,'θ '+T.th+'°',px+30*Math.cos(-th/2),py+30*Math.sin(-th/2),{col:C.blue,size:12,bold:true});}}
+  // 轉軸圖示
+  if(T.scene==='wrench'){g.fillStyle=C.bar2;g.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3;g[i?'lineTo':'moveTo'](Math.cos(a)*15,Math.sin(a)*15);}g.closePath();g.fill();}
+  g.restore();
+  g.fillStyle=C.fulc;g.beginPath();g.arc(ox,oy,7,0,TAU);g.fill();
+  text(g,TQSC[T.scene].ax,ox,oy+24,{col:C.fulc,size:12,bold:true,align:'center',bg:C.panel});
+  handle(g,ox+Math.cos(-phi)*rp,oy+Math.sin(-phi)*rp,8);
+  if(T.F>0)handle(g,ox+Math.cos(-phi)*rp+(Math.cos(-phi)*ux-Math.sin(-phi)*uy)*Lf,oy+Math.sin(-phi)*rp+(Math.sin(-phi)*ux+Math.cos(-phi)*uy)*Lf,8);
+  // 轉動箭頭
+  if(Math.abs(tq)>1e-3){const sg=Math.sign(tq),R=clamp(rp*.38,34,78);g.strokeStyle=C.purple;g.lineWidth=2.4;g.beginPath();g.arc(ox,oy,R,sg>0?-.4:.4,sg>0?-1.5:1.5,sg<0);g.stroke();
+    const ea=sg>0?-1.5:1.5;head(g,ox+Math.cos(ea)*R,oy+Math.sin(ea)*R,ea-sg*Math.PI/2,C.purple,9);
+    text(g,sg>0?'逆時針轉':'順時針轉',ox,oy-R-10,{col:C.purple,size:12,bold:true,align:'center'});}
+  else text(g,'轉不動（力矩 ＝ 0）',ox,oy-44,{col:C.load,size:13,bold:true,align:'center'});
+  // 文字
+  const S=TQSC[T.scene];
+  $('tFormula').innerHTML=`力臂 ＝ r × sinθ ＝ ${T.r} × sin${T.th}° ＝ <b>${nf(dcm,1)} cm ＝ ${nf(dcm/100,3)} m</b><br>力矩 τ ＝ F × 力臂 ＝ ${T.F} × ${nf(dcm/100,3)} ＝ <b>${nf(tq,2)} N・m</b>`;
+  $('tNow').innerHTML=`<dt>施力 F</dt><dd>${T.F} N</dd><dt>${S.pt}到${S.ax}</dt><dd>${T.r} cm</dd><dt>力臂</dt><dd>${nf(dcm,1)} cm</dd><dt>力矩</dt><dd>${nf(tq,2)} N・m</dd>`;
+  let say;
+  if(T.F===0)say='施力是 0，當然不會轉。';
+  else if(dcm<.3)say=`力的方向正好通過${S.ax}，力臂 ＝ 0，所以力矩 ＝ 0：不管用多大的力都轉不動。`;
+  else if(T.th===90)say=`力和${S.arm}垂直，力臂剛好等於 r ＝ ${T.r} cm，是同樣的力能產生的最大力矩。`;
+  else say=`力臂只有 ${nf(dcm,1)} cm（比 r ＝ ${T.r} cm 短），所以力矩只有 ${nf(tq,2)} N・m。把力轉成垂直方向（θ ＝ 90°）會變成 ${nf(T.F*T.r/100,2)} N・m。`;
+  $('tSay').textContent=say;};
+// 拖曳
+dragger($('cvTq'),()=>{const cv=$('cvTq'),W=cv.clientWidth,H=cv._fh||300;
+  const sc=(W*.52)/55,ox=W*.27,oy=H*.6,th=T.th*D2R,phi=T.phi;
+  const c=Math.cos(-phi),s=Math.sin(-phi),rp=T.r*sc;
+  const pxs=ox+c*rp,pys=oy+s*rp;
+  const ux=Math.cos(th),uy=-Math.sin(th),Lf=16+T.F*2.7;
+  const hx=pxs+(c*ux-s*uy)*Lf,hy=pys+(s*ux+c*uy)*Lf;
+  return [{x:hx,y:hy,r:30,move:(x,y)=>{const dx=x-pxs,dy=y-pys;const lx=c*dx+s*dy,ly=-s*dx+c*dy;
+      let F=clamp(Math.round((Math.hypot(lx,ly)-16)/2.7),0,50),a=Math.atan2(-ly,lx)/D2R;
+      if(a<0)a+=360;if(a>180)a=a>270?0:180;
+      T.F=F;T.th=Math.round(a/5)*5;setTF(T.F);setTTh(T.th);T.phi=0;T.run=false;}},
+    {x:pxs,y:pys,r:26,move:(x,y)=>{const dx=x-ox,dy=y-oy;const lx=c*dx+s*dy;
+      T.r=clamp(Math.round(lx/sc),5,50);setTR(T.r);T.phi=0;T.run=false;}}];},()=>{hideStory();kick();});
+
+// ======================================================================
+// 2 槓桿平衡
+// ======================================================================
+const LBAR=100;
+const L2={mode:'wt',fx:50,barW:false,free:true,arm:true,add:1,ws:[{x:20,m:2},{x:80,m:1}],ang:0,tgt:0};
+const l2def=()=>JSON.parse(JSON.stringify([{x:20,m:2},{x:80,m:1}]));
+segOn($('lMode'),v=>{L2.mode=v;segSet($('lMode'),v);
+  if(v==='arm'){L2.fx=50;L2.ws=[{x:15,m:3},{x:85,m:3}];}else if(v==='see'){L2.fx=50;L2.ws=[{x:15,m:3},{x:80,m:2}];}
+  hideStory();UI.lev();kick();});
+segOn($('lAdd'),v=>{L2.add=+v;segSet($('lAdd'),v);});
+$('lBarW').addEventListener('change',e=>{L2.barW=e.target.checked;kick();});
+$('lFree').addEventListener('change',e=>{L2.free=e.target.checked;kick();});
+$('lArm').addEventListener('change',e=>{L2.arm=e.target.checked;kick();});
+$('lDel').addEventListener('click',()=>{L2.ws.pop();hideStory();kick();});
+$('lReset').addEventListener('click',()=>{L2.fx=50;L2.ws=l2def();L2.barW=false;$('lBarW').checked=false;hideStory();kick();});
+const lNet=()=>{let m=0;L2.ws.forEach(w=>m+=w.m*(L2.fx-w.x));if(L2.barW)m+=2*(L2.fx-LBAR/2);return m*G/100;};
+const lSide=s=>{let t=0;L2.ws.forEach(w=>{const d=(L2.fx-w.x);if(s<0?d>0:d<0)t+=w.m*G*Math.abs(d)/100;});
+  if(L2.barW){const d=L2.fx-LBAR/2;if(s<0?d>0:d<0)t+=2*G*Math.abs(d)/100;}return t;};
+UI.lev=()=>{segSet($('lMode'),L2.mode);segSet($('lAdd'),L2.add);};
+TICK.lev=dt=>{const net=lNet();
+  L2.tgt=(!L2.free)?0:(Math.abs(net)<.02?0:Math.sign(net)*.17);
+  const d=L2.tgt-L2.ang;if(Math.abs(d)<.002){L2.ang=L2.tgt;return false;}
+  L2.ang+=d*Math.min(1,dt*5);return true;};
+function lGeom(cv,W,H){const bx=W*.5,by=H*.46,bw=Math.min(W*.74,760);return{bx,by,bw,sc:bw/LBAR,px:x=>bx+(x-L2.fx)*(bw/LBAR)};}
+function loadIcon(g,x,y,m,mode,sel,k){const s=(10+m*3.2)*(k||1);
+  if(mode==='see'){g.fillStyle=C.blue;g.beginPath();g.arc(x,y+s*.55,s*.42,0,TAU);g.fill();
+    g.beginPath();g.roundRect(x-s*.42,y+s*.9,s*.84,s*1.1,4);g.fill();}
+  else if(mode==='arm'){g.strokeStyle=C.steel;g.lineWidth=1.6;line(g,x,y,x,y+14,C.steel,1.6);
+    g.fillStyle=C.blue;g.beginPath();g.moveTo(x-s*.5,y+14);g.lineTo(x+s*.5,y+14);g.lineTo(x+s*.36,y+14+s);g.lineTo(x-s*.36,y+14+s);g.closePath();g.fill();}
+  else{line(g,x,y,x,y+12,C.steel,1.6);g.fillStyle=C.bar2;g.strokeStyle=C.ink;g.lineWidth=1;
+    g.beginPath();g.roundRect(x-s*.5,y+12,s,s*.78,3);g.fill();}
+  text(g,m+' kg',x,y+(mode==='wt'?12+s*.78+13:14+s+13),{col:C.ink,size:12,bold:true,align:'center'});
+  if(sel){g.strokeStyle=C.accent;g.lineWidth=2;g.strokeRect(x-s*.6,y+8,s*1.2,s*1.2);}}
+DRAW.lev=()=>{const cv=$('cvLev'),{W,H}=fit(cv,.40,280,360),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const{bx,by,bw,sc,px}=lGeom(cv,W,H);
+  const gy=by+62;
+  g.fillStyle=C.floor;g.globalAlpha=.45;g.fillRect(0,gy,W,H-gy);g.globalAlpha=1;
+  const a=L2.ang;
+  // 支柱
+  g.fillStyle=C.fulc;g.beginPath();g.moveTo(bx,by+6);g.lineTo(bx-26,gy);g.lineTo(bx+26,gy);g.closePath();g.fill();
+  text(g,L2.mode==='arm'?'肩膀（支點）':'支點',bx,gy+15,{col:C.fulc,size:12,bold:true,align:'center'});
+  g.save();g.translate(bx,by);g.rotate(a);
+  g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=1.6;
+  const x0=-(L2.fx)*sc,x1=(LBAR-L2.fx)*sc,bh=L2.mode==='see'?12:10;
+  g.beginPath();g.roundRect(x0,-bh/2,x1-x0,bh,3);g.fill();g.stroke();
+  // 刻度
+  for(let i=0;i<=LBAR;i+=10){const X=(i-L2.fx)*sc;line(g,X,-bh/2,X,-bh/2-(i%50?4:7),C.bar2,1);
+    if(i%20===0)text(g,String(Math.abs(i-L2.fx)),X,-bh/2-11,{col:C.muted,size:11,align:'center',mono:true});}
+  // 棒重
+  if(L2.barW){const X=(LBAR/2-L2.fx)*sc;arrow(g,X,0,X,38,C.ghost,2.4);text(g,'棒重 2 kg',X,52,{col:C.muted,size:11,align:'center',bold:true});}
+  // 力臂
+  if(L2.arm){L2.ws.forEach(w=>{const X=(w.x-L2.fx)*sc;if(Math.abs(X)<2)return;
+    line(g,0,bh/2+5,X,bh/2+5,X>0?C.load:C.fulc,2,[6,4]);});}
+  g.restore();
+  // 重物（鉛直掛著，不跟著棒子轉）
+  L2.ws.forEach((w,i)=>{const X=(w.x-L2.fx)*sc,ca=Math.cos(a),sa=Math.sin(a);
+    const px2=bx+X*ca,py2=by+X*sa+bh/2,k=clamp(W/620,1,2.1),s2=(10+w.m*3.2)*k;
+    loadIcon(g,px2,py2,w.m,L2.mode,L2.sel===i,k);
+    const yb=py2+(L2.mode==='wt'?12+s2*.78:14+s2)+16;
+    arrow(g,px2,yb,px2,yb+Math.min(56,14+w.m*7),C.load,2.2);});
+  handle(g,bx,by+2,8);
+  const net=lNet();
+  const bal=Math.abs(net)<.02;
+  text(g,bal?'平衡':'不平衡',W-10,16,{col:bal?C.green:C.load,size:14,bold:true,align:'right'});
+  // 表格
+  const rows=L2.ws.map((w,i)=>{const d=(L2.fx-w.x)/100,F=w.m*G;return{nm:(d>0?'左':d<0?'右':'支點上')+' '+w.m+' kg',F,d:Math.abs(d),t:F*Math.abs(d),s:Math.sign(d)};});
+  if(L2.barW){const d=(L2.fx-LBAR/2)/100;rows.push({nm:'棒子本身 2 kg',F:2*G,d:Math.abs(d),t:2*G*Math.abs(d),s:Math.sign(d)});}
+  const SL=lSide(-1),SR=lSide(1);
+  $('lTable').innerHTML='<tr><th>重物</th><th class="n">重量 (N)</th><th class="n">力臂 (m)</th><th class="n">力矩 (N・m)</th></tr>'+
+    rows.map(r=>`<tr class="${r.s>0?'ccw':r.s<0?'cw':''}"><td>${r.nm}</td><td class="n">${nf(r.F,0)}</td><td class="n">${nf(r.d,2)}</td><td class="n">${nf(r.t,2)}</td></tr>`).join('')+
+    `<tr class="sum"><td>左邊總和</td><td class="n"></td><td class="n"></td><td class="n">${nf(SL,2)}</td></tr>`+
+    `<tr class="sum"><td>右邊總和</td><td class="n"></td><td class="n"></td><td class="n">${nf(SR,2)}</td></tr>`;
+  let f=`左：${nf(SL,2)} N・m　　右：${nf(SR,2)} N・m<br>`;
+  if(bal)f+='兩邊相等 → <b>平衡</b>';
+  else{const diff=Math.abs(SL-SR),hi=SL>SR?'左':'右';f+=`<b>${hi}邊多 ${nf(diff,2)} N・m</b>，所以${hi}邊會往下沉`;
+    const last=L2.ws[L2.ws.length-1];
+    if(last){const other=L2.ws.slice(0,-1).reduce((s,w)=>s+w.m*(L2.fx-w.x),0)+(L2.barW?2*(L2.fx-LBAR/2):0);
+      const need=L2.fx-(-other/last.m);
+      if(need>=0&&need<=LBAR)f+=`<br>把最後掛上的 ${last.m} kg 移到刻度 ${nf(need,0)}（離支點 ${nf(Math.abs(need-L2.fx),0)} cm）就會平衡。`;}}
+  $('lFormula').innerHTML=f;
+  $('lSay').textContent=bal?(L2.ws.length?`左右力矩都是 ${nf(SL,2)} N・m，所以平衡。重的那一邊要靠近支點、輕的那一邊要離遠一點。`:'棒子上沒有東西。'):
+    (SL>SR?`左邊力矩比較大，左邊下沉。`:`右邊力矩比較大，右邊下沉。`);
+  // 長條圖
+  const cg=$('cvLG'),G2=fit(cg,.42,110,170),gg=cg.getContext('2d');
+  gg.clearRect(0,0,G2.W,G2.H);
+  const mx=Math.max(SL,SR,1),bw2=G2.W*.26,y0=G2.H-26;
+  [[SL,'左',C.fulc,G2.W*.3],[SR,'右',C.load,G2.W*.7]].forEach(([v,nm,col,cx])=>{
+    const h=(y0-18)*v/mx;gg.fillStyle=col;gg.fillRect(cx-bw2/2,y0-h,bw2,h);
+    text(gg,nm+' '+nf(v,2),cx,y0+15,{col:col,size:12,bold:true,align:'center'});});
+  line(gg,0,y0,G2.W,y0,C.line,1.4);};
+// 指標操作
+(function(){const cv=$('cvLev');let drag=null,moved=false;
+  const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const inv=(x,y)=>{const W=cv.clientWidth,H=cv._fh||300,{bx,by,sc}=lGeom(cv,W,H);
+    const dx=x-bx,dy=y-by,a=-L2.ang,lx=Math.cos(a)*dx-Math.sin(a)*dy,ly=Math.sin(a)*dx+Math.cos(a)*dy;
+    return{cm:L2.fx+lx/sc,ly,bx,by,sc};};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const q=inv(x,y);moved=false;
+    if(Math.hypot(x-q.bx,y-q.by)<24){drag={t:'f'};cv.setPointerCapture(ev.pointerId);ev.preventDefault();return;}
+    let best=-1,bd=1e9;L2.ws.forEach((w,i)=>{const d=Math.abs(q.cm-w.x);if(d<bd){bd=d;best=i;}});
+    if(best>=0&&bd*q.sc<26&&q.ly>-14&&q.ly<70){drag={t:'w',i:best};L2.sel=best;cv.setPointerCapture(ev.pointerId);ev.preventDefault();kick();return;}
+    if(q.ly>-22&&q.ly<28&&q.cm>=0&&q.cm<=LBAR){const nx=clamp(Math.round(q.cm/5)*5,0,LBAR);
+      if(!L2.ws.some(w=>Math.abs(w.x-nx)<3)){L2.ws.push({x:nx,m:L2.add});hideStory();kick();}}});
+  cv.addEventListener('pointermove',ev=>{if(!drag)return;const[x,y]=pos(ev);const q=inv(x,y);moved=true;
+    if(drag.t==='f'){L2.fx=clamp(Math.round(q.cm/5)*5,5,LBAR-5);}
+    else{const w=L2.ws[drag.i];if(!w)return;w.x=clamp(Math.round(q.cm/5)*5,-20,LBAR+20);w.off=(q.ly>95||w.x<0||w.x>LBAR);}
+    hideStory();kick();});
+  const up=()=>{if(drag&&drag.t==='w'){const w=L2.ws[drag.i];if(w&&(w.off||w.x<0||w.x>LBAR))L2.ws.splice(drag.i,1);else if(w)delete w.off;}
+    drag=null;L2.sel=-1;kick();};
+  cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);})();
+
+// ======================================================================
+// 3 三類槓桿
+// ======================================================================
+const TOOLS=[
+ {id:'see',nm:'蹺蹺板',cls:1,O:50,E:0,L:100,Wf:300,en:'坐著的人',ln:'另一邊的人',note:'兩邊力臂一樣長時，體重一樣才平衡。'},
+ {id:'scis',nm:'剪刀',cls:1,O:55,E:0,L:100,Wf:20,en:'握柄',ln:'被剪的東西',note:'東西夾在靠近支點（刀根）的位置，抗力臂短，就比較省力。'},
+ {id:'bal',nm:'等臂天平',cls:1,O:50,E:0,L:100,Wf:5,en:'砝碼',ln:'要秤的東西',note:'兩臂等長，所以砝碼重量＝物體重量。'},
+ {id:'plier',nm:'老虎鉗',cls:1,O:18,E:100,L:0,Wf:200,en:'手握的地方',ln:'被夾的鐵絲',note:'支點靠近刀口，施力臂長、抗力臂短，非常省力。'},
+ {id:'clip',nm:'指甲剪',cls:2,O:0,L:35,E:100,Wf:30,en:'手指壓的地方',ln:'指甲',note:'抗力點（刀口）在中間，所以是第二類，一定省力。'},
+ {id:'open',nm:'開瓶器',cls:2,O:0,L:25,E:100,Wf:60,en:'手抬的地方',ln:'瓶蓋',note:'瓶蓋在支點和手之間，抗力臂很短，所以很省力。'},
+ {id:'barrow',nm:'獨輪車',cls:2,O:0,L:40,E:100,Wf:400,en:'手提的地方',ln:'車上的貨物',note:'輪子是支點，貨物在中間；貨物往前（靠近輪子）放會更省力。'},
+ {id:'juice',nm:'壓汁器',cls:2,O:0,L:30,E:100,Wf:80,en:'手壓的地方',ln:'檸檬',note:'檸檬在中間，壓下去的力比果汁反抗的力小。'},
+ {id:'stap',nm:'釘書機',cls:2,O:0,L:45,E:100,Wf:40,en:'手壓的地方',ln:'釘書針',note:'針（抗力點）在轉軸和手之間，是第二類。'},
+ {id:'twee',nm:'鑷子',cls:3,O:0,E:35,L:100,Wf:2,en:'手指捏的地方',ln:'被夾的東西',note:'施力點在中間，施力臂比抗力臂短，費力；換到的是夾小東西的靈巧。'},
+ {id:'chop',nm:'筷子',cls:3,O:0,E:25,L:100,Wf:1.5,en:'中指出力的地方',ln:'夾起來的菜',note:'費力但移動範圍大、動作靈活。'},
+ {id:'arm',nm:'手臂舉啞鈴',cls:3,O:0,E:15,L:100,Wf:50,en:'肱二頭肌拉的地方',ln:'手上的啞鈴',note:'肌肉出的力比啞鈴重好幾倍，但手掌移動得比肌肉收縮快很多。'}];
+const CL={tool:0,arm:true,sch:true,ph:0,run:false,mid:null,qi:-1,ok:0,tot:0};
+function curTool(){const t=Object.assign({},TOOLS[CL.tool]);
+  if(CL.mid!=null){if(t.cls===1)t.O=CL.mid;else if(t.cls===2)t.L=CL.mid;else t.E=CL.mid;}
+  return t;}
+$('tlList').innerHTML=TOOLS.map((t,i)=>`<button class="tbtn" data-i="${i}" aria-pressed="${i===0}">${t.nm}<span class="c">第${'一二三'[t.cls-1]}類</span></button>`).join('');
+$('tlList').addEventListener('click',e=>{const b=e.target.closest('button[data-i]');if(!b)return;
+  CL.tool=+b.dataset.i;CL.mid=null;CL.ph=0;CL.run=false;hideStory();UI.cls();kick();});
+$('cArm').addEventListener('change',e=>{CL.arm=e.target.checked;kick();});
+$('cSch').addEventListener('change',e=>{CL.sch=e.target.checked;kick();});
+$('cPlay').addEventListener('click',()=>{CL.run=!CL.run;if(CL.run)CL.ph=0;kick();});
+UI.cls=()=>{$('tlList').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.i===CL.tool)));};
+TICK.cls=dt=>{if(!CL.run)return false;CL.ph+=dt*.8;if(CL.ph>=1){CL.ph=1;CL.run=false;return false;}return true;};
+// 器具素描
+function pic(g,t,x,y,w,h,ph){const cx=x+w/2,cy=y+h/2,S=Math.min(w*.78,h*1.15);
+  g.lineCap='round';
+  const bar=(x1,y1,x2,y2,col,lw)=>line(g,x1,y1,x2,y2,col,lw);
+  if(t.id==='see'){const a=(.14-ph*.28);g.save();g.translate(cx,cy+S*.1);g.rotate(a);
+    g.fillStyle=C.bar;g.fillRect(-S*.4,-5,S*.8,10);
+    g.fillStyle=C.blue;g.beginPath();g.arc(-S*.33,-16,9,0,TAU);g.fill();g.beginPath();g.arc(S*.33,-16,9,0,TAU);g.fill();g.restore();
+    g.fillStyle=C.fulc;g.beginPath();g.moveTo(cx,cy+S*.1);g.lineTo(cx-14,cy+S*.34);g.lineTo(cx+14,cy+S*.34);g.closePath();g.fill();}
+  else if(t.id==='scis'||t.id==='plier'||t.id==='twee'){const op=(t.id==='twee')?(.18-ph*.15):(.3-ph*.26);
+    const pivx=cx-S*.05,pivy=cy;const hl=S*.42,bl=S*.34;
+    for(const s of[-1,1]){const a=s*op;
+      if(t.id==='twee'){g.save();g.translate(cx-S*.3,cy-S*.3);g.rotate(s*op*.6);
+        g.strokeStyle=C.steel;g.lineWidth=5;g.beginPath();g.moveTo(0,0);g.lineTo(S*.62,S*.5);g.stroke();g.restore();}
+      else{g.save();g.translate(pivx,pivy);g.rotate(a);
+        g.strokeStyle=C.steel;g.lineWidth=t.id==='plier'?9:5;g.beginPath();g.moveTo(0,0);g.lineTo(bl,0);g.stroke();
+        if(t.id==='plier'){g.fillStyle=C.steel;g.beginPath();g.moveTo(bl*.55,-2);g.lineTo(bl,-7);g.lineTo(bl,2);g.lineTo(bl*.55,2);g.closePath();g.fill();}
+        g.strokeStyle=t.id==='plier'?C.load:C.bar2;g.lineWidth=t.id==='plier'?9:6;g.beginPath();g.moveTo(0,0);g.lineTo(-hl,0);g.stroke();
+        if(t.id==='scis'){g.strokeStyle=C.bar2;g.lineWidth=5;g.beginPath();g.ellipse(-hl-9,0,11,8,0,0,TAU);g.stroke();}
+        g.restore();}}
+    if(t.id!=='twee'){g.fillStyle=C.bar2;g.beginPath();g.arc(pivx,pivy,5,0,TAU);g.fill();}}
+  else if(t.id==='bal'){bar(cx,cy+S*.05,cx,cy+S*.36,C.steel,8);
+    g.save();g.translate(cx,cy+S*.05);g.rotate(.05-ph*.1);
+    g.strokeStyle=C.bar2;g.lineWidth=6;g.beginPath();g.moveTo(-S*.36,0);g.lineTo(S*.36,0);g.stroke();
+    for(const s of[-1,1]){line(g,s*S*.36,0,s*S*.36,S*.16,C.steel,1.4);
+      g.fillStyle=s<0?C.accent:C.load;g.beginPath();g.arc(s*S*.36,S*.2,S*.09,0,Math.PI);g.fill();}
+    g.restore();}
+  else if(t.id==='clip'||t.id==='stap'||t.id==='juice'){const base=cy+S*.06,hx=x+w*.12;
+    g.fillStyle=C.steel;g.fillRect(hx,base,w*.76,9);
+    g.save();g.translate(hx,base);g.rotate(-.28+ph*.24);
+    g.fillStyle=C.bar2;g.fillRect(0,-10,w*.76,10);g.restore();
+    if(t.id==='clip'){g.fillStyle=C.load;g.fillRect(hx+w*.76*.35-5,base-7,11,8);g.fillStyle=C.steel;g.fillRect(hx+w*.76*.35-2,base-13,5,7);}
+    if(t.id==='stap'){g.fillStyle=C.panel;g.strokeStyle=C.line;g.lineWidth=1;g.fillRect(hx+w*.3,base+9,w*.4,7);g.strokeRect(hx+w*.3,base+9,w*.4,7);g.fillStyle=C.steel;g.fillRect(hx+w*.76*.45-2,base-10,5,10);}
+    if(t.id==='juice'){g.fillStyle='#e8c33a';g.beginPath();g.ellipse(hx+w*.76*.3,base-7-(1-ph)*4,13,9,0,0,TAU);g.fill();}}
+  else if(t.id==='open'){const bx=cx-S*.1,by=cy+S*.2;
+    g.fillStyle=C.blue;g.globalAlpha=.6;g.beginPath();g.roundRect(bx-13,by-S*.42,26,S*.42,5);g.fill();g.globalAlpha=1;
+    g.fillStyle=C.load;g.fillRect(bx-14,by-S*.46,28,8);
+    g.save();g.translate(bx-20,by-S*.3);g.rotate(-.1-ph*.5);
+    g.strokeStyle=C.steel;g.lineWidth=8;g.beginPath();g.moveTo(0,0);g.lineTo(S*.5,0);g.stroke();g.restore();}
+  else if(t.id==='barrow'){g.save();g.translate(x+w*.2,cy+S*.22);g.rotate(-ph*.22);
+    g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=1.4;
+    g.beginPath();g.moveTo(w*.12,-S*.12);g.lineTo(w*.5,-S*.2);g.lineTo(w*.5,-S*.02);g.lineTo(w*.12,0);g.closePath();g.fill();g.stroke();
+    g.strokeStyle=C.bar2;g.lineWidth=5;g.beginPath();g.moveTo(0,0);g.lineTo(w*.68,-S*.12);g.stroke();
+    g.strokeStyle=C.steel;g.lineWidth=3;g.beginPath();g.moveTo(w*.1,0);g.lineTo(w*.14,S*.16);g.stroke();g.restore();
+    g.fillStyle=C.ink;g.beginPath();g.arc(x+w*.2,cy+S*.22,S*.13,0,TAU);g.fill();
+    g.fillStyle=C.panel;g.beginPath();g.arc(x+w*.2,cy+S*.22,S*.05,0,TAU);g.fill();}
+  else if(t.id==='chop'){for(const s of[0,1]){g.save();g.translate(x+w*.82,cy);g.rotate((s?1:-1)*(.1-ph*.08));
+    g.strokeStyle=C.bar;g.lineWidth=6;g.beginPath();g.moveTo(0,0);g.lineTo(-w*.66,0);g.stroke();g.restore();}
+    g.fillStyle=C.green;g.beginPath();g.arc(x+w*.14,cy,8,0,TAU);g.fill();}
+  else if(t.id==='arm'){const ex=x+w*.2,ey=cy+S*.2;
+    g.strokeStyle=C.bar2;g.lineWidth=14;g.beginPath();g.moveTo(ex,ey-S*.46);g.lineTo(ex,ey);g.stroke();
+    const a=-.35-ph*.5;g.save();g.translate(ex,ey);g.rotate(a);
+    g.strokeStyle=C.bar;g.lineWidth=13;g.beginPath();g.moveTo(0,0);g.lineTo(w*.56,0);g.stroke();
+    g.fillStyle=C.ink;g.fillRect(w*.56-6,-9,12,18);
+    g.strokeStyle=C.load;g.lineWidth=4;g.beginPath();g.moveTo(w*.1,-4);g.lineTo(-2,-S*.3);g.stroke();g.restore();
+    text(g,'肱二頭肌',ex+10,ey-S*.36,{col:C.load,size:11,bold:true});}
+  g.lineCap='butt';}
+DRAW.cls=()=>{const cv=$('cvCls'),{W,H}=fit(cv,.42,280,400),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);const t=curTool();
+  const two=CL.sch&&W>560;
+  const pw=two?W*.44:(CL.sch?W:W);
+  if(CL.sch&&!two){/* 窄畫面：上下排 */}
+  const picBox=two?[0,H*.06,W*.44,H*.88]:[0,0,W,H*.5];
+  const schBox=two?[W*.46,H*.1,W*.52,H*.8]:[0,H*.52,W,H*.46];
+  if(!CL.sch){pic(g,t,W*.1,0,W*.8,H-18,CL.ph);text(g,t.nm,W*.5,H-6,{col:C.muted,size:13,bold:true,align:'center'});}
+  else{pic(g,t,picBox[0]+10,picBox[1]+6,picBox[2]-20,picBox[3]-30,CL.ph);
+    text(g,t.nm,picBox[0]+picBox[2]/2,picBox[1]+picBox[3]-4,{col:C.muted,size:13,bold:true,align:'center'});}
+  if(two)line(g,W*.45,H*.08,W*.45,H*.92,C.line,1,[4,4]);
+  if(CL.sch){
+    const[sx,sy,sw,sh]=schBox,y=sy+sh*.52,x0=sx+sw*.1,x1=sx+sw*.9,px=v=>x0+(x1-x0)*v/100;
+    g.fillStyle=C.bar;g.strokeStyle=C.bar2;g.lineWidth=1.4;g.beginPath();g.roundRect(x0-8,y-5,x1-x0+16,10,3);g.fill();g.stroke();
+    // 支點
+    g.fillStyle=C.fulc;g.beginPath();g.moveTo(px(t.O),y+6);g.lineTo(px(t.O)-13,y+28);g.lineTo(px(t.O)+13,y+28);g.closePath();g.fill();
+    text(g,'支點',px(t.O),y+42,{col:C.fulc,size:12,bold:true,align:'center'});
+    // 抗力（向下）、施力
+    const Wf=t.Wf,armW=Math.abs(t.L-t.O)/100,armE=Math.abs(t.E-t.O)/100,Ef=armE>0?Wf*armW/armE:Infinity;
+    const sc2=Math.min(46/Math.max(Wf,Ef),2.2),up=t.cls!==1;   // 第一類：兩力同向（都向下）；第二、三類：施力和抗力反向
+    const lw2=Math.max(18,Wf*sc2),le=Math.max(18,(isFinite(Ef)?Ef:Wf)*sc2);
+    arrow(g,px(t.L),y+5,px(t.L),y+5+lw2,C.load,3);
+    text(g,'抗力 '+nf(Wf,0)+' N',px(t.L),y+18+lw2,{col:C.load,size:12,bold:true,align:'center'});
+    text(g,'抗力點',px(t.L),y-9,{col:C.load,size:11,align:'center',base:'bottom',bg:C.panel});
+    if(up){arrow(g,px(t.E),y-5,px(t.E),y-5-le,C.accent,3);
+      text(g,'施力 '+(isFinite(Ef)?nf(Ef,0)+' N':'—'),px(t.E),y-12-le,{col:C.accent,size:12,bold:true,align:'center'});}
+    else{arrow(g,px(t.E),y+5,px(t.E),y+5+le,C.accent,3);
+      text(g,'施力 '+(isFinite(Ef)?nf(Ef,0)+' N':'—'),px(t.E),y+18+le,{col:C.accent,size:12,bold:true,align:'center'});}
+    text(g,'施力點',px(t.E),y-9,{col:C.accent,size:11,align:'center',base:'bottom',bg:C.panel});
+    if(CL.arm){const ya=y-Math.max(34,(up?le:0)+26);
+      line(g,px(t.O),ya,px(t.E),ya,C.accent,2,[6,4]);
+      line(g,px(t.E),ya,px(t.E),y-5,C.accent,1,[3,4]);line(g,px(t.O),ya,px(t.O),y,C.accent,1,[3,4]);
+      text(g,'施力臂 '+nf(armE*100,0)+' cm',(px(t.O)+px(t.E))/2,ya-5,{col:C.accent,size:11,bold:true,align:'center',bg:C.panel});
+      const yb=y+lw2+34;
+      line(g,px(t.O),yb,px(t.L),yb,C.load,2,[6,4]);
+      line(g,px(t.L),yb,px(t.L),y+5,C.load,1,[3,4]);line(g,px(t.O),yb,px(t.O),y,C.load,1,[3,4]);
+      text(g,'抗力臂 '+nf(armW*100,0)+' cm',(px(t.O)+px(t.L))/2,yb+14,{col:C.load,size:11,bold:true,align:'center',bg:C.panel});}
+    if(CL.mid!=null)handle(g,px(t.cls===1?t.O:t.cls===2?t.L:t.E),y,8);
+    else{g.globalAlpha=.5;handle(g,px(t.cls===1?t.O:t.cls===2?t.L:t.E),y,7);g.globalAlpha=1;}
+    text(g,'拖曳橘點可移動'+(t.cls===1?'支點':t.cls===2?'抗力點':'施力點'),x1,sy+sh-4,{col:C.muted,size:11,align:'right'});}
+  // 文字
+  const armW=Math.abs(t.L-t.O)/100,armE=Math.abs(t.E-t.O)/100,Ef=armE>0?t.Wf*armW/armE:Infinity;
+  $('cName').textContent=t.nm+'：第'+'一二三'[t.cls-1]+'類槓桿';
+  const cc=$('cCls');['c1','c2','c3'].forEach((k,i)=>cc.querySelector('.'+k).classList.toggle('on',i+1===t.cls));
+  $('cFormula').innerHTML=`施力 × 施力臂 ＝ 抗力 × 抗力臂<br>施力 × ${nf(armE,2)} ＝ ${nf(t.Wf,0)} × ${nf(armW,2)}<br>施力 ＝ <b>${isFinite(Ef)?nf(Ef,1)+' N':'—'}</b>　（抗力 ${nf(t.Wf,0)} N 的 ${isFinite(Ef)?nf(Ef/t.Wf,2):'—'} 倍）`;
+  const ratio=Ef/t.Wf;
+  $('cSay').textContent=(ratio<0.98?`施力臂比抗力臂長 → 省力（只要 ${nf(Ef,1)} N），但手要移動比較長的距離。`:ratio>1.02?`施力臂比抗力臂短 → 費力（要 ${nf(Ef,1)} N），但換到比較大的移動範圍與速度。`:'兩個力臂一樣長 → 不省力也不費力。')+' '+t.note;};
+// 拖曳中間那一點
+dragger($('cvCls'),()=>{const cv=$('cvCls'),W=cv.clientWidth,H=cv._fh||280,t=curTool();
+  const two=CL.sch&&W>560;const schBox=two?[W*.46,H*.1,W*.52,H*.8]:[0,H*.52,W,H*.46];
+  if(!CL.sch)return[];
+  const[sx,sy,sw,sh]=schBox,y=sy+sh*.52,x0=sx+sw*.1,x1=sx+sw*.9;
+  const v=t.cls===1?t.O:t.cls===2?t.L:t.E;
+  return[{x:x0+(x1-x0)*v/100,y:y,r:34,move:x=>{let p=clamp(Math.round((x-x0)/(x1-x0)*100),8,92);
+    const b=TOOLS[CL.tool];
+    if(b.cls===1)p=clamp(p,Math.min(b.E,b.L)+8,Math.max(b.E,b.L)-8);
+    else if(b.cls===2)p=clamp(p,8,92);
+    CL.mid=p;}}];},()=>{hideStory();kick();});
+// 判斷練習
+segOn($('cQans'),v=>{if(CL.qi<0){$('cQsay').textContent='先按「出一題」。';return;}
+  const t=TOOLS[CL.qi];CL.tot++;const ok=+v===t.cls;if(ok)CL.ok++;
+  $('cQsay').textContent=(ok?'✔ 答對了！':'✘ 答錯了。')+t.nm+'的支點在'+(t.cls===1?'中間，所以是第一類。':t.cls===2?'一端，抗力點在中間，所以是第二類。':'一端，施力點在中間，所以是第三類。')+`　（答對 ${CL.ok} ／ 共 ${CL.tot} 題）`;
+  CL.tool=CL.qi;CL.mid=null;CL.qi=-1;$('cQ').textContent='再按「出一題」繼續。';UI.cls();kick();});
+$('cQnew').addEventListener('click',()=>{CL.qi=Math.floor(Math.random()*TOOLS.length);
+  $('cQ').innerHTML='<b>'+TOOLS[CL.qi].nm+'</b> 是第幾類槓桿？（先想，再按下面的答案）';$('cQsay').textContent=`答對 ${CL.ok} ／ 共 ${CL.tot} 題`;
+  $('cQans').querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed','false'));});
+
+// ======================================================================
+// 題目情境
+// ======================================================================
+function goT(o){setBench('tq');Object.assign(T,{run:false,phi:0},o);setTF(T.F);setTR(T.r);setTTh(T.th);segSet($('tScene'),T.scene);UI.tq();kick();}
+function goL(o){setBench('lev');Object.assign(L2,{ang:0},o);$('lBarW').checked=!!L2.barW;$('lFree').checked=!!L2.free;UI.lev();kick();}
+function goC(o){setBench('cls');CL.tool=TOOLS.findIndex(t=>t.id===o.id);if(CL.tool<0)CL.tool=0;CL.mid=o.mid!=null?o.mid:null;CL.ph=0;CL.run=!!o.play;UI.cls();kick();}
+const QG=[
+ {g:'力矩（實驗台 1）',q:[
+  ['門把為什麼裝在離門軸最遠的地方','把手靠近門軸','推門的位置離門軸只有 8 公分，力臂只有 8 公分，力矩 0.08 × F 很小，門很難推開。把手裝在門的外緣（約 80 公分）時，同樣的力產生的力矩是 10 倍。',()=>goT({scene:'door',r:8,th:90,F:20})],
+  ['螺帽轉不開，套一根鐵管把扳手加長','扳手加長一倍','手握的位置從 15 公分移到 45 公分，力臂變成 3 倍，同樣的力氣力矩也變成 3 倍。這就是「施力點離轉軸愈遠愈省力」。',()=>goT({scene:'wrench',r:45,th:90,F:20})],
+  ['斜斜地拉，為什麼比較沒力','θ ＝ 40°','只有垂直於扳手的分力 F sin40° 在轉動它，力臂變成 r sin40°，力矩只剩垂直拉的 0.64 倍。',()=>goT({scene:'wrench',r:30,th:40,F:20})],
+  ['力的方向通過轉軸，怎麼用力都轉不動','θ ＝ 0°','力的作用線剛好穿過螺帽中心，力臂 ＝ 0，所以力矩 ＝ 0。這是「力很大但力矩為 0」的經典例子。',()=>goT({scene:'wrench',r:30,th:0,F:50})],
+  ['腳踏車踏板踩到最上面時最難踩','踏板在最高點','踩下去的力沿著曲柄方向，力臂 ＝ 0，所以踩不動；曲柄轉到水平時力臂最大，最好踩。',()=>goT({scene:'bolt',r:17,th:0,F:40})],
+  ['同樣的力，怎樣的力矩最大','θ ＝ 90°、r 最大','力垂直於桿、施力點離轉軸最遠時，力臂 ＝ r，力矩最大。',()=>goT({scene:'wrench',r:50,th:90,F:20})]]},
+ {g:'槓桿平衡（實驗台 2）',q:[
+  ['蹺蹺板：30 kg 和 20 kg 要怎麼坐才平衡','蹺蹺板','重的人要靠近支點。30 kg 坐在離支點 20 公分、20 kg 坐在 30 公分處：30 × 20 ＝ 20 × 30，兩邊力矩相等就平衡。',()=>goL({mode:'see',fx:50,barW:false,ws:[{x:30,m:3},{x:80,m:2}]})],
+  ['天平左邊 3 kg，右邊要掛多少','等臂天平','兩邊力臂一樣長（各 50 公分），所以兩邊重量要一樣。先試著在右邊掛 2 kg 看看會往哪邊沉。',()=>goL({mode:'wt',fx:50,barW:false,ws:[{x:0,m:3},{x:100,m:2}]})],
+  ['支點移到靠近重物的一邊','支點不在中點','支點往重的那一邊移動，重物的力臂變短、輕的那一邊力臂變長，所以用小的重量也能平衡大的重量——這就是桿秤的原理。',()=>goL({mode:'wt',fx:25,barW:false,ws:[{x:5,m:5},{x:95,m:1}]})],
+  ['扁擔挑兩桶水，肩膀要放哪裡','扁擔','兩桶一樣重時肩膀放中間；若一邊比較重，肩膀要往重的那一邊移，兩邊力矩才相等。',()=>goL({mode:'arm',fx:50,barW:false,ws:[{x:10,m:3},{x:90,m:2}]})],
+  ['棒子自己的重量要不要算','算進棒重 2 kg','棒子的重量集中在重心（均勻棒的中點）。支點在中點時它的力臂 ＝ 0 可以不管；支點偏掉以後就要算。',()=>goL({mode:'wt',fx:30,barW:true,ws:[{x:95,m:1}]})],
+  ['一邊掛兩個砝碼','多個力矩相加','同一邊有好幾個重物時，把每一個的「重量 × 力臂」加起來再比較。',()=>goL({mode:'wt',fx:50,barW:false,ws:[{x:20,m:1},{x:35,m:2},{x:90,m:2}]})]]},
+ {g:'三類槓桿（實驗台 3）',q:[
+  ['獨輪車為什麼省力，貨物要放前面還是後面','獨輪車','輪子是支點、貨物在中間、手在最遠端，是第二類槓桿，一定省力。貨物愈靠近輪子（抗力臂愈短）愈省力。',()=>goC({id:'barrow',play:true})],
+  ['鑷子夾東西明明很小，為什麼說它費力','鑷子','施力點在中間，施力臂比抗力臂短，所以施力一定大於抗力，是第三類槓桿。它換到的是靈巧與移動距離。',()=>goC({id:'twee',play:true})],
+  ['剪鐵絲要靠近刀口還是刀尖','老虎鉗','支點（軸）靠近刀口，抗力臂很短、施力臂很長，所以非常省力。同理，用剪刀剪硬的東西要往刀根塞。',()=>goC({id:'plier',play:true})],
+  ['手臂舉啞鈴是第幾類槓桿','手臂','肘關節是支點、肱二頭肌拉在很靠近肘的地方、啞鈴在最遠端：施力點在中間，第三類，費力但手掌動得快。',()=>goC({id:'arm',play:true})],
+  ['剪刀：東西夾在不同位置，省力一樣嗎','剪刀（抗力點可拖）','拖曳橘點把被剪的東西往支點移，抗力臂變短、需要的施力變小。所以第一類槓桿可能省力也可能費力。',()=>goC({id:'scis',mid:70})],
+  ['哪些工具是第二類槓桿','開瓶器','抗力點夾在支點和施力點中間的都是第二類：開瓶器、獨輪車、壓汁器、釘書機、指甲剪，一定省力。',()=>goC({id:'open',play:true})]]}];
+function buildQ(){$('qbox').innerHTML=QG.map((G0,gi)=>`<div class="qgrp"><h4>${G0.g}</h4><div class="qchips">`+
+  G0.q.map((q,i)=>`<button class="qchip" data-g="${gi}" data-i="${i}" aria-pressed="false">${q[0]}<span class="pg">${q[1]}</span></button>`).join('')+'</div></div>').join('');}
+buildQ();
+$('qbox').addEventListener('click',e=>{const b=e.target.closest('.qchip');if(!b)return;
+  const q=QG[+b.dataset.g].q[+b.dataset.i];q[3]();
+  document.querySelectorAll('.qchip').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+  showStory(q[0],q[2]);});
+
+// ================= 啟動 =================
+UI.tq();UI.lev();UI.cls();
+setBench((location.hash||'').replace('#','')||'tq',true);
+kick();
+})();
+</script>
+</body>
+</html>
