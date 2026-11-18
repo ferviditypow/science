@@ -194,11 +194,12 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <button class="btn" id="cStep">▸ 0.1 秒</button>
         <span class="seg" id="cTrack"><button data-v="pend" aria-pressed="true">單擺</button><button data-v="bowl" aria-pressed="false">光滑軌道</button><button data-v="ramp" aria-pressed="false">斜面滑下</button><button data-v="throw" aria-pressed="false">鉛直上拋</button><button data-v="spring" aria-pressed="false">彈簧</button></span>
         <span class="seg" id="cTs"><button data-v="1" aria-pressed="true">1×</button><button data-v="0.25" aria-pressed="false">¼×</button></span>
+        <label class="tog"><input type="checkbox" id="cKeep" checked> 拖曳時保持總能量</label>
         <label class="tog"><input type="checkbox" id="cFg"> 標出重力</label>
         <label class="tog"><input type="checkbox" id="cFc"> 標出向心力</label>
       </div>
       <div class="cbox"><canvas class="cv" id="cvCons" aria-label="力學能守恆動畫與能量長條圖"></canvas></div>
-      <p class="hint" id="cHint">拖曳橘色的球改變起點；拖曳虛線可以改變「位能為 0」的高度（高中）。</p>
+      <p class="hint" id="cHint">拖曳橘色的球沿著軌道移動：預設<b>保持總能量</b>，所以位能減少多少、動能就增加多少（球旁邊有即時數字），放手會從那裡用當下的速率繼續動；把「拖曳時保持總能量」取消，就變成「重新選一個靜止放開的起點」。拖曳虛線可以改變「位能為 0」的高度（高中）。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -241,7 +242,7 @@ function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','ke','ug','us','heat','tot','wood','wood2','steel','floor'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
 function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
-  let h=Math.round(clamp(w*ratio,minH,maxH));
+  let h=Math.round(clamp(w*ratio,minH,(window.FSH?FSH(cv,maxH):maxH)));
   if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
   cv.style.height=h+'px';const d=DPR();
   if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
@@ -567,7 +568,7 @@ kSetMode('ke');
 // ======================================================================
 // 4 力學能守恆
 // ======================================================================
-const C4={track:'pend',m:1,mu:0,v0:10,k:50,s0:0,s:0,v:0,t:0,run:false,Q:0,zero:0,hist:[],ts:1,marks:null,E0:0,fg:false,fc:false,drag:false};
+const C4={track:'pend',m:1,mu:0,v0:10,k:50,s0:0,s:0,v:0,t:0,run:false,Q:0,zero:0,hist:[],ts:1,marks:null,E0:0,fg:false,fc:false,drag:false,keepE:true};
 const TRK={
   pend:{L:2,amax:80,label:'單擺：擺長 2 m'},
   bowl:{label:'光滑軌道'},
@@ -622,6 +623,7 @@ TICK.cons=dt=>{if(!C4.run)return false;const T=dt*C4.ts,n=40;for(let i=0;i<n;i++
   return C4.run;};
 $('cPlay').addEventListener('click',()=>{if(C4.run){C4.run=false;$('cPlay').textContent='▶ 繼續';return;}if(!C4.run&&C4.t===0)cReset();C4.run=true;$('cPlay').textContent='❚❚ 暫停';kick();});
 $('cReset').addEventListener('click',()=>{cReset();kick();});
+$('cKeep').addEventListener('change',e=>{C4.keepE=e.target.checked;kick();});
 $('cFg').addEventListener('change',e=>{C4.fg=e.target.checked;kick();});
 $('cFc').addEventListener('change',e=>{C4.fc=e.target.checked;kick();});
 // 曲率半徑與圓心（單擺就是擺長與吊點；其他軌道用軌跡上三點外接圓）
@@ -690,7 +692,7 @@ DRAW.cons=()=>{const cv=$('cvCons'),nar=cv.clientWidth<600,{W,H}=fit(cv,nar?1.15
         text(g,'向心力 '+nf(fc,1)+' N',lx2,ly2-4,{size:11.5,col:C.purple,bold:true,align:dx>0?'left':'right'});}
       else text(g,'向心力 ＝ 0（現在速率 0）',cxp+10,cyp-14,{size:11,col:C.purple,bold:true});}}
   // 拖曳時的即時讀數
-  if(C4.drag&&n!=='spring'){const ymin=Math.min(...TR.pts.map(p=>p[1])),Kb=C4.m*G*(b.y-ymin);
+  if(C4.drag&&n!=='spring'){const ymin=Math.min(...TR.pts.map(p=>p[1])),Kb=cK()+C4.m*G*(b.y-ymin);
     const tx=bxp+(bxp>sceneW*.6?-14:14),al=bxp>sceneW*.6?'right':'left',ty0=byp-86;
     text(g,'位能 '+J(cU()),tx,ty0,{size:12,col:C.ug,bold:true,align:al,bg:C.panel});
     text(g,'動能 '+J(cK()),tx,ty0+16,{size:12,col:C.ke,bold:true,align:al,bg:C.panel});
@@ -712,7 +714,15 @@ DRAW.cons=()=>{const cv=$('cvCons'),nar=cv.clientWidth<600,{W,H}=fit(cv,nar?1.15
 dragger($('cvCons'),()=>{if(!cGeo)return[];const L=[];const b=at(C4.s);const n=C4.track;
   const r=10+C4.m*2;const bx=cGeo.X(b.x),by=n==='spring'?cGeo.Y(0)-20:cGeo.Y(b.y)-(n==='pend'?0:r);
   if(n!=='throw')L.push({x:bx,y:by,r:30,start(){C4.drag=true;},end(){C4.drag=false;},move(x,y){C4.run=false;const wx=(x-cGeo.ox)/cGeo.k,wy=(cGeo.oy-y)/cGeo.k;let s=n==='spring'?sNear(clamp(wx,-1,1),0):sNear(wx,wy);
-    if(n==='pend'){const p=at(s);}C4.s0=s;C4.marks=C4.marks;cReset();hideStory();}});
+    if(C4.keepE&&n!=='throw'){            // 保持總能量：拖到哪裡，動能就是「總能量 − 位能」
+      const prev=C4.s;C4.s=s;C4.s0=s;
+      const U=cU()+cUs();let K=C4.E0-C4.Q-U;
+      if(K<0){K=0;C4.E0=U+C4.Q;}          // 拖超過原本的折返點，就把總能量提高到這裡
+      const dir=Math.sign(s-prev)||Math.sign(C4.v)||1;
+      C4.v=dir*Math.sqrt(2*K/C4.m);
+      C4.t=0;C4.hist=[];cRec();C4.run=false;$('cPlay').textContent='▶ 放手';
+    }else{C4.s0=s;cReset();}
+    hideStory();}});
   if(n!=='spring'&&LV==='sh'){const zy=cGeo.Y(C4.zero);const cw0=$('cvCons').clientWidth;L.push({x:cw0<600?cw0-14:cw0-Math.min(230,cw0*.3)-20-14,y:zy,r:22,move(x,y){C4.zero=Math.round(((cGeo.oy-y)/cGeo.k)*2)/2;cReset();}});}
   return L;},kick);
 function cNowPanel(){const p=at(C4.s);const K=cK(),U=cU(),Us=cUs();

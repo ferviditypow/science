@@ -112,7 +112,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <div class="ctl">
           <div class="slider"><span class="tlabel">施力 F</span><input type="range" id="tF" min="0" max="200" step="2" value="20"><output id="tFo"></output></div>
           <div class="slider"><span class="tlabel">距離 r</span><input type="range" id="tR" min="5" max="50" step="1" value="30"><output id="tRo"></output></div>
-          <div class="slider"><span class="tlabel">力的方向 θ</span><input type="range" id="tTh" min="0" max="180" step="5" value="90"><output id="tTho"></output></div>
+          <div class="slider"><span class="tlabel">力的方向 θ</span><input type="range" id="tTh" min="-180" max="180" step="5" value="90"><output id="tTho"></output></div>
         </div>
         <div class="toolbar" style="margin-top:8px">
           <button class="btn" id="tRec">＋ 記錄這一組</button>
@@ -298,7 +298,7 @@ function readColors(){const s=getComputedStyle(document.documentElement);
   ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','bar','bar2','fulc','load','arm','steel','floor','ghost'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
 readColors();
 function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
-  let h=Math.round(clamp(w*ratio,minH,maxH));
+  let h=Math.round(clamp(w*ratio,minH,(window.FSH?FSH(cv,maxH):maxH)));
   if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
   cv.style.height=h+'px';const d=DPR();
   if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
@@ -391,7 +391,7 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   // 力臂與作用線（在旋轉座標內畫）
   const ux=Math.cos(th),uy=-Math.sin(th),px=rp,py=0;
   const tfoot=-(px*ux+py*uy),fx=px+tfoot*ux,fy=py+tfoot*uy;
-  const dcm=Math.abs(T.r*Math.sin(th)),tq=T.F*dcm/100;
+  const dcm=Math.abs(T.r*Math.sin(th)),tq=T.F*dcm/100,tqs=T.F*T.r*Math.sin(th)/100;
   const Lf=16+T.F*TFS;
   if(T.F>0&&T.ln){line(g,px-ux*430,py-uy*430,px+ux*430,py+uy*430,C.ghost,1,[4,5]);}
   if(T.arm&&T.F>0&&dcm>.3){line(g,0,0,fx,fy,C.arm,2.6,[7,5]);
@@ -410,7 +410,7 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
       text(g,'有效：F sinθ ＝ '+nf(fper,1)+' N',px+6,py-fper*TFS-4,{col:C.green,size:12,bold:true});
       if(Math.abs(fpar)>.5)text(g,'沒用：F cosθ ＝ '+nf(fpar,1)+' N',px+fpar*TFS+(fpar>0?6:-6),py+16,{col:C.muted,size:12,align:fpar>0?'left':'right'});}
     // 角度弧
-    if(T.th>2&&T.th<178){g.strokeStyle=C.blue;g.lineWidth=1.6;g.beginPath();g.arc(px,py,26,-th,0,false);g.stroke();
+    if(Math.abs(T.th)>2&&Math.abs(T.th)<178){g.strokeStyle=C.blue;g.lineWidth=1.6;g.beginPath();g.arc(px,py,26,Math.min(0,-th),Math.max(0,-th),false);g.stroke();
       text(g,'θ '+T.th+'°',px+30*Math.cos(-th/2),py+30*Math.sin(-th/2),{col:C.blue,size:12,bold:true});}}
   // 轉軸圖示
   if(T.scene==='wrench'){g.fillStyle=C.bar2;g.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3;g[i?'lineTo':'moveTo'](Math.cos(a)*15,Math.sin(a)*15);}g.closePath();g.fill();}
@@ -420,7 +420,7 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   handle(g,ox+Math.cos(-phi)*rp,oy+Math.sin(-phi)*rp,8);
   if(T.F>0)handle(g,ox+Math.cos(-phi)*rp+(Math.cos(-phi)*ux-Math.sin(-phi)*uy)*Lf,oy+Math.sin(-phi)*rp+(Math.sin(-phi)*ux+Math.cos(-phi)*uy)*Lf,8);
   // 轉動箭頭
-  if(Math.abs(tq)>1e-3){const sg=Math.sign(tq),R=clamp(rp*.38,34,78);g.strokeStyle=C.purple;g.lineWidth=2.4;g.beginPath();g.arc(ox,oy,R,sg>0?-.4:.4,sg>0?-1.5:1.5,sg<0);g.stroke();
+  if(Math.abs(tq)>1e-3){const sg=Math.sign(tqs),R=clamp(rp*.38,34,78);g.strokeStyle=C.purple;g.lineWidth=2.4;g.beginPath();g.arc(ox,oy,R,sg>0?-.4:.4,sg>0?-1.5:1.5,sg<0);g.stroke();
     const ea=sg>0?-1.5:1.5;head(g,ox+Math.cos(ea)*R,oy+Math.sin(ea)*R,ea-sg*Math.PI/2,C.purple,9);
     text(g,sg>0?'逆時針轉':'順時針轉',ox,oy-R-10,{col:C.purple,size:12,bold:true,align:'center'});}
   else text(g,'轉不動（力矩 ＝ 0）',ox,oy-44,{col:C.load,size:13,bold:true,align:'center'});
@@ -443,7 +443,6 @@ dragger($('cvTq'),()=>{const cv=$('cvTq'),W=cv.clientWidth,H=cv._fh||300;
   const hx=pxs+(c*ux-s*uy)*Lf,hy=pys+(s*ux+c*uy)*Lf;
   return [{x:hx,y:hy,r:30,move:(x,y)=>{const dx=x-pxs,dy=y-pys;const lx=c*dx+s*dy,ly=-s*dx+c*dy;
       let F=clamp(Math.round((Math.hypot(lx,ly)-16)/TFS/2)*2,0,200),a=Math.atan2(-ly,lx)/D2R;
-      if(a<0)a+=360;if(a>180)a=a>270?0:180;
       T.F=F;T.th=Math.round(a/5)*5;setTF(T.F);setTTh(T.th);T.phi=0;T.run=false;}},
     {x:pxs,y:pys,r:26,move:(x,y)=>{const dx=x-ox,dy=y-oy;const lx=c*dx+s*dy;
       T.r=clamp(Math.round(lx/sc),5,50);setTR(T.r);T.phi=0;T.run=false;}}];},()=>{hideStory();kick();});

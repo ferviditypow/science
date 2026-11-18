@@ -44,6 +44,19 @@ header .foldbtn{display:none}
   .touchbtn[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
   .touchbtn:hover{opacity:1}
   @media print{.touchbtn{display:none}}
+
+  .fsbox{position:relative}
+  .fsbtn{position:absolute;top:6px;right:6px;z-index:6;width:34px;height:34px;padding:0;border-radius:9px;
+    border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;opacity:.5}
+  .fsbtn:hover,.fsbtn:focus-visible{opacity:1;border-color:var(--accent);color:var(--ink)}
+  :fullscreen{overflow:auto}
+  .panel:fullscreen,.cbox:fullscreen{background:var(--panel);border-radius:0;max-width:none;width:100vw;height:100vh;padding:8px 14px 14px}
+  .stepbar{position:fixed;right:10px;bottom:58px;z-index:60;display:flex;gap:6px;align-items:center}
+  .stepbar button{padding:8px 12px;min-height:40px;border:1px solid var(--line);border-radius:999px;
+    background:var(--panel);color:var(--ink);font-size:.84rem;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.62}
+  .stepbar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+  .stepbar button:hover{opacity:1}
+  @media print{.stepbar,.fsbtn{display:none}}
 `;
   const st = document.createElement('style');
   st.textContent = css;
@@ -110,6 +123,89 @@ header .foldbtn{display:none}
     });
   }
 
-  function init() { fold(); nav(); touchMode(); zoomRedraw(); }
+
+  // ---- 全螢幕：每個畫布右上角一顆 ⛶，把整個實驗台放大到全螢幕 ----
+  window.FSH = function (cv, maxH) {       // 各頁的 fit() 會呼叫：全螢幕時畫布可以變高
+    cv._usesFit = true;
+    const fe = document.fullscreenElement;
+    if (!fe || !fe.contains(cv)) { cv._fsTop = null; return maxH; }
+    if (cv._fsTop == null) cv._fsTop = cv.getBoundingClientRect().top;
+    return Math.max(maxH, Math.floor(innerHeight - cv._fsTop - 14));
+  };
+  function fsBtns() {
+    if (embedded || !document.fullscreenEnabled) return;
+    const add = () => {
+      document.querySelectorAll('canvas,svg').forEach(cv => {
+        if (cv.dataset.nofs || cv.closest('button,.chip,.seg')) return;
+        const box = cv.closest('.cbox') || cv.parentElement;
+        if (!box || box.querySelector(':scope > .fsbtn')) return;
+        if (cv.clientWidth && cv.clientWidth < 180) return;
+        const panel = cv.closest('.panel') || box;
+        box.classList.add('fsbox');
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'fsbtn'; b.textContent = '⛶';
+        b.title = '全螢幕（再按一次或 Esc 離開）';
+        b.addEventListener('click', e => {
+          e.preventDefault(); e.stopPropagation();
+          if (document.fullscreenElement) document.exitFullscreen();
+          else panel.requestFullscreen && panel.requestFullscreen().catch(() => {});
+        });
+        box.appendChild(b);
+      });
+    };
+    add();
+    let t = 0;
+    addEventListener('click', () => { clearTimeout(t); t = setTimeout(add, 300); }, true);
+    document.addEventListener('fullscreenchange', () => {
+      const fe = document.fullscreenElement;
+      document.querySelectorAll('canvas').forEach(c => { c._fsTop = null; c._fh = 0; });
+      // 沒有用共用 fit() 的頁面（畫布高度寫在 CSS 裡）：全螢幕時也讓它長高一點
+      if (fe) {
+        fe.querySelectorAll('canvas').forEach(c => {
+          if (c._usesFit) return;
+          const r = c.getBoundingClientRect();
+          if (!c._h0) c._h0 = r.height;
+          const avail = Math.floor(innerHeight - r.top - 16);
+          if (avail > c._h0 + 40) c.style.height = Math.min(avail, Math.round(c._h0 * 1.7)) + 'px';
+        });
+      } else {
+        document.querySelectorAll('canvas').forEach(c => { if (c._h0) c.style.height = ''; });
+      }
+      // 全螢幕時只有該元素的子孫會顯示，所以把浮動按鈕搬進去
+      const host = fe || document.body;
+      document.querySelectorAll('.stepbar,.touchbtn').forEach(el => host.appendChild(el));
+      [0, 60, 260, 600].forEach(d => setTimeout(() => dispatchEvent(new Event('resize')), d));
+    });
+  }
+
+  // ---- 逐幀播放：全站共用。開啟後所有動畫停住，按「下一幀」才前進一格 ----
+  function frameStep() {
+    if (embedded) return;
+    const raf0 = window.requestAnimationFrame.bind(window);
+    let on = false, q = [], vt = performance.now(), idc = 1, pend = 0;
+    window.requestAnimationFrame = cb => { if (!on) return raf0(cb); q.push(cb); return idc++; };
+    const flush = adv => { vt += adv; const l = q; q = []; l.forEach(cb => { try { cb(vt); } catch (e) { console.error(e); } }); };
+    const soon = () => { if (!on) return; clearTimeout(pend); pend = setTimeout(() => flush(0), 0); };
+    ['pointerdown', 'pointerup', 'pointermove', 'input', 'change', 'keydown', 'wheel'].forEach(t =>
+      addEventListener(t, soon, { passive: true, capture: true }));
+    const wrap = document.createElement('div');
+    wrap.className = 'stepbar';
+    wrap.innerHTML = '<button type="button" aria-pressed="false" title="逐幀模式：動畫會停住，按「下一幀」才前進一格">⏭ 逐幀</button>' +
+      '<button type="button" hidden>▸ 1 幀</button><button type="button" hidden>▸▸ 5 幀</button>';
+    document.body.appendChild(wrap);
+    const bs = wrap.querySelectorAll('button');
+    bs[0].addEventListener('click', () => {
+      on = !on;
+      if (on) vt = performance.now(); else { const l = q; q = []; l.forEach(cb => raf0(cb)); }
+      bs[0].setAttribute('aria-pressed', String(on));
+      bs[0].textContent = on ? '⏭ 逐幀中' : '⏭ 逐幀';
+      bs[1].hidden = bs[2].hidden = !on;
+      document.documentElement.dataset.step = on ? '1' : '';
+    });
+    bs[1].addEventListener('click', () => flush(1000 / 60));
+    bs[2].addEventListener('click', () => flush(5000 / 60));
+  }
+
+  function init() { fold(); nav(); touchMode(); zoomRedraw(); fsBtns(); frameStep(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
