@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>溫度與溫標</title>
+<title>溫度與熱</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
 <link rel="stylesheet" href="../shared/ui.css">
 <script src="../shared/site.js"></script>
@@ -52,9 +52,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   <header>
     <div>
       <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 國二 第五章 溫度與熱</div>
-      <h1>溫度與溫標</h1>
+      <h1>溫度與熱</h1>
     </div>
-    <p>兩個實驗台：自製溫度計（把錐形瓶放進熱水，水位為什麼先下降再上升）、三種溫標的對照與換算。橘色的東西可以拖曳。</p>
+    <p>四個實驗台：自製溫度計（錐形瓶可以自己拖進拖出水槽）、三種溫標的對照與換算、熱量與比熱（兩杯一起加熱、混合後的熱平衡）、加熱曲線（冰→水→水蒸氣，兩段水平線）。橘色的東西可以拖曳。</p>
   </header>
 
   <nav class="panel benchbar" aria-label="實驗台">
@@ -62,6 +62,8 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
     <span class="seg" id="benchSeg">
       <button data-v="flask" aria-pressed="true"><span class="n">1</span>自製溫度計</button>
       <button data-v="scale" aria-pressed="false"><span class="n">2</span>三種溫標</button>
+      <button data-v="heat" aria-pressed="false"><span class="n">3</span>熱量與比熱</button>
+      <button data-v="curve" aria-pressed="false"><span class="n">4</span>加熱曲線</button>
     </span>
   </nav>
 
@@ -148,6 +150,87 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
     </div>
   </section>
 
+
+  <!-- ============ 3 熱量與比熱 ============ -->
+  <section class="bench" id="b-heat" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="seg" id="hMode"><button data-v="heat" aria-pressed="true">兩杯一起加熱</button><button data-v="mix" aria-pressed="false">倒在一起（熱平衡）</button></span>
+        <button class="btn primary" id="hPlay">▶ 開始加熱</button>
+        <button class="btn" id="hReset">⟲ 重來</button>
+        <span class="tlabel">速度</span>
+        <span class="seg" id="hSpd"><button data-v="1" aria-pressed="true">×1</button><button data-v="4" aria-pressed="false">×4</button></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">甲</span>
+        <span class="seg" id="hSubA"></span>
+        <div class="slider"><span class="tlabel">質量</span><input type="range" id="hMa" min="50" max="400" step="10" value="200"><output id="hMao"></output></div>
+        <div class="slider"><span class="tlabel">起始溫度</span><input type="range" id="hTa" min="0" max="90" step="5" value="20"><output id="hTao"></output></div>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">乙</span>
+        <span class="seg" id="hSubB"></span>
+        <div class="slider"><span class="tlabel">質量</span><input type="range" id="hMb" min="50" max="400" step="10" value="200"><output id="hMbo"></output></div>
+        <div class="slider"><span class="tlabel">起始溫度</span><input type="range" id="hTb" min="0" max="90" step="5" value="20"><output id="hTbo"></output></div>
+      </div>
+      <div class="toolbar" id="hProw">
+        <div class="slider"><span class="tlabel">加熱器功率</span><input type="range" id="hP" min="20" max="200" step="10" value="100"><output id="hPo"></output></div>
+        <p class="mini" style="margin:0">兩杯用一模一樣的加熱器，每秒給的熱量相同。</p>
+      </div>
+      <div class="grid2">
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvHeat" aria-label="兩杯液體加熱"></canvas></div>
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvHG" aria-label="溫度隨時間變化"></canvas></div>
+      </div>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>算式</h3>
+        <div class="formula2" id="hFormula"></div>
+        <div class="verdict" id="hSay"></div>
+      </section>
+      <section class="panel box">
+        <h3>比熱表 <small style="color:var(--muted);font-weight:400">卡／(公克・℃)</small></h3>
+        <table class="wt" id="hTable"></table>
+        <p class="mini">比熱＝讓 1 公克的物質升高 1 ℃ 需要的熱量。比熱大的（像水）很難加熱也很難冷卻，所以海邊日夜溫差比沙漠小。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ============ 4 加熱曲線 ============ -->
+  <section class="bench" id="b-curve" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="cPlay">▶ 開始加熱</button>
+        <button class="btn" id="cStep">▸ 下一段</button>
+        <button class="btn" id="cReset">⟲ 回到 −20 ℃ 的冰</button>
+        <span class="tlabel">速度</span>
+        <span class="seg" id="cSpd"><button data-v="1" aria-pressed="true">×1</button><button data-v="4" aria-pressed="false">×4</button><button data-v="12" aria-pressed="false">×12</button></span>
+        <label class="tog"><input type="checkbox" id="cPart" checked> 顯示粒子</label>
+      </div>
+      <div class="toolbar">
+        <div class="slider"><span class="tlabel">冰的質量</span><input type="range" id="cM" min="10" max="200" step="10" value="100"><output id="cMo"></output></div>
+        <div class="slider"><span class="tlabel">加熱功率</span><input type="range" id="cP" min="100" max="2000" step="100" value="800"><output id="cPo"></output></div>
+      </div>
+      <div class="grid2">
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvCur" aria-label="冰加熱的粒子模型"></canvas></div>
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvCG" aria-label="加熱曲線"></canvas></div>
+      </div>
+      <p class="hint">右圖就是課本的加熱曲線：兩段水平線分別是「熔化」和「沸騰」，這時候一直給熱但溫度不變，熱量都拿去改變狀態（潛熱）。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>現在 <small id="cClock" style="color:var(--muted);font-weight:400"></small></h3>
+        <dl class="fk" id="cNow"></dl>
+        <div class="verdict" id="cSay" style="margin-top:8px"></div>
+      </section>
+      <section class="panel box">
+        <h3>五個階段要吸收的熱量</h3>
+        <table class="wt" id="cTable"></table>
+        <p class="mini">冰的比熱 0.5、水 1、水蒸氣 0.48 卡／(公克・℃)；熔化熱 80 卡／公克、汽化熱 540 卡／公克。汽化熱特別大，所以燒開一鍋水容易，把它燒乾要很久。</p>
+      </section>
+    </div>
+  </section>
+
   <section class="panel" id="qpanel">
     <p class="ptitle">題目情境 <small>常見題型；之後補上講義頁碼與考古題題號</small></p>
     <div class="cbox" id="qbox"></div>
@@ -156,6 +239,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   <div class="notes">
     <div><h2>溫度</h2><p>溫度是物體冷熱的程度，反映分子運動的激烈程度，不是熱量的多少。兩個物體接觸後熱由高溫流向低溫，直到溫度相同（熱平衡），溫度計就是利用熱平衡來量溫度的。</p></div>
     <div><h2>溫度計</h2><p>常見的液體溫度計利用熱脹冷縮：液體膨脹率比玻璃大很多，所以溫度升高時液柱會上升。管子愈細，同樣的體積變化造成的液柱變化愈明顯，溫度計愈靈敏。</p></div>
+    <div><h2>熱量與潛熱</h2><p>熱量 H ＝ 質量 × 比熱 × 溫度變化。比熱大的物質（水 1 卡/公克・℃）很難加熱也很難冷卻。熔化、沸騰時雖然一直吸熱，溫度卻不變，這些熱拿去改變狀態（熔化熱 80、汽化熱 540 卡/公克），叫做潛熱。</p></div>
     <div><h2>常見誤解</h2><p>「放進熱水水位一定馬上上升」：玻璃先膨脹，水位會先略降一下。「量體溫要把溫度計拿出來很久才讀」：水銀體溫計有縮口所以可以；一般溫度計要在待測物中讀。「絕對溫度可以是負的」：絕對零度 −273 ℃ 是下限。</p></div>
   </div>
 </div>
@@ -198,7 +282,7 @@ let G=9.8;
 function sliderBind(id,fn,fmt){const el=$(id),o=$(id+'o');const up=()=>{o.textContent=fmt(+el.value);};el.addEventListener('input',()=>{fn(+el.value);up();hideStory();kick();});up();return v=>{el.value=v;o.textContent=fmt(v);};}
 
 // ================= 實驗台切換與迴圈 =================
-let bench='flask';const BENCHES=['flask','scale'];
+let bench='flask';const BENCHES=['flask','scale','heat','curve'];
 const DRAW={},TICK={},UI={};
 function setBench(b,noHash){if(!BENCHES.includes(b))b='flask';bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
@@ -421,10 +505,199 @@ dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{
     move:(x,yy)=>{const c=(bot-clamp(yy,top,bot))/(bot-top)*160-35;S.T=clamp(Math.round(c*2)/2,-30,120);setST(S.T);}}];},()=>{hideStory();kick();});
 
 // ======================================================================
+// 3 熱量與比熱
+// ======================================================================
+const SUBS=[['water','水',1,'#2d7fa3'],['oil','食用油',.5,'#d6a52a'],['alc','酒精',.6,'#9b59b6'],
+            ['sand','沙',.2,'#c2a06a'],['iron','鐵',.11,'#8d99a6'],['al','鋁',.21,'#aab6c2']];
+const sub=k=>SUBS.find(x=>x[0]===k);
+const HQ={mode:'heat',a:{k:'water',m:200,T:20},b:{k:'oil',m:200,T:20},P:100,run:false,t:0,spd:1,hist:[],Tf:null};
+const THMAX=160;
+['A','B'].forEach(L=>{const el=$('hSub'+L);
+  el.innerHTML=SUBS.map((x,i)=>`<button data-v="${x[0]}" aria-pressed="${i===(L==='A'?0:1)}">${x[1]}</button>`).join('');
+  segOn(el,v=>{HQ[L.toLowerCase()].k=v;segSet(el,v);hReset();hideStory();});});
+const setHMa=sliderBind('hMa',v=>{HQ.a.m=v;hReset();},v=>v+' g');
+const setHMb=sliderBind('hMb',v=>{HQ.b.m=v;hReset();},v=>v+' g');
+const setHTa=sliderBind('hTa',v=>{HQ.a.T0=v;hReset();},v=>v+' ℃');
+const setHTb=sliderBind('hTb',v=>{HQ.b.T0=v;hReset();},v=>v+' ℃');
+const setHP=sliderBind('hP',v=>{HQ.P=v;hReset();},v=>v+' 卡/秒');
+HQ.a.T0=20;HQ.b.T0=20;
+function hReset(){HQ.t=0;HQ.run=false;HQ.a.T=HQ.a.T0;HQ.b.T=HQ.b.T0;HQ.hist=[{t:0,a:HQ.a.T,b:HQ.b.T}];
+  HQ.Tf=(HQ.a.m*sub(HQ.a.k)[2]*HQ.a.T0+HQ.b.m*sub(HQ.b.k)[2]*HQ.b.T0)/(HQ.a.m*sub(HQ.a.k)[2]+HQ.b.m*sub(HQ.b.k)[2]);
+  UI.heat();kick();}
+segOn($('hMode'),v=>{HQ.mode=v;segSet($('hMode'),v);$('hProw').hidden=v!=='heat';hReset();hideStory();});
+segOn($('hSpd'),v=>{HQ.spd=+v;segSet($('hSpd'),v);});
+$('hPlay').addEventListener('click',()=>{if(HQ.t>=THMAX)hReset();HQ.run=!HQ.run;hideStory();UI.heat();kick();});
+$('hReset').addEventListener('click',()=>{hReset();hideStory();});
+UI.heat=()=>{$('hPlay').textContent=HQ.mode==='mix'?(HQ.run?'⏸ 暫停':(HQ.t>0?'▶ 繼續':'▶ 倒在一起')):(HQ.run?'⏸ 暫停':(HQ.t>0?'▶ 繼續加熱':'▶ 開始加熱'));
+  $('hProw').hidden=HQ.mode!=='heat';segSet($('hMode'),HQ.mode);};
+TICK.heat=dt=>{if(!HQ.run)return false;const step=Math.min(.2,dt*HQ.spd);
+  if(HQ.mode==='heat'){
+    [HQ.a,HQ.b].forEach(c=>{const s=sub(c.k)[2],lim=c.k==='water'?100:(c.k==='alc'?78:300);
+      if(c.T<lim)c.T=Math.min(lim,c.T+HQ.P/(c.m*s)*step);});
+  }else{const k=1-Math.exp(-step/1.1);HQ.a.T+=(HQ.Tf-HQ.a.T)*k;HQ.b.T+=(HQ.Tf-HQ.b.T)*k;}
+  HQ.t+=step;HQ.hist.push({t:HQ.t,a:HQ.a.T,b:HQ.b.T});
+  if(HQ.t>=THMAX||(HQ.mode==='mix'&&Math.abs(HQ.a.T-HQ.b.T)<.05)){HQ.run=false;UI.heat();return false;}
+  return true;};
+function cup(g,x,y,w,h,c,nm,T,run,mix){
+  const s=sub(c.k),frac=clamp(c.m/420,.2,1),lh=h*frac;
+  g.strokeStyle=C.glassc;g.lineWidth=2.4;
+  g.beginPath();g.moveTo(x-w/2,y-h-6);g.lineTo(x-w/2,y);g.lineTo(x+w/2,y);g.lineTo(x+w/2,y-h-6);g.stroke();
+  g.fillStyle=s[3];g.globalAlpha=.55;g.fillRect(x-w/2+2,y-lh,w-4,lh-2);g.globalAlpha=1;
+  text(g,nm+'　'+s[1],x,y-h-14,{col:C.ink,size:13,bold:true,align:'center'});
+  text(g,c.m+' g',x,y+16,{col:C.muted,size:12,align:'center'});
+  // 溫度計
+  const tx=x+w/2+16,th=h+6,ty=y;
+  g.strokeStyle=C.glassc;g.lineWidth=2;g.beginPath();g.roundRect(tx-5,ty-th,10,th,5);g.stroke();
+  const fr=clamp((c.T+10)/120,0,1);
+  g.fillStyle=C.liq;g.fillRect(tx-3,ty-th*fr,6,th*fr-2);
+  g.beginPath();g.arc(tx,ty+4,7,0,TAU);g.fill();
+  text(g,nf(c.T,1)+' ℃',tx+12,ty-th*fr+4,{col:C.liq,size:13,bold:true});
+  if(run&&!mix){g.fillStyle='#e8732a';for(let i=-1;i<2;i++){g.beginPath();g.moveTo(x+i*10,y+30);g.quadraticCurveTo(x+i*10-7,y+16,x+i*10,y+6);g.quadraticCurveTo(x+i*10+7,y+16,x+i*10,y+30);g.fill();}
+    text(g,HQ.P+' 卡/秒',x,y+44,{col:'#e8732a',size:11,bold:true,align:'center'});}}
+DRAW.heat=()=>{const cv=$('cvHeat'),{W,H}=fit(cv,.62,250,340),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const y=H*.74,h=H*.44,w=Math.min(W*.3,110);
+  cup(g,W*.27,y,w,h,HQ.a,'甲',HQ.a.T,HQ.run,HQ.mode==='mix');
+  cup(g,W*.73,y,w,h,HQ.b,'乙',HQ.b.T,HQ.run,HQ.mode==='mix');
+  if(HQ.mode==='mix'){arrow(g,W*.42,H*.26,W*.58,H*.26,C.accent,2.6);
+    text(g,'倒在一起',W*.5,H*.2,{col:C.accent,size:12,bold:true,align:'center'});}
+  // 圖
+  const cg=$('cvHG'),GG=fit(cg,.62,250,340),gg=cg.getContext('2d');
+  gg.clearRect(0,0,GG.W,GG.H);
+  const pl=42,pr=12,pt=24,pb=28,tmax=HQ.mode==='mix'?12:THMAX;
+  const X=t=>pl+(GG.W-pl-pr)*Math.min(t,tmax)/tmax,Y=v=>pt+(GG.H-pt-pb)*(1-clamp(v,0,110)/110);
+  gg.strokeStyle=C.line;gg.lineWidth=1;gg.strokeRect(pl,pt,GG.W-pl-pr,GG.H-pt-pb);
+  for(let v=0;v<=100;v+=20){line(gg,pl,Y(v),GG.W-pr,Y(v),C.line,1,[3,4]);text(gg,v+'',pl-5,Y(v)+4,{col:C.muted,size:11,align:'right',mono:true});}
+  text(gg,'溫度（℃）',pl,14,{col:C.muted,size:12,bold:true});
+  for(let t=0;t<=tmax;t+=tmax/4)text(gg,nf(t,0)+' 秒',X(t),GG.H-8,{col:C.muted,size:11,align:'center'});
+  [['a',C.accent,'甲'],['b',C.blue,'乙']].forEach(([k,col,nm])=>{gg.strokeStyle=col;gg.lineWidth=2.4;gg.beginPath();
+    HQ.hist.forEach((r,i)=>{const x=X(r.t),yy=Y(r[k]);i?gg.lineTo(x,yy):gg.moveTo(x,yy);});gg.stroke();
+    const last=HQ.hist[HQ.hist.length-1];dot(gg,X(last.t),Y(last[k]),col);
+    text(gg,nm,X(last.t)+8,Y(last[k])+4,{col:col,size:12,bold:true});});
+  // 文字
+  const sa=sub(HQ.a.k),sb=sub(HQ.b.k),Ca=HQ.a.m*sa[2],Cb=HQ.b.m*sb[2];
+  if(HQ.mode==='heat'){
+    $('hFormula').innerHTML=`熱量 H ＝ 質量 m × 比熱 s × 溫度變化 ΔT<br>`+
+      `甲：升高 1 ℃ 要 ${HQ.a.m} × ${sa[2]} ＝ <b>${nf(Ca,0)} 卡</b>　（已吸收 ${nf(Ca*(HQ.a.T-HQ.a.T0),0)} 卡，升高 ${nf(HQ.a.T-HQ.a.T0,1)} ℃）<br>`+
+      `乙：升高 1 ℃ 要 ${HQ.b.m} × ${sb[2]} ＝ <b>${nf(Cb,0)} 卡</b>　（已吸收 ${nf(Cb*(HQ.b.T-HQ.b.T0),0)} 卡，升高 ${nf(HQ.b.T-HQ.b.T0,1)} ℃）`;
+    const fast=Ca<Cb?'甲':(Cb<Ca?'乙':null);
+    $('hSay').textContent=fast?`同樣的加熱器每秒給一樣多的熱，${fast}的「質量×比熱」比較小，所以升溫比較快（快 ${nf(Math.max(Ca,Cb)/Math.min(Ca,Cb),2)} 倍）。圖上的斜率＝加熱功率÷(m×s)。`:
+      '兩杯的「質量×比熱」一樣，所以升溫速度一樣快，圖上兩條線重疊。';
+  }else{
+    $('hFormula').innerHTML=`熱平衡：高溫的放出的熱 ＝ 低溫的吸收的熱<br>`+
+      `${HQ.a.m}×${sa[2]}×(T<sub>f</sub>−${HQ.a.T0}) ＋ ${HQ.b.m}×${sb[2]}×(T<sub>f</sub>−${HQ.b.T0}) ＝ 0<br>`+
+      `T<sub>f</sub> ＝ (${nf(Ca,0)}×${HQ.a.T0} ＋ ${nf(Cb,0)}×${HQ.b.T0}) ÷ (${nf(Ca,0)}＋${nf(Cb,0)}) ＝ <b>${nf(HQ.Tf,1)} ℃</b>`;
+    $('hSay').textContent=HQ.a.T0===HQ.b.T0?'兩杯溫度一樣，倒在一起當然還是一樣，沒有熱的流動。':
+      `最後兩杯都會變成 ${nf(HQ.Tf,1)} ℃。終溫比較靠近「質量×比熱」大的那一杯——它的溫度比較不容易被改變。`;}
+  $('hTable').innerHTML='<tr><th>物質</th><th class="n">比熱</th><th class="n">這杯的 m×s</th></tr>'+
+    SUBS.map(x=>`<tr><td>${x[1]}</td><td class="n">${x[2]}</td><td class="n">${x[0]===HQ.a.k?'甲 '+nf(Ca,0):''}${x[0]===HQ.b.k?' 乙 '+nf(Cb,0):''}</td></tr>`).join('');};
+
+// ======================================================================
+// 4 加熱曲線（冰 → 水 → 水蒸氣）
+// ======================================================================
+const CI=.5,CW=1,CS=.48,LF=80,LV=540;
+const CU={m:100,P:800,run:false,spd:1,part:true,Q:0,t:0};
+const setCM=sliderBind('cM',v=>{CU.m=v;cuReset();},v=>v+' g');
+const setCP=sliderBind('cP',v=>{CU.P=v;},v=>v+' 卡/秒');
+segOn($('cSpd'),v=>{CU.spd=+v;segSet($('cSpd'),v);});
+$('cPart').addEventListener('change',e=>{CU.part=e.target.checked;kick();});
+$('cPlay').addEventListener('click',()=>{if(CU.Q>=cuTot())cuReset();CU.run=!CU.run;hideStory();UI.curve();kick();});
+$('cReset').addEventListener('click',()=>{cuReset();hideStory();});
+$('cStep').addEventListener('click',()=>{const st=cuSt(),c=cuCum();const i=st.i;CU.Q=c[Math.min(i+1,c.length-1)];CU.run=false;UI.curve();kick();});
+function cuReset(){CU.Q=0;CU.t=0;CU.run=false;UI.curve();kick();}
+const cuSegs=()=>[['冰升溫 −20 → 0 ℃',CU.m*CI*20,'m×0.5×20'],['冰熔化成水（0 ℃）',CU.m*LF,'m×80'],
+  ['水升溫 0 → 100 ℃',CU.m*CW*100,'m×1×100'],['水沸騰汽化（100 ℃）',CU.m*LV,'m×540'],
+  ['水蒸氣升溫 100 → 150 ℃',CU.m*CS*50,'m×0.48×50']];
+function cuCum(){const c=[0];cuSegs().forEach(s=>c.push(c[c.length-1]+s[1]));return c;}
+const cuTot=()=>cuCum()[5];
+function cuSt(){const c=cuCum(),Q=CU.Q;let i=0;while(i<4&&Q>=c[i+1])i++;
+  const q=Q-c[i],seg=cuSegs()[i],f=clamp(q/seg[1],0,1);
+  const T=[-20+20*f,0,100*f,100,100+50*f][i];
+  const ph=['固體（冰）','固液共存：冰正在熔化','液體（水）','液氣共存：水正在沸騰','氣體（水蒸氣）'][i];
+  return{i,q,f,T,ph,seg};}
+UI.curve=()=>{$('cPlay').textContent=CU.run?'⏸ 暫停':(CU.Q>0?'▶ 繼續加熱':'▶ 開始加熱');segSet($('cSpd'),String(CU.spd));};
+TICK.curve=dt=>{if(!CU.run)return false;const step=Math.min(.2,dt*CU.spd);
+  CU.Q=Math.min(cuTot(),CU.Q+CU.P*step);CU.t+=step;
+  if(CU.Q>=cuTot()){CU.run=false;UI.curve();return false;}return true;};
+const hsh=(i,k)=>{const v=Math.sin((i+1)*12.9898+k*78.233)*43758.5453;return v-Math.floor(v);};
+function cuParticles(g,x,y,w,h,st){
+  const N=54,cols=9,rows=6,T=st.T;
+  const liqF=st.i===0?0:st.i===1?st.f:1;             // 已經變成液體的比例
+  const gasF=st.i<3?0:st.i===3?st.f:1;
+  // 水體（看起來像一杯水）
+  const wH=h*.5*clamp(liqF-gasF,0,1);
+  if(wH>2){g.fillStyle=C.water;g.globalAlpha=.22;g.fillRect(x+2,y-wH,w-4,wH-1);g.globalAlpha=1;
+    line(g,x+2,y-wH,x+w-2,y-wH,C.water,1.6);}
+  for(let i=0;i<N;i++){
+    const cx0=i%cols,cy0=(i/cols)|0;
+    const hx=hsh(i,1),hy=hsh(i,2);
+    const isGas=i/N<gasF, isLiq=!isGas&&(i/N<liqF);
+    let px,py,amp,sp;
+    if(isGas){px=x+(hx*.9+.05)*w; py=y-h+(hy*.6)*h; amp=7;sp=2.2;}
+    else if(isLiq){px=x+(hx*.88+.06)*w; py=y-Math.max(wH,h*.2)*(.15+hy*.8); amp=3.2;sp=1.1;}
+    else{px=x+w*.1+cx0*(w*.8/(cols-1)); py=y-h*.06-(rows-1-cy0)*(h*.34/(rows-1)); amp=.7+clamp((T+20)/20,0,1)*1.8;sp=.8;}
+    const ph2=i*1.7,t=CU.t;
+    const dx=Math.cos(t*sp+ph2)*amp,dy=Math.sin(t*sp*1.3+ph2*1.4)*amp;
+    g.fillStyle=isGas?C.ghost:(isLiq?C.water:C.cold);
+    g.beginPath();g.arc(px+dx,py+dy,isGas?3.4:4.6,0,TAU);g.fill();}
+}
+DRAW.curve=()=>{const cv=$('cvCur'),{W,H}=fit(cv,.62,250,340),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const st=cuSt();
+  const x=W*.18,w=W*.64,y=H*.84,h=H*.6;
+  g.strokeStyle=C.glassc;g.lineWidth=2.4;
+  g.beginPath();g.moveTo(x,y-h);g.lineTo(x,y);g.lineTo(x+w,y);g.lineTo(x+w,y-h);g.stroke();
+  if(CU.part)cuParticles(g,x,y,w,h,st);
+  g.fillStyle='#e8732a';for(let i=-1;i<2;i++){const fx2=x+w/2+i*14;
+    g.beginPath();g.moveTo(fx2,y+34);g.quadraticCurveTo(fx2-8,y+18,fx2,y+6);g.quadraticCurveTo(fx2+8,y+18,fx2,y+34);g.fill();}
+  text(g,CU.P+' 卡/秒',x+w/2,y+48,{col:'#e8732a',size:12,bold:true,align:'center'});
+  text(g,st.ph,x+w/2,y-h-10,{col:C.ink,size:14,bold:true,align:'center'});
+  text(g,nf(st.T,1)+' ℃',x+w+10,y-h/2,{col:C.liq,size:15,bold:true});
+  if(st.i===1||st.i===3)text(g,'已經變成'+(st.i===1?'水':'水蒸氣')+' '+nf(st.f*100,0)+'%',x+w/2,y-h+16,{col:C.muted,size:12,align:'center'});
+  // 加熱曲線
+  const cg=$('cvCG'),GG=fit(cg,.62,250,340),gg=cg.getContext('2d');
+  gg.clearRect(0,0,GG.W,GG.H);
+  const pl=42,pr=14,pt=22,pb=30,tot=cuTot(),cum=cuCum();
+  const X=q=>pl+(GG.W-pl-pr)*q/tot,Y=v=>pt+(GG.H-pt-pb)*(1-(v+30)/190);
+  gg.strokeStyle=C.line;gg.lineWidth=1;gg.strokeRect(pl,pt,GG.W-pl-pr,GG.H-pt-pb);
+  [-20,0,50,100,150].forEach(v=>{line(gg,pl,Y(v),GG.W-pr,Y(v),C.line,1,[3,4]);text(gg,v+'',pl-5,Y(v)+4,{col:C.muted,size:11,align:'right',mono:true});});
+  text(gg,'溫度（℃）',pl,14,{col:C.muted,size:12,bold:true});
+  text(gg,'吸收的熱量（卡）→',GG.W-pr,GG.H-8,{col:C.muted,size:11,align:'right'});
+  const pts=[[0,-20],[cum[1],0],[cum[2],0],[cum[3],100],[cum[4],100],[cum[5],150]];
+  gg.strokeStyle=C.ghost;gg.lineWidth=1.6;gg.beginPath();pts.forEach((p,i)=>{const px=X(p[0]),py=Y(p[1]);i?gg.lineTo(px,py):gg.moveTo(px,py);});gg.stroke();
+  // 已走過的部分
+  gg.strokeStyle=C.liq;gg.lineWidth=3;gg.beginPath();
+  let started=false;
+  for(let i=0;i<pts.length;i++){const q0=pts[i][0];if(q0>CU.Q)break;const px=X(q0),py=Y(pts[i][1]);started?gg.lineTo(px,py):(gg.moveTo(px,py),started=true);}
+  gg.lineTo(X(CU.Q),Y(st.T));gg.stroke();
+  dot(gg,X(CU.Q),Y(st.T),C.liq,5);
+  ['熔化','沸騰'].forEach((nm,j)=>{const a=cum[j===0?1:3],b=cum[j===0?2:4];
+    line(gg,X(a),Y(j?100:0),X(b),Y(j?100:0),C.accent,3);
+    text(gg,nm,X((a+b)/2),Y(j?100:0)-8,{col:C.accent,size:12,bold:true,align:'center'});});
+  // 文字
+  $('cClock').textContent=nf(CU.t,0)+' 秒';
+  $('cNow').innerHTML=`<dt>狀態</dt><dd>${st.ph.split('：')[0]}</dd><dt>溫度</dt><dd>${nf(st.T,1)} ℃</dd><dt>已吸收的熱量</dt><dd>${nf(CU.Q,0)} 卡</dd><dt>這一段還要</dt><dd>${nf(st.seg[1]-st.q,0)} 卡</dd>`;
+  $('cSay').textContent=(st.i===1||st.i===3)?
+    `${st.ph}：一直在加熱，但溫度${st.i===1?'停在 0 ℃':'停在 100 ℃'}不動——吸收的熱量全部拿去${st.i===1?'把冰的結構拆開':'把水分子變成氣體'}，這就是${st.i===1?'熔化熱':'汽化熱'}（潛熱）。`:
+    `${st.ph}：吸收的熱量用來讓溫度上升，每 1 ℃ 需要 ${nf(CU.m*[CI,0,CW,0,CS][st.i],0)} 卡（m×s）。`;
+  const segs=cuSegs();
+  $('cTable').innerHTML='<tr><th>階段</th><th class="n">算式</th><th class="n">熱量（卡）</th></tr>'+
+    segs.map((sg,i)=>`<tr${i===st.i?' style="background:var(--accent-soft)"':''}><td>${sg[0]}</td><td class="n">${sg[2]}</td><td class="n">${nf(sg[1],0)}</td></tr>`).join('')+
+    `<tr class="sum"><td>合計</td><td class="n"></td><td class="n">${nf(tot,0)}</td></tr>`;};
+hReset();cuReset();
+
+// ======================================================================
 // 題目情境
 // ======================================================================
 function goF(o){setBench('flask');fReset();F.px=.30;F.py=.96;Object.assign(F,o);segSet($('fBath'),String(F.bath));segSet($('fPart'),F.part);segSet($('fSpd'),String(F.spd));segSet($('fTube'),String(F.A));$('fZoom').checked=F.zoom;
   F.run=true;UI.flask();kick();}
+function goH(o){setBench('heat');HQ.mode=o.mode||'heat';
+  if(o.a)Object.assign(HQ.a,o.a);if(o.b)Object.assign(HQ.b,o.b);if(o.P)HQ.P=o.P;
+  segSet($('hSubA'),HQ.a.k);segSet($('hSubB'),HQ.b.k);setHMa(HQ.a.m);setHMb(HQ.b.m);setHTa(HQ.a.T0);setHTb(HQ.b.T0);setHP(HQ.P);
+  hReset();HQ.run=!!o.play;UI.heat();kick();}
+function goC2(o){setBench('curve');if(o.m){CU.m=o.m;setCM(o.m);}if(o.P){CU.P=o.P;setCP(o.P);}
+  cuReset();if(o.step){const c=cuCum();CU.Q=c[o.step]+ (o.step===1||o.step===3?cuSegs()[o.step][1]*.35:0);}
+  CU.run=!!o.play;UI.curve();kick();}
 function goS(o){setBench('scale');Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);$('sX').checked=S.x;$('sXrow').hidden=!S.x;$('sDef').checked=S.def;kick();}
 const QG=[
  {g:'自製溫度計（實驗台 1）',q:[
@@ -434,6 +707,20 @@ const QG=[
   ['如果只有玻璃會膨脹','只有玻璃膨脹','水位只會往下掉然後停住。把兩個合起來看，就是前幾秒玻璃贏、後來水贏。',()=>goF({bath:80,part:'gl',spd:1,zoom:true})],
   ['把吸管換細一點，溫度計會怎樣','細吸管','同樣的體積變化，管子愈細、液柱跑得愈長，溫度計愈靈敏（刻度可以畫得更細）。這就是溫度計的管子都做得很細的原因。',()=>goF({bath:80,part:'both',A:.071,spd:4})],
   ['最後水位停在哪裡','等到熱平衡','當玻璃和水都和水槽一樣溫度時，體積不再改變，水位就停住——這個高度對應的就是水槽的溫度。溫度計要「等讀數穩定」才能讀，就是在等熱平衡。',()=>goF({bath:80,part:'both',spd:12})]]},
+ {g:'熱量與比熱（實驗台 3）',q:[
+  ['同樣的火，為什麼油比水先變熱','水 vs 食用油','水的比熱 1、油 0.5，同樣 200 g 時水升高 1 ℃ 要 200 卡、油只要 100 卡。所以同樣的加熱器，油升溫快 2 倍。',()=>goH({mode:'heat',a:{k:'water',m:200,T0:20},b:{k:'oil',m:200,T0:20},P:100,play:true})],
+  ['海邊的日夜溫差為什麼比沙漠小','水 vs 沙','沙的比熱只有 0.2，是水的 1/5：白天太陽曬，沙一下就燙、水卻升不了幾度；晚上沙又很快冷掉。所以靠海的地方溫差比較小。',()=>goH({mode:'heat',a:{k:'water',m:200,T0:20},b:{k:'sand',m:200,T0:20},P:100,play:true})],
+  ['鐵鍋為什麼一下子就燙手','鐵 vs 水','鐵的比熱 0.11，幾乎是水的 1/9，很少的熱量就能讓它溫度升很高。',()=>goH({mode:'heat',a:{k:'water',m:200,T0:20},b:{k:'iron',m:200,T0:20},P:100,play:true})],
+  ['同樣是水，質量加倍會怎樣','100 g vs 200 g 的水','升高 1 ℃ 需要的熱量跟質量成正比，所以 200 g 的水升溫速度剛好是 100 g 的一半。',()=>goH({mode:'heat',a:{k:'water',m:100,T0:20},b:{k:'water',m:200,T0:20},P:100,play:true})],
+  ['80 ℃ 和 20 ℃ 的水各 200 g 混在一起','熱平衡','質量和比熱都一樣，所以終溫剛好是中間：50 ℃。高溫的放出的熱 ＝ 低溫的吸收的熱。',()=>goH({mode:'mix',a:{k:'water',m:200,T0:80},b:{k:'water',m:200,T0:20},play:true})],
+  ['100 g 的熱水加 300 g 的冷水','質量不一樣','終溫會偏向量多的那一杯：(100×80＋300×20)÷400 ＝ 35 ℃。',()=>goH({mode:'mix',a:{k:'water',m:100,T0:80},b:{k:'water',m:300,T0:20},play:true})]]},
+ {g:'加熱曲線（實驗台 4）',q:[
+  ['為什麼冰水混合物一直停在 0 ℃','熔化那一段','在熔化的過程中，吸收的熱量全部拿去拆開冰的結構（熔化熱 80 卡/公克），不會讓溫度上升。所以只要還有冰沒熔完，溫度就一直是 0 ℃。',()=>goC2({step:1,play:true})],
+  ['哪一段要花最久','汽化','100 g 的水：熔化只要 8000 卡，汽化卻要 54000 卡（540 卡/公克）。所以水燒開很快、燒乾卻要很久，這也是為什麼被水蒸氣燙到比被熱水燙到嚴重。',()=>goC2({step:3,play:true})],
+  ['0 ℃ 的冰和 0 ℃ 的水，哪一個比較「冷」','同溫度不同狀態','溫度一樣，但 0 ℃ 的冰還要再吸收 80 卡/公克才會變成 0 ℃ 的水，所以用冰塊冰飲料比用同溫度的冷水有效得多。',()=>goC2({step:1})],
+  ['把冰的質量減半','50 g','每一段需要的熱量都減半，所以同樣的加熱器只要一半的時間；但曲線的形狀、轉折的溫度完全一樣。',()=>goC2({m:50,play:true})],
+  ['加熱功率加倍','1600 卡/秒','需要的「熱量」不變，只是比較快吸收到，所以以熱量為橫軸的曲線一模一樣，只是時間減半。',()=>goC2({P:1600,play:true})],
+  ['水蒸氣的比熱比水小','最後一段','水蒸氣 0.48、水 1，所以同樣的加熱器，變成水蒸氣以後溫度上升得比較快（曲線最後一段比較陡）。',()=>goC2({step:4,play:true})]]},
  {g:'三種溫標（實驗台 2）',q:[
   ['攝氏 25 度是華氏幾度','25 ℃','華氏 ＝ 攝氏 × 1.8 ＋ 32 ＝ 25 × 1.8 ＋ 32 ＝ 77 °F。',()=>goS({T:25})],
   ['華氏 100 度熱不熱','≈37.8 ℃','攝氏 ＝ (100 − 32) ÷ 1.8 ≈ 37.8 ℃，比體溫還高一點，是很熱的天氣。',()=>goS({T:37.8})],
@@ -450,7 +737,7 @@ $('qbox').addEventListener('click',e=>{const b=e.target.closest('.qchip');if(!b)
   showStory(q[0],q[2]);});
 
 // ================= 啟動 =================
-fReset();UI.flask();
+fReset();UI.flask();UI.heat();UI.curve();
 setBench((location.hash||'').replace('#','')||'flask',true);
 kick();
 })();
