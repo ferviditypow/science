@@ -1,0 +1,512 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>原子光譜與能階</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<script src="../shared/site.js"></script>
+<style>
+:root{--dark:#14161c;--dark2:#23262f;--tube:#8d99a6;--lyman:#7048e8;--balmer:#1c7ed6;--paschen:#e8590c;--ghost:#aab2bb}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--tube:#7a8794;--lyman:#9775fa;--balmer:#5aa9ff;--paschen:#ff922b;--ghost:#6b7480;color-scheme:dark}}
+:root[data-theme="dark"]{--tube:#7a8794;--lyman:#9775fa;--balmer:#5aa9ff;--paschen:#ff922b;--ghost:#6b7480;color-scheme:dark}
+.wrap{max-width:1280px}
+.benchbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;padding:8px 10px}
+.benchbar .seg button{font-weight:700;min-height:44px;padding:0 14px}
+.benchbar .seg button .n{font-family:var(--f-mono);margin-right:5px;opacity:.65}
+.bench{display:flex;flex-direction:column;gap:12px}
+.bench[hidden]{display:none}
+.grid2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px;align-items:start}
+@media (max-width:860px){.grid2{grid-template-columns:minmax(0,1fr)}}
+.box{padding:10px 14px 14px}
+.box h3{margin:0 0 6px;font-size:1rem}
+canvas.cv{display:block;width:100%}
+.formula2{font-family:var(--f-mono);font-size:.95rem;background:var(--accent-soft);border-radius:8px;padding:8px 10px;margin:6px 0;line-height:1.75}
+.mini{font-size:.85rem;color:var(--muted);margin:4px 0 0}
+.qgrp{margin-bottom:12px}
+.qgrp h4{margin:0 0 6px;font-size:.82rem;color:var(--muted);font-weight:500;letter-spacing:.06em}
+.qchips{display:flex;flex-wrap:wrap;gap:7px}
+.qchip{border:1px solid var(--line);background:var(--panel);border-radius:999px;min-height:36px;padding:3px 13px;cursor:pointer;font-size:.88rem;text-align:left;color:var(--ink)}
+.qchip:hover{border-color:var(--accent)}
+.qchip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft)}
+.qchip .pg{color:var(--muted);font-size:.76rem;margin-left:4px}
+.story p{white-space:pre-line}
+dl.fk{display:grid;grid-template-columns:auto 1fr;gap:5px 14px;margin:8px 0 0;align-items:baseline}
+dl.fk dt{color:var(--muted);font-size:13px}
+dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
+.wt{border-collapse:collapse;width:100%;font-size:.92rem;margin-top:4px}
+.wt th,.wt td{border-bottom:1px solid var(--line);padding:5px 6px;text-align:left}
+.wt td.n,.wt th.n{font-family:var(--f-mono);text-align:right;white-space:nowrap}
+.wt tr.on td{background:var(--accent-soft);font-weight:700}
+.ser{display:flex;gap:10px;flex-wrap:wrap;font-size:.85rem;margin-top:4px}
+.ser i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:4px;vertical-align:-1px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高二 原子結構 ／ 高一 近代物理</div>
+      <h1>原子光譜與能階</h1>
+    </div>
+    <p>三個實驗台：放射光譜（每種元素的「指紋」）、波耳模型與能階躍遷（算出每一條譜線的波長）、吸收光譜（為什麼太陽光譜上有暗線）。</p>
+  </header>
+
+  <nav class="panel benchbar" aria-label="實驗台">
+    <span class="tlabel">實驗台</span>
+    <span class="seg" id="benchSeg">
+      <button data-v="emit" aria-pressed="true"><span class="n">1</span>放射光譜</button>
+      <button data-v="bohr" aria-pressed="false"><span class="n">2</span>波耳模型與能階</button>
+      <button data-v="abs" aria-pressed="false"><span class="n">3</span>吸收光譜</button>
+    </span>
+  </nav>
+
+  <section class="panel story" id="story" hidden>
+    <button class="x" id="storyX" aria-label="關閉說明">×</button>
+    <h3 id="storyT"></h3>
+    <p id="storyP"></p>
+    <button class="btn" id="storyBack" style="margin-top:8px">↓ 回到題目列表</button>
+  </section>
+
+  <!-- 1 放射光譜 -->
+  <section class="bench" id="b-emit">
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">光源</span>
+        <span class="seg" id="eSrc"></span>
+        <label class="tog"><input type="checkbox" id="eLab" checked> 標出波長</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvEmit" aria-label="光譜管、稜鏡與屏幕"></canvas></div>
+      <p class="hint">拖曳屏幕下方的橘色游標可以讀出波長。氣體放電管發出的是<b>線光譜</b>，每種元素的線條位置都不一樣，像指紋一樣可以用來辨認元素；白熾燈泡（固體燈絲）發出的是<b>連續光譜</b>。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3 id="eName"></h3>
+        <div class="formula2" id="eInfo"></div>
+        <table class="wt" id="eTable"></table>
+      </section>
+      <section class="panel box">
+        <h3>游標</h3>
+        <dl class="fk" id="eNow"></dl>
+        <div class="verdict" id="eSay"></div>
+        <p class="mini">可見光大約是 400～700 nm：400 nm 紫、500 nm 青綠、600 nm 橙、700 nm 紅。比 400 nm 短的是紫外線、比 700 nm 長的是紅外線，眼睛都看不到。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- 2 波耳模型 -->
+  <section class="bench" id="b-bohr" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">電子從 n =</span>
+        <span class="seg" id="bNi"></span>
+        <span class="tlabel">跳到 n =</span>
+        <span class="seg" id="bNf"></span>
+        <button class="btn primary" id="bGo">▶ 躍遷</button>
+        <button class="btn" id="bClr">⟲ 清除累積的譜線</button>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="bSer" checked> 在能階圖上畫出三個系列</label>
+        <label class="tog"><input type="checkbox" id="bAll"> 一次畫出整個巴耳末系列</label>
+      </div>
+      <div class="grid2">
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvAtom" aria-label="波耳原子模型"></canvas></div>
+        <div class="cbox" style="padding:0"><canvas class="cv" id="cvLev" aria-label="能階圖"></canvas></div>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvBSpec" aria-label="累積的譜線"></canvas></div>
+      <p class="hint">電子只能待在特定的能階上。往內跳（n 變小）會<b>放出</b>一個光子，往外跳（n 變大）要<b>吸收</b>一個光子，光子的能量剛好等於兩個能階的差。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>這一次躍遷</h3>
+        <div class="formula2" id="bFormula"></div>
+        <dl class="fk" id="bNow"></dl>
+        <div class="verdict" id="bSay"></div>
+      </section>
+      <section class="panel box">
+        <h3>三個系列</h3>
+        <div class="ser">
+          <span><i style="background:var(--lyman)"></i>來曼系（跳到 n＝1，紫外線）</span>
+          <span><i style="background:var(--balmer)"></i>巴耳末系（跳到 n＝2，可見光）</span>
+          <span><i style="background:var(--paschen)"></i>帕申系（跳到 n＝3，紅外線）</span>
+        </div>
+        <table class="wt" id="bTable"></table>
+        <p class="mini">E<sub>n</sub> ＝ −13.6 ÷ n²（電子伏特）。n 愈大能階愈靠近，所以同一個系列的譜線在短波長那端愈擠愈密，最後收斂到系列極限。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- 3 吸收光譜 -->
+  <section class="bench" id="b-abs" hidden>
+    <section class="panel">
+      <div class="toolbar">
+        <span class="tlabel">情境</span>
+        <span class="seg" id="aMode"><button data-v="lab" aria-pressed="true">白光穿過冷氫氣</button><button data-v="sun" aria-pressed="false">太陽光譜</button></span>
+        <label class="tog"><input type="checkbox" id="aGas" checked> 放入氣體</label>
+        <label class="tog"><input type="checkbox" id="aCmp" checked> 和放射光譜對照</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvAbs" aria-label="吸收光譜實驗"></canvas></div>
+      <p class="hint">同一種原子「會放出哪些波長」就「會吸收哪些波長」，因為兩者都是同樣的能階差。所以吸收光譜的暗線和放射光譜的亮線剛好對在一起。</p>
+    </section>
+    <div class="grid2">
+      <section class="panel box">
+        <h3>發生什麼事</h3>
+        <div class="verdict" id="aSay"></div>
+        <p class="mini" id="aNote"></p>
+      </section>
+      <section class="panel box">
+        <h3>為什麼側面看是亮線、正面看是暗線</h3>
+        <p class="mini">氣體吸收了那些波長以後，會把光子往<b>四面八方</b>再放出來，所以正對著光源的方向就少了那些波長（暗線）；從旁邊看，卻只看得到那幾條亮線。這也是為什麼我們能知道太陽和遙遠恆星是由什麼元素組成的。</p>
+      </section>
+    </div>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">題目情境 <small>常見題型；之後補上講義頁碼與考古題題號</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+
+  <div class="notes">
+    <div><h2>線光譜</h2><p>原子的能階是分立的，所以只會放出特定幾個能量的光子，在光譜上就是幾條亮線。每種元素的能階不同，線的位置也不同，可以當作元素的指紋。固體、液體或高壓氣體發光則是連續光譜。</p></div>
+    <div><h2>能量與波長</h2><p>光子能量 E ＝ hν ＝ hc／λ。用電子伏特和奈米時 λ(nm) ＝ 1240 ÷ E(eV)：能階差愈大，放出的光波長愈短（能量愈高）。</p></div>
+    <div><h2>常見誤解</h2><p>「電子可以停在任何地方」：只能在特定能階。「吸收和放射是兩套波長」：是同一套。「n 愈大能量愈小」：n 愈大能量愈大（負得愈少），n＝∞ 時為 0，代表電子脫離原子（游離）。</p></div>
+  </div>
+</div>
+<script>
+(()=>{
+// ================= 共用 =================
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),TAU=Math.PI*2,D2R=Math.PI/180;
+const DPR=()=>Math.min((window.devicePixelRatio||1)*((window.visualViewport&&visualViewport.scale)||1),3);   // 兩指放大頁面時也要重畫，否則畫布會糊
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','accent','accent-soft','blue','green','red','purple','dark','dark2','tube','lyman','balmer','paschen','ghost'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());}
+readColors();
+function fit(cv,ratio,minH,maxH){const w=Math.max(10,cv.clientWidth);if(!cv.clientWidth&&cv.width>20){const d=DPR();return{W:cv.width/d,H:cv.height/d};}
+  let h=Math.round(clamp(w*ratio,minH,(window.FSH?FSH(cv,maxH):maxH)));
+  if(cv._fh&&Math.abs(h-cv._fh)<=2)h=cv._fh;cv._fh=h;   // 遲滯：避免和捲軸互相拉扯
+  cv.style.height=h+'px';const d=DPR();
+  if(cv.width!==Math.round(w*d)||cv.height!==Math.round(h*d)){cv.width=Math.round(w*d);cv.height=Math.round(h*d);}
+  cv.getContext('2d').setTransform(d,0,0,d,0,0);return{W:w,H:h};}
+function segSet(el,v){el.querySelectorAll('button[data-v]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));}
+function segOn(el,fn){el.addEventListener('click',e=>{const b=e.target.closest('button[data-v]');if(b)fn(b.dataset.v);});}
+const FONT='"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif';
+function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabetic',bg=null,mono=false}={}){
+  g.font=`${bold?700:500} ${size}px ${mono?'"IBM Plex Mono",monospace':FONT}`;g.textAlign=align;g.textBaseline=base;
+  const w=g.measureText(s).width,cw=g.canvas.clientWidth||1e9;let px=align==='center'?x-w/2:align==='right'?x-w:x;x+=Math.max(4-px,0)+Math.min(cw-4-(px+w),0);
+  if(bg){px=align==='center'?x-w/2:align==='right'?x-w:x;const py=base==='middle'?y-size/2-1:base==='top'?y-1:y-size;g.save();g.fillStyle=bg;g.globalAlpha=.85;g.fillRect(px-3,py-2,w+6,size+5);g.restore();}
+  g.fillStyle=col;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
+function head(g,x,y,ang,col,size=10){g.fillStyle=col;g.beginPath();g.moveTo(x,y);g.lineTo(x-size*Math.cos(ang-.42),y-size*Math.sin(ang-.42));g.lineTo(x-size*Math.cos(ang+.42),y-size*Math.sin(ang+.42));g.closePath();g.fill();}
+function arrow(g,x1,y1,x2,y2,col,w=2.4){const L=Math.hypot(x2-x1,y2-y1);if(L<2)return;const a=Math.atan2(y2-y1,x2-x1);line(g,x1,y1,x2-Math.cos(a)*5,y2-Math.sin(a)*5,col,w);head(g,x2,y2,a,col,Math.min(11,L*.6));}
+function handle(g,x,y,r=9){g.fillStyle=C.accent;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();g.strokeStyle=C.panel;g.lineWidth=2;g.stroke();}
+function dragger(cv,handles,after){let cur=null;const pos=ev=>{const r=cv.getBoundingClientRect();return[ev.clientX-r.left,ev.clientY-r.top];};
+  const pick=(x,y)=>{let best=null,bd=1e9;for(const h of handles()){const d=h.hit?h.hit(x,y):Math.hypot(x-h.x,y-h.y);if(d<(h.r||26)&&d<bd){bd=d;best=h;}}return best;};
+  cv.addEventListener('pointerdown',ev=>{const[x,y]=pos(ev);const h=pick(x,y);if(!h)return;cur={h,dx:h.free?0:h.x-x,dy:h.free?0:h.y-y};h.start&&h.start();cv.setPointerCapture(ev.pointerId);ev.preventDefault();});
+  cv.addEventListener('pointermove',ev=>{const[x,y]=pos(ev);if(!cur){cv.style.cursor=pick(x,y)?'grab':'default';return;}cur.h.move(x+cur.dx,y+cur.dy);after();});
+  const up=()=>{if(cur&&cur.h.end)cur.h.end();cur=null;after();};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);}
+const nf=(x,d=1)=>{const r=(Math.round(x*Math.pow(10,d))/Math.pow(10,d));return (Object.is(r,-0)?0:r).toFixed(d);};
+
+// ================= 實驗台切換與迴圈 =================
+let bench='emit';const BENCHES=['emit','bohr','abs'];
+const DRAW={},TICK={},UI={};
+function setBench(b,noHash){if(!BENCHES.includes(b))b='emit';bench=b;segSet($('benchSeg'),b);
+  BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();kick();}
+segOn($('benchSeg'),v=>{hideStory();setBench(v);});
+let raf=0,lastT=0;
+function kick(){if(!raf)raf=requestAnimationFrame(loop);}
+function loop(now){raf=0;const dt=lastT?Math.min(.05,(now-lastT)/1000):0;lastT=now;
+  let more=false;try{more=TICK[bench]?TICK[bench](dt):false;DRAW[bench]();}catch(e){console.error(e);more=false;}
+  if(more&&!raf)raf=requestAnimationFrame(loop);else if(!more)lastT=0;}
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+new MutationObserver(()=>{readColors();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+addEventListener('resize',kick);
+function showStory(t,p){$('storyT').textContent=t;$('storyP').innerHTML=p;$('story').hidden=false;$('story').scrollIntoView({behavior:'smooth',block:'nearest'});}
+function hideStory(){$('story').hidden=true;document.querySelectorAll('.qchip[aria-pressed="true"]').forEach(b=>b.setAttribute('aria-pressed','false'));}
+$('storyX').addEventListener('click',hideStory);
+$('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior:'smooth',block:'start'}));
+
+// ================= 共用：波長 → 顏色、光譜帶 =================
+const WL0=380,WL1=760;
+function wrgb(w){let r=0,g=0,b=0;
+  if(w<380||w>780)return'#1a1c22';
+  if(w<440){r=-(w-440)/60;b=1;}
+  else if(w<490){g=(w-440)/50;b=1;}
+  else if(w<510){g=1;b=-(w-510)/20;}
+  else if(w<580){r=(w-510)/70;g=1;}
+  else if(w<645){r=1;g=-(w-645)/65;}
+  else r=1;
+  let f=1;if(w>700)f=.25+.75*(780-w)/80;else if(w<420)f=.25+.75*(w-380)/40;
+  const v=x=>Math.round(255*Math.pow(Math.max(0,Math.min(1,x))*f,.8));
+  return`rgb(${v(r)},${v(g)},${v(b)})`;}
+const wx=(w,x,W)=>x+W*(w-WL0)/(WL1-WL0);
+// mode: 'cont' 連續、'emit' 線光譜、'abs' 吸收
+function strip(g,x,y,W,H,lines,mode,axis){
+  if(mode==='emit'){g.fillStyle='#0b0c10';g.fillRect(x,y,W,H);}
+  else{for(let i=0;i<W;i++){const w=WL0+(WL1-WL0)*i/W;g.fillStyle=wrgb(w);g.fillRect(x+i,y,1.4,H);}}
+  (lines||[]).forEach(L=>{const px=wx(L[0],x,W);
+    if(mode==='emit'){g.fillStyle=wrgb(L[0]);g.globalAlpha=.35+.65*L[1];
+      g.fillRect(px-1.6,y,3.2,H);g.globalAlpha=.25*L[1];g.fillRect(px-5,y,10,H);g.globalAlpha=1;}
+    else if(mode==='abs'){g.fillStyle='#0b0c10';g.globalAlpha=.55+.45*L[1];g.fillRect(px-1.8,y,3.6,H);g.globalAlpha=1;}});
+  g.strokeStyle=C.line;g.lineWidth=1;g.strokeRect(x,y,W,H);
+  if(axis){for(let w=400;w<=750;w+=50){const px=wx(w,x,W);line(g,px,y+H,px,y+H+5,C.muted,1.2);
+    text(g,w+'',px,y+H+17,{col:C.muted,size:11,align:'center',mono:true});}
+    text(g,'nm',x+W+6,y+H+17,{col:C.muted,size:11});}}
+
+// ======================================================================
+// 1 放射光譜
+// ======================================================================
+const SRC=[
+ ['H','氫 H',[[656.3,1],[486.1,.65],[434.0,.4],[410.2,.25]],'最簡單的原子，四條可見光譜線就是巴耳末系的前四條。'],
+ ['He','氦 He',[[667.8,.5],[587.6,1],[501.6,.5],[492.2,.3],[471.3,.3],[447.1,.5]],'1868 年先在太陽光譜裡發現這條黃線，才在地球上找到氦。'],
+ ['Hg','汞 Hg',[[404.7,.5],[435.8,.9],[546.1,1],[577.0,.6],[579.1,.55]],'日光燈管裡就是汞蒸氣，綠色的 546 nm 最強。'],
+ ['Na','鈉 Na',[[589.0,1],[589.6,.95]],'只有黃色的兩條（D 線），這就是鈉燈和焰色反應的黃光。'],
+ ['cont','白熾燈',null,'固體燈絲發光是連續光譜，所有波長都有，看不到線。'],
+ ['sun','太陽',[[656.3,.9],[589.0,.8],[527.0,.7],[486.1,.85],[430.8,.9],[396.8,1]],'太陽的連續光譜上有一條條暗線（夫朗和斐線），是外層較冷的氣體吸收造成的。']];
+const E1={k:'H',cur:589,lab:true};
+$('eSrc').innerHTML=SRC.map((s,i)=>`<button data-v="${s[0]}" aria-pressed="${i===0}">${s[1]}</button>`).join('');
+segOn($('eSrc'),v=>{E1.k=v;segSet($('eSrc'),v);hideStory();kick();});
+$('eLab').addEventListener('change',e=>{E1.lab=e.target.checked;kick();});
+const srcOf=()=>SRC.find(s=>s[0]===E1.k);
+const srcMode=()=>E1.k==='cont'?'cont':(E1.k==='sun'?'abs':'emit');
+function srcColor(){const s=srcOf();if(!s[2])return'#fff6e0';
+  let r=0,g2=0,b=0,tot=0;s[2].forEach(L=>{const c=wrgb(L[0]).match(/\d+/g).map(Number);r+=c[0]*L[1];g2+=c[1]*L[1];b+=c[2]*L[1];tot+=L[1];});
+  return`rgb(${Math.round(r/tot)},${Math.round(g2/tot)},${Math.round(b/tot)})`;}
+DRAW.emit=()=>{const cv=$('cvEmit'),{W,H}=fit(cv,.40,300,400),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const s=srcOf(),mode=srcMode();
+  // 光學台（深色）
+  const bx=10,by=8,bw=W-20,bh=H*.52;
+  g.fillStyle=C.dark;g.fillRect(bx,by,bw,bh);
+  // 光源
+  const tx=bx+bw*.09,ty=by+bh*.5;
+  if(E1.k==='sun'){g.fillStyle='#ffd43b';g.beginPath();g.arc(tx,ty,24,0,TAU);g.fill();
+    g.globalAlpha=.3;g.beginPath();g.arc(tx,ty,34,0,TAU);g.fill();g.globalAlpha=1;
+    text(g,'太陽',tx,ty+48,{col:'#ffd43b',size:12,bold:true,align:'center'});}
+  else{g.fillStyle=C.tube;g.beginPath();g.roundRect(tx-34,ty-11,68,22,9);g.fill();
+    g.fillStyle=srcColor();g.globalAlpha=.9;g.beginPath();g.roundRect(tx-28,ty-7,56,14,7);g.fill();g.globalAlpha=1;
+    text(g,E1.k==='cont'?'燈泡':'放電管',tx,ty+34,{col:C.ghost,size:12,bold:true,align:'center'});}
+  // 光束到稜鏡
+  g.strokeStyle='#fff';g.globalAlpha=.55;g.lineWidth=3;
+  g.beginPath();g.moveTo(tx+36,ty);g.lineTo(bx+bw*.42,ty);g.stroke();g.globalAlpha=1;
+  // 狹縫
+  g.fillStyle=C.dark2;g.fillRect(bx+bw*.27,by+6,7,bh*.42-6);g.fillRect(bx+bw*.27,ty+8,7,bh*.5-14);
+  text(g,'狹縫',bx+bw*.27+3,by+bh-6,{col:C.ghost,size:11,align:'center'});
+  // 稜鏡
+  const px0=bx+bw*.46,py0=ty;
+  g.fillStyle='#9ec5d8';g.globalAlpha=.45;g.beginPath();g.moveTo(px0,py0-36);g.lineTo(px0-30,py0+28);g.lineTo(px0+30,py0+28);g.closePath();g.fill();g.globalAlpha=1;
+  g.strokeStyle='#cfe4ee';g.lineWidth=1.5;g.stroke();
+  // 色散光束 → 屏幕
+  const scX=bx+bw*.68,scW=bw*.29,scY=by+10,scH=bh-20;
+  for(let i=0;i<=60;i++){const w=WL0+(WL1-WL0)*i/60,yy=scY+scH*(1-i/60);
+    const on=mode==='cont'||mode==='abs'?1:(s[2]?Math.max(...s[2].map(L=>Math.abs(L[0]-w)<6?L[1]:0)):0);
+    if(on<=0)continue;
+    g.strokeStyle=wrgb(w);g.globalAlpha=.25+.55*on;g.lineWidth=2.4;
+    g.beginPath();g.moveTo(px0+12,py0+6);g.lineTo(scX,yy);g.stroke();g.globalAlpha=1;}
+  // 屏幕上的光譜（直的）
+  g.save();g.translate(scX,scY+scH);g.rotate(-Math.PI/2);
+  strip(g,0,0,scH,scW,s[2],mode,false);g.restore();
+  text(g,'屏幕',scX+scW/2,by+bh-6,{col:C.ghost,size:11,align:'center'});
+  // 下方可量測的光譜帶
+  const sy=by+bh+26,sw=W-60,sx=24;
+  strip(g,sx,sy,sw,38,s[2],mode,true);
+  if(E1.lab&&s[2])s[2].forEach(L=>{const X=wx(L[0],sx,sw);
+    line(g,X,sy-4,X,sy-14,C.muted,1);text(g,nf(L[0],1),X,sy-18,{col:C.muted,size:10.5,align:'center',mono:true});});
+  // 游標
+  const cxp=wx(E1.cur,sx,sw);
+  line(g,cxp,sy-6,cxp,sy+44,C.accent,2);
+  handle(g,cxp,sy+50,8);
+  text(g,nf(E1.cur,0)+' nm',cxp,sy+72,{col:C.accent,size:13,bold:true,align:'center'});
+  // 文字
+  $('eName').textContent=s[1]+(mode==='cont'?'：連續光譜':mode==='abs'?'：連續光譜＋吸收暗線':'：線光譜');
+  $('eInfo').innerHTML=s[3];
+  $('eTable').innerHTML=s[2]?('<tr><th class="n">波長 (nm)</th><th>顏色</th><th class="n">相對強度</th></tr>'+
+    s[2].slice().sort((a,b)=>a[0]-b[0]).map(L=>`<tr><td class="n">${nf(L[0],1)}</td><td><span style="display:inline-block;width:26px;height:12px;border-radius:3px;background:${wrgb(L[0])}"></span></td><td class="n">${nf(L[1]*100,0)}%</td></tr>`).join(''))
+    :'<tr><td class="mini" style="color:var(--muted)">連續光譜：每一個波長都有，沒有分立的線。</td></tr>';
+  const near=s[2]?s[2].reduce((a,L)=>Math.abs(L[0]-E1.cur)<Math.abs(a[0]-E1.cur)?L:a,s[2][0]):null;
+  $('eNow').innerHTML=`<dt>游標波長</dt><dd>${nf(E1.cur,1)} nm</dd><dt>光子能量</dt><dd>${nf(1239.8/E1.cur,2)} eV</dd>`+
+    (near?`<dt>最近的譜線</dt><dd>${nf(near[0],1)} nm</dd>`:'');
+  $('eSay').textContent=E1.cur<400?'這裡已經是紫外線，眼睛看不到。':E1.cur>700?'這裡已經是紅外線，眼睛看不到（但可以用感測器測到）。':
+    (near&&Math.abs(near[0]-E1.cur)<4?`游標正好落在 ${nf(near[0],1)} nm 這條譜線上。`:
+     mode==='cont'?'連續光譜上每個波長都有光。':'這個波長沒有譜線，所以是暗的。');};
+dragger($('cvEmit'),()=>{const cv=$('cvEmit'),W=cv.clientWidth,H=cv._fh||320;
+  const bh=H*.52,sy=8+bh+26,sw=W-60,sx=24;
+  return[{x:wx(E1.cur,sx,sw),y:sy+50,r:34,move:x=>{E1.cur=clamp(WL0+(WL1-WL0)*(x-sx)/sw,WL0,WL1);}}];},()=>{hideStory();kick();});
+
+// ======================================================================
+// 2 波耳模型與能階
+// ======================================================================
+const EN=n=>-13.6/(n*n), LAM=dE=>1239.84/Math.abs(dE);
+const B={ni:3,nf:2,ser:true,all:false,t:1,run:false,lines:[],ph:0};
+['Ni','Nf'].forEach(k=>{const el=$('b'+k);
+  el.innerHTML=[1,2,3,4,5,6].map(n=>`<button data-v="${n}" aria-pressed="${n===(k==='Ni'?3:2)}">${n}</button>`).join('');
+  segOn(el,v=>{B[k.toLowerCase()]=+v;segSet(el,v);B.t=1;B.run=false;hideStory();kick();});});
+$('bSer').addEventListener('change',e=>{B.ser=e.target.checked;kick();});
+$('bAll').addEventListener('change',e=>{B.all=e.target.checked;if(B.all){B.lines=[];for(let n=3;n<=6;n++)B.lines.push(LAM(EN(2)-EN(n)));}kick();});
+$('bGo').addEventListener('click',()=>{if(B.ni===B.nf)return;B.t=0;B.run=true;
+  const lam=LAM(EN(B.nf)-EN(B.ni));if(lam>=WL0&&lam<=WL1&&!B.lines.some(x=>Math.abs(x-lam)<1))B.lines.push(lam);
+  hideStory();kick();});
+$('bClr').addEventListener('click',()=>{B.lines=[];$('bAll').checked=false;B.all=false;kick();});
+TICK.bohr=dt=>{if(!B.run)return false;B.t=Math.min(1,B.t+dt*.9);B.ph+=dt;
+  if(B.t>=1&&B.ph>2.6){B.run=false;return false;}return true;};
+UI.bohr=()=>{segSet($('bNi'),String(B.ni));segSet($('bNf'),String(B.nf));};
+DRAW.bohr=()=>{const cv=$('cvAtom'),{W,H}=fit(cv,.8,280,380),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const cx=W*.5,cy=H*.5,RN=n=>Math.min(W,H)*.44*(n*n+4)/40;   // 半徑 ∝ n²（n=1 稍微放大才看得見）
+  const emis=B.nf<B.ni;
+  for(let n=1;n<=6;n++){g.strokeStyle=n===B.ni||n===B.nf?C.accent:C.line;g.lineWidth=n===B.ni||n===B.nf?1.8:1;
+    g.setLineDash(n===B.ni||n===B.nf?[]:[3,4]);g.beginPath();g.arc(cx,cy,RN(n),0,TAU);g.stroke();g.setLineDash([]);
+    text(g,'n='+n,cx+RN(n)*.72,cy-RN(n)*.72,{col:C.muted,size:10.5,mono:true,bg:C.panel});}
+  g.fillStyle=C.red;g.beginPath();g.arc(cx,cy,9,0,TAU);g.fill();
+  text(g,'＋',cx,cy+4,{col:C.panel,size:12,bold:true,align:'center'});
+  // 電子
+  const t=B.t,n0=B.ni,n1=B.nf,rr=(1-t)*RN(n0)+t*RN(n1),a=B.ph*1.6;
+  const ex=cx+Math.cos(a)*rr,ey=cy+Math.sin(a)*rr;
+  g.fillStyle=C.blue;g.beginPath();g.arc(ex,ey,7,0,TAU);g.fill();
+  text(g,'e⁻',ex+10,ey+4,{col:C.blue,size:11,bold:true});
+  // 光子
+  const lam=LAM(EN(n1)-EN(n0)),col=lam>=WL0&&lam<=WL1?wrgb(lam):(lam<WL0?C.lyman:C.paschen);
+  if(B.ni!==B.nf&&(B.run||t>=1)){
+    const p=emis?clamp((B.ph-.3)*.55,0,1):clamp(1-(B.ph-.3)*.55,0,1);
+    const r0=RN(6)*1.08,rp=emis?(rr+p*(r0-rr)):(r0-(1-p)*(r0-rr));
+    if(p>0&&p<1){const ax=cx+Math.cos(a+.5)*rp,ay=cy+Math.sin(a+.5)*rp;
+      g.strokeStyle=col;g.lineWidth=2.4;g.beginPath();
+      for(let i=0;i<26;i++){const d=i*2.2,xx=ax+Math.cos(a+.5)*d,yy=ay+Math.sin(a+.5)*d;
+        const off=Math.sin(i*.9)*4;const nx=-Math.sin(a+.5)*off,ny=Math.cos(a+.5)*off;
+        i?g.lineTo(xx+nx,yy+ny):g.moveTo(xx+nx,yy+ny);}
+      g.stroke();}}
+  text(g,emis?'放出光子':'吸收光子',cx,H-8,{col:col,size:13,bold:true,align:'center'});
+  // ---- 能階圖 ----
+  const cl=$('cvLev'),L2=fit(cl,.8,280,380),gl=cl.getContext('2d');
+  gl.clearRect(0,0,L2.W,L2.H);
+  const lx=L2.W*.22,lw=L2.W*.62,top=24,bot=L2.H-30;
+  const Y=E=>bot-(bot-top)*(E+13.6)/13.6;
+  line(gl,lx-6,Y(0),lx+lw+6,Y(0),C.muted,1.4,[4,4]);
+  text(gl,'n=∞　E=0（游離）',lx+lw+8,Y(0)+4,{col:C.muted,size:11,align:'right'});
+  for(let n=1;n<=6;n++){const y=Y(EN(n));
+    gl.strokeStyle=n===B.ni||n===B.nf?C.accent:C.ink;gl.lineWidth=n===B.ni||n===B.nf?2.6:1.6;
+    gl.beginPath();gl.moveTo(lx,y);gl.lineTo(lx+lw,y);gl.stroke();
+    if(n<=4){text(gl,'n='+n,lx-8,y+4,{col:C.muted,size:11,align:'right',mono:true});
+      text(gl,nf(EN(n),2)+' eV',lx+lw+6,y+4,{col:C.muted,size:11,mono:true});}}
+  text(gl,'n=5、6…',lx-8,Y(EN(5))-2,{col:C.muted,size:10,align:'right',mono:true});
+  if(B.ser){const S=[[1,C.lyman],[2,C.balmer],[3,C.paschen]];
+    S.forEach(([nf2,col2],si)=>{for(let n=nf2+1;n<=6;n++){const x=lx+lw*(.12+si*.3)+ (n-nf2)*lw*.055;
+      arrow(gl,x,Y(EN(n)),x,Y(EN(nf2)),col2,1.6);}});}
+  const xx=lx+lw*.82;
+  arrow(gl,xx,Y(EN(B.ni)),xx,Y(EN(B.nf)),col,3.2);
+  text(gl,'能階圖',lx-8,14,{col:C.muted,size:12,bold:true});
+  // ---- 累積譜線 ----
+  const cs=$('cvBSpec'),S2=fit(cs,.17,96,150),gs=cs.getContext('2d');
+  gs.clearRect(0,0,S2.W,S2.H);
+  const sx=24,sw=S2.W-60;
+  strip(gs,sx,10,sw,46,B.lines.map(l=>[l,1]),'emit',true);
+  B.lines.forEach(l=>text(gs,nf(l,1),wx(l,sx,sw),8,{col:C.muted,size:10,align:'center',mono:true}));
+  // 文字
+  const dE=EN(B.nf)-EN(B.ni);
+  $('bFormula').innerHTML=`E<sub>${B.ni}</sub> ＝ −13.6 ÷ ${B.ni}² ＝ ${nf(EN(B.ni),2)} eV　　E<sub>${B.nf}</sub> ＝ ${nf(EN(B.nf),2)} eV<br>`+
+    `ΔE ＝ ${nf(Math.abs(dE),3)} eV（${emis?'放出':'吸收'}）<br>λ ＝ 1240 ÷ ΔE ＝ <b>${nf(LAM(dE),1)} nm</b>`;
+  $('bNow').innerHTML=`<dt>躍遷</dt><dd>n ${B.ni} → ${B.nf}</dd><dt>光子能量</dt><dd>${nf(Math.abs(dE),3)} eV</dd><dt>波長</dt><dd>${nf(LAM(dE),1)} nm</dd><dt>屬於</dt><dd>${B.nf===1?'來曼系':B.nf===2?'巴耳末系':B.nf===3?'帕申系':'n='+B.nf+' 系列'}</dd>`;
+  $('bSay').textContent=B.ni===B.nf?'兩個能階一樣，沒有躍遷。':
+    (LAM(dE)<WL0?`波長 ${nf(LAM(dE),1)} nm 落在紫外線，眼睛看不到——跳到 n＝1 的來曼系全部都是紫外線。`:
+     LAM(dE)>WL1?`波長 ${nf(LAM(dE),1)} nm 落在紅外線，眼睛看不到——跳到 n＝3 的帕申系全部都是紅外線。`:
+     `波長 ${nf(LAM(dE),1)} nm 落在可見光，就是氫光譜上看得到的那幾條線之一（巴耳末系）。`);
+  const rows=[];for(let n=3;n<=7;n++)rows.push([n,2,LAM(EN(2)-EN(n))]);
+  rows.unshift([2,1,LAM(EN(1)-EN(2))]);rows.push([4,3,LAM(EN(3)-EN(4))]);
+  $('bTable').innerHTML='<tr><th>躍遷</th><th class="n">ΔE (eV)</th><th class="n">λ (nm)</th><th>區域</th></tr>'+
+    rows.map(r=>`<tr${r[0]===B.ni&&r[1]===B.nf?' class="on"':''}><td>n ${r[0]} → ${r[1]}</td><td class="n">${nf(1239.84/r[2],3)}</td><td class="n">${nf(r[2],1)}</td><td>${r[2]<WL0?'紫外':r[2]>WL1?'紅外':'可見光'}</td></tr>`).join('');};
+
+// ======================================================================
+// 3 吸收光譜
+// ======================================================================
+const HL=[[656.3,1],[486.1,.7],[434.0,.45],[410.2,.3]];
+const A={mode:'lab',gas:true,cmp:true};
+segOn($('aMode'),v=>{A.mode=v;segSet($('aMode'),v);hideStory();kick();});
+$('aGas').addEventListener('change',e=>{A.gas=e.target.checked;kick();});
+$('aCmp').addEventListener('change',e=>{A.cmp=e.target.checked;kick();});
+DRAW.abs=()=>{const cv=$('cvAbs'),{W,H}=fit(cv,.46,300,420),g=cv.getContext('2d');
+  g.clearRect(0,0,W,H);
+  const sun=A.mode==='sun';
+  const bx=10,by=8,bw=W-20,bh=H*.46;
+  g.fillStyle=C.dark;g.fillRect(bx,by,bw,bh);
+  const ty=by+bh*.46;
+  // 光源
+  if(sun){g.fillStyle='#ffd43b';g.beginPath();g.arc(bx+bw*.09,ty,26,0,TAU);g.fill();
+    text(g,'太陽內部（高溫、連續光譜）',bx+bw*.09,ty+46,{col:'#ffd43b',size:11,bold:true,align:'center'});}
+  else{g.fillStyle='#fff6e0';g.beginPath();g.arc(bx+bw*.09,ty,20,0,TAU);g.fill();
+    text(g,'白光燈（連續光譜）',bx+bw*.09,ty+40,{col:C.ghost,size:11,bold:true,align:'center'});}
+  // 光束
+  for(let i=0;i<=40;i++){const w=WL0+(WL1-WL0)*i/40;g.strokeStyle=wrgb(w);g.globalAlpha=.5;g.lineWidth=1.6;
+    g.beginPath();g.moveTo(bx+bw*.12,ty-6+i*.3);g.lineTo(bx+bw*.74,ty-6+i*.3);g.stroke();}
+  g.globalAlpha=1;
+  // 氣體
+  if(A.gas){const gx=bx+bw*.42,gw=bw*.17;
+    g.fillStyle=C.tube;g.globalAlpha=.3;g.fillRect(gx,ty-44,gw,88);g.globalAlpha=1;
+    g.strokeStyle=C.tube;g.lineWidth=2;g.strokeRect(gx,ty-44,gw,88);
+    for(let i=0;i<14;i++){const px2=gx+8+((i*37)%100)/100*(gw-16),py2=ty-36+((i*61)%100)/100*72;
+      g.fillStyle=C.balmer;g.globalAlpha=.8;g.beginPath();g.arc(px2,py2,3.4,0,TAU);g.fill();g.globalAlpha=1;}
+    text(g,sun?'外層較冷的氣體':'冷的氫氣',gx+gw/2,ty-52,{col:C.ghost,size:11,bold:true,align:'center'});
+    // 往四面八方再放出
+    [[-1,-1],[1,-1],[-1,1],[1,1],[0,-1.3],[0,1.3]].forEach(d=>{const a2=Math.atan2(d[1],d[0]);
+      arrow(g,gx+gw/2,ty,gx+gw/2+Math.cos(a2)*52,ty+Math.sin(a2)*42,wrgb(656),1.8);});}
+  // 屏幕
+  const scX=bx+bw*.78,scW=bw*.19;
+  g.save();g.translate(scX,by+bh-10);g.rotate(-Math.PI/2);
+  strip(g,0,0,bh-20,scW,A.gas?HL:null,A.gas?'abs':'cont',false);g.restore();
+  text(g,'屏幕',scX+scW/2,by+bh-2,{col:C.ghost,size:11,align:'center'});
+  // 下方對照
+  const sy=by+bh+28,sx=24,sw=W-60;
+  strip(g,sx,sy,sw,34,A.gas?HL:null,A.gas?'abs':'cont',!A.cmp);
+  text(g,A.gas?'吸收光譜（正對著光源看）':'連續光譜（沒有氣體）',sx,sy-6,{col:C.muted,size:12,bold:true});
+  if(A.cmp){const sy2=sy+58;
+    strip(g,sx,sy2,sw,34,HL,'emit',true);
+    text(g,'放射光譜（從旁邊看同一團氣體）',sx,sy2-6,{col:C.muted,size:12,bold:true});
+    HL.forEach(L=>{const X=wx(L[0],sx,sw);line(g,X,sy+34,X,sy2,C.accent,1.2,[4,4]);});}
+  $('aSay').textContent=!A.gas?'沒有氣體時，屏幕上是完整的連續光譜，每個波長都有。':
+    (sun?'太陽內部發出連續光譜，經過外層比較冷的氣體時，某些波長被吸收，所以我們看到的太陽光譜上有一條條暗線（夫朗和斐線）。分析這些暗線的位置，就知道太陽上有哪些元素。':
+     '白光穿過冷的氫氣後，656、486、434、410 nm 這幾個波長被吸收掉，屏幕上就出現暗線——位置和氫的放射光譜亮線完全一樣。');
+  $('aNote').textContent=A.cmp?'虛線連起來的就是「同一個波長」：上面是暗線、下面是亮線。':'';};
+
+// ======================================================================
+// 題目情境
+// ======================================================================
+function goE(o){setBench('emit');Object.assign(E1,o);segSet($('eSrc'),E1.k);kick();}
+function goB(o){setBench('bohr');Object.assign(B,o);segSet($('bNi'),String(B.ni));segSet($('bNf'),String(B.nf));
+  if(o.go){B.t=0;B.ph=0;B.run=true;const lam=LAM(EN(B.nf)-EN(B.ni));if(lam>=WL0&&lam<=WL1&&!B.lines.some(x=>Math.abs(x-lam)<1))B.lines.push(lam);}
+  UI.bohr();kick();}
+function goA(o){setBench('abs');Object.assign(A,o);segSet($('aMode'),A.mode);$('aGas').checked=A.gas;$('aCmp').checked=A.cmp;kick();}
+const QG=[
+ {g:'放射光譜（實驗台 1）',q:[
+  ['為什麼說光譜是元素的指紋','氫／氦／汞／鈉','每種元素的能階不一樣，所以放出的波長組合也不一樣。切換光源看線的位置怎麼變——只要量出波長，就能知道是什麼元素。',()=>goE({k:'He',cur:587.6})],
+  ['鈉燈為什麼是黃色的','鈉 D 線','鈉只有 589.0 和 589.6 nm 兩條靠得很近的黃線，所以鈉燈、焰色反應都是黃色的。',()=>goE({k:'Na',cur:589})],
+  ['氫的四條可見光譜線','氫 H','656.3（紅）、486.1（青）、434.0（藍紫）、410.2（紫），就是巴耳末系的前四條。愈往紫端線愈密。',()=>goE({k:'H',cur:656.3})],
+  ['燈泡為什麼看不到線','白熾燈','固體燈絲發光是連續光譜（熱輻射），所有波長都有，和氣體放電管的線光譜完全不同。',()=>goE({k:'cont',cur:550})],
+  ['太陽光譜上的暗線','太陽','太陽的連續光譜上有一條條暗線，位置對應各種元素的吸收波長。氦就是先在這裡被發現的。',()=>goE({k:'sun',cur:589})]]},
+ {g:'波耳模型與能階（實驗台 2）',q:[
+  ['n＝3 跳到 n＝2 放出什麼光','巴耳末 Hα','ΔE ＝ 13.6×(1/4 − 1/9) ＝ 1.889 eV，λ ＝ 1240 ÷ 1.889 ＝ 656.3 nm，就是氫光譜最亮的那條紅線。',()=>goB({ni:3,nf:2,go:true})],
+  ['為什麼來曼系看不到','n → 1','跳到 n＝1 的能階差都超過 10 eV，波長小於 122 nm，全部落在紫外線，眼睛看不到。',()=>goB({ni:2,nf:1,go:true})],
+  ['帕申系在哪裡','n → 3','跳到 n＝3 的能量差很小，波長都大於 820 nm，是紅外線。',()=>goB({ni:4,nf:3,go:true})],
+  ['為什麼譜線愈往紫端愈密','整個巴耳末系','n 愈大，能階愈靠近（−13.6/n²），所以 5→2、6→2、7→2 的波長愈來愈接近，最後收斂到 364.6 nm 的系列極限。',()=>goB({ni:6,nf:2,go:true,all:true})],
+  ['電子要吸收光子才跳得上去','n 2 → 4','往外跳要吸收剛好等於能階差的光子；能量不對的光子不會被吸收，這就是吸收光譜只有特定波長的原因。',()=>goB({ni:2,nf:4,go:true})],
+  ['游離需要多少能量','n 1 → ∞','把基態的電子完全拉走要 13.6 eV，這叫游離能。能階圖最上面那條虛線就是 E＝0。',()=>goB({ni:1,nf:6,go:true})]]},
+ {g:'吸收光譜（實驗台 3）',q:[
+  ['白光穿過冷氫氣會怎樣','出現暗線','656、486、434、410 nm 被吸收，屏幕上出現暗線，位置和放射光譜的亮線完全一樣。',()=>goA({mode:'lab',gas:true,cmp:true})],
+  ['拿掉氣體','連續光譜','沒有氣體時是完整的連續光譜，沒有任何暗線。',()=>goA({mode:'lab',gas:false,cmp:false})],
+  ['為什麼太陽光譜有暗線','夫朗和斐線','太陽內部發出連續光譜，經過外層比較冷的氣體時被吸收掉特定波長。從暗線的位置就能知道太陽上有哪些元素。',()=>goA({mode:'sun',gas:true,cmp:true})],
+  ['從旁邊看同一團氣體','亮線','被吸收的能量會往四面八方再放出來，所以從側面看只看得到那幾條亮線——和正面看到的暗線位置相同。',()=>goA({mode:'lab',gas:true,cmp:true})]]}];
+function buildQ(){$('qbox').innerHTML=QG.map((G0,gi)=>`<div class="qgrp"><h4>${G0.g}</h4><div class="qchips">`+
+  G0.q.map((q,i)=>`<button class="qchip" data-g="${gi}" data-i="${i}" aria-pressed="false">${q[0]}<span class="pg">${q[1]}</span></button>`).join('')+'</div></div>').join('');}
+buildQ();
+$('qbox').addEventListener('click',e=>{const b=e.target.closest('.qchip');if(!b)return;
+  const q=QG[+b.dataset.g].q[+b.dataset.i];q[3]();
+  document.querySelectorAll('#qbox .qchip').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed','true');
+  showStory(q[0],q[2]);});
+
+// ================= 啟動 =================
+UI.bohr();
+setBench((location.hash||'').replace('#','')||'emit',true);
+kick();
+})();
+</script>
+</body>
+</html>
