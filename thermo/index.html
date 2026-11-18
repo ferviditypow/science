@@ -76,9 +76,9 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
   <section class="bench" id="b-flask">
     <section class="panel">
       <div class="toolbar">
-        <span class="tlabel">放進</span>
+        <span class="tlabel">水槽裡裝</span>
         <span class="seg" id="fBath"><button data-v="80" aria-pressed="true">熱水 80 ℃</button><button data-v="40" aria-pressed="false">溫水 40 ℃</button><button data-v="10" aria-pressed="false">冷水 10 ℃</button><button data-v="0" aria-pressed="false">冰水 0 ℃</button></span>
-        <button class="btn primary" id="fPlay">▶ 放進水裡</button>
+        <button class="btn primary" id="fPlay">▶ 開始計時</button>
         <button class="btn" id="fReset">⟲ 重來（回到 25 ℃）</button>
         <span class="tlabel">速度</span>
         <span class="seg" id="fSpd"><button data-v="1" aria-pressed="true">×1</button><button data-v="4" aria-pressed="false">×4</button><button data-v="12" aria-pressed="false">×12</button></span>
@@ -94,7 +94,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <div class="cbox" style="padding:0"><canvas class="cv" id="cvFlask" aria-label="錐形瓶溫度計"></canvas></div>
         <div class="cbox" style="padding:0"><canvas class="cv" id="cvFG" aria-label="水位與溫度隨時間變化"></canvas></div>
       </div>
-      <p class="hint">左圖：錐形瓶裝滿染色的水，瓶口用橡皮塞插一根細吸管。右圖上半是吸管裡的水位變化（mm），下半是玻璃和水的溫度。</p>
+      <p class="hint"><b>拖曳錐形瓶（橘點）</b>可以自由移動：放進水槽裡、提到半空中、再放回去都可以，玻璃對水和對空氣的導熱快慢不同（空氣慢很多）。右圖上半是吸管裡的水位變化（mm），下半是玻璃和水的溫度。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -220,26 +220,40 @@ $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior
 // 1 錐形瓶自製溫度計
 //   玻璃先熱（τ 1.5 s）→ 容積先變大 → 水位先降；水慢慢熱（τ 60 s）→ 膨脹多 8 倍 → 水位回升
 // ======================================================================
-const T0=25,BG=2.7e-5,BL=2.1e-4,V0=100,TAUG=1.5,TAUL=60,TMAX=260;
-const F={bath:80,spd:1,part:'both',A:.196,zoom:false,run:false,t:0,Tg:T0,Tl:T0,hist:[],inBath:false};
+const T0=25,BG=2.7e-5,BL=2.1e-4,V0=100,TAUG_W=1.5,TAUG_A=14,TAUL=60,TMAX=300;
+const F={bath:80,spd:1,part:'both',A:.196,zoom:false,run:false,t:0,Tg:T0,Tl:T0,hist:[],
+         px:.30,py:.50,imm:0};        // px,py＝錐形瓶底部中心的位置（畫布比例），imm＝泡在水裡的比例
 const fH=(Tg,Tl)=>{const gl=F.part==='liq'?0:BG*(Tg-T0),lq=F.part==='gl'?0:BL*(Tl-T0);return V0*(lq-gl)/F.A*10;};  // mm
-function fReset(keep){F.t=0;F.Tg=T0;F.Tl=T0;F.hist=[{t:0,h:0,g:T0,l:T0}];F.run=false;F.inBath=false;UI.flask();kick();}
-segOn($('fBath'),v=>{F.bath=+v;segSet($('fBath'),v);fReset();hideStory();});
+function fReset(){F.t=0;F.Tg=T0;F.Tl=T0;F.hist=[{t:0,h:0,g:T0,l:T0}];F.run=false;F.px=.30;F.py=.50;UI.flask();kick();}
+const fRe=()=>{F.hist=F.hist.map(r=>({t:r.t,g:r.g,l:r.l,h:V0*((F.part==='gl'?0:BL*(r.l-T0))-(F.part==='liq'?0:BG*(r.g-T0)))/F.A*10}));};
+segOn($('fBath'),v=>{F.bath=+v;segSet($('fBath'),v);hideStory();kick();});
 segOn($('fSpd'),v=>{F.spd=+v;segSet($('fSpd'),v);});
-segOn($('fPart'),v=>{F.part=v;segSet($('fPart'),v);F.hist=F.hist.map(r=>({t:r.t,g:r.g,l:r.l,h:V0*((F.part==='gl'?0:BL*(r.l-T0))-(F.part==='liq'?0:BG*(r.g-T0)))/F.A*10}));kick();});
-segOn($('fTube'),v=>{F.A=+v;segSet($('fTube'),v);F.hist=F.hist.map(r=>({t:r.t,g:r.g,l:r.l,h:V0*((F.part==='gl'?0:BL*(r.l-T0))-(F.part==='liq'?0:BG*(r.g-T0)))/F.A*10}));kick();});
+segOn($('fPart'),v=>{F.part=v;segSet($('fPart'),v);fRe();kick();});
+segOn($('fTube'),v=>{F.A=+v;segSet($('fTube'),v);fRe();kick();});
 $('fZoom').addEventListener('change',e=>{F.zoom=e.target.checked;kick();});
-$('fPlay').addEventListener('click',()=>{if(F.t>=TMAX)fReset();F.run=!F.run;F.inBath=true;hideStory();UI.flask();kick();});
+$('fPlay').addEventListener('click',()=>{if(F.t>=TMAX)fReset();F.run=!F.run;hideStory();UI.flask();kick();});
 $('fReset').addEventListener('click',()=>{fReset();hideStory();});
-UI.flask=()=>{$('fPlay').textContent=F.run?'⏸ 暫停':(F.t>0?'▶ 繼續':'▶ 放進水裡');};
+UI.flask=()=>{$('fPlay').textContent=F.run?'⏸ 暫停':(F.t>0?'▶ 繼續計時':'▶ 開始計時');};
+// 幾何：水槽固定，錐形瓶可以自由拖曳
+function fGeo(W,H){
+  const bowW=Math.min(W*.52,235),bowH=H*.30,bowY=H*.985,bcx=W*.30;
+  const tw=Math.max(7,W*.035),fw=bowW*.54,fh=bowH*.72,nw=tw+10,STRAW=H*.46;
+  const fx=clamp(F.px*W,fw/2+12,W-fw/2-58),fy=clamp(F.py*H,fh+104,H-8);
+  const neck=fy-fh,mmPx=(STRAW-26)/70,zero=neck-26-15*mmPx;   // 刻度 −15～+55 mm
+  // 泡在水裡的比例
+  const wtop=bowY-bowH,inx=Math.abs(fx-bcx)<(bowW-fw)/2+10;
+  const imm=inx?clamp((Math.min(fy,bowY)-Math.max(neck,wtop))/fh,0,1):0;
+  return{bowW,bowH,bowY,bcx,wtop,tw,fw,fh,nw,STRAW,fx,fy,neck,mmPx,zero,imm};}
 TICK.flask=dt=>{if(!F.run)return false;
   const step=Math.min(.25,dt*F.spd);let n=Math.max(1,Math.ceil(step/.02)),h=step/n;
-  for(let i=0;i<n;i++){F.Tg+=(F.bath-F.Tg)/TAUG*h;F.Tl+=(F.Tg-F.Tl)/TAUL*h;F.t+=h;}
+  for(let i=0;i<n;i++){
+    const f=F.imm,rw=f/TAUG_W,ra=(1-f)/TAUG_A,rt=rw+ra,Ts=(rw*F.bath+ra*T0)/rt;
+    F.Tg+=(Ts-F.Tg)*rt*h;F.Tl+=(F.Tg-F.Tl)/TAUL*h;F.t+=h;}
   F.hist.push({t:F.t,h:fH(F.Tg,F.Tl),g:F.Tg,l:F.Tl});
   if(F.t>=TMAX){F.run=false;UI.flask();return false;}
   return true;};
 function fPhase(){const h=fH(F.Tg,F.Tl),hot=F.bath>T0,dg=Math.abs(F.Tg-F.Tl);
-  if(!F.inBath)return 0;
+  if(F.imm<.15&&F.t<1)return 0;
   if(F.t<.8)return 1;
   if(hot?h<-0.05:h>0.05)return 2;
   if(dg>1.2)return 3;
@@ -247,44 +261,49 @@ function fPhase(){const h=fH(F.Tg,F.Tl),hot=F.bath>T0,dg=Math.abs(F.Tg-F.Tl);
 DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const hot=F.bath>T0,h=fH(F.Tg,F.Tl)*(F.zoom?4:1);
-  const cx=W*.46,bowY=H*.98,bowH=H*.3,bowW=Math.min(W*.74,250);
-  // 吸管
-  const tubeTop=H*.05,tubeBot=H*.62,tw=Math.max(7,W*.035);
-  const mmPx=(tubeBot-tubeTop-30)/82,zero=tubeBot-30-18*mmPx;   // 0 mm 的位置（下方留 18 mm）
-  // 水槽
+  const G0=fGeo(W,H),{bowW,bowH,bowY,bcx,wtop,tw,fw,fh,nw,STRAW,fx,fy,neck,mmPx,zero}=G0;
+  F.imm=G0.imm;
+  const col0=hot?C.hot:C.cold;
+  // 桌面與水槽（水先畫底色，瓶子畫完再疊一層半透明的水，才有「泡在水裡」的感覺）
   g.fillStyle=C.bench;g.globalAlpha=.6;g.fillRect(0,bowY-6,W,8);g.globalAlpha=1;
-  g.fillStyle=hot?C.hot:C.cold;g.globalAlpha=.16;g.fillRect(cx-bowW/2,bowY-bowH,bowW,bowH);g.globalAlpha=1;
-  g.strokeStyle=hot?C.hot:C.cold;g.lineWidth=2;g.strokeRect(cx-bowW/2,bowY-bowH,bowW,bowH);
-  text(g,(hot?'熱水 ':F.bath<15?'冷水 ':'溫水 ')+F.bath+' ℃',cx-bowW/2+6,bowY-bowH+16,{col:hot?C.hot:C.cold,size:13,bold:true});
-  // 錐形瓶
-  const fy=bowY-10,fw=bowW*.52,fh=bowH*.74,nw=tw+10;
-  g.fillStyle=C.glassc;g.globalAlpha=.3;
-  g.beginPath();g.moveTo(cx-nw/2,fy-fh);g.lineTo(cx-fw/2,fy-fh*.42);g.lineTo(cx-fw/2,fy);g.lineTo(cx+fw/2,fy);g.lineTo(cx+fw/2,fy-fh*.42);g.lineTo(cx+nw/2,fy-fh);g.closePath();g.fill();g.globalAlpha=1;
-  g.strokeStyle=C.glassc;g.lineWidth=3;g.stroke();
-  g.fillStyle=C.liq;g.globalAlpha=.75;g.beginPath();g.moveTo(cx-nw/2+3,fy-fh+3);g.lineTo(cx-fw/2+3,fy-fh*.42);g.lineTo(cx-fw/2+3,fy-3);g.lineTo(cx+fw/2-3,fy-3);g.lineTo(cx+fw/2-3,fy-fh*.42);g.lineTo(cx+nw/2-3,fy-fh+3);g.closePath();g.fill();g.globalAlpha=1;
-  // 橡皮塞
-  g.fillStyle=C.bar2||C.muted;g.fillStyle='#8a6a3f';g.beginPath();g.roundRect(cx-nw/2-5,fy-fh-13,nw+10,15,3);g.fill();
-  // 吸管
-  g.fillStyle=C.panel;g.strokeStyle=C.glassc;g.lineWidth=2;
-  g.beginPath();g.roundRect(cx-tw/2,tubeTop,tw,fy-fh-tubeTop,3);g.fill();g.stroke();
-  const lv=clamp(zero-h*mmPx,tubeTop+6,fy-fh-4);
-  g.fillStyle=C.liq;g.fillRect(cx-tw/2+2,lv,tw-4,fy-fh-lv);
-  // 刻度尺（以一開始的水位為 0）
-  const sx=cx+tw/2+10;
-  line(g,sx,tubeTop+6,sx,tubeBot-6,C.line,1.4);
-  for(let mm=-18;mm<=62;mm++){const y=zero-mm*mmPx;if(y<tubeTop+4||y>tubeBot)continue;
+  g.fillStyle=col0;g.globalAlpha=.14;g.fillRect(bcx-bowW/2,wtop,bowW,bowH);g.globalAlpha=1;
+  // 錐形瓶（可拖曳）
+  const drawFlask=()=>{
+    g.fillStyle=C.glassc;g.globalAlpha=.3;
+    g.beginPath();g.moveTo(fx-nw/2,neck);g.lineTo(fx-fw/2,fy-fh*.42);g.lineTo(fx-fw/2,fy);g.lineTo(fx+fw/2,fy);g.lineTo(fx+fw/2,fy-fh*.42);g.lineTo(fx+nw/2,neck);g.closePath();g.fill();g.globalAlpha=1;
+    g.strokeStyle=C.glassc;g.lineWidth=3;g.stroke();
+    g.fillStyle=C.liq;g.globalAlpha=.75;g.beginPath();g.moveTo(fx-nw/2+3,neck+3);g.lineTo(fx-fw/2+3,fy-fh*.42);g.lineTo(fx-fw/2+3,fy-3);g.lineTo(fx+fw/2-3,fy-3);g.lineTo(fx+fw/2-3,fy-fh*.42);g.lineTo(fx+nw/2-3,neck+3);g.closePath();g.fill();g.globalAlpha=1;
+    g.fillStyle='#8a6a3f';g.beginPath();g.roundRect(fx-nw/2-5,neck-13,nw+10,15,3);g.fill();
+    g.fillStyle=C.panel;g.strokeStyle=C.glassc;g.lineWidth=2;
+    g.beginPath();g.roundRect(fx-tw/2,neck-STRAW,tw,STRAW,3);g.fill();g.stroke();
+    const lv=clamp(zero-h*mmPx,neck-STRAW+5,neck-4);
+    g.fillStyle=C.liq;g.fillRect(fx-tw/2+2,lv,tw-4,neck-lv);
+    return lv;};
+  const lv=drawFlask();
+  // 水面之下再疊一層水，瓶子就「浸在水裡」
+  if(F.imm>0){g.fillStyle=col0;g.globalAlpha=.18;g.fillRect(bcx-bowW/2,wtop,bowW,bowH);g.globalAlpha=1;}
+  g.strokeStyle=col0;g.lineWidth=2.4;
+  g.beginPath();g.moveTo(bcx-bowW/2,wtop-10);g.lineTo(bcx-bowW/2,bowY);g.lineTo(bcx+bowW/2,bowY);g.lineTo(bcx+bowW/2,wtop-10);g.stroke();
+  line(g,bcx-bowW/2,wtop,bcx+bowW/2,wtop,col0,2);
+  text(g,(hot?'熱水 ':F.bath<15?'冷水 ':'溫水 ')+F.bath+' ℃',bcx-bowW/2+6,wtop+18,{col:col0,size:13,bold:true});
+  // 刻度尺（跟著瓶子走；以一開始的水位為 0）
+  const sx=fx+tw/2+10;
+  line(g,sx,neck-STRAW+4,sx,neck-4,C.line,1.4);
+  for(let mm=-15;mm<=55;mm++){const y=zero-mm*mmPx;if(y<neck-STRAW+2||y>neck)continue;
     if(mm%10===0){line(g,sx,y,sx+9,y,C.muted,1.4);text(g,(mm>0?'+':'')+mm,sx+12,y+4,{col:C.muted,size:11,mono:true});}
     else if(mm%5===0)line(g,sx,y,sx+6,y,C.line,1.2);}
-  // 一開始的水位
-  line(g,cx-tw/2-24,zero,sx,zero,C.ghost,1.6,[5,4]);
-  text(g,W<430?'原水位':'一開始的水位',cx-tw/2-26,zero+4,{col:C.muted,size:11,align:'right'});
-  // 目前水位標示
+  line(g,fx-tw/2-24,zero,sx,zero,C.ghost,1.6,[5,4]);
+  text(g,W<430?'原水位':'一開始的水位',fx-tw/2-26,zero-7,{col:C.muted,size:11,align:'right'});
   const col=Math.abs(h)<.2?C.muted:(h>0?C.liq:C.cold);
-  arrow(g,cx-tw/2-14,zero,cx-tw/2-14,lv,col,2.2);
-  text(g,(fH(F.Tg,F.Tl)>0?'＋':'')+nf(fH(F.Tg,F.Tl),1)+' mm',cx-tw/2-18,(zero+lv)/2+4,{col:col,size:12,bold:true,align:'right',bg:C.panel});
+  arrow(g,fx-tw/2-14,zero,fx-tw/2-14,lv,col,2.2);
+  text(g,(fH(F.Tg,F.Tl)>0?'＋':'')+nf(fH(F.Tg,F.Tl),1)+' mm',fx-tw/2-18,(zero+lv)/2+4,{col:col,size:12,bold:true,align:'right',bg:C.panel});
   if(F.zoom)text(g,'水位變化已放大 4 倍',W-6,H-6,{col:C.muted,size:11,align:'right'});
+  // 拖曳把手與「現在泡在哪裡」
+  handle(g,fx,fy-fh*.5,9);
+  const envT=F.imm>.5?((hot?'熱水':'冷水')+' '+F.bath+' ℃'):(F.imm>0?'半泡在水裡':'空氣 '+T0+' ℃');
+  text(g,'現在：'+envT,fx,Math.max(14,neck-STRAW-6),{col:F.imm>.5?col0:C.muted,size:12,bold:true,align:'center',bg:C.panel});
   // 溫度標示
-  const nar=W<520,tlx=nar?8:Math.min(W-90,cx+bowW/2+8),tly=nar?16:bowY-bowH*.52;
+  const nar=W<520,tlx=nar?8:Math.min(W-96,bcx+bowW/2+10),tly=nar?16:wtop+24;
   text(g,'玻璃 '+nf(F.Tg,1)+' ℃',tlx,tly,{col:C.glassc,size:12,bold:true});
   text(g,'水 '+nf(F.Tl,1)+' ℃',tlx,tly+17,{col:C.liq,size:12,bold:true});
   // ---- 圖 ----
@@ -324,11 +343,15 @@ DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext(
   const dV_g=V0*BG*(F.Tg-T0),dV_l=V0*BL*(F.Tl-T0);
   $('fFormula').innerHTML=`瓶子容積變化 ＝ 100 × 0.000027 × ${nf(F.Tg-T0,1)} ＝ <b>${nf(dV_g,3)} mL</b><br>水的體積變化 ＝ 100 × 0.00021 × ${nf(F.Tl-T0,1)} ＝ <b>${nf(dV_l,3)} mL</b><br>擠進吸管的水 ＝ ${nf(dV_l,3)} − ${nf(dV_g,3)} ＝ <b>${nf(dV_l-dV_g,3)} mL</b> → 水位 ${hh>0?'＋':''}${nf(hh,1)} mm`;
   let say;
-  if(!F.inBath)say='按「放進水裡」把錐形瓶放進水槽，注意一開始的那幾秒。';
+  if(F.imm<.15&&F.t<1)say='拖曳錐形瓶（橘點）把它放進水槽裡，注意放進去的那幾秒水位怎麼動。隨時可以再把它拿出來。';
+  else if(F.imm<.15)say=`現在拿在空氣中（${T0} ℃）。空氣導熱慢很多，玻璃和水都要很久才會跟著變，水位幾乎不動。`;
   else if(ph<=2)say=hotw?`玻璃已經 ${nf(F.Tg,1)} ℃，水還只有 ${nf(F.Tl,1)} ℃：瓶子的容積先變大，水位先往下掉。`:`玻璃已經降到 ${nf(F.Tg,1)} ℃，水還有 ${nf(F.Tl,1)} ℃：瓶子的容積先縮小，水位先往上升。`;
   else if(ph===3)say=hotw?`水開始變熱了（${nf(F.Tl,1)} ℃）。水膨脹得比玻璃快，水位正在回升。`:`水開始變冷了（${nf(F.Tl,1)} ℃）。水收縮得比玻璃多，水位正在下降。`;
   else say=`玻璃和水都差不多 ${nf(F.Tl,0)} ℃ 了，水位停在 ${hh>0?'＋':''}${nf(hh,1)} mm。這就是溫度計「量到的溫度」。`;
   $('fSay').textContent=say;};
+dragger($('cvFlask'),()=>{const cv=$('cvFlask'),W=cv.clientWidth,H=cv._fh||330,G0=fGeo(W,H);
+  return[{x:G0.fx,y:G0.fy-G0.fh*.5,r:Math.max(40,G0.fw*.6),
+    move:(x,y)=>{F.px=clamp(x/W,0,1);F.py=clamp((y+G0.fh*.5)/H,0,1);if(!F.run&&F.t<TMAX)F.run=true;UI.flask();}}];},()=>{hideStory();kick();});
 function dot(g,x,y,col,r=4){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();}
 
 // ======================================================================
@@ -400,8 +423,8 @@ dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{
 // ======================================================================
 // 題目情境
 // ======================================================================
-function goF(o){setBench('flask');fReset();Object.assign(F,o);segSet($('fBath'),String(F.bath));segSet($('fPart'),F.part);segSet($('fSpd'),String(F.spd));segSet($('fTube'),String(F.A));$('fZoom').checked=F.zoom;
-  F.run=true;F.inBath=true;UI.flask();kick();}
+function goF(o){setBench('flask');fReset();F.px=.30;F.py=.96;Object.assign(F,o);segSet($('fBath'),String(F.bath));segSet($('fPart'),F.part);segSet($('fSpd'),String(F.spd));segSet($('fTube'),String(F.A));$('fZoom').checked=F.zoom;
+  F.run=true;UI.flask();kick();}
 function goS(o){setBench('scale');Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);$('sX').checked=S.x;$('sXrow').hidden=!S.x;$('sDef').checked=S.def;kick();}
 const QG=[
  {g:'自製溫度計（實驗台 1）',q:[
