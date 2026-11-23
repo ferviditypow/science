@@ -309,11 +309,12 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <span class="seg" id="osTon"><button data-v="hypo" aria-pressed="false">清水（低張）</button><button data-v="iso" aria-pressed="true">等張</button><button data-v="hyper" aria-pressed="false">濃溶液（高張）</button></span>
       </div>
       <div class="cbox"><canvas class="cv" id="cvOS" aria-label="滲透作用"></canvas></div>
+      <p class="hint" style="margin:2px 0 0">管子 45 公分高，刻度每 5 公分。<b>橘色的握把可以直接用手拖</b>：往下壓＝加壓（水被擠回純水那邊），拖到最上面＝放開（P＝0）。也可以用下面的滑桿或「加壓到兩側等高」。</p>
       <div class="legend"><span><i style="background:var(--water)"></i>水分子（可穿過半透膜）</span><span><i style="background:var(--sol)"></i>溶質（過不去）</span><span><i class="sq" style="background:var(--membrane)"></i>半透膜</span></div>
     </section>
     <div class="grid2">
       <section class="panel box">
-        <h3>穿過半透膜的水分子 <small>每秒（最近 3 秒平均）</small></h3>
+        <h3>穿過半透膜的水分子 <small>每秒（最近 8 秒平均）</small></h3>
         <canvas class="cv" id="cvOSR" aria-label="兩方向穿過半透膜的水分子數"></canvas>
       </section>
       <section class="panel box">
@@ -1018,6 +1019,18 @@ const setOSP=sliderBind('osP',v=>{OS.P=v;},v=>nf(v,3)+' atm');
 function osPRange(){const pi=Math.max(.05,piOf()),mx=Math.ceil(pi*1.8*100)/100,el=$('osP');
   el.max=mx;el.step=Math.max(.001,Math.round(mx/200*1000)/1000);if(OS.P>mx){OS.P=mx;setOSP(mx);}}
 const osNudge=d=>{const el=$('osP'),st=+el.step||.005;OS.P=clamp(Math.round((OS.P+d*st*2)/st)*st,0,+el.max);setOSP(OS.P);kick();};
+// 活塞可以直接用手拖：往下壓＝加壓、往上拉＝減壓（拖到頂就是放開，P＝0）
+{const cv=$('cvOS');let dg=null;
+ const hit=(x,y)=>{const p=OS.pis;return !!p&&x>p.x-p.w/2-12&&x<p.x+p.w/2+12&&y>p.top-10&&y<p.head+18;};
+ const pos=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+ cv.addEventListener('pointerdown',e=>{if(OS.mode!=='u')return;const [x,y]=pos(e);if(!hit(x,y))return;
+   dg={y0:y,P0:OS.P};cv.setPointerCapture(e.pointerId);cv.style.cursor='grabbing';hideStory();e.preventDefault();});
+ cv.addEventListener('pointermove',e=>{const [x,y]=pos(e);
+   if(!dg){cv.style.cursor=OS.mode==='u'&&hit(x,y)?'ns-resize':'';return;}
+   const mx=+$('osP').max,span=(OS.pis&&OS.pis.span)||200;
+   OS.P=clamp(dg.P0+(y-dg.y0)/span*mx,0,mx);setOSP(OS.P);kick();e.preventDefault();});
+ const end=e=>{if(!dg)return;dg=null;cv.style.cursor='';try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
+ cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);}
 $('osPm').addEventListener('click',()=>osNudge(-1));
 $('osPp').addEventListener('click',()=>osNudge(1));
 $('osPeq').addEventListener('click',()=>{osPRange();OS.P=clamp(piOf(),0,+$('osP').max);setOSP(OS.P);OS.dh=0;hideStory();kick();});
@@ -1066,12 +1079,14 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42
     line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2.5);
     // 溶液這一管永遠有活塞，活塞坐在液面上（不會蓋住液面）：沒加壓時灰色、加壓時變深並標 P
     if(isSol){const mouth=ty-nh+7,on=OS.P>0,ck=on?'#2b3138':'#aeb9c3';
+      OS.pis={x,w:nw,top:mouth,head:yy,span:nh};                                        // 給拖曳用
       g.fillStyle=ck;g.fillRect(x-3.5,mouth+3,7,Math.max(0,yy-10-mouth-3));            // 活塞桿
-      g.fillStyle=ck;g.fillRect(x-nw/2+5,mouth,nw-10,7);                                // 握把
+      g.fillStyle=C.accent;g.beginPath();g.roundRect(x-nw/2+3,mouth-2,nw-6,11,4);g.fill();   // 握把（橘色＝可以拖）
+      g.strokeStyle=C.panel;g.lineWidth=1.3;line(g,x-9,mouth+3.5,x+9,mouth+3.5,C.panel,1.3);
       g.fillStyle=on?'#2b3138':'#d4dbe1';g.fillRect(x-nw/2+2,yy-10,nw-4,10);            // 活塞頭
       g.strokeStyle=on?'#2b3138':'#9aa6b0';g.lineWidth=1.4;g.strokeRect(x-nw/2+2.5,yy-9.5,nw-5,9);
       text(g,'壓力活塞',x+nw/2+6,mouth+9,{size:11.5,bold:true,col:on?C.ink:C.muted});
-      text(g,on?'P ＝ '+nf(OS.P,3)+' atm':'還沒加壓',x+nw/2+6,mouth+24,{size:11,mono:on,col:on?C.red:C.muted});}
+      text(g,on?'P ＝ '+nf(OS.P,3)+' atm':'↕ 拖我加壓',x+nw/2+6,mouth+24,{size:11,mono:on,col:on?C.red:C.accent});}
     text(g,isSol?(OS.C>0?'溶液':'純水'):'純水',x,ty-nh-7,{align:'center',size:10.5,col:isSol&&OS.C>0?C.sol:C.water,bold:true});});
   if(Math.abs(OS.dh)>.3){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
     line(g,nlx,yl,cx,yl,C.muted,1,[3,3]);line(g,nrx,yr,cx,yr,C.muted,1,[3,3]);
