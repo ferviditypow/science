@@ -253,7 +253,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <p class="hint" style="margin:2px 0 0">這一台在說：液體冷卻時常常<b>先過冷</b>（已經低於凝固點卻還沒結冰），所以<b>凝固點不能直接從冷卻曲線上讀</b>，要把固液共存線往回延長。上面的粒子畫面是在看「為什麼會過冷」：冰核要長過臨界大小才長得起來。</p>
       <div class="toolbar">
         <label class="tog"><input type="checkbox" id="scDust"> 水裡有灰塵（雜質）</label>
-        <label class="tog"><input type="checkbox" id="scZoom" checked> 放大看最大的那顆冰核</label>
+        <label class="tog"><input type="checkbox" id="scZoom" checked> 右邊顯示「和臨界大小比一比」</label>
         <div class="slider"><span class="tlabel">冷卻槽溫度</span><input type="range" id="scBath" min="-25" max="-2" step="1" value="-20"><output id="scBatho"></output></div>
         <div class="slider"><span class="tlabel">冷卻速率</span><input type="range" id="scK" min="0.03" max="0.25" step="0.01" value="0.09"><output id="scKo"></output></div>
         <div class="slider"><span class="tlabel">溶質（重量莫耳濃度）</span><input type="range" id="scM" min="0" max="2" step="0.1" value="0"><output id="scMo"></output></div>
@@ -262,7 +262,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <div class="slider"><span class="tlabel">過冷幾度時開始結冰</span><input type="range" id="scAuto" min="0" max="12" step="0.5" value="0"><output id="scAutoo"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvSC" aria-label="過冷水中冰核的形成"></canvas></div>
-      <p class="hint">淡藍色的小團是水分子偶然排成冰的樣子（冰核）。比「臨界大小」小的冰核不穩定，很快又散掉；只要有一顆長過臨界大小，就會一路長大，整杯瞬間結冰。</p>
+      <p class="hint">左邊是杯子裡的水（放大看分子）：水分子偶爾會聚成一小團排得像冰，這就是<b>冰核</b>。右邊把「現在最大的那顆冰核」和<b>臨界大小</b>（虛線圈）放在一起比：比虛線圈小就會散掉，超過就一路長大、整杯瞬間結冰。溫度愈低，臨界大小愈小，愈容易成功。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -537,9 +537,10 @@ const CUPSETS={
 function cupsLoad(k){VP.cupSet=k;segSet($('vpCupSet'),k);VP.cups=CUPSETS[k].map(c=>({...c,W0:c.W}));VP.flyers=[];VP.ct=0;VP.cupHist=[[0,...VP.cups.map(c=>c.W)]];}
 segOn($('vpCupSet'),v=>{hideStory();cupsLoad(v);VP.run=true;kick();});
 const xwOf=c=>c.W<=1e-9?0:(c.W/18)/((c.W/18)+c.i*c.mol);
-function tickCups(dt){const h0=sdt(VP,dt);if(!h0)return busy(VP);const cs=VP.cups;const h=h0*6;VP.ct+=h;
+// 轉移速率 kk 正比於總水量：不管幾杯、水多少，1× 大約 30 秒接近平衡
+function tickCups(dt){const h0=sdt(VP,dt);if(!h0)return busy(VP);const cs=VP.cups;const h=h0;VP.ct+=h;
   for(let s=0;s<20;s++){const act=cs.filter(c=>c.W>1e-6);const Pbar=act.reduce((a,c)=>a+xwOf(c),0)/act.length;
-    const kk=30*cs.reduce((a,c)=>a+c.W0,0);act.forEach(c=>{c.W=Math.max(0,c.W-kk*(xwOf(c)-Pbar)*h/20);});
+    const kk=3*cs.reduce((a,c)=>a+c.W0,0);act.forEach(c=>{c.W=Math.max(0,c.W-kk*(xwOf(c)-Pbar)*h/20);});
     const tot=cs.reduce((a,c)=>a+c.W,0),tot0=cs.reduce((a,c)=>a+c.W0,0);const act2=cs.filter(c=>c.W>1e-6);const fix=(tot0-tot)/act2.length;act2.forEach(c=>c.W+=fix);}
   // 飛行的水分子（示意淨流向）
   const act=cs.filter(c=>c.W>1e-6);const Pbar=act.reduce((a,c)=>a+xwOf(c),0)/act.length;
@@ -796,7 +797,7 @@ const SC={T:15,bath:-20,k:.09,m:0,auto:0,cons:true,zg:true,spd:.5,zoom:true,run:
 const scTf0=()=>-1.86*SC.m;                               // 原始溶液的凝固點（ΔTf ＝ Kf·m）
 const scTf=f=>-1.86*SC.m/Math.max(.08,1-f);                // 結冰後剩下的溶液愈濃，凝固點愈低＝固液共存線
 const nStar=(dT,het)=>dT<=0.05?1e9:Math.pow(30/dT,2)*(het?0.22:1);
-function scReset(){Object.assign(SC,{T:15,run:false,t:0,cl:[],f:0,front:null,shake:0,hist:[[0,15,0]],state:'liq',maxN:0,nucT:null});
+function scReset(){SC.rsm=0;SC.zrat=0;SC.rx=.5;SC.ry=.5;Object.assign(SC,{T:15,run:false,t:0,cl:[],f:0,front:null,shake:0,hist:[[0,15,0]],state:'liq',maxN:0,nucT:null});
   SC.dustPts=[...Array(7)].map(()=>[.1+.8*Math.random(),.15+.75*Math.random()]);$('scPlay').textContent='▶ 開始冷卻';}
 function scNucleate(c){SC.state='freezing';SC.front={x:c.x,y:c.y};SC.nucT=SC.t;const dT=Math.max(0,scTf0()-SC.T);SC.f=Math.min(1,dT/80);SC.cl=[];}
 let scAcc=0;
@@ -818,6 +819,13 @@ function scStep(dt){SC.t+=dt;const dT=scTf0()-SC.T;
     if(SC.T<Tc-.02)SC.T=Math.min(Tc,SC.T+30*dt);          // 放出凝固熱，溫度回升到固液共存線
     else{SC.T=Tc;SC.f=Math.min(1,SC.f+SC.k*(Tc-SC.bath)*dt/80*2.2);if(SC.f>=1)SC.state='ice';}}
   else{SC.T+=-SC.k*1.8*(SC.T-SC.bath)*dt;}
+  // 畫面用的平滑值：冰核的大小用 EMA，才不會一顆一顆忽隱忽現（之前「閃來閃去」的原因）
+  {const bg=SC.cl.reduce((a,c)=>(!a||c.n>a.n)?c:a,null),nsx=nStar(scTf0()-SC.T,false);
+   if(bg&&(SC.rsm||0)<2.5){SC.rx=bg.x;SC.ry=bg.y;}
+   const tR=bg?Math.min(26,5+Math.sqrt(bg.n)*3.4):0;
+   SC.rsm=(SC.rsm||0)+(tR-(SC.rsm||0))*Math.min(1,dt*2.2);
+   const tZ=(bg&&nsx<1e8)?Math.sqrt(Math.max(bg.n,.3)/nsx):0;
+   SC.zrat=(SC.zrat||0)+(tZ-(SC.zrat||0))*Math.min(1,dt*2.2);}
   if(SC.t-SC.hist[SC.hist.length-1][0]>0.1)SC.hist.push([SC.t,SC.T,SC.f]);
   if(SC.t>260){SC.run=false;}}
 TICK.sc=dt=>{const d=sdt(SC,dt);if(d){const h=d*4,n=6;for(let i=0;i<n;i++)scStep(h/n);}if(!SC.run&&!SC.pend)$('scPlay').textContent=SC.state==='ice'?'▶ 再一次':SC.t<.05?'▶ 開始冷卻':'▶ 繼續';return busy(SC);};
@@ -852,39 +860,81 @@ function scABCD(){const H=SC.hist;if(SC.nucT==null||H.length<8)return null;
   const x1=H[bi-1][0],y1=H[bi-1][1],x2=H[bi][0],y2=H[bi][1];
   const t=(y1-(k*x1+a))/((y1-(k*x1+a))-(y2-(k*x2+a))),bx=x1+(x2-x1)*t,by=k*bx+a;
   return{k,a,bx,b:by,dx:H[di][0],d:H[di][1],cx:H[ci][0],c:H[ci][1],x2:S[n-1][0],y2:k*S[n-1][0]+a};}
-DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g.clearRect(0,0,W,H);
-  const bx=14,by=10,bw=W-28,bh=H-20;g.fillStyle=C.liq;g.fillRect(bx,by,bw,bh);g.strokeStyle=C.glass;g.lineWidth=3;g.strokeRect(bx,by,bw,bh);
-  const cs=Math.max(12,Math.min(20,bw/40)),cols=Math.floor(bw/cs),rows=Math.floor(bh/cs),tt=SC.t;
-  // 結冰區（由成核點往外）
-  let fr=null;if(SC.front){const R=Math.sqrt(SC.f)*Math.hypot(bw,bh)*0.75;fr={x:bx+SC.front.x*bw,y:by+SC.front.y*bh,R};}
-  for(let r=0;r<rows;r++)for(let c=0;c<cols;c++){const x0=bx+(c+.5)*cs,y0=by+(r+.5)*cs;
-    const iced=SC.state==='ice'||(fr&&Math.hypot(x0-fr.x,y0-fr.y)<fr.R);
-    if(iced){g.fillStyle=C.ice;g.fillRect(x0-cs*.38,y0-cs*.38,cs*.76,cs*.76);}
-    else{const k=r*cols+c;dot(g,x0+hjit(k,5)*cs*.3,y0+hjit(k,6)*cs*.3,cs*.3,C.water);}}
-  // 灰塵
-  if(SC.dust)SC.dustPts.forEach(p=>{g.fillStyle=C.muted;g.beginPath();g.ellipse(bx+p[0]*bw,by+p[1]*bh,cs*.9,cs*.55,.6,0,TAU);g.fill();});
-  // 冰核
-  const dT=scTf0()-SC.T;
-  SC.cl.forEach(c=>{const ns=nStar(dT,c.het);const R=Math.sqrt(c.n)*cs*.62+cs*.3;const x=bx+c.x*bw,y=by+c.y*bh;
-    g.fillStyle=C.panel;g.beginPath();g.arc(x,y,R+1,0,TAU);g.fill();
-    const k=Math.ceil(R/cs);for(let i=-k;i<=k;i++)for(let j=-k;j<=k;j++){const px=x+i*cs*.9,py=y+j*cs*.9;if(Math.hypot(px-x,py-y)<=R){g.fillStyle=c.n>=ns*.7?C.accent:C.ice;g.fillRect(px-cs*.33,py-cs*.33,cs*.66,cs*.66);}}
-    if(c.n>=4)text(g,c.n+'',x,y-R-3,{align:'center',size:10,mono:true,col:C.ink,bg:C.panel});});
-  if(fr&&SC.state==='freezing')text(g,'❄ 由這裡開始結冰',fr.x,fr.y-8,{align:'center',size:12,bold:true,col:C.accent,bg:C.panel});
-  text(g,`${nf(SC.T,1)} ℃`,bx+bw-8,by+20,{align:'right',size:16,bold:true,mono:true,bg:C.panel});
-  if(SC.shake>0)text(g,'↯ 搖晃中',bx+8,by+20,{size:13,bold:true,col:C.accent,bg:C.panel});
-  // 放大看最大的那顆冰核：和臨界大小比一比
-  if(SC.zoom&&SC.state==='liq'){const big=SC.cl.reduce((a,c)=>(!a||c.n>a.n)?c:a,null);
-    const iw=Math.min(240,bw*.42),ih=Math.min(150,bh*.52),ix=bx+bw-iw-10,iy=by+bh-ih-10;
-    g.fillStyle=C.panel;g.fillRect(ix,iy,iw,ih);g.strokeStyle=C.line;g.lineWidth=1.5;g.strokeRect(ix,iy,iw,ih);
-    text(g,'放大看最大的冰核',ix+8,iy+16,{size:11,bold:true,col:C.muted});
-    const ns2=nStar(dT,big&&big.het),cx=ix+iw*.32,cy=iy+ih*.58,u=Math.min(iw,ih)*.3;
-    if(ns2<1e8){const Rs=u;g.strokeStyle=C.muted;g.lineWidth=1.5;g.setLineDash([4,4]);g.beginPath();g.arc(cx,cy,Rs,0,TAU);g.stroke();g.setLineDash([]);
-      text(g,'臨界大小 '+nf(ns2,0),cx,cy+Rs+14,{align:'center',size:10.5,col:C.muted});
-      if(big){const R2=Rs*Math.sqrt(big.n/ns2);g.fillStyle=big.n>=ns2?C.accent:C.ice;g.beginPath();g.arc(cx,cy,Math.max(3,R2),0,TAU);g.fill();
-        text(g,big.n+' 個分子',cx,cy-Rs-6,{align:'center',size:11,bold:true,col:C.ink});
-        text(g,big.n>=ns2?'超過臨界 → 一路長大':'比臨界小 → 馬上散掉',ix+iw-8,iy+ih-10,{align:'right',size:11,bold:true,col:big.n>=ns2?C.accent:C.muted});}
-      else text(g,'目前沒有冰核',ix+iw-8,iy+ih-10,{align:'right',size:11,col:C.muted});}
-    else text(g,'0 ℃ 以上：臨界大小無限大，\n再大的冰核也會散掉'.split('\n')[0],ix+8,iy+ih/2+6,{size:11,col:C.muted});}
+DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.30,210,300),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+  const dT=scTf0()-SC.T, ns=nStar(dT,false);
+  const big=SC.cl.reduce((a,c)=>(!a||c.n>a.n)?c:a,null);
+  // ---- 狀態列：現在是哪一步 ----
+  const stage=SC.state==='ice'?4:SC.state==='freezing'?3:(dT>0?2:1);
+  const STX=[null,
+    ['① 正在冷卻，還是液體','液體的溫度一路往下掉，還沒到凝固點。',C.water],
+    ['② 已經低於凝固點，卻還沒結冰 ← 這就是過冷','過冷了 '+nf(Math.max(0,dT),1)+' ℃。冰核要長過「臨界大小」才長得起來，所以還在等。',C.purple],
+    ['③ 有一顆冰核長過臨界大小 → 整杯開始結冰','結冰放出凝固熱，溫度馬上回升到凝固點附近。',C.accent],
+    ['④ 全部結冰，溫度才繼續往下降','',C.ice]][stage];
+  const two=!!STX[1]&&W>=560, sh=two?46:32;
+  g.fillStyle=C['accent-soft']||'rgba(232,89,12,.08)';g.fillRect(0,0,W,sh);
+  text(g,STX[0],10,two?19:21,{size:W<560?12:14,bold:true,col:STX[2]});
+  if(two)text(g,STX[1],10,37,{size:11.5,col:C.muted});
+  text(g,nf(SC.T,1)+' ℃',W-24,two?26:21,{align:'right',size:W<560?13:15,bold:true,mono:true,col:C.ink});
+  // ---- 版面 ----
+  const pad=8,top=sh+pad,bot=H-pad;
+  const showZ=SC.zoom, lw=showZ?Math.round((W-pad*3)*.58):W-pad*2;
+  const bx=pad,by=top,bw=lw,bh=bot-top;
+  // ---- 左：杯子裡的水 ----
+  g.fillStyle=C.liq;g.fillRect(bx,by,bw,bh);g.strokeStyle=C.glass;g.lineWidth=2.5;g.strokeRect(bx,by,bw,bh);
+  const NM=86, R0=5.2;
+  const fr=SC.front?{x:bx+SC.front.x*bw,y:by+SC.front.y*bh,R:Math.sqrt(SC.f)*Math.hypot(bw,bh)*.8}:null;
+  const iced=(x,y)=>SC.state==='ice'||(fr&&Math.hypot(x-fr.x,y-fr.y)<fr.R);
+  // 冰的區域畫成整齊的晶格
+  if(SC.state==='ice'||fr){g.save();g.beginPath();
+    if(SC.state==='ice')g.rect(bx+1,by+1,bw-2,bh-2);else{g.rect(bx+1,by+1,bw-2,bh-2);}
+    g.clip();
+    const cs=15;
+    for(let yy=by+cs*.6;yy<by+bh;yy+=cs)for(let xx=bx+cs*.6;xx<bx+bw;xx+=cs){
+      if(!iced(xx,yy))continue;
+      g.fillStyle=C.ice;g.fillRect(xx-4.6,yy-4.6,9.2,9.2);}
+    g.restore();}
+  // 液體裡的水分子（固定位置，只有很慢的微動）
+  const tt=SC.t;
+  for(let i=0;i<NM;i++){
+    const px=bx+8+(hjit(i,11)+.5)*(bw-16),py=by+8+(hjit(i,12)+.5)*(bh-16);
+    if(iced(px,py))continue;
+    const dx=Math.cos(tt*.55+i*1.7)*1.6,dy=Math.sin(tt*.47+i*2.3)*1.6;
+    dot(g,px+dx,py+dy,R0,C.water);}
+  // 最大的那顆冰核（只畫一顆，半徑用 EMA 平滑，不會忽隱忽現）
+  if(SC.state==='liq'&&SC.rsm>1.5){
+    const cx2=bx+(SC.rx!=null?SC.rx:.5)*bw,cy2=by+(SC.ry!=null?SC.ry:.5)*bh,R=SC.rsm;
+    g.fillStyle=C.panel;g.globalAlpha=.9;g.beginPath();g.arc(cx2,cy2,R+2,0,TAU);g.fill();g.globalAlpha=1;
+    g.fillStyle=big&&big.n>=ns?C.accent:C.ice;g.globalAlpha=.35;g.beginPath();g.arc(cx2,cy2,R,0,TAU);g.fill();g.globalAlpha=1;
+    const cs=9;for(let yy=-R;yy<=R;yy+=cs)for(let xx=-R;xx<=R;xx+=cs){if(Math.hypot(xx,yy)>R-1)continue;
+      g.fillStyle=big&&big.n>=ns?C.accent:C.ice;g.fillRect(cx2+xx-3,cy2+yy-3,6,6);}
+    text(g,'冰核',cx2,cy2-R-6,{align:'center',size:11,bold:true,col:big&&big.n>=ns?C.accent:C.muted,bg:C.panel});}
+  if(fr&&SC.state==='freezing')text(g,'❄ 從這裡開始結冰',clamp(fr.x,bx+70,bx+bw-70),Math.max(by+16,fr.y-fr.R-6),{align:'center',size:12,bold:true,col:C.accent,bg:C.panel});
+  if(SC.dust)SC.dustPts.forEach(p=>{const px=bx+p[0]*bw,py=by+p[1]*bh;if(iced(px,py))return;
+    g.fillStyle=C.muted;g.beginPath();g.ellipse(px,py,7,4.5,.6,0,TAU);g.fill();});
+  if(SC.shake>0)text(g,'↯ 搖一搖',bx+8,by+bh-8,{size:12,bold:true,col:C.accent,bg:C.panel});
+  text(g,'杯子裡的水（放大看分子）',bx+8,by+15,{size:11,col:C.muted,bg:C.panel});
+  // ---- 右：夠大了嗎？ ----
+  if(showZ){const zx=bx+bw+pad,zw=W-zx-pad,zy=by,zh=bh;
+    g.fillStyle=C.panel;g.fillRect(zx,zy,zw,zh);g.strokeStyle=C.line;g.lineWidth=1.5;g.strokeRect(zx,zy,zw,zh);
+    text(g,'這顆冰核夠大了嗎？',zx+8,zy+15,{size:11.5,bold:true,col:C.muted});
+    const cx3=zx+zw*.5,cy3=zy+zh*.52,u=Math.min(zw,zh)*.26;
+    if(ns<1e8&&SC.state==='liq'){
+      g.strokeStyle=C.muted;g.lineWidth=1.6;g.setLineDash([5,4]);g.beginPath();g.arc(cx3,cy3,u,0,TAU);g.stroke();g.setLineDash([]);
+      text(g,'臨界大小（'+nf(ns,0)+' 個分子）',cx3,cy3-u-8,{align:'center',size:11,col:C.muted});
+      const n1=big?big.n:0,Rs=Math.min(u*1.35,u*(SC.zrat||0));
+      g.fillStyle=n1>=ns?C.accent:C.ice;g.beginPath();g.arc(cx3,cy3,Math.max(2.5,Rs),0,TAU);g.fill();
+      g.strokeStyle=C.muted;g.lineWidth=1.6;g.setLineDash([5,4]);g.beginPath();g.arc(cx3,cy3,u,0,TAU);g.stroke();g.setLineDash([]);
+      text(g,(n1||0)+' 個分子',cx3,cy3+u+16,{align:'center',size:12,bold:true,col:C.ink});
+      text(g,n1>=ns?'超過臨界 → 一路長大，整杯結冰':'比臨界小 → 很快又散掉',cx3,zy+zh-10,{align:'center',size:11.5,bold:true,col:n1>=ns?C.accent:C.muted});}
+    else if(SC.state!=='liq'){
+      g.fillStyle=C.accent;g.beginPath();g.arc(cx3,cy3,u*1.25,0,TAU);g.fill();
+      g.strokeStyle=C.muted;g.lineWidth=1.6;g.setLineDash([5,4]);g.beginPath();g.arc(cx3,cy3,u,0,TAU);g.stroke();g.setLineDash([]);
+      text(g,'虛線＝臨界大小',cx3,cy3-u*1.25-8,{align:'center',size:11,col:C.muted});
+      text(g,'已經越過臨界大小',cx3,cy3+u*1.25+18,{align:'center',size:12,bold:true,col:C.accent});
+      text(g,'冰一路長大，不會再散掉',cx3,zy+zh-10,{align:'center',size:11.5,col:C.muted});}
+    else{text(g,'溫度還在 0 ℃ 以上：',cx3,cy3-6,{align:'center',size:12,col:C.muted});
+      text(g,'臨界大小是「無限大」，',cx3,cy3+12,{align:'center',size:12,col:C.muted});
+      text(g,'再大的冰核都會散掉',cx3,cy3+30,{align:'center',size:12,col:C.muted});}}
   // 圖
   // 固液共存線的延長線，和它跟冷卻曲線的交點（講義圖的 TA～TD）
   const P=scABCD();
@@ -910,7 +960,6 @@ DRAW.sc=()=>{const cv=$('cvSC'),{W,H}=fit(cv,.4,240,380),g=cv.getContext('2d');g
     ['no','<b>T_C 不是</b>　那是過冷解除、放出凝固熱後回升到的溫度（'+nf(P.c,2)+' ℃）；此時已經有一部分結冰，剩下的溶液變濃，所以比真正的凝固點低。'],
     ['no','<b>T_D 不是</b>　那是過冷到最低的溫度（'+nf(P.d,2)+' ℃），只代表冰核還沒出現，和凝固點無關。']
   ]:[['info','按「開始冷卻」跑完一次（建議把溶質拉到 1 m 以上，固液共存線才會明顯斜斜往下），圖上就會自動畫出 T_A～T_D。']]);
-  const ns=nStar(dT,false);
   $('scNow').innerHTML=[['水溫',nf(SC.T,2)+' ℃'],['過冷度（低於凝固點 '+nf(scTf0(),2)+' ℃）',dT>0?nf(dT,1)+' ℃':'—'],['臨界大小（約幾個分子）',ns<1e8?nf(ns,0)+(SC.dust?'（灰塵上約 '+nf(nStar(dT,true),0)+'）':''):'無限大（0 ℃ 以上冰不穩定）'],
     ['現在的冰核數 ／ 最大的',SC.cl.length+' ／ '+SC.maxN],['已結冰',nf(SC.f*100,0)+'%']].map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
   $('scSay').textContent=SC.state==='liq'?(SC.T>0?'溫度高於 0 ℃：冰不穩定，偶爾聚在一起的分子馬上散開。':'已經低於 0 ℃ 卻還沒結冰——這就是過冷。冰要從一個小冰核長大，但很小的冰核表面分子比例高、不穩定，大多長沒幾個就散掉。溫度愈低，臨界大小愈小，愈容易有冰核剛好長過臨界大小。丟一顆冰晶、搖一搖或有灰塵，都能幫忙越過這一關。'):
@@ -933,8 +982,9 @@ function osParts(){const L=[];const nW=osNW();
   for(let k=0;k<nWR;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'w'});for(let k=0;k<nS;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'s'});
   L.forEach(p=>{const a=Math.random()*TAU;p.vx=Math.cos(a)*.25;p.vy=Math.sin(a)*.25;});OS.parts=L;OS.ev=[];}
 function osReset(){OS.dh=0;OS.t=0;OS.sc=1;OS.burst=0;osParts();}
+const TUBE_CM=15;                                  // 管子只有 15 公分高（真實的滲透計要用很長的細管）
 function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
-  if(OS.mode==='u'){const k=0.6;OS.dh+=k*((pi-OS.P)*1033.6-OS.dh)*dt;
+  if(OS.mode==='u'){const k=0.6;OS.dh=clamp(OS.dh+k*((pi-OS.P)*1033.6-OS.dh)*dt,-TUBE_CM,TUBE_CM);
     // 粒子：s=-1 左邊（純水）、1 右邊；x∈[0,1] 是各自那半邊的位置，膜在左半 x=1、右半 x=0
     const R=OS.parts,nR=R.filter(p=>p.s===1).length,xwR=R.filter(p=>p.s===1&&p.ty==='w').length/nR;
     const f=pi>1e-9?1+((hyd+OS.P)/pi)*(1/Math.max(xwR,.01)-1):1+(hyd+OS.P)*3;const NW=osNW();
@@ -970,15 +1020,16 @@ segOn($('osView'),v=>{hideStory();OS.view=v;osParts();kick();});
 const setOSCL=sliderBind('osCL',v=>{OS.CL=v;osParts();setTimeout(osPRange,0);},v=>v===0?'純水':nf(v,3)+' M');
 const setOST=sliderBind('osT',v=>{OS.T=v;setTimeout(osPRange,0);},v=>v+' ℃');
 $('osReset').addEventListener('click',()=>{osReset();kick();});
-DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.45:.46,nar?520:340,nar?700:470),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42,nar?480:300,nar?640:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
   const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.48:H;
   // ---- 水槽＋半透膜＋活塞（課本的畫法）----
-  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?72:92,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;   // ty 要留得下管子＋活塞
-  const eq=(pi-OS.P)*1033.6,sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1),pxPerCm=(TH2*.5)/sMax;
-  const nw=Math.min(62,(x1-x0)*.14),nh=nar?44:62;                  // 上面兩根管子
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?74:98,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;   // ty 要留得下管子＋活塞
+  const eq=(pi-OS.P)*1033.6;                       // 真正平衡需要的水柱高（cm）
+  const nw=Math.min(74,(x1-x0)*.17),nh=nar?50:66;                  // 上面兩根管子
   const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
-  const d=OS.dh*pxPerCm/2,yl=ty-nh*.35+d,yr=ty-nh*.35-d;            // 液面（溶液高 → dh>0）
+  const yMid=ty-nh*.45,halfPx=nh*.45-7,pxPerCm=halfPx/(TUBE_CM/2);  // 管子只有 TUBE_CM 公分高
+  const d=clamp(OS.dh,-TUBE_CM,TUBE_CM)*pxPerCm/2,yl=yMid+d,yr=yMid-d;   // 液面（溶液高 → dh>0）
   // 槽體
   g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=5;g.beginPath();g.roundRect(x0,ty,x1-x0,TH2,12);g.fill();g.stroke();
   g.save();g.beginPath();g.roundRect(x0+3,ty+3,x1-x0-6,TH2-6,10);g.clip();
@@ -1004,15 +1055,23 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.45:.46
   // 上面兩根管子
   [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
     g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
-    const yy=clamp(y,ty-nh+10,ty+4);
-    g.fillStyle=isSol&&OS.C>0?'rgba(232,89,12,.14)':C.liq;g.fillRect(x-nw/2+2,yy,nw-4,ty-yy+4);
-    line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2);
-    if(isSol){g.fillStyle='#2b3138';g.fillRect(x-nw/2+2,yy-11,nw-4,11);g.fillRect(x-4,Math.max(2,ty-nh-18),8,yy-Math.max(2,ty-nh-18)-9);
-      text(g,'壓力活塞',x+nw/2+6,Math.max(12,ty-nh-6),{size:11.5,bold:true});}});
-  if(Math.abs(OS.dh)>.5){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
+    const yy=clamp(y,ty-nh+7,ty+4);
+    g.fillStyle=isSol&&OS.C>0?'rgba(232,89,12,.30)':C.liq;g.fillRect(x-nw/2+2,yy,nw-4,ty-yy+4);
+    line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2.5);
+    // 有加壓才蓋上活塞；沒加壓時兩根都是開口管，液面才看得到
+    if(isSol&&OS.P>0){g.fillStyle='#2b3138';g.fillRect(x-nw/2+2,yy-11,nw-4,11);g.fillRect(x-4,Math.max(2,ty-nh-18),8,yy-Math.max(2,ty-nh-18)-9);
+      text(g,'壓力活塞',x+nw/2+6,Math.max(12,ty-nh-6),{size:11.5,bold:true});}
+    if(!(isSol&&OS.P>0))text(g,isSol?(OS.C>0?'溶液':'純水'):'純水',x,ty-nh-7,{align:'center',size:10.5,col:isSol&&OS.C>0?C.sol:C.water,bold:true});});
+  if(Math.abs(OS.dh)>.3){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
     line(g,nlx,yl,cx,yl,C.muted,1,[3,3]);line(g,nrx,yr,cx,yr,C.muted,1,[3,3]);
     arrow(g,cx,ya,cx,yb,C.purple,1.8);
-    text(g,'Δh ＝ '+(Math.abs(OS.dh)>=100?nf(OS.dh/100,2)+' m':nf(OS.dh,1)+' cm'),cx+6,(ya+yb)/2+4,{size:11.5,bold:true,col:C.purple,bg:C.panel});}
+    const full=Math.abs(OS.dh)>=TUBE_CM-.05;
+    text(g,'Δh ＝ '+nf(OS.dh,1)+' cm'+(full?'（管子滿了）':''),cx+6,(ya+yb)/2+4,{size:11.5,bold:true,col:C.purple,bg:C.panel});}
+  // 管子的刻度（每 5 公分）
+  for(let cm=-TUBE_CM/2;cm<=TUBE_CM/2+.01;cm+=5){const y=yMid-cm*pxPerCm;
+    line(g,nlx-nw/2-7,y,nlx-nw/2-1,y,C.muted,1);
+    if(cm===0)text(g,'0',nlx-nw/2-10,y+4,{align:'right',size:10,col:C.muted,mono:true});}
+  text(g,TUBE_CM+' cm 管',nlx-nw/2-10,ty-nh+4,{align:'right',size:10,col:C.muted});
 
   // 壓力計：指針式，π 的位置有紅色刻度
   {const pi=piOf(),R0=GR,gx=x1+14+R0,gy=ty+TH2*.42,mx=Math.max(+$('osP').max,pi*1.15,.05);
@@ -1044,9 +1103,11 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.45:.46
   $('osNow').innerHTML=[['右側 π＝i·C·R·T',`${OS.i} × ${nf(OS.C,3)} × 0.082 × ${OS.T+273} ＝ ${nf(piSide(OS.C),3)} atm`],
     ['左側 π',OS.CL>0?`${OS.i} × ${nf(OS.CL,3)} × 0.082 × ${OS.T+273} ＝ ${nf(piSide(OS.CL),3)} atm`:'0（純水）'],
     ['兩側的差（會推動水的那個）',nf(pi,3)+' atm'],['換成水柱高度',nf(pi*1033.6,1)+' cm（1 atm ＝ 1033.6 cm 水柱）'],['外加壓力',nf(OS.P,2)+' atm'],['目前液面差 Δh',nf(OS.dh,1)+' cm'],['液柱的壓力 ρgh',nf(OS.dh/1033.6,3)+' atm']].map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('');
-  $('osSay').textContent=OS.C===0?'兩邊都是純水，穿過去的水分子兩方向一樣多，液面不動。':
+  const need=pi*1033.6,capped=Math.abs(OS.dh)>=TUBE_CM-.05;
+  $('osSay').innerHTML=OS.C===0?'兩邊都是純水，穿過去的水分子兩方向一樣多，液面不動。':
     OS.P>pi+1e-6?'外加壓力大於滲透壓：溶液這邊的水被壓過去比較多，水分子淨流向純水——逆滲透（海水淡化、淨水器）。':
-    `兩邊的水分子都會穿過半透膜。溶液那邊膜上有一部分位置被溶質擋住，每秒穿過來的水分子比較少，所以水淨流入溶液，溶液液面上升。液面差產生的壓力把溶液那邊的水「壓」回去，直到兩方向一樣多（平衡）。平衡時 ρgh ＝ π${OS.P>0?' − 外加壓力':''}。`;};
+    capped?`水一直流進溶液，<b>管子（${TUBE_CM} cm）已經滿了還停不下來</b>：這個濃度的滲透壓 ${nf(pi,3)} atm 相當於 <b>${nf(need,0)} cm（${nf(need/100,2)} m）</b>的水柱，要那麼高的液柱才壓得回去。所以實驗上不是看液面升多高，而是<b>用活塞加壓到兩側等高</b>，那個壓力就是 π。（按「加壓到兩側等高」試試）`:
+    `兩邊的水分子都會穿過半透膜。溶液那邊膜上有一部分位置被溶質擋住，每秒穿過來的水分子比較少，所以水淨流入溶液，溶液液面上升。液面差產生的壓力（${nf(OS.dh,1)} cm 水柱 ＝ ${nf(OS.dh/1033.6,3)} atm）要長到和 π ＝ ${nf(pi,3)} atm 一樣大才會停。`;};
 function drawCell(g,W,H){const cx=W/2,cy=H/2+6,R=Math.min(W,H)*.22*OS.sc;
   g.fillStyle=OS.ton==='hyper'?'rgba(232,89,12,.14)':C.liq;g.fillRect(10,10,W-20,H-20);g.strokeStyle=C.glass;g.lineWidth=3;g.strokeRect(10,10,W-20,H-20);
   const obj=OS.obj,tt=OS.t;
