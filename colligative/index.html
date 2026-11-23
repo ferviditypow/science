@@ -292,7 +292,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       <div id="osUCtl" class="toolbar">
         <span class="tlabel">右側溶質</span>
         <span class="seg" id="osI"><button data-v="1" aria-pressed="true">葡萄糖</button><button data-v="2" aria-pressed="false">NaCl（i＝2）</button></span>
-        <div class="slider"><span class="tlabel">右側濃度</span><input type="range" id="osC" min="0" max="0.1" step="0.005" value="0.02"><output id="osCo"></output></div>
+        <div class="slider"><span class="tlabel">右側濃度</span><input type="range" id="osC" min="0" max="0.1" step="0.001" value="0.02"><output id="osCo"></output></div>
         <span class="tlabel">右側活塞加壓</span>
         <button class="btn" id="osPm" aria-label="減少壓力">−</button>
         <div class="slider" style="min-width:160px"><input type="range" id="osP" min="0" max="2" step="0.005" value="0"><output id="osPo"></output></div>
@@ -301,7 +301,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
       </div>
       <div id="osUCtl2" class="toolbar">
         <span class="tlabel">畫面</span><span class="seg" id="osView"><button data-v="zoom" aria-pressed="true">放大看半透膜</button><button data-v="full" aria-pressed="false">很多粒子</button></span>
-        <div class="slider"><span class="tlabel">左側濃度</span><input type="range" id="osCL" min="0" max="0.1" step="0.005" value="0"><output id="osCLo"></output></div>
+        <div class="slider"><span class="tlabel">左側濃度</span><input type="range" id="osCL" min="0" max="0.1" step="0.001" value="0"><output id="osCLo"></output></div>
         <div class="slider"><span class="tlabel">溫度</span><input type="range" id="osT" min="0" max="60" step="1" value="27"><output id="osTo"></output></div>
       </div>
       <div id="osCCtl" class="toolbar" hidden>
@@ -982,9 +982,15 @@ function osParts(){const L=[];const nW=osNW();
   for(let k=0;k<nWR;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'w'});for(let k=0;k<nS;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'s'});
   L.forEach(p=>{const a=Math.random()*TAU;p.vx=Math.cos(a)*.25;p.vy=Math.sin(a)*.25;});OS.parts=L;OS.ev=[];}
 function osReset(){OS.dh=0;OS.t=0;OS.sc=1;OS.burst=0;osParts();}
-const TUBE_CM=15;                                  // 管子只有 15 公分高（真實的滲透計要用很長的細管）
+const TUBE_CM=45;        // 管子 45 公分高（真實的滲透計要用更長的細管，這裡已經是畫得下的極限）
+const OST=16;            // 1× 時大約 16 秒走完「看得到的那一段」（到管頂或到平衡）
 function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
-  if(OS.mode==='u'){const k=0.6;OS.dh=clamp(OS.dh+k*((pi-OS.P)*1033.6-OS.dh)*dt,-TUBE_CM,TUBE_CM);
+  if(OS.mode==='u'){
+    // 液面往「真正的平衡高度 he」指數逼近；速度定成「看得到的那一段（到管頂或到 he）
+    // 在 1× 大約 OST 秒走完」，所以濃的、稀的溶液都看得到過程，而且接近平衡時會自己慢下來
+    const he=1033.6*(pi-OS.P);
+    if(Math.abs(he)>1e-6){const v0=Math.min(Math.abs(he),TUBE_CM)/OST;
+      OS.dh=clamp(OS.dh+v0*Math.sign(he)*(1-OS.dh/he)*dt,-TUBE_CM,TUBE_CM);}
     // 粒子：s=-1 左邊（純水）、1 右邊；x∈[0,1] 是各自那半邊的位置，膜在左半 x=1、右半 x=0
     const R=OS.parts,nR=R.filter(p=>p.s===1).length,xwR=R.filter(p=>p.s===1&&p.ty==='w').length/nR;
     const f=pi>1e-9?1+((hyd+OS.P)/pi)*(1/Math.max(xwR,.01)-1):1+(hyd+OS.P)*3;const NW=osNW();
@@ -996,8 +1002,8 @@ function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
     // 維持兩邊數量（代表後面還有很多溶液），把多出來的水分子從遠端搬回
     const nL=R.filter(p=>p.s===-1).length;if(nL<NW){const c=R.filter(p=>p.s===1&&p.ty==='w'&&p.x>.8);for(let k=0;k<NW-nL&&k<c.length;k++){c[k].s=-1;c[k].x=.05+.1*Math.random();}}
     else if(nL>NW){const c=R.filter(p=>p.s===-1&&p.x<.2);for(let k=0;k<nL-NW&&k<c.length;k++){c[k].s=1;c[k].x=.85+.1*Math.random();}}
-    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-3)OS.ev.shift();
-    const sp=Math.max(.5,Math.min(3,OS.t));
+    OS.ev.push([OS.t,lr,rl]);while(OS.ev.length&&OS.ev[0][0]<OS.t-8)OS.ev.shift();   // 8 秒平均，數字才不會跳（平衡時兩邊要看得出一樣）
+    const sp=Math.max(.5,Math.min(8,OS.t));
     OS.flux=[OS.ev.reduce((a,e)=>a+e[1],0)/sp,OS.ev.reduce((a,e)=>a+e[2],0)/sp];}
   else{const tgt=OS.ton==='hypo'?(OS.obj==='rbc'?1.42:1.35):OS.ton==='hyper'?.72:1;OS.sc+=(tgt-OS.sc)*Math.min(1,dt*.5);
     if(OS.obj==='rbc'&&OS.ton==='hypo'&&OS.sc>1.33)OS.burst=Math.min(1,OS.burst+dt*.8);}}
@@ -1020,15 +1026,15 @@ segOn($('osView'),v=>{hideStory();OS.view=v;osParts();kick();});
 const setOSCL=sliderBind('osCL',v=>{OS.CL=v;osParts();setTimeout(osPRange,0);},v=>v===0?'純水':nf(v,3)+' M');
 const setOST=sliderBind('osT',v=>{OS.T=v;setTimeout(osPRange,0);},v=>v+' ℃');
 $('osReset').addEventListener('click',()=>{osReset();kick();});
-DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42,nar?480:300,nar?640:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42,nar?540:300,nar?760:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
-  const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.48:H;
+  const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.55:H;
   // ---- 水槽＋半透膜＋活塞（課本的畫法）----
-  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?74:98,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;   // ty 要留得下管子＋活塞
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=Math.round(uh*(nar?.50:.60)),by=uh-24,cx=(x0+x1)/2,TH2=by-ty;   // 上面 6 成留給管子，下面才是水槽
   const eq=(pi-OS.P)*1033.6;                       // 真正平衡需要的水柱高（cm）
-  const nw=Math.min(74,(x1-x0)*.17),nh=nar?50:66;                  // 上面兩根管子
+  const nw=Math.min(74,(x1-x0)*.17),nh=ty-(nar?20:26);             // 上面兩根管子（幾乎頂到畫面上緣）
   const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
-  const yMid=ty-nh*.45,halfPx=nh*.45-7,pxPerCm=halfPx/(TUBE_CM/2);  // 管子只有 TUBE_CM 公分高
+  const yMid=ty-nh*.5,halfPx=nh*.5-11,pxPerCm=halfPx/(TUBE_CM/2);   // 靜止液面在管子中間，上下各留 TUBE_CM/2
   const d=clamp(OS.dh,-TUBE_CM,TUBE_CM)*pxPerCm/2,yl=yMid+d,yr=yMid-d;   // 液面（溶液高 → dh>0）
   // 槽體
   g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=5;g.beginPath();g.roundRect(x0,ty,x1-x0,TH2,12);g.fill();g.stroke();
@@ -1043,15 +1049,15 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
   g.fillStyle='rgba(255,255,255,.9)';g.fillRect(cx-5,ty+3,10,TH2-6);
   g.strokeStyle=C.membrane;g.lineWidth=2;g.setLineDash([6,5]);line(g,cx,ty+4,cx,by-4,C.membrane,2,[6,5]);g.setLineDash([]);
   text(g,'半透膜',cx-9,ty-8,{align:'right',size:12,bold:true,col:C.membrane});
-  text(g,'純水',x0+(cx-x0)/2,by-10,{align:'center',size:13,bold:true,col:C.water});
-  text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-10,{align:'center',size:13,bold:true,col:OS.C>0?C.sol:C.water});
+  text(g,'純水',x0+(cx-x0)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:C.water});
+  text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:OS.C>0?C.sol:C.water});
   // 兩個方向的水流（箭頭粗細＝流量）
-  {const a=OS.flux||[1,1],mxf=Math.max(a[0],a[1],.001),y1a=ty+TH2*.38,y2a=ty+TH2*.62,Lw=Math.min(96,(x1-x0)*.17);
-   const w1=3+9*a[0]/mxf,w2=3+9*a[1]/mxf;
-   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',w1);text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:12.5,bold:true,col:'#e0458a'});
-   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,w2);text(g,'H₂O',cx+Lw+8,y2a+5,{size:12.5,bold:true,col:C.blue});
-   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:11,mono:true,col:'#e0458a'});
-   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:11,mono:true,col:C.blue});}
+  {const a=OS.flux||[1,1],mxf=Math.max(a[0],a[1],.001),y1a=ty+TH2*.34,y2a=ty+TH2*.60,Lw=Math.min(96,(x1-x0)*.17);
+   const w1=3+9*a[0]/mxf,w2=3+9*a[1]/mxf,fs=TH2<170?10.5:12.5;
+   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',w1);text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:fs,bold:true,col:'#e0458a'});
+   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,w2);text(g,'H₂O',cx+Lw+8,y2a+5,{size:fs,bold:true,col:C.blue});
+   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:fs-1.5,mono:true,col:'#e0458a'});
+   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:fs-1.5,mono:true,col:C.blue});}
   // 上面兩根管子
   [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
     g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
@@ -1068,10 +1074,10 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
     const full=Math.abs(OS.dh)>=TUBE_CM-.05;
     text(g,'Δh ＝ '+nf(OS.dh,1)+' cm'+(full?'（管子滿了）':''),cx+6,(ya+yb)/2+4,{size:11.5,bold:true,col:C.purple,bg:C.panel});}
   // 管子的刻度（每 5 公分）
-  for(let cm=-TUBE_CM/2;cm<=TUBE_CM/2+.01;cm+=5){const y=yMid-cm*pxPerCm;
-    line(g,nlx-nw/2-7,y,nlx-nw/2-1,y,C.muted,1);
-    if(cm===0)text(g,'0',nlx-nw/2-10,y+4,{align:'right',size:10,col:C.muted,mono:true});}
-  text(g,TUBE_CM+' cm 管',nlx-nw/2-10,ty-nh+4,{align:'right',size:10,col:C.muted});
+  for(let cm=-Math.floor(TUBE_CM/10)*5;cm<=Math.floor(TUBE_CM/10)*5+.01;cm+=5){const y=yMid-cm*pxPerCm,maj=Math.round(cm)%10===0;
+    line(g,nlx-nw/2-(maj?9:5),y,nlx-nw/2-1,y,C.muted,1);
+    if(maj)text(g,''+Math.round(cm),nlx-nw/2-12,y+4,{align:'right',size:10,col:C.muted,mono:true});}
+  text(g,TUBE_CM+' cm 管',nlx-nw/2-12,ty-nh+2,{align:'right',size:10,col:C.muted});
 
   // 壓力計：指針式，π 的位置有紅色刻度
   {const pi=piOf(),R0=GR,gx=x1+14+R0,gy=ty+TH2*.42,mx=Math.max(+$('osP').max,pi*1.15,.05);
