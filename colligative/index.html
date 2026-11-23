@@ -1046,11 +1046,11 @@ segOn($('osView'),v=>{hideStory();OS.view=v;osParts();kick();});
 const setOSCL=sliderBind('osCL',v=>{OS.CL=v;osParts();setTimeout(osPRange,0);},v=>v===0?'純水':nf(v,3)+' M');
 const setOST=sliderBind('osT',v=>{OS.T=v;setTimeout(osPRange,0);},v=>v+' ℃');
 $('osReset').addEventListener('click',()=>{osReset();kick();});
-DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42,nar?540:300,nar?760:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.50,nar?540:360,nar?760:540),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
   const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.55:H;
   // ---- 水槽＋半透膜＋活塞（課本的畫法）----
-  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=Math.round(uh*(nar?.50:.60)),by=uh-24,cx=(x0+x1)/2,TH2=by-ty;   // 上面 6 成留給管子，下面才是水槽
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=Math.round(uh*(nar?.55:.66)),by=uh-24,cx=(x0+x1)/2,TH2=by-ty;   // 上面 6 成留給管子，下面才是水槽
   const eq=(pi-OS.P)*1033.6;                       // 真正平衡需要的水柱高（cm）
   const nw=Math.min(74,(x1-x0)*.17),nh=ty-(nar?20:26);             // 上面兩根管子（幾乎頂到畫面上緣）
   const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
@@ -1072,12 +1072,25 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42
   text(g,'純水',x0+(cx-x0)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:C.water});
   text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:OS.C>0?C.sol:C.water});
   // 兩個方向的水流（箭頭粗細＝流量）
-  {const a=OS.flux||[1,1],mxf=Math.max(a[0],a[1],.001),y1a=ty+TH2*.34,y2a=ty+TH2*.60,Lw=Math.min(96,(x1-x0)*.17);
-   const w1=3+9*a[0]/mxf,w2=3+9*a[1]/mxf,fs=TH2<170?10.5:12.5;
-   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',w1);text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:fs,bold:true,col:'#e0458a'});
-   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,w2);text(g,'H₂O',cx+Lw+8,y2a+5,{size:fs,bold:true,col:C.blue});
-   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:fs-1.5,mono:true,col:'#e0458a'});
-   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:fs-1.5,mono:true,col:C.blue});}
+  {const a=OS.flux||[1,1],fs=TH2<170?11:13,Lw=Math.min(104,(x1-x0)*.19);
+   const y1a=ty+TH2*.22,y2a=ty+TH2*.46,y3a=ty+TH2*.72;
+   // 兩個方向只差一成左右，用「粗細＝彼此相比」把差距放大：一樣多時都畫 11px，不一樣時 5px vs 20px
+   const lo=Math.min(a[0],a[1]),hi=Math.max(a[0],a[1]),sp=hi-lo,same=sp<Math.max(.25,hi*.05);
+   const wOf=v=>same?11:5+15*(v-lo)/sp;
+   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',wOf(a[0]));
+   text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:fs,bold:true,col:'#e0458a'});
+   text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:fs-1,mono:true,bold:true,col:'#e0458a',bg:C.panel});
+   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,wOf(a[1]));
+   text(g,'H₂O',cx+Lw+8,y2a+5,{size:fs,bold:true,col:C.blue});
+   text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:fs-1,mono:true,bold:true,col:C.blue,bg:C.panel});
+   // 第三支：淨流（真正決定液面升降的量）
+   const net=a[0]-a[1],an=Math.abs(net);
+   if(same||an<.05){text(g,'淨流 ＝ 0：兩邊一樣多，液面不動',cx,y3a+5,{align:'center',size:fs,bold:true,col:C.green,bg:C.panel});}
+   else{const dir=net>0?1:-1,Ln=Lw*1.15;
+     text(g,TH2<170?'淨流 '+nf(an,1)+'（'+(net>0?'進溶液':'回純水')+'）'
+                  :'淨流 '+nf(an,1)+' 個/秒（'+(net>0?'水進溶液，液面上升':'水回純水，液面下降')+'）',
+          cx,y3a-11,{align:'center',size:fs,bold:true,col:C.purple,bg:C.panel});
+     arrow(g,cx-dir*Ln,y3a+7,cx+dir*Ln,y3a+7,C.purple,13);}}
   // 上面兩根管子
   [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
     g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
