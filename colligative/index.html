@@ -970,13 +970,13 @@ segOn($('osView'),v=>{hideStory();OS.view=v;osParts();kick();});
 const setOSCL=sliderBind('osCL',v=>{OS.CL=v;osParts();setTimeout(osPRange,0);},v=>v===0?'純水':nf(v,3)+' M');
 const setOST=sliderBind('osT',v=>{OS.T=v;setTimeout(osPRange,0);},v=>v+' ℃');
 $('osReset').addEventListener('click',()=>{osReset();kick();});
-DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42,nar?480:300,nar?640:420),g=cv.getContext('2d');g.clearRect(0,0,W,H);
+DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.45:.46,nar?520:340,nar?700:470),g=cv.getContext('2d');g.clearRect(0,0,W,H);
   if(OS.mode==='cell')return drawCell(g,W,H);
   const pi=piOf();const uw=nar?W:W*.42,uh=nar?H*.48:H;
   // ---- 水槽＋半透膜＋活塞（課本的畫法）----
-  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?34:46,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;
+  const GR=nar?26:32,m=12,x0=m,x1=uw-m-GR*2-14,ty=nar?72:92,by=uh-26,cx=(x0+x1)/2,TH2=by-ty;   // ty 要留得下管子＋活塞
   const eq=(pi-OS.P)*1033.6,sMax=Math.max(Math.abs(eq),Math.abs(OS.dh),1),pxPerCm=(TH2*.5)/sMax;
-  const nw=Math.min(62,(x1-x0)*.14),nh=nar?40:54;                  // 上面兩根管子
+  const nw=Math.min(62,(x1-x0)*.14),nh=nar?44:62;                  // 上面兩根管子
   const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
   const d=OS.dh*pxPerCm/2,yl=ty-nh*.35+d,yr=ty-nh*.35-d;            // 液面（溶液高 → dh>0）
   // 槽體
@@ -991,7 +991,7 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.35:.42
   // 半透膜
   g.fillStyle='rgba(255,255,255,.9)';g.fillRect(cx-5,ty+3,10,TH2-6);
   g.strokeStyle=C.membrane;g.lineWidth=2;g.setLineDash([6,5]);line(g,cx,ty+4,cx,by-4,C.membrane,2,[6,5]);g.setLineDash([]);
-  text(g,'半透膜',cx,ty-8,{align:'center',size:12,bold:true,col:C.membrane});
+  text(g,'半透膜',cx-9,ty-8,{align:'right',size:12,bold:true,col:C.membrane});
   text(g,'純水',x0+(cx-x0)/2,by-10,{align:'center',size:13,bold:true,col:C.water});
   text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-10,{align:'center',size:13,bold:true,col:OS.C>0?C.sol:C.water});
   // 兩個方向的水流（箭頭粗細＝流量）
