@@ -983,14 +983,14 @@ function osParts(){const L=[];const nW=osNW();
   L.forEach(p=>{const a=Math.random()*TAU;p.vx=Math.cos(a)*.25;p.vy=Math.sin(a)*.25;});OS.parts=L;OS.ev=[];}
 function osReset(){OS.dh=0;OS.t=0;OS.sc=1;OS.burst=0;osParts();}
 const TUBE_CM=45;        // 管子 45 公分高（真實的滲透計要用更長的細管，這裡已經是畫得下的極限）
-const OST=16;            // 1× 時大約 16 秒走完「看得到的那一段」（到管頂或到平衡）
+const OST=16;            // 1× 時大約 16 秒走完「看得到的那一段」（到管頂、到平衡、或加壓後退回來）
 function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
   if(OS.mode==='u'){
     // 液面往「真正的平衡高度 he」指數逼近；速度定成「看得到的那一段（到管頂或到 he）
     // 在 1× 大約 OST 秒走完」，所以濃的、稀的溶液都看得到過程，而且接近平衡時會自己慢下來
-    const he=1033.6*(pi-OS.P);
-    if(Math.abs(he)>1e-6){const v0=Math.min(Math.abs(he),TUBE_CM)/OST;
-      OS.dh=clamp(OS.dh+v0*Math.sign(he)*(1-OS.dh/he)*dt,-TUBE_CM,TUBE_CM);}
+    const he=1033.6*(pi-OS.P);                                   // 平衡液面差（cm）：π−P 換算成水柱
+    const A=Math.abs(he)>1e-6?Math.min(Math.abs(he),TUBE_CM)/(Math.abs(he)*OST):1/OST;
+    OS.dh=clamp(OS.dh+A*(he-OS.dh)*dt,-TUBE_CM,TUBE_CM);         // 往 he 指數逼近，A 讓「看得到的那一段」約 OST 秒
     // 粒子：s=-1 左邊（純水）、1 右邊；x∈[0,1] 是各自那半邊的位置，膜在左半 x=1、右半 x=0
     const R=OS.parts,nR=R.filter(p=>p.s===1).length,xwR=R.filter(p=>p.s===1&&p.ty==='w').length/nR;
     const f=pi>1e-9?1+((hyd+OS.P)/pi)*(1/Math.max(xwR,.01)-1):1+(hyd+OS.P)*3;const NW=osNW();
@@ -1034,7 +1034,7 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42
   const eq=(pi-OS.P)*1033.6;                       // 真正平衡需要的水柱高（cm）
   const nw=Math.min(74,(x1-x0)*.17),nh=ty-(nar?20:26);             // 上面兩根管子（幾乎頂到畫面上緣）
   const nlx=cx-(x1-x0)*.26,nrx=cx+(x1-x0)*.26;                      // 左：純水管　右：溶液管（有活塞）
-  const yMid=ty-nh*.5,halfPx=nh*.5-11,pxPerCm=halfPx/(TUBE_CM/2);   // 靜止液面在管子中間，上下各留 TUBE_CM/2
+  const yMid=ty-nh*.5,halfPx=nh*.5-24,pxPerCm=halfPx/(TUBE_CM/2);   // 靜止液面在管子中間；上面多留 24px 給活塞頭與握把
   const d=clamp(OS.dh,-TUBE_CM,TUBE_CM)*pxPerCm/2,yl=yMid+d,yr=yMid-d;   // 液面（溶液高 → dh>0）
   // 槽體
   g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=5;g.beginPath();g.roundRect(x0,ty,x1-x0,TH2,12);g.fill();g.stroke();
@@ -1061,13 +1061,18 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.42
   // 上面兩根管子
   [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
     g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
-    const yy=clamp(y,ty-nh+7,ty+4);
+    const yy=clamp(y,ty-nh+24,ty+4);
     g.fillStyle=isSol&&OS.C>0?'rgba(232,89,12,.30)':C.liq;g.fillRect(x-nw/2+2,yy,nw-4,ty-yy+4);
     line(g,x-nw/2+2,yy,x+nw/2-2,yy,isSol&&OS.C>0?C.sol:C.water,2.5);
-    // 有加壓才蓋上活塞；沒加壓時兩根都是開口管，液面才看得到
-    if(isSol&&OS.P>0){g.fillStyle='#2b3138';g.fillRect(x-nw/2+2,yy-11,nw-4,11);g.fillRect(x-4,Math.max(2,ty-nh-18),8,yy-Math.max(2,ty-nh-18)-9);
-      text(g,'壓力活塞',x+nw/2+6,Math.max(12,ty-nh-6),{size:11.5,bold:true});}
-    if(!(isSol&&OS.P>0))text(g,isSol?(OS.C>0?'溶液':'純水'):'純水',x,ty-nh-7,{align:'center',size:10.5,col:isSol&&OS.C>0?C.sol:C.water,bold:true});});
+    // 溶液這一管永遠有活塞，活塞坐在液面上（不會蓋住液面）：沒加壓時灰色、加壓時變深並標 P
+    if(isSol){const mouth=ty-nh+7,on=OS.P>0,ck=on?'#2b3138':'#aeb9c3';
+      g.fillStyle=ck;g.fillRect(x-3.5,mouth+3,7,Math.max(0,yy-10-mouth-3));            // 活塞桿
+      g.fillStyle=ck;g.fillRect(x-nw/2+5,mouth,nw-10,7);                                // 握把
+      g.fillStyle=on?'#2b3138':'#d4dbe1';g.fillRect(x-nw/2+2,yy-10,nw-4,10);            // 活塞頭
+      g.strokeStyle=on?'#2b3138':'#9aa6b0';g.lineWidth=1.4;g.strokeRect(x-nw/2+2.5,yy-9.5,nw-5,9);
+      text(g,'壓力活塞',x+nw/2+6,mouth+9,{size:11.5,bold:true,col:on?C.ink:C.muted});
+      text(g,on?'P ＝ '+nf(OS.P,3)+' atm':'還沒加壓',x+nw/2+6,mouth+24,{size:11,mono:on,col:on?C.red:C.muted});}
+    text(g,isSol?(OS.C>0?'溶液':'純水'):'純水',x,ty-nh-7,{align:'center',size:10.5,col:isSol&&OS.C>0?C.sol:C.water,bold:true});});
   if(Math.abs(OS.dh)>.3){const ya=Math.min(yl,yr),yb=Math.max(yl,yr);
     line(g,nlx,yl,cx,yl,C.muted,1,[3,3]);line(g,nrx,yr,cx,yr,C.muted,1,[3,3]);
     arrow(g,cx,ya,cx,yb,C.purple,1.8);
