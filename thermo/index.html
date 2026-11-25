@@ -131,13 +131,14 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="sOnF" checked> 華氏</label>
         <label class="tog"><input type="checkbox" id="sOnK" checked> 絕對</label>
         <label class="tog"><input type="checkbox" id="sX"> 自訂 X</label>
+        <button class="btn" id="sTidy">↔ 排整齊</button>
       </div>
       <div class="toolbar" id="sXrow" hidden>
         <div class="slider"><span class="tlabel">X 溫標的冰點</span><input type="range" id="sX1" min="-40" max="60" step="5" value="20"><output id="sX1o"></output></div>
         <div class="slider"><span class="tlabel">X 溫標的沸點</span><input type="range" id="sX2" min="70" max="300" step="5" value="170"><output id="sX2o"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvScale" aria-label="攝氏、華氏、絕對溫標對照"></canvas></div>
-      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右拖曳改順序</b>，也可以只留下要比較的那幾支。</p>
+      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右自由拖曳</b>，要排多近都可以，按「排整齊」會重新平均分佈；也可以只留下要比較的那幾支。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -408,7 +409,7 @@ DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext(
   // 拖曳把手與「現在泡在哪裡」
   handle(g,fx,fy-fh*.5,9);
   const envT=F.imm>.5?((hot?'熱水':'冷水')+' '+F.bath+' ℃'):(F.imm>0?'半泡在水裡':'空氣 '+T0+' ℃');
-  text(g,'現在：'+envT,fx,Math.max(58,neck-STRAW-6),{col:F.imm>.5?col0:C.muted,size:12,bold:true,align:'center',bg:C.panel});
+  text(g,'現在：'+envT,W-42,21,{col:F.imm>.5?col0:C.muted,size:13,bold:true,align:'right',bg:C.panel});
   // 溫度標示
   const nar=W<520,tlx=nar?8:Math.min(W-96,bcx+bowW/2+10),tly=nar?16:wtop+24;
   text(g,'玻璃 '+nf(F.Tg,1)+' ℃',tlx,tly,{col:C.glassc,size:12,bold:true});
@@ -464,12 +465,11 @@ function dot(g,x,y,col,r=4){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.f
 // ======================================================================
 // 2 三種溫標
 // ======================================================================
-const S={T:25,def:true,x1:20,x2:170,order:['C','F','K','X'],on:{C:true,F:true,K:true,X:false},drag:null};
+const S={T:25,def:true,x1:20,x2:170,order:['C','F','K','X'],on:{C:true,F:true,K:true,X:false},
+         pos:{},drag:null};   // pos[k]＝0～1 的水平位置，沒設定就平均分佈
 Object.defineProperty(S,'x',{get:()=>S.on.X,set:v=>{S.on.X=!!v;}});   // 舊程式用 S.x，接到 on.X
 const sVis=()=>S.order.filter(k=>S.on[k]);
-function sMove(k,slot){const vis=sVis(),cur=vis.indexOf(k);
-  if(cur<0)return false;const t=clamp(slot,0,vis.length-1);if(t===cur)return false;
-  vis.splice(cur,1);vis.splice(t,0,k);S.order=vis.concat(S.order.filter(q=>!S.on[q]));return true;}
+
 const setST=sliderBind('sT',v=>{S.T=v;},v=>nf(v,1)+' ℃');
 const setSX1=sliderBind('sX1',v=>{S.x1=v;},v=>v+' °X');
 const setSX2=sliderBind('sX2',v=>{S.x2=v;},v=>v+' °X');
@@ -488,10 +488,11 @@ const sList=()=>sVis().map(k=>k==='X'?{k:'X',nm:'自訂 X',u:'°X',f:toX,step:(S
 const SCOL=[{k:'C',nm:'攝氏',u:'℃',f:c=>c,step:20,lo:-40,hi:130},
             {k:'F',nm:'華氏',u:'°F',f:toF,step:40,lo:-40,hi:260},
             {k:'K',nm:'絕對（克氏）',u:'K',f:toK,step:20,lo:230,hi:400}];
-function sGeom(W,H){const n=Math.max(1,sVis().length),top=34,bot=H-56,cols=[];
-  const mr=Math.min(46,W*.1),ml=6;                       // 右邊留給最後一支的刻度數字
-  for(let i=0;i<n;i++)cols.push(ml+(W-ml-mr)*(i+.5)/n);
-  return{top,bot,cols,y:c=>bot-(bot-top)*(c+35)/160};}
+function sGeom(W,H){const vis=sVis(),n=Math.max(1,vis.length),top=48,bot=H-74;
+  const mr=Math.min(46,W*.1),ml=6,span=W-ml-mr;          // 右邊留給最後一支的刻度數字
+  // 沒有被拖過的就平均分佈；拖過的記在 S.pos，所以可以自由調整彼此的距離
+  const cols=vis.map((k,i)=>ml+span*(S.pos[k]!=null?S.pos[k]:(i+.5)/n));
+  return{top,bot,cols,vis,ml,span,y:c=>bot-(bot-top)*(c+35)/160};}
 DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const{top,bot,cols,y}=sGeom(W,H),tw=Math.min(26,W*.045);
@@ -507,22 +508,31 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
     const ly=clamp(y(S.T),top+3,bot);
     g.fillStyle=C.liq;g.fillRect(cx-tw/2+3,ly,tw-6,bot-ly+6);
     // 刻度
+    // 兩支靠很近時，刻度數字改畫在左邊，才不會疊到隔壁的管子
+    const others=cols.filter((_,j)=>j!==i);
+    const nearR=others.some(o=>o>cx&&o-cx<62),nearL=others.some(o=>o<cx&&cx-o<62);
+    const numL=nearR&&!nearL;
+    // 擠在一起時，名稱與讀數上下錯開，才不會疊字
+    const stag=(others.filter(o=>o<cx&&cx-o<78).length%2)?1:0;
     const vlo=col.f(-35),vhi=col.f(125),st=col.step;
     const first=Math.ceil(Math.min(vlo,vhi)/st)*st;
     for(let v=first;v<=Math.max(vlo,vhi)+1e-6;v+=st){
       const c=col.k==='C'?v:col.k==='F'?(v-32)/1.8:col.k==='K'?v-273:(v-S.x1)*100/(S.x2-S.x1);
       const yy=y(c);if(yy<top-1||yy>bot+1)continue;
-      line(g,cx+tw/2,yy,cx+tw/2+7,yy,C.muted,1.3);
-      text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+4,{col:C.muted,size:11,mono:true});
-      line(g,cx-tw/2-5,yy,cx-tw/2,yy,C.line,1.1);}
+      if(numL){line(g,cx-tw/2-7,yy,cx-tw/2,yy,C.muted,1.3);
+        text(g,nf(v,Math.abs(st)<5?1:0),cx-tw/2-10,yy+5,{col:C.ink,size:14,mono:true,align:'right'});
+        line(g,cx+tw/2,yy,cx+tw/2+5,yy,C.line,1.1);}
+      else{line(g,cx+tw/2,yy,cx+tw/2+7,yy,C.muted,1.3);
+        text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+5,{col:C.ink,size:14,mono:true});
+        line(g,cx-tw/2-5,yy,cx-tw/2,yy,C.line,1.1);}}
     if(list.length>1){const gw=Math.min(86,W/list.length-14);
       if(S.drag===col.k){g.fillStyle=C.accent;g.globalAlpha=.14;g.fillRect(cx-gw/2,top-34,gw,bot-top+54);g.globalAlpha=1;}
-      text(g,'⣿',cx-gw/2+6,top-19,{col:S.drag===col.k?C.accent:C.line,size:13,bold:true});}
-    text(g,col.nm,cx,top-16,{col:S.drag===col.k?C.accent:C.ink,size:13,bold:true,align:'center'});
-    text(g,col.u,cx,top-3,{col:C.muted,size:11,align:'center'});
+      text(g,'⣿',cx-gw/2+6,top-19-stag*16,{col:S.drag===col.k?C.accent:C.line,size:13,bold:true});}
+    text(g,col.nm,cx,top-17-stag*16,{col:S.drag===col.k?C.accent:C.ink,size:15,bold:true,align:'center',bg:C.panel});
+    text(g,col.u,cx,top-3-stag*16,{col:C.muted,size:12,align:'center',bg:C.panel});
     // 讀數
     const v=col.f(S.T);
-    text(g,nf(v,1)+' '+col.u,cx,bot+52,{col:C.accent,size:13,bold:true,align:'center'});});
+    text(g,nf(v,1)+' '+col.u,cx,bot+50+stag*18,{col:C.accent,size:17,bold:true,align:'center',bg:C.panel});});
   // 指標
   const my=clamp(y(S.T),top,bot);
   line(g,6,my,W-6,my,C.accent,2,[7,5]);
@@ -542,12 +552,13 @@ dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{
     hit:(x,yy)=>((yy>=top-36&&yy<=top-2&&Math.abs(x-cols[i])<Math.min(70,W/(n*2)-6))
                 ||Math.hypot(x-cols[i],yy-(bot+14))<tw)?-1:999,
     start:()=>{S.drag=col.k;},
-    move:x=>{if(sMove(col.k,Math.floor(clamp(x,0,W-1)/W*n)))kick();},
+    move:x=>{const{ml,span}=sGeom(W,H);S.pos[col.k]=clamp((x-ml)/span,0,1);kick();},
     end:()=>{S.drag=null;}}));
   hs.push({x:14,y:clamp(y(S.T),top,bot),hit:(x,yy)=>Math.abs(yy-clamp(y(S.T),top,bot))<24?0:999,r:26,free:false,
     move:(x,yy)=>{const c=(bot-clamp(yy,top,bot))/(bot-top)*160-35;S.T=clamp(Math.round(c*2)/2,-30,120);setST(S.T);}});
   return hs;},()=>{hideStory();kick();});
 // 四支溫度計各自可以開關（至少要留一支）
+$('sTidy').addEventListener('click',()=>{S.pos={};hideStory();kick();});
 ['C','F','K'].forEach(k=>{const el=$('sOn'+k);el.addEventListener('change',()=>{
   if(!el.checked&&sVis().length<=1){el.checked=true;return;}
   S.on[k]=el.checked;hideStory();kick();});});
@@ -746,7 +757,7 @@ function goH(o){setBench('heat');HQ.mode=o.mode||'heat';
 function goC2(o){setBench('curve');if(o.m){CU.m=o.m;setCM(o.m);}if(o.P){CU.P=o.P;setCP(o.P);}
   cuReset();if(o.step){const c=cuCum();CU.Q=c[o.step]+ (o.step===1||o.step===3?cuSegs()[o.step][1]*.35:0);}
   CU.run=!!o.play;UI.curve();kick();}
-function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};
+function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};S.pos={};
   Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);
   $('sX').checked=S.on.X;$('sXrow').hidden=!S.on.X;$('sDef').checked=S.def;
   ['C','F','K'].forEach(k=>{$('sOn'+k).checked=S.on[k];});kick();}
