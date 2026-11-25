@@ -39,7 +39,8 @@ header .foldbtn{display:none}
 @media (max-width:700px){.grpnav{gap:6px 10px}.grpnav>.tlabel{display:none}.grpnav .units{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px;scrollbar-width:thin}.grpnav a.u{white-space:nowrap;min-height:34px;padding:5px 11px}}
 
   /* ---- 手寫批註與雷射筆 ---- */
-  #inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom}
+  #inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom;display:none}
+  #inkCv.live{display:block}                      /* 沒有字也沒在寫的時候整張拿掉，不然 4K 螢幕每一幀都要合成一張全螢幕貼圖 */
   html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
   #inkGo{position:fixed;right:10px;bottom:106px;z-index:60;min-height:40px;padding:8px 12px;border-radius:999px;
     border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 .84rem/1 var(--f-body);
@@ -235,16 +236,26 @@ header .foldbtn{display:none}
     const MORE = ['#f59f00', '#e64980', '#0ca678', '#a9754a', '#868e96', '#ffffff'];
     const K = { on: false, tool: 'pen', col: COLS[1], w: 4.5, strokes: [], cur: null, pid: null,
                 laser: null, fade: null, tmr: 0 };
-    const cv = document.createElement('canvas'); cv.id = 'inkCv';
-    const g = cv.getContext('2d');
+    let cv = null, g = null;                        // 第一次要寫字才真的建立畫布
+    function ensure() {
+      if (cv) return cv;
+      cv = document.createElement('canvas'); cv.id = 'inkCv'; g = cv.getContext('2d');
+      document.body.appendChild(cv); wire(); fit(); return cv;
+    }
+    function live() {                                // 有字、正在寫、或雷射還在淡出才需要這張畫布
+      if (!cv) return;
+      cv.classList.toggle('live', K.on || K.strokes.length > 0 || !!K.cur || !!K.laser || !!K.fade);
+    }
     const go = document.createElement('button'); go.id = 'inkGo'; go.type = 'button';
     go.textContent = '✏️ 寫字／雷射筆';
     go.title = '整頁都可以用手指寫字；寫字時不會動到動畫。再按「完成」回到操作模式。';
     const bar = document.createElement('div'); bar.id = 'inkBar';
-    document.body.append(cv, go, bar);
+    document.body.append(go, bar);
 
     // ---- 幾何：墨水存文件座標，畫布只有視窗大小 ----
-    const fit = () => { const d = Math.min(2, devicePixelRatio || 1);
+    const fit = () => { if (!cv) return;
+      // 大畫面（例如 4K 電視）用 1 倍就好：全螢幕貼圖愈大，合成愈慢
+      const d = Math.min(innerWidth * innerHeight > 2.2e6 ? 1 : 2, devicePixelRatio || 1);
       cv.width = Math.round(innerWidth * d); cv.height = Math.round(innerHeight * d);
       g.setTransform(d, 0, 0, d, 0, 0); draw(); };
     const pt = e => [e.clientX + scrollX, e.clientY + scrollY, performance.now()];
@@ -283,6 +294,7 @@ header .foldbtn{display:none}
       side(L, true); R.reverse(); side(R, false); P.closePath(); return P;
     }
     function draw() {
+      if (!cv) return; live();
       g.clearRect(0, 0, innerWidth, innerHeight);
       g.save(); g.translate(-scrollX, -scrollY);
       K.strokes.forEach(st => { g.fillStyle = st.c; g.fill(st.path || (st.path = build(st))); });
@@ -309,6 +321,7 @@ header .foldbtn{display:none}
       K.strokes = K.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < 16 + st.w / 2));
       if (K.strokes.length !== n) draw(); }
 
+    function wire() {
     cv.addEventListener('pointerdown', e => {
       if (!K.on || K.pid !== null) return;                             // 同時只認一根手指＝手掌不會畫到
       K.pid = e.pointerId; cv.setPointerCapture(e.pointerId); e.preventDefault();
@@ -333,6 +346,7 @@ header .foldbtn{display:none}
       if (K.cur) { K.cur.path = build(K.cur); K.strokes.push(K.cur); K.cur = null; draw(); }
     };
     cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+    }
 
     // ---- 工具列 ----
     const mk = (txt, title, cls, host) => { const b = document.createElement('button'); b.type = 'button';
@@ -375,12 +389,12 @@ header .foldbtn{display:none}
     lasB.addEventListener('click', () => { K.tool = 'laser'; sync(); });
     erB.addEventListener('click', () => { K.tool = 'er'; sync(); });
     function set(v) { K.on = v; document.documentElement.dataset.ink = v ? '1' : '';
-      if (!v) { K.pid = null; K.cur = null; K.laser = null; K.fade = null; clearTimeout(K.tmr); }
-      sync(); draw(); }
+      if (v) ensure(); else { K.pid = null; K.cur = null; K.laser = null; K.fade = null; clearTimeout(K.tmr); }
+      sync(); live(); draw(); }
     go.addEventListener('click', () => set(true));
     addEventListener('keydown', e => { if (e.key === 'Escape' && K.on) set(false); });
-    addEventListener('resize', fit); addEventListener('scroll', draw, { passive: true });
-    fit(); sync();
+    addEventListener('resize', fit); addEventListener('scroll', () => { if (cv) draw(); }, { passive: true });
+    sync();
   }
 
   function init() { fold(); nav(); touchMode(); zoomRedraw(); fsBtns(); frameStep(); inkLayer(); }
