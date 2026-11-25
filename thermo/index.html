@@ -45,25 +45,6 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 .steps li.on .k{color:var(--accent)}
 .ctl{display:flex;flex-direction:column;gap:2px}
 .ctl .slider{min-width:0;flex:none}
-
-/* ── 手寫批註（只有這一頁） ── */
-#inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom}
-html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
-#inkGo{position:fixed;right:10px;bottom:106px;z-index:60;min-height:40px;padding:8px 12px;border-radius:10px;
-  border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer;opacity:.72}
-#inkGo:hover{opacity:1}
-html[data-ink="1"] #inkGo{display:none}
-#inkBar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;display:none;gap:6px;
-  align-items:center;padding:7px 9px;border-radius:14px;border:1px solid var(--line);background:var(--panel);
-  box-shadow:0 6px 24px rgba(0,0,0,.18);flex-wrap:wrap;max-width:96vw}
-html[data-ink="1"] #inkBar{display:flex}
-#inkBar button{min-height:44px;min-width:44px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);
-  background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
-#inkBar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-#inkBar .swatch{width:34px;min-width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;border:2px solid var(--line)}
-#inkBar .swatch[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px;border-color:var(--panel)}
-#inkBar .sep{width:1px;height:30px;background:var(--line);margin:0 2px}
-@media print{#inkGo,#inkBar{display:none!important}}
 </style>
 </head>
 <body>
@@ -152,14 +133,14 @@ html[data-ink="1"] #inkBar{display:flex}
         <label class="tog"><input type="checkbox" id="sX"> 自訂 X</label>
         <button class="btn" id="sTidy">↔ 排整齊</button>
         <span class="tlabel">刻度</span>
-        <span class="seg" id="sTick"><button data-v="all" aria-pressed="true">完整刻度</button><button data-v="two" aria-pressed="false">只標冰點與沸點</button></span>
+        <span class="seg" id="sTick"><button data-v="all" aria-pressed="false">完整刻度</button><button data-v="two" aria-pressed="true">只標熔點與沸點</button></span>
       </div>
       <div class="toolbar" id="sXrow" hidden>
-        <div class="slider"><span class="tlabel">X 溫標的冰點</span><input type="range" id="sX1" min="-40" max="60" step="5" value="20"><output id="sX1o"></output></div>
+        <div class="slider"><span class="tlabel">X 溫標的熔點</span><input type="range" id="sX1" min="-40" max="60" step="5" value="20"><output id="sX1o"></output></div>
         <div class="slider"><span class="tlabel">X 溫標的沸點</span><input type="range" id="sX2" min="70" max="300" step="5" value="170"><output id="sX2o"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvScale" aria-label="攝氏、華氏、絕對溫標對照"></canvas></div>
-      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右自由拖曳</b>，要排多近都可以，按「排整齊」會重新平均分佈；也可以只留下要比較的那幾支。切成「只標冰點與沸點」就會把中間的刻度收起來，只留兩個定義點，每一支都會標出自己的數字。</p>
+      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右自由拖曳</b>，要排多近都可以，按「排整齊」會重新平均分佈；也可以只留下要比較的那幾支。切成「只標熔點與沸點」就會把中間的刻度收起來，只留兩個定義點，每一支都會標出自己的數字。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -172,7 +153,7 @@ html[data-ink="1"] #inkBar{display:flex}
         <h3>一度有多大</h3>
         <div class="formula2" id="sDeg"></div>
         <div class="verdict" id="sSay"></div>
-        <p class="mini">攝氏和絕對溫標的「一度」一樣大（都是把冰點到沸點分成 100 格），所以只要加減 273；華氏把同一段分成 180 格，所以一華氏度比較小，換算時要乘 1.8 再加 32。</p>
+        <p class="mini">攝氏和絕對溫標的「一度」一樣大（都是把熔點到沸點分成 100 格），所以只要加減 273；華氏把同一段分成 180 格，所以一華氏度比較小，換算時要乘 1.8 再加 32。</p>
       </section>
     </div>
   </section>
@@ -486,7 +467,7 @@ function dot(g,x,y,col,r=4){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.f
 // 2 三種溫標
 // ======================================================================
 const S={T:25,def:true,x1:20,x2:170,order:['C','F','K','X'],on:{C:true,F:true,K:true,X:false},
-         pos:{},ticks:'all',drag:null};   // pos[k]＝0～1 的水平位置，沒設定就平均分佈
+         pos:{},ticks:'two',drag:null};   // pos[k]＝0～1 的水平位置，沒設定就平均分佈
 Object.defineProperty(S,'x',{get:()=>S.on.X,set:v=>{S.on.X=!!v;}});   // 舊程式用 S.x，接到 on.X
 const sVis=()=>S.order.filter(k=>S.on[k]);
 
@@ -546,13 +527,13 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
       else{line(g,cx+tw/2,yy,cx+tw/2+7,yy,C.muted,1.3);
         text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+6,{col:C.ink,size:tfs,mono:true});
         line(g,cx-tw/2-5,yy,cx-tw/2,yy,C.line,1.1);}}
-    // 每一支都標出自己的冰點與沸點數字（不然只看到攝氏的 0／100，會以為華氏、克氏也是 0／100）
-    if(S.def)[[0,'冰點'],[100,'沸點']].forEach(([c,nm])=>{
+    // 每一支都標出自己的熔點與沸點數字（不然只看到攝氏的 0／100，會以為華氏、克氏也是 0／100）
+    if(S.def)[[0,'熔點'],[100,'沸點']].forEach(([c,nm])=>{
       const yy=y(c),vv=col.f(c);
       const onNum=S.ticks==='two',right=onNum?!numL:numL;     // 完整刻度時放在數字的另一邊
       const bx=right?cx+tw/2+10:cx-tw/2-10;
       line(g,cx-tw/2-6,yy,cx+tw/2+6,yy,C.blue,2);
-      text(g,nf(vv,Math.abs(vv)<10&&vv%1?1:0)+' '+col.u,bx,yy+(nm==='冰點'?18:-8),
+      text(g,nf(vv,Math.abs(vv)<10&&vv%1?1:0)+' '+col.u,bx,yy+(nm==='熔點'?18:-8),
            {col:C.blue,size:onNum?tfs:Math.min(14,tfs),bold:true,mono:true,align:right?'left':'right',bg:C.panel});});
     if(list.length>1){const gw=Math.min(86,W/list.length-14);
       if(S.drag===col.k){g.fillStyle=C.accent;g.globalAlpha=.14;g.fillRect(cx-gw/2,top-34,gw,bot-top+54);g.globalAlpha=1;}
@@ -572,8 +553,8 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
   $('sFormula').innerHTML=`華氏 ＝ 攝氏 × 1.8 ＋ 32 ＝ ${nf(C0,1)} × 1.8 ＋ 32 ＝ <b>${nf(toF(C0),1)} °F</b><br>`+
     `絕對 ＝ 攝氏 ＋ 273 ＝ ${nf(C0,1)} ＋ 273 ＝ <b>${nf(toK(C0),1)} K</b><br>`+
     `攝氏 ＝ (華氏 − 32) ÷ 1.8 ＝ (${nf(toF(C0),1)} − 32) ÷ 1.8 ＝ <b>${nf(C0,1)} ℃</b>`+
-    (S.x?`<br>X 溫標：冰點 ${S.x1} °X、沸點 ${S.x2} °X，中間分成 ${S.x2-S.x1} 格<br>　X ＝ ${S.x1} ＋ (${S.x2}−${S.x1}) × 攝氏 ÷ 100 ＝ <b>${nf(toX(C0),1)} °X</b>`:'');
-  $('sDeg').innerHTML=`冰點到沸點：攝氏 100 格、華氏 180 格、絕對 100 格`+(S.x?`、X ${S.x2-S.x1} 格`:'')+`<br>所以 1 ℃ 的大小 ＝ 1.8 °F ＝ 1 K`+(S.x?` ＝ ${nf((S.x2-S.x1)/100,2)} °X`:'')+`<br>溫度「差」10 ℃ ＝ 18 °F ＝ 10 K（差值不加 32、也不加 273）`;};
+    (S.x?`<br>X 溫標：熔點 ${S.x1} °X、沸點 ${S.x2} °X，中間分成 ${S.x2-S.x1} 格<br>　X ＝ ${S.x1} ＋ (${S.x2}−${S.x1}) × 攝氏 ÷ 100 ＝ <b>${nf(toX(C0),1)} °X</b>`:'');
+  $('sDeg').innerHTML=`熔點到沸點：攝氏 100 格、華氏 180 格、絕對 100 格`+(S.x?`、X ${S.x2-S.x1} 格`:'')+`<br>所以 1 ℃ 的大小 ＝ 1.8 °F ＝ 1 K`+(S.x?` ＝ ${nf((S.x2-S.x1)/100,2)} °X`:'')+`<br>溫度「差」10 ℃ ＝ 18 °F ＝ 10 K（差值不加 32、也不加 273）`;};
 dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{top,bot,cols,y}=sGeom(W,H);
   const list=sList(),n=Math.max(1,list.length),tw=Math.min(26,W*.045);
   // 先排「換順序」的握把（名稱區與球泡），再排溫度指標；hit 回傳 −1 代表優先
@@ -787,7 +768,7 @@ function goH(o){setBench('heat');HQ.mode=o.mode||'heat';
 function goC2(o){setBench('curve');if(o.m){CU.m=o.m;setCM(o.m);}if(o.P){CU.P=o.P;setCP(o.P);}
   cuReset();if(o.step){const c=cuCum();CU.Q=c[o.step]+ (o.step===1||o.step===3?cuSegs()[o.step][1]*.35:0);}
   CU.run=!!o.play;UI.curve();kick();}
-function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};S.pos={};S.ticks='all';segSet($('sTick'),'all');
+function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};S.pos={};S.ticks='two';segSet($('sTick'),'two');
   Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);
   $('sX').checked=S.on.X;$('sXrow').hidden=!S.on.X;$('sDef').checked=S.def;
   ['C','F','K'].forEach(k=>{$('sOn'+k).checked=S.on[k];});kick();}
@@ -818,7 +799,7 @@ const QG=[
   ['華氏 100 度熱不熱','≈37.8 ℃','攝氏 ＝ (100 − 32) ÷ 1.8 ≈ 37.8 ℃，比體溫還高一點，是很熱的天氣。',()=>goS({T:37.8})],
   ['哪一個溫度攝氏和華氏讀數一樣','−40 度','設 C ＝ 1.8C ＋ 32 → C ＝ −40。−40 ℃ 剛好等於 −40 °F，這是唯一的交點（畫面最低只到 −30，拉到底就看得到趨勢）。',()=>goS({T:-30})],
   ['絕對零度是幾度','0 K','0 K ＝ −273 ℃，是溫度的下限，分子的運動到達最低。絕對溫度不會是負的。',()=>goS({T:-30})],
-  ['自訂溫標：冰點 20°X、沸點 170°X，50 ℃ 是幾度','X 溫標','冰點到沸點被分成 170 − 20 ＝ 150 格，所以 1 ℃ ＝ 1.5 °X：X ＝ 20 ＋ 1.5 × 50 ＝ 95 °X。',()=>goS({T:50,x:true,x1:20,x2:170})],
+  ['自訂溫標：熔點 20°X、沸點 170°X，50 ℃ 是幾度','X 溫標','熔點到沸點被分成 170 − 20 ＝ 150 格，所以 1 ℃ ＝ 1.5 °X：X ＝ 20 ＋ 1.5 × 50 ＝ 95 °X。',()=>goS({T:50,x:true,x1:20,x2:170})],
   ['溫度「差」怎麼換算','差 10 ℃','溫度差不用加 32 也不用加 273：差 10 ℃ ＝ 差 18 °F ＝ 差 10 K。只有「某一個溫度」才要加。',()=>goS({T:10})]]}];
 function buildQ(){$('qbox').innerHTML=QG.map((G0,gi)=>`<div class="qgrp"><h4>${G0.g}</h4><div class="qchips">`+
   G0.q.map((q,i)=>`<button class="qchip" data-g="${gi}" data-i="${i}" aria-pressed="false">${q[0]}<span class="pg">${q[1]}</span></button>`).join('')+'</div></div>').join('');}
@@ -833,88 +814,6 @@ fReset();UI.flask();UI.heat();UI.curve();
 setBench((location.hash||'').replace('#','')||'flask',true);
 kick();
 })();
-
-// ======================================================================
-// 手寫批註：整頁都可以寫，墨水存在文件座標、關頁就消失
-// ======================================================================
-{
-const INK={on:false,col:'#e8590c',w:4.5,er:false,strokes:[],cur:null,pid:null};
-const cv=document.createElement('canvas');cv.id='inkCv';document.body.appendChild(cv);
-const g=cv.getContext('2d');
-const go=document.createElement('button');go.id='inkGo';go.type='button';
-go.textContent='✏️ 在畫面上寫字';go.title='打開後整頁都可以用手指寫字；寫字時動畫不會被拖到。';
-document.body.appendChild(go);
-const bar=document.createElement('div');bar.id='inkBar';document.body.appendChild(bar);
-
-function inkFit(){const d=Math.min(2,window.devicePixelRatio||1),w=innerWidth,h=innerHeight;
-  cv.width=Math.round(w*d);cv.height=Math.round(h*d);g.setTransform(d,0,0,d,0,0);inkDraw();}
-function inkDraw(){const w=innerWidth,h=innerHeight,sx=scrollX,sy=scrollY;
-  g.clearRect(0,0,w,h);g.save();g.translate(-sx,-sy);
-  g.lineCap='round';g.lineJoin='round';
-  const all=INK.cur?INK.strokes.concat([INK.cur]):INK.strokes;
-  all.forEach(st=>{const p=st.pts;if(!p.length)return;
-    g.strokeStyle=st.c;g.lineWidth=st.w;g.beginPath();
-    if(p.length===1){g.arc(p[0][0],p[0][1],st.w/2,0,Math.PI*2);g.fillStyle=st.c;g.fill();return;}
-    g.moveTo(p[0][0],p[0][1]);
-    for(let i=1;i<p.length-1;i++){const mx=(p[i][0]+p[i+1][0])/2,my=(p[i][1]+p[i+1][1])/2;
-      g.quadraticCurveTo(p[i][0],p[i][1],mx,my);}
-    g.lineTo(p[p.length-1][0],p[p.length-1][1]);g.stroke();});
-  g.restore();}
-const dpt=e=>[e.clientX+scrollX,e.clientY+scrollY];
-function eraseAt(x,y){const r=16,before=INK.strokes.length;
-  INK.strokes=INK.strokes.filter(st=>!st.pts.some(p=>Math.hypot(p[0]-x,p[1]-y)<r+st.w/2));
-  if(INK.strokes.length!==before)inkDraw();}
-cv.addEventListener('pointerdown',e=>{
-  if(!INK.on||INK.pid!==null)return;            // 同時只認一根手指 → 手掌放上去不會畫
-  INK.pid=e.pointerId;cv.setPointerCapture(e.pointerId);e.preventDefault();
-  const[x,y]=dpt(e);
-  if(INK.er){eraseAt(x,y);return;}
-  INK.cur={c:INK.col,w:INK.w,pts:[[x,y]]};inkDraw();});
-cv.addEventListener('pointermove',e=>{
-  if(!INK.on||e.pointerId!==INK.pid)return;e.preventDefault();
-  const[x,y]=dpt(e);
-  if(INK.er){eraseAt(x,y);return;}
-  if(!INK.cur)return;const p=INK.cur.pts,l=p[p.length-1];
-  if(Math.hypot(x-l[0],y-l[1])<1.2)return;p.push([x,y]);inkDraw();});
-const inkUp=e=>{if(e.pointerId!==INK.pid)return;INK.pid=null;
-  if(INK.cur){INK.strokes.push(INK.cur);INK.cur=null;inkDraw();}};
-cv.addEventListener('pointerup',inkUp);cv.addEventListener('pointercancel',inkUp);
-
-// 工具列
-const mk=(txt,title,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;
-  if(title)b.title=title;if(cls)b.className=cls;bar.appendChild(b);return b;};
-const COLS=['#e8590c','#1864ab','#2b8a3e','#2b3138'];
-const swa=COLS.map(c=>{const b=mk('','筆的顏色','swatch');b.style.background=c;
-  b.setAttribute('aria-pressed',String(c===INK.col));
-  b.addEventListener('click',()=>{INK.col=c;INK.er=false;syncBar();});return b;});
-bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
-const WS=[[2.5,'細'],[4.5,'中'],[9,'粗']];
-const wbs=WS.map(([w,nm])=>{const b=mk(nm,'筆的粗細');b.setAttribute('aria-pressed',String(w===INK.w));
-  b.addEventListener('click',()=>{INK.w=w;INK.er=false;syncBar();});return b;});
-bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
-const erB=mk('橡皮擦','劃過哪一筆就擦掉哪一筆');
-erB.addEventListener('click',()=>{INK.er=!INK.er;syncBar();});
-const unB=mk('↶ 復原','');
-unB.addEventListener('click',()=>{INK.strokes.pop();inkDraw();});
-const clB=mk('清除','全部清掉（要按兩次）');let clArm=0;
-clB.addEventListener('click',()=>{if(Date.now()-clArm<3000){INK.strokes=[];clArm=0;clB.textContent='清除';inkDraw();}
-  else{clArm=Date.now();clB.textContent='真的清除？';setTimeout(()=>{if(Date.now()-clArm>=3000)clB.textContent='清除';},3100);}});
-bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
-const okB=mk('✓ 完成','回到操作動畫（寫的字會留著）');
-okB.addEventListener('click',()=>setInk(false));
-function syncBar(){swa.forEach((b,i)=>b.setAttribute('aria-pressed',String(!INK.er&&COLS[i]===INK.col)));
-  wbs.forEach((b,i)=>b.setAttribute('aria-pressed',String(!INK.er&&WS[i][0]===INK.w)));
-  erB.setAttribute('aria-pressed',String(INK.er));}
-function setInk(v){INK.on=v;document.documentElement.dataset.ink=v?'1':'';
-  if(!v){INK.pid=null;INK.cur=null;}syncBar();inkDraw();}
-go.addEventListener('click',()=>setInk(true));
-addEventListener('keydown',e=>{if(e.key==='Escape'&&INK.on)setInk(false);});
-addEventListener('resize',inkFit);addEventListener('scroll',inkDraw,{passive:true});
-// 全螢幕時只有全螢幕元素的子孫會被畫出來，所以要把這三個搬進去（site.js 對 stepbar 也是這樣做）
-addEventListener('fullscreenchange',()=>{const fs=document.fullscreenElement||document.body;
-  [cv,go,bar].forEach(el=>fs.appendChild(el));setTimeout(inkFit,60);});
-inkFit();syncBar();
-}
 </script>
 </body>
 </html>

@@ -38,6 +38,27 @@ header .foldbtn{display:none}
 .grpnav a.u[aria-current="page"] .no,.grpnav a.u[aria-current="page"] small{color:inherit;opacity:.75}
 @media (max-width:700px){.grpnav{gap:6px 10px}.grpnav>.tlabel{display:none}.grpnav .units{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px;scrollbar-width:thin}.grpnav a.u{white-space:nowrap;min-height:34px;padding:5px 11px}}
 
+  /* ---- 手寫批註與雷射筆 ---- */
+  #inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom}
+  html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
+  #inkGo{position:fixed;right:10px;bottom:106px;z-index:60;min-height:40px;padding:8px 12px;border-radius:999px;
+    border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 .84rem/1 var(--f-body);
+    box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.62}
+  #inkGo:hover{opacity:1}
+  html[data-ink="1"] #inkGo{display:none}
+  #inkBar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;display:none;gap:5px;
+    align-items:center;padding:7px 9px;border-radius:16px;border:1px solid var(--line);background:var(--panel);
+    box-shadow:0 8px 28px rgba(0,0,0,.2);flex-wrap:wrap;max-width:97vw;justify-content:center}
+  html[data-ink="1"] #inkBar{display:flex}
+  #inkBar button{min-height:44px;min-width:44px;padding:6px 11px;border-radius:11px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
+  #inkBar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+  #inkBar .sw{width:34px;min-width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;border:2px solid var(--line)}
+  #inkBar .sw[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
+  #inkBar .sep{width:1px;height:30px;background:var(--line);margin:0 3px}
+  #inkBar .more{display:none;gap:5px;align-items:center}
+  #inkBar.open .more{display:flex}
+  @media print{#inkGo,#inkBar,#inkCv{display:none!important}}
   .touchbtn{position:fixed;right:10px;bottom:10px;z-index:60;padding:8px 12px;min-height:40px;
     border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
     font-size:.84rem;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.9}
@@ -173,7 +194,7 @@ header .foldbtn{display:none}
       }
       // 全螢幕時只有該元素的子孫會顯示，所以把浮動按鈕搬進去
       const host = fe || document.body;
-      document.querySelectorAll('.stepbar,.touchbtn').forEach(el => host.appendChild(el));
+      document.querySelectorAll('.stepbar,.touchbtn,#inkCv,#inkGo,#inkBar').forEach(el => host.appendChild(el));
       [0, 60, 260, 600].forEach(d => setTimeout(() => dispatchEvent(new Event('resize')), d));
     });
   }
@@ -206,6 +227,162 @@ header .foldbtn{display:none}
     bs[2].addEventListener('click', () => flush(5000 / 60));
   }
 
-  function init() { fold(); nav(); touchMode(); zoomRedraw(); fsBtns(); frameStep(); }
+
+  // ---- 手寫批註：鋼筆（粗細隨速度）、雷射筆、橡皮擦。整頁都能寫，關頁就消失 ----
+  function inkLayer() {
+    if (document.getElementById('inkCv')) return;
+    const COLS = ['#2b3138', '#e03131', '#e8590c', '#1864ab', '#2b8a3e', '#7048e8'];
+    const MORE = ['#f59f00', '#e64980', '#0ca678', '#a9754a', '#868e96', '#ffffff'];
+    const K = { on: false, tool: 'pen', col: COLS[1], w: 4.5, strokes: [], cur: null, pid: null,
+                laser: null, fade: null, tmr: 0 };
+    const cv = document.createElement('canvas'); cv.id = 'inkCv';
+    const g = cv.getContext('2d');
+    const go = document.createElement('button'); go.id = 'inkGo'; go.type = 'button';
+    go.textContent = '✏️ 寫字／雷射筆';
+    go.title = '整頁都可以用手指寫字；寫字時不會動到動畫。再按「完成」回到操作模式。';
+    const bar = document.createElement('div'); bar.id = 'inkBar';
+    document.body.append(cv, go, bar);
+
+    // ---- 幾何：墨水存文件座標，畫布只有視窗大小 ----
+    const fit = () => { const d = Math.min(2, devicePixelRatio || 1);
+      cv.width = Math.round(innerWidth * d); cv.height = Math.round(innerHeight * d);
+      g.setTransform(d, 0, 0, d, 0, 0); draw(); };
+    const pt = e => [e.clientX + scrollX, e.clientY + scrollY, performance.now()];
+
+    // ---- 鋼筆：用書寫速度算粗細（手指沒有筆壓），起筆收筆收尖 ----
+    function widths(st) {
+      const p = st.pts, n = p.length, out = new Array(n); let w = st.w * .75;
+      for (let i = 0; i < n; i++) {
+        let v = 0;
+        if (i > 0) { const dt = Math.max(4, p[i][2] - p[i - 1][2]);
+          v = Math.hypot(p[i][0] - p[i - 1][0], p[i][1] - p[i - 1][1]) / dt; }
+        const u = Math.min(1, Math.max(0, (v - .12) / 1.5));          // px/ms → 0~1
+        const raw = st.w * (1.3 - .92 * u);                            // 慢＝粗、快＝細
+        w += (raw - w) * .32;                                          // 平滑，不然會一節一節
+        out[i] = w;
+      }
+      const tp = Math.min(6, Math.floor(n / 2));                       // 兩端收尖
+      for (let i = 0; i < tp; i++) { const f = .28 + .72 * (i + 1) / tp;
+        out[i] *= f; out[n - 1 - i] *= f; }
+      return out;
+    }
+    function build(st) {                                                // 變寬度筆畫＝填滿的多邊形
+      const p = st.pts, n = p.length, P = new Path2D();
+      if (n === 1) { P.arc(p[0][0], p[0][1], Math.max(.8, st.w * .45), 0, 7); return P; }
+      const w = widths(st), L = [], R = [];
+      for (let i = 0; i < n; i++) {
+        const a = p[Math.max(0, i - 1)], b = p[Math.min(n - 1, i + 1)];
+        let dx = b[0] - a[0], dy = b[1] - a[1]; const d = Math.hypot(dx, dy) || 1;
+        const nx = -dy / d * w[i] / 2, ny = dx / d * w[i] / 2;
+        L.push([p[i][0] + nx, p[i][1] + ny]); R.push([p[i][0] - nx, p[i][1] - ny]);
+      }
+      const side = (A, first) => { if (first) P.moveTo(A[0][0], A[0][1]); else P.lineTo(A[0][0], A[0][1]);
+        for (let i = 1; i < A.length - 1; i++)
+          P.quadraticCurveTo(A[i][0], A[i][1], (A[i][0] + A[i + 1][0]) / 2, (A[i][1] + A[i + 1][1]) / 2);
+        P.lineTo(A[A.length - 1][0], A[A.length - 1][1]); };
+      side(L, true); R.reverse(); side(R, false); P.closePath(); return P;
+    }
+    function draw() {
+      g.clearRect(0, 0, innerWidth, innerHeight);
+      g.save(); g.translate(-scrollX, -scrollY);
+      K.strokes.forEach(st => { g.fillStyle = st.c; g.fill(st.path || (st.path = build(st))); });
+      if (K.cur) { g.fillStyle = K.cur.c; g.fill(build(K.cur)); }
+      const las = K.laser || K.fade;
+      if (las && las.pts.length) {
+        const al = K.fade ? Math.max(0, 1 - (performance.now() - K.fade.t0) / 900) : 1;
+        g.lineCap = 'round'; g.lineJoin = 'round'; g.globalAlpha = al;
+        g.beginPath(); g.moveTo(las.pts[0][0], las.pts[0][1]);
+        las.pts.forEach(q => g.lineTo(q[0], q[1]));
+        g.shadowColor = 'rgba(255,40,30,.95)'; g.shadowBlur = 22;
+        g.strokeStyle = 'rgba(255,45,35,.9)'; g.lineWidth = 9; g.stroke();
+        g.shadowBlur = 10; g.strokeStyle = 'rgba(255,220,215,.95)'; g.lineWidth = 3; g.stroke();
+        g.shadowBlur = 0; g.globalAlpha = 1;
+      }
+      g.restore();
+    }
+    function fadeTick() {
+      if (!K.fade) return;
+      if (performance.now() - K.fade.t0 > 900) { K.fade = null; draw(); return; }
+      draw(); K.tmr = setTimeout(fadeTick, 16);                        // 用計時器，逐幀模式才不會卡住
+    }
+    function erase(x, y) { const n = K.strokes.length;
+      K.strokes = K.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < 16 + st.w / 2));
+      if (K.strokes.length !== n) draw(); }
+
+    cv.addEventListener('pointerdown', e => {
+      if (!K.on || K.pid !== null) return;                             // 同時只認一根手指＝手掌不會畫到
+      K.pid = e.pointerId; cv.setPointerCapture(e.pointerId); e.preventDefault();
+      const q = pt(e);
+      if (K.tool === 'er') { erase(q[0], q[1]); return; }
+      if (K.tool === 'laser') { clearTimeout(K.tmr); K.fade = null; K.laser = { pts: [q] }; draw(); return; }
+      K.cur = { c: K.col, w: K.w, pts: [q] }; draw();
+    });
+    cv.addEventListener('pointermove', e => {
+      if (!K.on || e.pointerId !== K.pid) return; e.preventDefault();
+      const q = pt(e);
+      if (K.tool === 'er') { erase(q[0], q[1]); return; }
+      const t = K.tool === 'laser' ? K.laser : K.cur; if (!t) return;
+      const l = t.pts[t.pts.length - 1];
+      if (Math.hypot(q[0] - l[0], q[1] - l[1]) < 1.1) return;
+      t.pts.push(q); draw();
+    });
+    const up = e => {
+      if (e.pointerId !== K.pid) return; K.pid = null;
+      if (K.laser) { K.fade = { pts: K.laser.pts, t0: performance.now() }; K.laser = null;
+        clearTimeout(K.tmr); K.tmr = setTimeout(fadeTick, 16); return; }
+      if (K.cur) { K.cur.path = build(K.cur); K.strokes.push(K.cur); K.cur = null; draw(); }
+    };
+    cv.addEventListener('pointerup', up); cv.addEventListener('pointercancel', up);
+
+    // ---- 工具列 ----
+    const mk = (txt, title, cls, host) => { const b = document.createElement('button'); b.type = 'button';
+      b.textContent = txt; if (title) b.title = title; if (cls) b.className = cls;
+      (host || bar).appendChild(b); return b; };
+    const sep = host => (host || bar).appendChild(Object.assign(document.createElement('span'), { className: 'sep' }));
+    const penB = mk('✒️ 鋼筆', '寫得慢的地方粗、快的地方細');
+    const lasB = mk('🔦 雷射筆', '手指按著時軌跡會留著，放開後約 1 秒淡出');
+    const erB = mk('橡皮擦', '劃過哪一筆就擦掉哪一筆');
+    sep();
+    const swaps = [], mkSw = (c, host) => { const b = mk('', '筆的顏色', 'sw', host); b.style.background = c;
+      b.addEventListener('click', () => { K.col = c; K.tool = 'pen'; sync(); }); swaps.push([b, c]); return b; };
+    COLS.forEach(c => mkSw(c));
+    const moreWrap = document.createElement('span'); moreWrap.className = 'more'; bar.appendChild(moreWrap);
+    MORE.forEach(c => mkSw(c, moreWrap));
+    const moreB = mk('更多色', '展開其他顏色');
+    moreB.addEventListener('click', () => { bar.classList.toggle('open');
+      moreB.setAttribute('aria-pressed', String(bar.classList.contains('open'))); });
+    sep();
+    const WS = [[2.5, '細'], [4.5, '中'], [9, '粗']];
+    const wbs = WS.map(([w, nm]) => { const b = mk(nm, '筆的粗細');
+      b.addEventListener('click', () => { K.w = w; K.tool = 'pen'; sync(); }); return b; });
+    sep();
+    const unB = mk('↶ 復原', ''); unB.addEventListener('click', () => { K.strokes.pop(); draw(); });
+    let arm = 0; const clB = mk('清除', '全部清掉（要按兩次）');
+    clB.addEventListener('click', () => {
+      if (Date.now() - arm < 3000) { K.strokes = []; arm = 0; clB.textContent = '清除'; draw(); }
+      else { arm = Date.now(); clB.textContent = '真的清除？';
+        setTimeout(() => { if (Date.now() - arm >= 3000) clB.textContent = '清除'; }, 3100); } });
+    mk('✓ 完成', '回到操作動畫（寫的字會留著）').addEventListener('click', () => set(false));
+
+    function sync() {
+      penB.setAttribute('aria-pressed', String(K.tool === 'pen'));
+      lasB.setAttribute('aria-pressed', String(K.tool === 'laser'));
+      erB.setAttribute('aria-pressed', String(K.tool === 'er'));
+      swaps.forEach(([b, c]) => b.setAttribute('aria-pressed', String(K.tool === 'pen' && c === K.col)));
+      wbs.forEach((b, i) => b.setAttribute('aria-pressed', String(K.tool === 'pen' && WS[i][0] === K.w)));
+    }
+    penB.addEventListener('click', () => { K.tool = 'pen'; sync(); });
+    lasB.addEventListener('click', () => { K.tool = 'laser'; sync(); });
+    erB.addEventListener('click', () => { K.tool = 'er'; sync(); });
+    function set(v) { K.on = v; document.documentElement.dataset.ink = v ? '1' : '';
+      if (!v) { K.pid = null; K.cur = null; K.laser = null; K.fade = null; clearTimeout(K.tmr); }
+      sync(); draw(); }
+    go.addEventListener('click', () => set(true));
+    addEventListener('keydown', e => { if (e.key === 'Escape' && K.on) set(false); });
+    addEventListener('resize', fit); addEventListener('scroll', draw, { passive: true });
+    fit(); sync();
+  }
+
+  function init() { fold(); nav(); touchMode(); zoomRedraw(); fsBtns(); frameStep(); inkLayer(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
 })();
