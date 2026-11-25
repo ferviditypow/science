@@ -304,6 +304,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <span class="tlabel">畫面</span><span class="seg" id="osView"><button data-v="zoom" aria-pressed="true">放大看半透膜</button><button data-v="full" aria-pressed="false">很多粒子</button></span>
         <div class="slider"><span class="tlabel">左側濃度</span><input type="range" id="osCL" min="0" max="0.1" step="0.001" value="0"><output id="osCLo"></output></div>
         <div class="slider"><span class="tlabel">溫度</span><input type="range" id="osT" min="0" max="60" step="1" value="27"><output id="osTo"></output></div>
+        <label class="tog"><input type="checkbox" id="osNet" checked> 顯示淨流動方向</label>
       </div>
       <div id="osCCtl" class="toolbar" hidden>
         <span class="seg" id="osObj"><button data-v="rbc" aria-pressed="true">紅血球</button><button data-v="egg" aria-pressed="false">去殼雞蛋</button><button data-v="veg" aria-pressed="false">小黃瓜（醃菜）</button></span>
@@ -362,7 +363,9 @@ function text(g,s,x,y,{col=C.ink,size=13,bold=false,align='left',base='alphabeti
   g.fillStyle=col;g.fillText(s,x,y);}
 function line(g,x1,y1,x2,y2,col,w=2,dash=null){g.strokeStyle=col;g.lineWidth=w;g.setLineDash(dash||[]);g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.setLineDash([]);}
 function head(g,x,y,ang,col,size=10){g.fillStyle=col;g.beginPath();g.moveTo(x,y);g.lineTo(x-size*Math.cos(ang-.42),y-size*Math.sin(ang-.42));g.lineTo(x-size*Math.cos(ang+.42),y-size*Math.sin(ang+.42));g.closePath();g.fill();}
-function arrow(g,x1,y1,x2,y2,col,w=2.2){const L=Math.hypot(x2-x1,y2-y1);if(L<2)return;const a=Math.atan2(y2-y1,x2-x1);line(g,x1,y1,x2-Math.cos(a)*5,y2-Math.sin(a)*5,col,w);head(g,x2,y2,a,col,Math.min(10,L*.6));}
+function arrow(g,x1,y1,x2,y2,col,w=2.2,hs=0){const L=Math.hypot(x2-x1,y2-y1);if(L<2)return;const a=Math.atan2(y2-y1,x2-x1);
+  const h=Math.min(hs||Math.max(10,w*2.1),L*.6);          // 箭頭的頭跟著線寬變大
+  line(g,x1,y1,x2-Math.cos(a)*h*.75,y2-Math.sin(a)*h*.75,col,w);head(g,x2,y2,a,col,h);}
 function dot(g,x,y,r,col){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.fill();}
 const nf=(x,d=1)=>{const r=Math.round(x*Math.pow(10,d))/Math.pow(10,d);return (Object.is(r,-0)?0:r).toFixed(d);};
 function sliderBind(id,fn,fmt){const el=$(id),o=$(id+'o');const up=()=>{o.textContent=fmt(+el.value);};el.addEventListener('input',()=>{fn(+el.value);up();hideStory();kick();});up();return v=>{el.value=v;o.textContent=fmt(v);};}
@@ -972,18 +975,21 @@ scReset();
 // ======================================================================
 // 5 滲透壓
 // ======================================================================
-const OS={mode:'u',view:'zoom',run:false,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0};
+const OS={mode:'u',view:'zoom',run:false,spd:.5,i:1,C:0.02,CL:0,T:27,P:0,dh:0,parts:[],ev:[],t:0,obj:'rbc',ton:'iso',sc:1,burst:0,net:true,hold:null};
 const piOf=()=>OS.i*(OS.C-OS.CL)*0.082*(OS.T+273);
 const piSide=c=>OS.i*c*0.082*(OS.T+273);
 const osNW=()=>OS.view==='zoom'?70:240;
 function osParts(){const L=[];const nW=osNW();
-  const fL=Math.min(.32,OS.CL*OS.i*3),nSL=Math.round(nW*fL);
+  // 溶質的比例是示意用的：照實際莫耳分率畫，0.02 M 只有 4 顆，兩邊差距 6%，比統計雜訊還小，
+  // 淨流的方向就會忽左忽右。放大成根號關係，差距看得出來，而且平衡條件仍然精確（f 用實測 xwR）
+  const fL=Math.min(.45,Math.sqrt(Math.max(0,OS.CL*OS.i))*1.6),nSL=Math.round(nW*fL);
   for(let k=0;k<nW-nSL;k++)L.push({s:-1,x:Math.random(),y:Math.random(),ty:'w'});
   for(let k=0;k<nSL;k++)L.push({s:-1,x:Math.random(),y:Math.random(),ty:'s'});
-  const fs=Math.min(.32,OS.C*OS.i*3);const nS=Math.round(nW*fs),nWR=nW-nS;
+  const fs=Math.min(.45,Math.sqrt(Math.max(0,OS.C*OS.i))*1.6);const nS=Math.round(nW*fs),nWR=nW-nS;
   for(let k=0;k<nWR;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'w'});for(let k=0;k<nS;k++)L.push({s:1,x:Math.random(),y:Math.random(),ty:'s'});
   L.forEach(p=>{const a=Math.random()*TAU;p.vx=Math.cos(a)*.25;p.vy=Math.sin(a)*.25;});OS.parts=L;OS.ev=[];}
 function osReset(){OS.dh=0;OS.t=0;OS.sc=1;OS.burst=0;OS.hold=null;osParts();}
+$('osNet').addEventListener('change',()=>{OS.net=$('osNet').checked;kick();});
 const TUBE_CM=45;        // 管子 45 公分高（真實的滲透計要用更長的細管，這裡已經是畫得下的極限）
 const OST=16;            // 1× 時大約 16 秒走完「看得到的那一段」（到管頂、到平衡、或加壓後退回來）
 function osStep(dt){OS.t+=dt;const pi=piOf();const hyd=OS.dh/1033.6;
@@ -1072,25 +1078,30 @@ DRAW.os=()=>{const cv=$('cvOS'),nar=cv.clientWidth<640,{W,H}=fit(cv,nar?1.62:.50
   text(g,'純水',x0+(cx-x0)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:C.water});
   text(g,OS.C>0?'水溶液':'純水',cx+(x1-cx)/2,by-9,{align:'center',size:TH2<170?11:13,bold:true,col:OS.C>0?C.sol:C.water});
   // 兩個方向的水流（箭頭粗細＝流量）
-  {const a=OS.flux||[1,1],fs=TH2<170?11:13,Lw=Math.min(104,(x1-x0)*.19);
+  {let a=OS.flux||[1,1];const fs=TH2<170?11:13,Lw=Math.min(104,(x1-x0)*.19);
    const y1a=ty+TH2*.22,y2a=ty+TH2*.46,y3a=ty+TH2*.72;
-   // 兩個方向只差一成左右，用「粗細＝彼此相比」把差距放大：一樣多時都畫 11px，不一樣時 5px vs 20px
-   const lo=Math.min(a[0],a[1]),hi=Math.max(a[0],a[1]),sp=hi-lo,same=sp<Math.max(.25,hi*.05);
+   // 「有沒有達到平衡」用物理判斷（π−P−液柱），不要用數粒子的結果：粒子只有一百顆，
+   // 統計雜訊會讓平衡時的兩個數字差一成，淨流箭頭就會指錯邊、和液面的升降矛盾
+   const drv=pi-OS.P-OS.dh/1033.6, same=Math.abs(drv)<pi*.04;
+   if(same){const m=(a[0]+a[1])/2;a=[m,m];}           // 平衡：兩個方向本來就一樣快，取平均
+   const lo=Math.min(a[0],a[1]),hi=Math.max(a[0],a[1]),sp=hi-lo;
    const wOf=v=>same?11:5+15*(v-lo)/sp;
-   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',wOf(a[0]));
+   const hsz=w=>Math.max(18,w*2.3);                       // 箭頭的頭：細箭頭也要看得清楚
+   arrow(g,cx-Lw,y1a,cx+Lw,y1a,'#e0458a',wOf(a[0]),hsz(wOf(a[0])));
    text(g,'H₂O',cx-Lw-8,y1a+5,{align:'right',size:fs,bold:true,col:'#e0458a'});
    text(g,nf(a[0],1)+' 個/秒',cx+Lw+8,y1a+5,{size:fs-1,mono:true,bold:true,col:'#e0458a',bg:C.panel});
-   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,wOf(a[1]));
+   arrow(g,cx+Lw,y2a,cx-Lw,y2a,C.blue,wOf(a[1]),hsz(wOf(a[1])));
    text(g,'H₂O',cx+Lw+8,y2a+5,{size:fs,bold:true,col:C.blue});
    text(g,nf(a[1],1)+' 個/秒',cx-Lw-8,y2a+5,{align:'right',size:fs-1,mono:true,bold:true,col:C.blue,bg:C.panel});
    // 第三支：淨流（真正決定液面升降的量）
-   const net=a[0]-a[1],an=Math.abs(net);
-   if(same||an<.05){text(g,'淨流 ＝ 0：兩邊一樣多，液面不動',cx,y3a+5,{align:'center',size:fs,bold:true,col:C.green,bg:C.panel});}
+   const net=same?0:(drv>=0?Math.abs(a[0]-a[1]):-Math.abs(a[0]-a[1])),an=Math.abs(net);
+   if(OS.net===false){}
+   else if(same||an<.05){text(g,'淨流 ＝ 0：兩邊一樣多，液面不動',cx,y3a+5,{align:'center',size:fs,bold:true,col:C.green,bg:C.panel});}
    else{const dir=net>0?1:-1,Ln=Lw*1.15;
      text(g,TH2<170?'淨流 '+nf(an,1)+'（'+(net>0?'進溶液':'回純水')+'）'
                   :'淨流 '+nf(an,1)+' 個/秒（'+(net>0?'水進溶液，液面上升':'水回純水，液面下降')+'）',
           cx,y3a-11,{align:'center',size:fs,bold:true,col:C.purple,bg:C.panel});
-     arrow(g,cx-dir*Ln,y3a+7,cx+dir*Ln,y3a+7,C.purple,13);}}
+     arrow(g,cx-dir*Ln,y3a+7,cx+dir*Ln,y3a+7,C.purple,13,28);}}
   // 上面兩根管子
   [[nlx,yl,false],[nrx,yr,true]].forEach(([x,y,isSol])=>{
     g.fillStyle=C.panel;g.strokeStyle='#8a97a3';g.lineWidth=3;g.beginPath();g.roundRect(x-nw/2,ty-nh,nw,nh+6,[8,8,0,0]);g.fill();g.stroke();
