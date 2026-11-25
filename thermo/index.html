@@ -151,13 +151,15 @@ html[data-ink="1"] #inkBar{display:flex}
         <label class="tog"><input type="checkbox" id="sOnK" checked> 絕對</label>
         <label class="tog"><input type="checkbox" id="sX"> 自訂 X</label>
         <button class="btn" id="sTidy">↔ 排整齊</button>
+        <span class="tlabel">刻度</span>
+        <span class="seg" id="sTick"><button data-v="all" aria-pressed="true">完整刻度</button><button data-v="two" aria-pressed="false">只標冰點與沸點</button></span>
       </div>
       <div class="toolbar" id="sXrow" hidden>
         <div class="slider"><span class="tlabel">X 溫標的冰點</span><input type="range" id="sX1" min="-40" max="60" step="5" value="20"><output id="sX1o"></output></div>
         <div class="slider"><span class="tlabel">X 溫標的沸點</span><input type="range" id="sX2" min="70" max="300" step="5" value="170"><output id="sX2o"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvScale" aria-label="攝氏、華氏、絕對溫標對照"></canvas></div>
-      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右自由拖曳</b>，要排多近都可以，按「排整齊」會重新平均分佈；也可以只留下要比較的那幾支。</p>
+      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右自由拖曳</b>，要排多近都可以，按「排整齊」會重新平均分佈；也可以只留下要比較的那幾支。切成「只標冰點與沸點」就會把中間的刻度收起來，只留兩個定義點，每一支都會標出自己的數字。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -423,7 +425,6 @@ DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext(
   if(F.gex&&Math.abs(gs-1)>1e-4){const pc=(gs-1)*100;
     text(g,(pc>0?'玻璃脹大 ':'玻璃縮小 ')+nf(Math.abs(pc),2)+'%（畫面放大 '+GEX+' 倍，虛線是原尺寸）',8,38,
          {col:C.glassc,size:11.5,bold:true,bg:C.panel});}
-  text(g,(F.A<.1?'細':F.A>.3?'粗':'中')+'吸管　截面積 '+F.A+' cm²',8,55,{col:C.muted,size:11,bg:C.panel});
   if(F.zoom)text(g,'水位變化已放大 4 倍',W-6,H-6,{col:C.muted,size:11,align:'right'});
   // 拖曳把手與「現在泡在哪裡」
   handle(g,fx,fy-fh*.5,9);
@@ -485,7 +486,7 @@ function dot(g,x,y,col,r=4){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.f
 // 2 三種溫標
 // ======================================================================
 const S={T:25,def:true,x1:20,x2:170,order:['C','F','K','X'],on:{C:true,F:true,K:true,X:false},
-         pos:{},drag:null};   // pos[k]＝0～1 的水平位置，沒設定就平均分佈
+         pos:{},ticks:'all',drag:null};   // pos[k]＝0～1 的水平位置，沒設定就平均分佈
 Object.defineProperty(S,'x',{get:()=>S.on.X,set:v=>{S.on.X=!!v;}});   // 舊程式用 S.x，接到 on.X
 const sVis=()=>S.order.filter(k=>S.on[k]);
 
@@ -517,8 +518,8 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
   const{top,bot,cols,y}=sGeom(W,H),tw=Math.min(26,W*.045);
   const defs=[[0,'冰水混合物'],[100,'水沸騰（1 atm）']];
   if(S.def)defs.forEach(([c,nm])=>{line(g,8,y(c),W-8,y(c),C.blue,1.5,[6,4]);
-    text(g,nm+' '+c+' ℃',10,y(c)-5,{col:C.blue,size:12,bold:true});});
-  const list=sList();
+    text(g,nm,10,y(c)-6,{col:C.blue,size:12.5,bold:true});});   // 數值由每一支溫度計自己標
+  const list=sList(),pitch=W/Math.max(1,list.length),tfs=pitch<170?12:17;   // 欄位窄就把字縮小
   list.forEach((col,i)=>{const cx=cols[i];
     // 管子
     g.fillStyle=C.panel;g.strokeStyle=C.glassc;g.lineWidth=2;
@@ -538,12 +539,21 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
     for(let v=first;v<=Math.max(vlo,vhi)+1e-6;v+=st){
       const c=col.k==='C'?v:col.k==='F'?(v-32)/1.8:col.k==='K'?v-273:(v-S.x1)*100/(S.x2-S.x1);
       const yy=y(c);if(yy<top-1||yy>bot+1)continue;
+      if(S.ticks==='two'){line(g,cx+tw/2,yy,cx+tw/2+4,yy,C.line,1);line(g,cx-tw/2-4,yy,cx-tw/2,yy,C.line,1);continue;}
       if(numL){line(g,cx-tw/2-7,yy,cx-tw/2,yy,C.muted,1.3);
-        text(g,nf(v,Math.abs(st)<5?1:0),cx-tw/2-10,yy+5,{col:C.ink,size:14,mono:true,align:'right'});
+        text(g,nf(v,Math.abs(st)<5?1:0),cx-tw/2-10,yy+6,{col:C.ink,size:tfs,mono:true,align:'right'});
         line(g,cx+tw/2,yy,cx+tw/2+5,yy,C.line,1.1);}
       else{line(g,cx+tw/2,yy,cx+tw/2+7,yy,C.muted,1.3);
-        text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+5,{col:C.ink,size:14,mono:true});
+        text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+6,{col:C.ink,size:tfs,mono:true});
         line(g,cx-tw/2-5,yy,cx-tw/2,yy,C.line,1.1);}}
+    // 每一支都標出自己的冰點與沸點數字（不然只看到攝氏的 0／100，會以為華氏、克氏也是 0／100）
+    if(S.def)[[0,'冰點'],[100,'沸點']].forEach(([c,nm])=>{
+      const yy=y(c),vv=col.f(c);
+      const onNum=S.ticks==='two',right=onNum?!numL:numL;     // 完整刻度時放在數字的另一邊
+      const bx=right?cx+tw/2+10:cx-tw/2-10;
+      line(g,cx-tw/2-6,yy,cx+tw/2+6,yy,C.blue,2);
+      text(g,nf(vv,Math.abs(vv)<10&&vv%1?1:0)+' '+col.u,bx,yy+(nm==='冰點'?18:-8),
+           {col:C.blue,size:onNum?tfs:Math.min(14,tfs),bold:true,mono:true,align:right?'left':'right',bg:C.panel});});
     if(list.length>1){const gw=Math.min(86,W/list.length-14);
       if(S.drag===col.k){g.fillStyle=C.accent;g.globalAlpha=.14;g.fillRect(cx-gw/2,top-34,gw,bot-top+54);g.globalAlpha=1;}
       text(g,'⣿',cx-gw/2+6,top-19-stag*16,{col:S.drag===col.k?C.accent:C.line,size:13,bold:true});}
@@ -578,6 +588,7 @@ dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{
   return hs;},()=>{hideStory();kick();});
 // 四支溫度計各自可以開關（至少要留一支）
 $('sTidy').addEventListener('click',()=>{S.pos={};hideStory();kick();});
+segOn($('sTick'),v=>{S.ticks=v;segSet($('sTick'),v);hideStory();kick();});
 ['C','F','K'].forEach(k=>{const el=$('sOn'+k);el.addEventListener('change',()=>{
   if(!el.checked&&sVis().length<=1){el.checked=true;return;}
   S.on[k]=el.checked;hideStory();kick();});});
@@ -776,7 +787,7 @@ function goH(o){setBench('heat');HQ.mode=o.mode||'heat';
 function goC2(o){setBench('curve');if(o.m){CU.m=o.m;setCM(o.m);}if(o.P){CU.P=o.P;setCP(o.P);}
   cuReset();if(o.step){const c=cuCum();CU.Q=c[o.step]+ (o.step===1||o.step===3?cuSegs()[o.step][1]*.35:0);}
   CU.run=!!o.play;UI.curve();kick();}
-function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};S.pos={};
+function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};S.pos={};S.ticks='all';segSet($('sTick'),'all');
   Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);
   $('sX').checked=S.on.X;$('sXrow').hidden=!S.on.X;$('sDef').checked=S.def;
   ['C','F','K'].forEach(k=>{$('sOn'+k).checked=S.on[k];});kick();}
