@@ -63,6 +63,7 @@
       <button data-v="inst" aria-pressed="false"><span class="n">4</span>樂器與音調</button>
       <button data-v="echo" aria-pressed="false"><span class="n">5</span>回聲與測距</button>
       <button data-v="range" aria-pressed="false"><span class="n">6</span>可聽範圍與分貝</button>
+      <button data-v="age" aria-pressed="false"><span class="n">7</span>耳朵年齡測驗</button>
     </span>
   </nav>
 
@@ -359,6 +360,44 @@
     </div>
   </section>
 
+  <section class="bench" id="b-age" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="agPlay">🔊 發聲</button>
+        <div class="slider" style="min-width:170px"><span class="tlabel">音量</span><input type="range" id="agV" min="0" max="100" step="1" value="25"><output id="agVo"></output></div>
+        <button class="btn" id="agCal">🔧 先用 1 kHz 調音量</button>
+        <button class="btn" id="agRst">⟲ 重來</button>
+      </div>
+      <div class="toolbar">
+        <div class="slider" style="flex:1 1 440px"><span class="tlabel">頻率</span><input type="range" id="agF" min="0" max="1000" step="1" value="889"><output id="agFo"></output></div>
+        <button class="btn" id="agM" aria-label="降低頻率">−</button>
+        <button class="btn" id="agP" aria-label="提高頻率">＋</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">快速跳到</span><span class="chips" id="agQuick"></span>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="agMark">🙉 我聽不到了 → 記下上限</button>
+        <label class="tog"><input type="checkbox" id="agBlind"> 防亂按：隨機兩段，選有聲音的那一段</label>
+        <span id="agABw" hidden><button class="btn" id="agAB1">第 1 段</button><button class="btn" id="agAB2">第 2 段</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvAg" aria-label="耳朵年齡測驗"></canvas></div>
+      <p class="hint">橘色游標可以直接在圖上拖。<b>喇叭比耳朵更容易成為瓶頸</b>：一般電視、筆電、手機喇叭在 15 kHz 以上會明顯變小聲，17 kHz 以上常常根本放不出來，測到的上限會偏低——要準一點請用耳機。音量不要開太大。</p>
+    </div>
+    <div class="verdict" id="agSay">先按「🔧 先用 1 kHz 調音量」把音量調到舒服，之後就不要再動音量，再開始往上拖。</div>
+    <div class="grid2">
+      <section class="panel box"><p class="big" id="agBig"></p><ul class="checks" id="agC"></ul></section>
+      <section class="panel box"><h3>為什麼年紀越大越聽不到高頻</h3>
+        <ul>
+          <li>耳蝸像一條捲起來的管子，<b>入口附近負責高頻、深處負責低頻</b>。聲音一進來就先經過高頻區，所以高頻的毛細胞最先被磨損。</li>
+          <li>毛細胞<b>死掉不會再生</b>，損失是累積的——年齡、噪音（耳機開太大聲、演唱會、工地）都會讓上限往下掉。這叫老年性聽損。</li>
+          <li>所以聽力退化幾乎都是<b>從最高頻開始</b>，講話的聲音（約 250～4000 Hz）通常最後才受影響；等到覺得「聽不清楚別人說話」時，高頻往往已經掉很多了。</li>
+          <li>17.4 kHz 左右的「蚊子音」常被做成學生的手機鈴聲，因為多數成年老師聽不到；也有商家用它來驅趕在店門口逗留的青少年。</li>
+        </ul>
+      </section>
+    </div>
+  </section>
+
   <section class="panel" id="qpanel">
     <p class="ptitle">題目情境 <small>講義頁碼為翰林《超級翰將講義 自然(3)》學生版；考古題標示學校、學年-學期-次別與題號</small></p>
     <div class="cbox" id="qbox"></div>
@@ -399,7 +438,7 @@ const nmCol=nm=>rgbStr(nmRGBa(nm));
 const f1=x=>(Math.round(x*10)/10).toFixed(1),f2=x=>(Math.round(x*100)/100).toFixed(2);
 const checks=(el,L)=>{el.innerHTML=L.map(([c,t])=>`<li class="${c}"><span>${t}</span></li>`).join('');};
 // ================= 實驗台切換與迴圈 =================
-let bench='make';const BENCHES=['make','speed','scope','inst','echo','range'];const MODES=['wall','cliff','move','depth','map','law'];
+let bench='make';const BENCHES=['make','speed','scope','inst','echo','range','age'];const MODES=['wall','cliff','move','depth','map','law'];
 const SIZE={},DRAW={},TICK={},UI={},STOP=[];
 function setBench(b,noHash){if(MODES.includes(b)){E.mode=b;b='echo';}if(!BENCHES.includes(b))b='make';if(b!==bench)STOP.forEach(f=>f());bench=b;segSet($('benchSeg'),b);
   BENCHES.forEach(k=>$('b-'+k).hidden=k!==b);if(!noHash)history.replaceState(null,'','#'+b);UI[b]&&UI[b]();SIZE[b]();kick();}
@@ -1456,6 +1495,181 @@ function gMk(mode,p={}){MK.mode=mode;Object.assign(MK,p);if(p.hitT===undefined&&
 function gSp(mode,p={}){SP.mode=mode;Object.assign(SP,p);SP.t=0;SP.run=mode!=='cross';UI.speed();SIZE.speed();kick();}
 function gSc(n,trs){SC.n=n;trs.forEach((t,i)=>SC.tr[i]=Object.assign({src:'fork',f:400,a:2},t));SC.sel=0;UI.scope();SIZE.scope();kick();}
 function gIn(mode,fn){IN.mode=mode;fn&&fn();IN.pl={};UI.inst();SIZE.inst();kick();}
+
+// ================= 7 耳朵年齡測驗 =================
+// 滑桿 0~1000 ←→ 20 Hz ~ 20000 Hz（等比，三個十倍頻程）
+const agHz=v=>20*Math.pow(1000,v/1000),agVal=f=>Math.log(f/20)/Math.log(1000)*1000;
+const agT=f=>f>=1000?(+(f/1000).toFixed(f>=10000?1:2))+' kHz':Math.round(f)+' Hz';
+// 聽得到的最高頻率 → 大致的年齡（統計趨勢，不是聽力檢查）
+// 年齡階梯：聽得到的最高頻率落在哪一段（統計趨勢，不是聽力檢查）
+const AGES=[[18000,20000,'20 歲以下'],[17000,18000,'20 歲出頭'],[16000,17000,'25～29 歲'],
+            [15000,16000,'30 多歲'],[14000,15000,'40 多歲'],[12000,14000,'50 多歲'],
+            [10000,12000,'60 歲以上'],[8000,10000,'幾乎人人聽得到']];
+const AGLO=8000,AGHI=20000;          // 放大區的範圍
+const agAge=f=>{for(const [a,b,t] of AGES)if(f>=a-1)return t;return '低於 8 kHz（多半是喇叭或音量的問題）';};
+const AG={fv:agVal(8000),vol:25,on:false,lim:null,blind:false,
+          seq:null,ans:0,streak:0,tries:0,msg:'',t:0,pulse:0};
+let agSrc=null,agTmr=[];
+const agFreq=()=>agHz(AG.fv);
+const agAmp=()=>Math.pow(AG.vol/100,2)*.45;
+function agKillTimers(){agTmr.forEach(clearTimeout);agTmr=[];}
+function agSnd(on,f){                                  // 真正控制發聲（淡入淡出 30ms，避免「喀」聲）
+  if(on){if(!agSrc)agSrc=contSrc(f||agFreq(),'fork');agSrc.freq(f||agFreq());agSrc.set(agAmp());}
+  else if(agSrc)agSrc.set(0);}
+function agStopAll(){agKillTimers();AG.on=false;AG.seq=null;agSnd(false);$('agABw').hidden=true;agUI();kick();}
+STOP.push(()=>{agKillTimers();AG.on=false;AG.seq=null;if(agSrc){agSrc.stop();agSrc=null;}});
+
+// 防亂按：兩段各 0.9 秒，只有其中一段真的有聲音，連對 3 次才算聽得到
+function agRun2AFC(){
+  agKillTimers();AG.ans=Math.random()<.5?1:2;AG.seq=1;AG.on=false;
+  $('agABw').hidden=false;agUI();kick();
+  const f=agFreq(),play=(k)=>{AG.seq=k;agSnd(k===AG.ans,f);kick();};
+  play(1);
+  agTmr.push(setTimeout(()=>{agSnd(false);AG.seq=1.5;kick();},900));
+  agTmr.push(setTimeout(()=>play(2),1300));
+  agTmr.push(setTimeout(()=>{agSnd(false);AG.seq='ask';kick();},2200));
+}
+function agAnswer(k){
+  if(AG.seq!=='ask')return;
+  AG.tries++;
+  if(k===AG.ans){AG.streak++;AG.msg=AG.streak>=3?'連續答對 3 次 → 你真的聽得到 '+fmtHz(agFreq())+'，可以再往上拖。':'答對了（'+AG.streak+'/3），再來一次。';}
+  else{AG.streak=0;AG.msg='答錯了，表示這個頻率你其實已經聽不到了（或喇叭放不出來）。連續答對 3 次才算數。';}
+  AG.seq=null;$('agABw').hidden=true;agUI();
+  if(AG.streak<3)agTmr.push(setTimeout(agRun2AFC,700));else kick();
+}
+
+function agUI(){
+  const f=agFreq();
+  $('agFo').textContent=agT(f);
+  $('agVo').textContent=AG.vol+' %';
+  $('agPlay').textContent=AG.on?'❚❚ 停止':'🔊 發聲';
+  $('agPlay').classList.toggle('primary',!AG.on);
+  $('agMark').disabled=AG.blind&&AG.streak<1;
+  const hi=AG.lim;
+  $('agBig').innerHTML=hi?('你聽得到的最高頻率約 <b>'+agT(hi)+'</b><br><span style="font-size:.86em">推估耳朵年齡：<b>'+agAge(hi)+'</b></span>')
+                         :'往上拖到聽不見為止，再按「我聽不到了」';
+  const C1=[];
+  if(hi){
+    C1.push(['ok','這是「同年齡層的平均趨勢」，不是聽力檢查。每個人差異很大。']);
+    C1.push([hi>=15000?'ok':'warn','喇叭能不能放出 '+agT(hi)+' 很關鍵。用電視或筆電喇叭時，結果常常被喇叭限制住。']);
+    C1.push(['ok','真正要擔心的是講話的頻段（250～4000 Hz）聽不清楚，那才需要找耳鼻喉科。']);
+  }else{
+    C1.push(['ok','先用 1 kHz 把音量調到舒服，之後不要再動音量。']);
+    C1.push(['ok','從 8 kHz 開始慢慢往上拖，拖到完全聽不見再按按鈕。']);
+    C1.push(['ok','安靜一點比較準；冷氣、電扇的噪音會蓋掉很小的聲音。']);
+  }
+  $('agC').innerHTML=C1.map(([k,t])=>'<li class="'+k+'">'+t+'</li>').join('');
+  let say;
+  if(AG.msg)say=AG.msg;
+  else if(AG.seq==='ask')say='剛才兩段裡只有一段有聲音，選一個。';
+  else if(AG.seq)say='仔細聽……';
+  else if(AG.on)say='現在正在放 <b>'+agT(f)+'</b>。聽得到就繼續往上拖；完全聽不見了就按「我聽不到了」。';
+  else say='先按「🔧 先用 1 kHz 調音量」把音量調到舒服，之後就不要再動音量，再開始往上拖。';
+  $('agSay').innerHTML=say;
+}
+function agSet(f,{play}={}){
+  AG.fv=clamp(agVal(f),0,1000);$('agF').value=Math.round(AG.fv);
+  AG.msg='';AG.streak=0;agKillTimers();AG.seq=null;$('agABw').hidden=true;
+  if(play){AG.on=true;agSnd(true);}else if(AG.on)agSnd(true);
+  agUI();kick();
+}
+$('agF').addEventListener('input',()=>{AG.fv=+$('agF').value;AG.msg='';AG.streak=0;
+  agKillTimers();AG.seq=null;$('agABw').hidden=true;if(AG.on)agSnd(true);agUI();kick();});
+$('agV').addEventListener('input',()=>{AG.vol=+$('agV').value;if(AG.on||AG.seq)agSnd(true);agUI();kick();});
+$('agPlay').addEventListener('click',()=>{hideStory();
+  if(AG.blind){if(AG.seq){agStopAll();}else agRun2AFC();return;}
+  AG.on=!AG.on;agSnd(AG.on);agUI();kick();});
+$('agCal').addEventListener('click',()=>{hideStory();agSet(1000,{play:true});});
+$('agM').addEventListener('click',()=>agSet(agFreq()/1.06));
+$('agP').addEventListener('click',()=>agSet(agFreq()*1.06));
+$('agBlind').addEventListener('change',()=>{AG.blind=$('agBlind').checked;agStopAll();});
+$('agAB1').addEventListener('click',()=>agAnswer(1));
+$('agAB2').addEventListener('click',()=>agAnswer(2));
+$('agMark').addEventListener('click',()=>{hideStory();AG.lim=agFreq();AG.msg='';agStopAll();});
+$('agRst').addEventListener('click',()=>{AG.lim=null;AG.msg='';AG.streak=0;agSet(8000);agStopAll();});
+{const q=$('agQuick');[1000,8000,10000,12000,14000,15000,16000,17000,18000,19000,20000].forEach(f=>{
+  const b=document.createElement('button');b.className='chip';b.textContent=agT(f);
+  b.addEventListener('click',()=>{hideStory();agSet(f,{play:!AG.blind});});q.appendChild(b);});}
+
+let WAG=0,HAG=0;
+SIZE.age=()=>{({W:WAG,H:HAG}=fit($('cvAg'),$('cvAg').clientWidth<560?1.15:.40,340,560));};
+UI.age=()=>{$('agF').value=Math.round(AG.fv);$('agV').value=AG.vol;agUI();};
+TICK.age=dt=>{AG.t+=dt;return AG.on||!!AG.seq;};
+DRAW.age=()=>{
+  const cv=$('cvAg'),g=cv.getContext('2d'),W=WAG,H=HAG,f=agFreq();
+  g.clearRect(0,0,W,H);
+  const nar=W<560,L=nar?26:50,R=W-(nar?10:18);
+  // ── 上半：放大 8～20 kHz，年齡階梯（主要操作區）──
+  const zt=26,zb=Math.round(H*.34);
+  const ZX=hz=>L+(R-L)*(Math.log(clamp(hz,AGLO,AGHI)/AGLO)/Math.log(AGHI/AGLO));
+  text(g,nar?'放大：8 ～ 20 kHz':'放大：8 ～ 20 kHz　聽得到的最高頻率 → 大致年齡',L,zt-10,{size:nar?11.5:12.5,bold:true,col:C.ink});
+  const COL=['#2f9e44','#74b816','#f08c00','#e8590c','#d9480f','#c2410c','#b06a2c','#9aa6b0'];
+  AGES.forEach(([a,b,t],i)=>{const x0=ZX(a),x1=ZX(b);
+    g.fillStyle=COL[i];g.globalAlpha=.16;g.fillRect(x0,zt,x1-x0,zb-zt);g.globalAlpha=1;
+    line(g,x0,zt,x0,zb,C.panel,1.5);
+    if(nar){if(i%2===0||x1-x0>40)text(g,String(Math.round(a/1000)),x0+2,zb-6,{size:9.5,col:C.muted,mono:true});}
+    else if(x1-x0>34){text(g,t,(x0+x1)/2,zt+16,{align:'center',size:11.5,bold:true,col:C.ink});
+      text(g,agT(a)+'～'+agT(b),(x0+x1)/2,zb-8,{align:'center',size:10,col:C.muted});}});
+  if(nar)text(g,agAge(f),L+2,zt+15,{size:13,bold:true,col:C.ink,bg:C.panel});
+  g.strokeStyle=C.line;g.lineWidth=1.2;g.strokeRect(L,zt,R-L,zb-zt);
+  // 已記錄的上限
+  if(AG.lim!=null&&AG.lim>=AGLO){const x=ZX(AG.lim);
+    line(g,x,zt-6,x,zb+6,C.red,2.5,[6,4]);
+    text(g,'你的上限 '+agT(AG.lim),nar?R:x,nar?zb+16:zt-16,{align:nar||x>R-110?'right':x<L+110?'left':'center',size:12.5,bold:true,col:C.red,bg:C.panel});}
+  // 游標（在放大區內才畫手把）
+  if(f>=AGLO){const x=ZX(f),sounding=AG.on||(AG.seq&&AG.seq===AG.ans);
+    if(sounding){AG.pulse=(AG.t*2)%1;g.fillStyle=C.accent;g.globalAlpha=.20*(1-AG.pulse);
+      g.beginPath();g.arc(x,(zt+zb)/2,16+30*AG.pulse,0,TAU);g.fill();g.globalAlpha=1;}
+    line(g,x,zt-6,x,zb+6,C.accent,3);handle(g,x,(zt+zb)/2,12);
+    text(g,agT(f),x,(zt+zb)/2+36,{align:x>R-80?'right':x<L+80?'left':'center',size:19,bold:true,col:C.accent,bg:C.panel});
+  }else{
+    text(g,'目前 '+agT(f)+'，在放大區的左邊（8 kHz 以下）',L+6,(zt+zb)/2+5,{size:13,bold:true,col:C.accent,bg:C.panel});}
+  if(AG.seq&&AG.seq!=='ask')text(g,'第 '+Math.ceil(AG.seq)+' 段',R-6,zt+16,{align:'right',size:14,bold:true,col:C.ink,bg:C.panel});
+  // ── 中段：完整 20 Hz ～ 20 kHz（人的可聽範圍，看自己在哪）──
+  const ft=zb+42,fb=ft+22;
+  const FX=hz=>L+(R-L)*Math.log(clamp(hz,20,20000)/20)/Math.log(1000);
+  line(g,FX(AGLO),ft,L,zb+2,C.accent,1,[4,3]);line(g,FX(AGHI),ft,R,zb+2,C.accent,1,[4,3]);
+  text(g,nar?'整個可聽範圍':'人的可聽範圍 20 Hz ～ 20 kHz（上面那張圖＝右邊這一小段放大）',L,ft-7,{align:'left',size:11.5,bold:true,col:C.muted});
+  g.fillStyle=C.accent;g.globalAlpha=.06;g.fillRect(L,ft,R-L,fb-ft);g.globalAlpha=1;
+  g.strokeStyle=C.line;g.lineWidth=1.2;g.strokeRect(L,ft,R-L,fb-ft);
+  (nar?[20,1000,20000]:[20,100,1000,10000,20000]).forEach(hz=>{const x=FX(hz);line(g,x,ft,x,fb,C.grid,1);
+    text(g,fmtHz(hz),x,fb+13,{align:hz===20?'left':hz===20000?'right':'center',size:10,col:C.muted});});
+  // 放大區對應到完整軸的哪一段
+  g.fillStyle=C.accent;g.globalAlpha=.22;g.fillRect(FX(AGLO),ft,FX(AGHI)-FX(AGLO),fb-ft);g.globalAlpha=1;
+  {const x=FX(f);line(g,x,ft-4,x,fb+4,C.accent,2.5);}
+  // ── 下半：動物聽得到的範圍（軸拉到 200 kHz）──
+  const t2=fb+36,b2=H-(nar?18:20);
+  const X2=hz=>L+(R-L)*(Math.log10(hz)-1)/(Math.log10(200000)-1);
+  text(g,nar?'動物聽得到的範圍（軸到 200 kHz）':'動物聽得到的範圍（這條軸一路拉到 200 kHz；紅虛線右邊就是超聲波）',L,t2-7,{size:11.5,bold:true,col:C.muted});
+  [10,100,1000,10000,100000].forEach(hz=>{const x=X2(hz);line(g,x,t2,x,b2,C.grid,1);
+    text(g,fmtHz(hz),x,b2+13,{align:'center',size:10,col:C.muted});});
+  line(g,X2(20000),t2,X2(20000),b2,C.red,1.4,[4,3]);
+  const rows=['human','dog','cat','bat','dolphin','elephant'].map(k=>ANI.find(a=>a.k===k)).filter(Boolean);
+  const rh=(b2-t2-4)/rows.length;
+  rows.forEach((a,i)=>{const y=t2+2+i*rh,hm=a.k==='human',x0=X2(a.a);
+    g.fillStyle=a.c;g.globalAlpha=hm?1:.7;g.fillRect(x0,y,Math.max(3,X2(a.b)-x0),Math.max(5,rh-4));g.globalAlpha=1;
+    if(nar)text(g,a.n,x0+4,y+rh-7,{size:10,bold:true,col:'#fff'});
+    else text(g,a.n,x0-5,y+rh-6,{align:'right',size:10.5,bold:hm,col:hm?C.ink:C.muted});});
+  {const x=X2(f);line(g,x,t2,x,b2,C.accent,2);}
+};
+
+// 直接在圖上拖游標
+{const cv=$('cvAg');let dg=0;
+ const px=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top];};
+ const put=hz=>{AG.fv=clamp(agVal(hz),0,1000);$('agF').value=Math.round(AG.fv);
+   AG.msg='';AG.streak=0;agKillTimers();AG.seq=null;$('agABw').hidden=true;
+   if(AG.on)agSnd(true);agUI();kick();};
+ const setFromX=(x,zone)=>{const nar=WAG<560,L=nar?26:50,R=WAG-(nar?10:18),u=clamp((x-L)/(R-L),0,1);
+   put(zone===1?AGLO*Math.pow(AGHI/AGLO,u):20*Math.pow(1000,u));};
+ cv.addEventListener('pointerdown',e=>{const [x,y]=px(e);
+   const zb=Math.round(HAG*.34),ft=zb+42,fb=ft+22;
+   const zone=y<=zb+8?1:(y>=ft-8&&y<=fb+8?2:0);          // 1＝放大區　2＝完整可聽範圍
+   if(!zone)return;dg=zone;cv.setPointerCapture(e.pointerId);hideStory();setFromX(x,zone);e.preventDefault();});
+ cv.addEventListener('pointermove',e=>{if(!dg)return;setFromX(px(e)[0],dg);e.preventDefault();});
+ const end=e=>{if(!dg)return;dg=0;try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
+ cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);}
+function gAg(f,p={}){AG.lim=p.lim||null;AG.blind=false;$('agBlind').checked=false;agSet(f);agStopAll();}
+
 function gRg(mode,p={}){RG.mode=mode;if(p.on){RG.on={};p.on.forEach(k=>RG.on[k]=1);}if(p.f)RG.fv=vOf(p.f);['L','af','al','d1','d2'].forEach(k=>{if(p[k]!==undefined)RG[k]=p[k];});UI.range();SIZE.range();kick();}
 const Q32={g:'翰林講義 3-2 聲音的產生、傳播與聲速',items:[
   {n:'隨堂1　用力擺動手臂卻沒有聲音',pg:'p.88',b:'range',set:()=>gRg('bars',{on:['human'],f:5}),t:'p.88 隨堂1　答案 (C) 振動頻率太小',
@@ -1553,6 +1767,16 @@ const QT={g:'上課講義〈樂音三要素〉〈聲音的產生與傳播〉',it
   {n:'煉油廠爆炸：強光、地震、爆炸聲',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'plant',giv:'d',dd:3400}),t:'答案 (D) 強光 → 地震 → 爆炸聲',p:'光 3×10⁸ m/s ＞ 地面 2000 m/s ＞ 空氣 340 m/s。'},
   {n:'例3　地面振動 8 秒後聽到爆炸聲',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'ground',giv:'t',dt:8}),t:'答案：約 3111 m',p:'D ÷ 350 − D ÷ 3500 ＝ 8 → D × 9 ÷ 3500 ＝ 8 → D ≈ 3111 m。'},
   {n:'軍艦：海水 1500、空氣 300，相隔 3 秒',pg:'聲音反射',b:'speed',set:()=>gSp('delay',{pair:'navy',giv:'t',dt:3}),t:'答案：1125 m',p:'D ÷ 300 − D ÷ 1500 ＝ 3 → D × 4 ÷ 1500 ＝ 3 → D ＝ 1125 m。'}]};
+const QAG=[
+  {n:'為什麼學生聽得到、老師聽不到的鈴聲',pg:'常見題型',b:'age',set:()=>gAg(17400),t:'「蚊子音」約 17.4 kHz',
+   p:'老年性聽損從最高頻開始，多數成年人聽不到 17 kHz 以上。把游標拖到 17.4 kHz 讓全班試試看。'},
+  {n:'20 Hz 以下與 20000 Hz 以上各叫什麼',pg:'常見題型',b:'age',set:()=>gAg(20000),t:'次聲波（＜20 Hz）、超聲波（＞20000 Hz）',
+   p:'兩者人耳都聽不到。大象用次聲波溝通，蝙蝠、海豚用超聲波定位，醫學超音波也在這個範圍。'},
+  {n:'狗笛為什麼人聽不到、狗聽得到',pg:'常見題型',b:'age',set:()=>gAg(20000),t:'狗的上限約 50 kHz，人只有 20 kHz',
+   p:'狗笛的頻率約 23～54 kHz，落在人的可聽範圍之外、狗的範圍之內。看下面那條動物的軸就很清楚。'},
+  {n:'聽力退化為什麼先從高頻開始',pg:'常見題型',b:'age',set:()=>gAg(16000),t:'耳蝸入口負責高頻，最先受損',
+   p:'耳蝸像捲起來的管子，入口附近偵測高頻、深處偵測低頻。聲音一進來就先經過高頻區，加上毛細胞死掉不會再生，所以高頻先掉。'}
+];
 const QX=[
   {n:'人耳可聽頻率範圍',pg:'向上 113-1-2 #1',b:'range',set:()=>gRg('bars',{on:['human'],f:20000}),t:'向上 113-1-2 #1　20～20000 Hz',p:'低於 20 Hz 是次聲波，高於 20000 Hz 是超聲波，人耳都聽不到。'},
   {n:'聲紋辨識利用什麼',pg:'向上 113-1-2 #2、大業 113-1-2 #5',b:'scope',set:()=>gSc(2,[{src:'voice',f:220,a:2},{src:'clar',f:220,a:2}]),t:'答案：音色（波形）',p:'每個人的聲帶、口腔不同，聲音波形不同。'},
@@ -1584,7 +1808,8 @@ const QX=[
 // 合併成題目列表
 QE[0].items.forEach(it=>it.b='echo');QE[1].items.forEach(it=>it.b='echo');QE[2].items.forEach(it=>it.b='echo');
 const QS=[Q32,Q33,{g:'翰林講義 3-4 聲波的傳播與應用（回聲、超聲波）',items:QE[0].items.concat(QRG)},
-  {g:QT.g,items:QT.items},{g:'上課講義〈聲音反射－回聲〉',items:QE[1].items},{g:'考古題（大業、向上 八年級）',items:QE[2].items.concat(QX)}];
+  {g:QT.g,items:QT.items},{g:'上課講義〈聲音反射－回聲〉',items:QE[1].items},{g:'考古題（大業、向上 八年級）',items:QE[2].items.concat(QX)},
+  {g:'耳朵年齡與可聽範圍（常見題型）',items:QAG}];
 {const box=$('qbox');QS.forEach(gr=>{const d=document.createElement('div');d.className='qgrp';d.innerHTML=`<h4>${gr.g}</h4>`;const c=document.createElement('div');c.className='qchips';
   gr.items.forEach(it=>{const b=document.createElement('button');b.className='qchip';b.innerHTML=`${it.n}<span class="pg">${it.pg}</span>`;
     b.addEventListener('click',()=>{setBench(it.b||'echo');it.set();showStory(it.t,it.p);$('story').scrollIntoView({behavior:'smooth',block:'start'});});c.appendChild(b);});
