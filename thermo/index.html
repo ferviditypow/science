@@ -91,6 +91,7 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <span class="tlabel">吸管</span>
         <span class="seg" id="fTube"><button data-v="0.071" aria-pressed="false">細</button><button data-v="0.196" aria-pressed="true">中</button><button data-v="0.5" aria-pressed="false">粗</button></span>
         <label class="tog"><input type="checkbox" id="fZoom"> 水位變化放大 4 倍</label>
+        <label class="tog"><input type="checkbox" id="fGex" checked> 誇張畫出玻璃的膨脹（×400，附原尺寸虛線）</label>
       </div>
       <div class="grid2">
         <div class="cbox" style="padding:0"><canvas class="cv" id="cvFlask" aria-label="錐形瓶溫度計"></canvas></div>
@@ -125,14 +126,18 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <span class="tlabel">溫度</span>
         <div class="slider" style="min-width:240px"><input type="range" id="sT" min="-30" max="120" step="0.5" value="25"><output id="sTo"></output></div>
         <label class="tog"><input type="checkbox" id="sDef" checked> 標出兩個定義點</label>
-        <label class="tog"><input type="checkbox" id="sX"> 加一支自訂的 X 溫標</label>
+        <span class="tlabel">顯示哪幾支</span>
+        <label class="tog"><input type="checkbox" id="sOnC" checked> 攝氏</label>
+        <label class="tog"><input type="checkbox" id="sOnF" checked> 華氏</label>
+        <label class="tog"><input type="checkbox" id="sOnK" checked> 絕對</label>
+        <label class="tog"><input type="checkbox" id="sX"> 自訂 X</label>
       </div>
       <div class="toolbar" id="sXrow" hidden>
         <div class="slider"><span class="tlabel">X 溫標的冰點</span><input type="range" id="sX1" min="-40" max="60" step="5" value="20"><output id="sX1o"></output></div>
         <div class="slider"><span class="tlabel">X 溫標的沸點</span><input type="range" id="sX2" min="70" max="300" step="5" value="170"><output id="sX2o"></output></div>
       </div>
       <div class="cbox"><canvas class="cv" id="cvScale" aria-label="攝氏、華氏、絕對溫標對照"></canvas></div>
-      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度。三支溫度計的液面一樣高＝同一個溫度，只是刻度寫法不同。</p>
+      <p class="hint">拖曳橘色的橫線（或拉上面的滑桿）可以改變溫度，液面一樣高＝同一個溫度，只是刻度寫法不同。<b>抓住溫度計上方的名稱（⣿ 那裡）可以左右拖曳改順序</b>，也可以只留下要比較的那幾支。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -305,8 +310,9 @@ $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior
 //   玻璃先熱（τ 1.5 s）→ 容積先變大 → 水位先降；水慢慢熱（τ 60 s）→ 膨脹多 8 倍 → 水位回升
 // ======================================================================
 const T0=25,BG=2.7e-5,BL=2.1e-4,V0=100,TAUG_W=1.5,TAUG_A=14,TAUL=60,TMAX=300;
-const F={bath:80,spd:1,part:'both',A:.196,zoom:false,run:false,t:0,Tg:T0,Tl:T0,hist:[],
+const F={bath:80,spd:1,part:'both',A:.196,zoom:false,gex:true,run:false,t:0,Tg:T0,Tl:T0,hist:[],
          px:.30,py:.50,imm:0};        // px,py＝錐形瓶底部中心的位置（畫布比例），imm＝泡在水裡的比例
+const GEX=400;      // 玻璃膨脹的畫面放大倍率（只影響畫面，不影響物理）
 const fH=(Tg,Tl)=>{const gl=F.part==='liq'?0:BG*(Tg-T0),lq=F.part==='gl'?0:BL*(Tl-T0);return V0*(lq-gl)/F.A*10;};  // mm
 function fReset(){F.t=0;F.Tg=T0;F.Tl=T0;F.hist=[{t:0,h:0,g:T0,l:T0}];F.run=false;F.px=.30;F.py=.50;UI.flask();kick();}
 const fRe=()=>{F.hist=F.hist.map(r=>({t:r.t,g:r.g,l:r.l,h:V0*((F.part==='gl'?0:BL*(r.l-T0))-(F.part==='liq'?0:BG*(r.g-T0)))/F.A*10}));};
@@ -315,19 +321,25 @@ segOn($('fSpd'),v=>{F.spd=+v;segSet($('fSpd'),v);});
 segOn($('fPart'),v=>{F.part=v;segSet($('fPart'),v);fRe();kick();});
 segOn($('fTube'),v=>{F.A=+v;segSet($('fTube'),v);fRe();kick();});
 $('fZoom').addEventListener('change',e=>{F.zoom=e.target.checked;kick();});
+$('fGex').addEventListener('change',e=>{F.gex=e.target.checked;kick();});
 $('fPlay').addEventListener('click',()=>{if(F.t>=TMAX)fReset();F.run=!F.run;hideStory();UI.flask();kick();});
 $('fReset').addEventListener('click',()=>{fReset();hideStory();});
 UI.flask=()=>{$('fPlay').textContent=F.run?'⏸ 暫停':(F.t>0?'▶ 繼續計時':'▶ 開始計時');};
 // 幾何：水槽固定，錐形瓶可以自由拖曳
 function fGeo(W,H){
   const bowW=Math.min(W*.52,235),bowH=H*.30,bowY=H*.985,bcx=W*.30;
-  const tw=Math.max(7,W*.035),fw=bowW*.54,fh=bowH*.72,nw=tw+10,STRAW=H*.46;
+  // 吸管畫出來的粗細要跟真的截面積對應：直徑 ∝ √A（細 0.071、中 0.196、粗 0.5 cm²）
+  const tw0=Math.max(5,W*.035*Math.sqrt(F.A/.196));
+  // 玻璃熱脹冷縮：線膨脹＝體膨脹/3，60 ℃ 只有 0.05%，看不出來，所以畫面上放大 GEX 倍
+  const gs=1+(F.part==='liq'?0:(F.Tg-T0)*(BG/3)*(F.gex?GEX:1));
+  const fw0=bowW*.54,fh0=bowH*.72,nw0=tw0+10;
+  const tw=tw0*gs,fw=fw0*gs,fh=fh0*gs,nw=tw+10,STRAW=H*.46;
   const fx=clamp(F.px*W,fw/2+12,W-fw/2-58),fy=clamp(F.py*H,fh+104,H-8);
   const neck=fy-fh,mmPx=(STRAW-26)/70,zero=neck-26-15*mmPx;   // 刻度 −15～+55 mm
   // 泡在水裡的比例
   const wtop=bowY-bowH,inx=Math.abs(fx-bcx)<(bowW-fw)/2+10;
   const imm=inx?clamp((Math.min(fy,bowY)-Math.max(neck,wtop))/fh,0,1):0;
-  return{bowW,bowH,bowY,bcx,wtop,tw,fw,fh,nw,STRAW,fx,fy,neck,mmPx,zero,imm};}
+  return{bowW,bowH,bowY,bcx,wtop,tw,tw0,gs,fw,fh,fw0,fh0,nw0,nw,STRAW,fx,fy,neck,mmPx,zero,imm};}
 TICK.flask=dt=>{if(!F.run)return false;
   const step=Math.min(.25,dt*F.spd);let n=Math.max(1,Math.ceil(step/.02)),h=step/n;
   for(let i=0;i<n;i++){
@@ -345,7 +357,7 @@ function fPhase(){const h=fH(F.Tg,F.Tl),hot=F.bath>T0,dg=Math.abs(F.Tg-F.Tl);
 DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const hot=F.bath>T0,h=fH(F.Tg,F.Tl)*(F.zoom?4:1);
-  const G0=fGeo(W,H),{bowW,bowH,bowY,bcx,wtop,tw,fw,fh,nw,STRAW,fx,fy,neck,mmPx,zero}=G0;
+  const G0=fGeo(W,H),{bowW,bowH,bowY,bcx,wtop,tw,tw0,gs,fw,fh,fw0,fh0,nw0,nw,STRAW,fx,fy,neck,mmPx,zero}=G0;
   F.imm=G0.imm;
   const col0=hot?C.hot:C.cold;
   // 桌面與水槽（水先畫底色，瓶子畫完再疊一層半透明的水，才有「泡在水裡」的感覺）
@@ -362,6 +374,11 @@ DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext(
     g.beginPath();g.roundRect(fx-tw/2,neck-STRAW,tw,STRAW,3);g.fill();g.stroke();
     const lv=clamp(zero-h*mmPx,neck-STRAW+5,neck-4);
     g.fillStyle=C.liq;g.fillRect(fx-tw/2+2,lv,tw-4,neck-lv);
+    // 室溫時的瓶子輪廓畫在最上面當對照（膨脹只有 0.05%，沒有對照根本看不出來）
+    if(F.gex&&Math.abs(gs-1)>2e-4){const n0=fy-fh0;
+      g.strokeStyle=C.ink;g.lineWidth=1.8;g.setLineDash([6,4]);g.globalAlpha=.75;
+      g.beginPath();g.moveTo(fx-nw0/2,n0);g.lineTo(fx-fw0/2,fy-fh0*.42);g.lineTo(fx-fw0/2,fy);g.lineTo(fx+fw0/2,fy);g.lineTo(fx+fw0/2,fy-fh0*.42);g.lineTo(fx+nw0/2,n0);g.stroke();
+      g.setLineDash([]);g.globalAlpha=1;}
     return lv;};
   const lv=drawFlask();
   // 水面之下再疊一層水，瓶子就「浸在水裡」
@@ -378,14 +395,20 @@ DRAW.flask=()=>{const cv=$('cvFlask'),{W,H}=fit(cv,.86,330,480),g=cv.getContext(
     else if(mm%5===0)line(g,sx,y,sx+6,y,C.line,1.2);}
   line(g,fx-tw/2-24,zero,sx,zero,C.ghost,1.6,[5,4]);
   text(g,W<430?'原水位':'一開始的水位',fx-tw/2-26,zero-7,{col:C.muted,size:11,align:'right'});
+
   const col=Math.abs(h)<.2?C.muted:(h>0?C.liq:C.cold);
-  arrow(g,fx-tw/2-14,zero,fx-tw/2-14,lv,col,2.2);
-  text(g,(fH(F.Tg,F.Tl)>0?'＋':'')+nf(fH(F.Tg,F.Tl),1)+' mm',fx-tw/2-18,(zero+lv)/2+4,{col:col,size:12,bold:true,align:'right',bg:C.panel});
+  if(Math.abs(lv-zero)>3)arrow(g,fx-tw/2-14,zero,fx-tw/2-14,lv,col,2.6,11);
+  // 讀數固定放在畫布左上角：瓶子可以拖到任何地方，跟著瓶子走的字一定會疊到別的字
+  text(g,'水位 '+(fH(F.Tg,F.Tl)>0?'＋':'')+nf(fH(F.Tg,F.Tl),1)+' mm',8,21,{col:col,size:16,bold:true,bg:C.panel});
+  if(F.gex&&Math.abs(gs-1)>1e-4){const pc=(gs-1)*100;
+    text(g,(pc>0?'玻璃脹大 ':'玻璃縮小 ')+nf(Math.abs(pc),2)+'%（畫面放大 '+GEX+' 倍，虛線是原尺寸）',8,38,
+         {col:C.glassc,size:11.5,bold:true,bg:C.panel});}
+  text(g,(F.A<.1?'細':F.A>.3?'粗':'中')+'吸管　截面積 '+F.A+' cm²',8,55,{col:C.muted,size:11,bg:C.panel});
   if(F.zoom)text(g,'水位變化已放大 4 倍',W-6,H-6,{col:C.muted,size:11,align:'right'});
   // 拖曳把手與「現在泡在哪裡」
   handle(g,fx,fy-fh*.5,9);
   const envT=F.imm>.5?((hot?'熱水':'冷水')+' '+F.bath+' ℃'):(F.imm>0?'半泡在水裡':'空氣 '+T0+' ℃');
-  text(g,'現在：'+envT,fx,Math.max(14,neck-STRAW-6),{col:F.imm>.5?col0:C.muted,size:12,bold:true,align:'center',bg:C.panel});
+  text(g,'現在：'+envT,fx,Math.max(58,neck-STRAW-6),{col:F.imm>.5?col0:C.muted,size:12,bold:true,align:'center',bg:C.panel});
   // 溫度標示
   const nar=W<520,tlx=nar?8:Math.min(W-96,bcx+bowW/2+10),tly=nar?16:wtop+24;
   text(g,'玻璃 '+nf(F.Tg,1)+' ℃',tlx,tly,{col:C.glassc,size:12,bold:true});
@@ -441,12 +464,19 @@ function dot(g,x,y,col,r=4){g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,TAU);g.f
 // ======================================================================
 // 2 三種溫標
 // ======================================================================
-const S={T:25,def:true,x:false,x1:20,x2:170};
+const S={T:25,def:true,x1:20,x2:170,order:['C','F','K','X'],on:{C:true,F:true,K:true,X:false},drag:null};
+Object.defineProperty(S,'x',{get:()=>S.on.X,set:v=>{S.on.X=!!v;}});   // 舊程式用 S.x，接到 on.X
+const sVis=()=>S.order.filter(k=>S.on[k]);
+function sMove(k,slot){const vis=sVis(),cur=vis.indexOf(k);
+  if(cur<0)return false;const t=clamp(slot,0,vis.length-1);if(t===cur)return false;
+  vis.splice(cur,1);vis.splice(t,0,k);S.order=vis.concat(S.order.filter(q=>!S.on[q]));return true;}
 const setST=sliderBind('sT',v=>{S.T=v;},v=>nf(v,1)+' ℃');
 const setSX1=sliderBind('sX1',v=>{S.x1=v;},v=>v+' °X');
 const setSX2=sliderBind('sX2',v=>{S.x2=v;},v=>v+' °X');
 $('sDef').addEventListener('change',e=>{S.def=e.target.checked;kick();});
-$('sX').addEventListener('change',e=>{S.x=e.target.checked;$('sXrow').hidden=!S.x;kick();});
+$('sX').addEventListener('change',e=>{
+  if(!e.target.checked&&sVis().length<=1){e.target.checked=true;return;}
+  S.x=e.target.checked;$('sXrow').hidden=!S.x;kick();});
 const toF=c=>c*1.8+32,toK=c=>c+273,toX=c=>S.x1+(S.x2-S.x1)*c/100;
 const SCHIPS=[['人的體溫',37],['舒適的室溫',25],['水沸騰',100],['冰水混合物',0],['冷凍庫',-18],['乾冰昇華',-78.5],['絕對零度',-273],['體溫計上限',42]];
 $('sChips').innerHTML=SCHIPS.map((c,i)=>`<button class="qchip" data-i="${i}">${c[0]}<span class="pg">${c[1]} ℃</span></button>`).join('');
@@ -454,11 +484,13 @@ $('sChips').addEventListener('click',e=>{const b=e.target.closest('button[data-i
   const v=SCHIPS[+b.dataset.i][1];S.T=clamp(v,-30,120);setST(S.T);
   $('sSay').textContent=v<-30?`絕對零度是 −273 ℃ ＝ 0 K，是溫度的下限，畫面上的溫度計畫不到那麼低。`:`${SCHIPS[+b.dataset.i][0]}：${v} ℃ ＝ ${nf(toF(v),1)} °F ＝ ${nf(toK(v),1)} K。`;
   kick();});
+const sList=()=>sVis().map(k=>k==='X'?{k:'X',nm:'自訂 X',u:'°X',f:toX,step:(S.x2-S.x1)/5}:SCOL.find(c=>c.k===k)).filter(Boolean);
 const SCOL=[{k:'C',nm:'攝氏',u:'℃',f:c=>c,step:20,lo:-40,hi:130},
             {k:'F',nm:'華氏',u:'°F',f:toF,step:40,lo:-40,hi:260},
             {k:'K',nm:'絕對（克氏）',u:'K',f:toK,step:20,lo:230,hi:400}];
-function sGeom(W,H){const n=S.x?4:3,top=34,bot=H-56,cols=[];
-  for(let i=0;i<n;i++)cols.push(W*(i+.5)/n);
+function sGeom(W,H){const n=Math.max(1,sVis().length),top=34,bot=H-56,cols=[];
+  const mr=Math.min(46,W*.1),ml=6;                       // 右邊留給最後一支的刻度數字
+  for(let i=0;i<n;i++)cols.push(ml+(W-ml-mr)*(i+.5)/n);
   return{top,bot,cols,y:c=>bot-(bot-top)*(c+35)/160};}
 DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
@@ -466,7 +498,7 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
   const defs=[[0,'冰水混合物'],[100,'水沸騰（1 atm）']];
   if(S.def)defs.forEach(([c,nm])=>{line(g,8,y(c),W-8,y(c),C.blue,1.5,[6,4]);
     text(g,nm+' '+c+' ℃',10,y(c)-5,{col:C.blue,size:12,bold:true});});
-  const list=S.x?SCOL.concat([{k:'X',nm:'自訂 X',u:'°X',f:toX,step:(S.x2-S.x1)/5,lo:S.x1-(S.x2-S.x1)*.35,hi:S.x2+(S.x2-S.x1)*.3}]):SCOL;
+  const list=sList();
   list.forEach((col,i)=>{const cx=cols[i];
     // 管子
     g.fillStyle=C.panel;g.strokeStyle=C.glassc;g.lineWidth=2;
@@ -483,7 +515,10 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
       line(g,cx+tw/2,yy,cx+tw/2+7,yy,C.muted,1.3);
       text(g,nf(v,Math.abs(st)<5?1:0),cx+tw/2+10,yy+4,{col:C.muted,size:11,mono:true});
       line(g,cx-tw/2-5,yy,cx-tw/2,yy,C.line,1.1);}
-    text(g,col.nm,cx,top-16,{col:C.ink,size:13,bold:true,align:'center'});
+    if(list.length>1){const gw=Math.min(86,W/list.length-14);
+      if(S.drag===col.k){g.fillStyle=C.accent;g.globalAlpha=.14;g.fillRect(cx-gw/2,top-34,gw,bot-top+54);g.globalAlpha=1;}
+      text(g,'⣿',cx-gw/2+6,top-19,{col:S.drag===col.k?C.accent:C.line,size:13,bold:true});}
+    text(g,col.nm,cx,top-16,{col:S.drag===col.k?C.accent:C.ink,size:13,bold:true,align:'center'});
     text(g,col.u,cx,top-3,{col:C.muted,size:11,align:'center'});
     // 讀數
     const v=col.f(S.T);
@@ -500,9 +535,22 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
     `攝氏 ＝ (華氏 − 32) ÷ 1.8 ＝ (${nf(toF(C0),1)} − 32) ÷ 1.8 ＝ <b>${nf(C0,1)} ℃</b>`+
     (S.x?`<br>X 溫標：冰點 ${S.x1} °X、沸點 ${S.x2} °X，中間分成 ${S.x2-S.x1} 格<br>　X ＝ ${S.x1} ＋ (${S.x2}−${S.x1}) × 攝氏 ÷ 100 ＝ <b>${nf(toX(C0),1)} °X</b>`:'');
   $('sDeg').innerHTML=`冰點到沸點：攝氏 100 格、華氏 180 格、絕對 100 格`+(S.x?`、X ${S.x2-S.x1} 格`:'')+`<br>所以 1 ℃ 的大小 ＝ 1.8 °F ＝ 1 K`+(S.x?` ＝ ${nf((S.x2-S.x1)/100,2)} °X`:'')+`<br>溫度「差」10 ℃ ＝ 18 °F ＝ 10 K（差值不加 32、也不加 273）`;};
-dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{top,bot,y}=sGeom(W,H);
-  return[{x:14,y:clamp(y(S.T),top,bot),hit:(x,yy)=>Math.abs(yy-clamp(y(S.T),top,bot))<24?0:999,r:26,free:false,
-    move:(x,yy)=>{const c=(bot-clamp(yy,top,bot))/(bot-top)*160-35;S.T=clamp(Math.round(c*2)/2,-30,120);setST(S.T);}}];},()=>{hideStory();kick();});
+dragger($('cvScale'),()=>{const cv=$('cvScale'),W=cv.clientWidth,H=cv._fh||340,{top,bot,cols,y}=sGeom(W,H);
+  const list=sList(),n=Math.max(1,list.length),tw=Math.min(26,W*.045);
+  // 先排「換順序」的握把（名稱區與球泡），再排溫度指標；hit 回傳 −1 代表優先
+  const hs=list.map((col,i)=>({x:cols[i],y:top-18,r:26,free:true,
+    hit:(x,yy)=>((yy>=top-36&&yy<=top-2&&Math.abs(x-cols[i])<Math.min(70,W/(n*2)-6))
+                ||Math.hypot(x-cols[i],yy-(bot+14))<tw)?-1:999,
+    start:()=>{S.drag=col.k;},
+    move:x=>{if(sMove(col.k,Math.floor(clamp(x,0,W-1)/W*n)))kick();},
+    end:()=>{S.drag=null;}}));
+  hs.push({x:14,y:clamp(y(S.T),top,bot),hit:(x,yy)=>Math.abs(yy-clamp(y(S.T),top,bot))<24?0:999,r:26,free:false,
+    move:(x,yy)=>{const c=(bot-clamp(yy,top,bot))/(bot-top)*160-35;S.T=clamp(Math.round(c*2)/2,-30,120);setST(S.T);}});
+  return hs;},()=>{hideStory();kick();});
+// 四支溫度計各自可以開關（至少要留一支）
+['C','F','K'].forEach(k=>{const el=$('sOn'+k);el.addEventListener('change',()=>{
+  if(!el.checked&&sVis().length<=1){el.checked=true;return;}
+  S.on[k]=el.checked;hideStory();kick();});});
 
 // ======================================================================
 // 3 熱量與比熱
@@ -698,7 +746,10 @@ function goH(o){setBench('heat');HQ.mode=o.mode||'heat';
 function goC2(o){setBench('curve');if(o.m){CU.m=o.m;setCM(o.m);}if(o.P){CU.P=o.P;setCP(o.P);}
   cuReset();if(o.step){const c=cuCum();CU.Q=c[o.step]+ (o.step===1||o.step===3?cuSegs()[o.step][1]*.35:0);}
   CU.run=!!o.play;UI.curve();kick();}
-function goS(o){setBench('scale');Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);$('sX').checked=S.x;$('sXrow').hidden=!S.x;$('sDef').checked=S.def;kick();}
+function goS(o){setBench('scale');S.order=['C','F','K','X'];S.on={C:true,F:true,K:true,X:false};
+  Object.assign(S,o);setST(S.T);setSX1(S.x1);setSX2(S.x2);
+  $('sX').checked=S.on.X;$('sXrow').hidden=!S.on.X;$('sDef').checked=S.def;
+  ['C','F','K'].forEach(k=>{$('sOn'+k).checked=S.on[k];});kick();}
 const QG=[
  {g:'自製溫度計（實驗台 1）',q:[
   ['錐形瓶放進熱水，水位先降還是先升','熱水 80 ℃','先「下降」再上升。玻璃直接碰到熱水，先受熱膨脹，瓶子的容積變大，但裡面的水還是冷的、體積還沒變，所以水位先掉下去。等熱傳進水裡，水膨脹得比玻璃多很多，水位才回升並超過原來的高度。',()=>goF({bath:80,part:'both',spd:1,zoom:true})],
