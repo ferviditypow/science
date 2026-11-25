@@ -45,6 +45,25 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
 .steps li.on .k{color:var(--accent)}
 .ctl{display:flex;flex-direction:column;gap:2px}
 .ctl .slider{min-width:0;flex:none}
+
+/* ── 手寫批註（只有這一頁） ── */
+#inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom}
+html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
+#inkGo{position:fixed;right:10px;bottom:106px;z-index:60;min-height:40px;padding:8px 12px;border-radius:10px;
+  border:1px solid var(--line);background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer;opacity:.72}
+#inkGo:hover{opacity:1}
+html[data-ink="1"] #inkGo{display:none}
+#inkBar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;display:none;gap:6px;
+  align-items:center;padding:7px 9px;border-radius:14px;border:1px solid var(--line);background:var(--panel);
+  box-shadow:0 6px 24px rgba(0,0,0,.18);flex-wrap:wrap;max-width:96vw}
+html[data-ink="1"] #inkBar{display:flex}
+#inkBar button{min-height:44px;min-width:44px;padding:6px 12px;border-radius:10px;border:1px solid var(--line);
+  background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
+#inkBar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+#inkBar .swatch{width:34px;min-width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;border:2px solid var(--line)}
+#inkBar .swatch[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px;border-color:var(--panel)}
+#inkBar .sep{width:1px;height:30px;background:var(--line);margin:0 2px}
+@media print{#inkGo,#inkBar{display:none!important}}
 </style>
 </head>
 <body>
@@ -803,6 +822,88 @@ fReset();UI.flask();UI.heat();UI.curve();
 setBench((location.hash||'').replace('#','')||'flask',true);
 kick();
 })();
+
+// ======================================================================
+// 手寫批註：整頁都可以寫，墨水存在文件座標、關頁就消失
+// ======================================================================
+{
+const INK={on:false,col:'#e8590c',w:4.5,er:false,strokes:[],cur:null,pid:null};
+const cv=document.createElement('canvas');cv.id='inkCv';document.body.appendChild(cv);
+const g=cv.getContext('2d');
+const go=document.createElement('button');go.id='inkGo';go.type='button';
+go.textContent='✏️ 在畫面上寫字';go.title='打開後整頁都可以用手指寫字；寫字時動畫不會被拖到。';
+document.body.appendChild(go);
+const bar=document.createElement('div');bar.id='inkBar';document.body.appendChild(bar);
+
+function inkFit(){const d=Math.min(2,window.devicePixelRatio||1),w=innerWidth,h=innerHeight;
+  cv.width=Math.round(w*d);cv.height=Math.round(h*d);g.setTransform(d,0,0,d,0,0);inkDraw();}
+function inkDraw(){const w=innerWidth,h=innerHeight,sx=scrollX,sy=scrollY;
+  g.clearRect(0,0,w,h);g.save();g.translate(-sx,-sy);
+  g.lineCap='round';g.lineJoin='round';
+  const all=INK.cur?INK.strokes.concat([INK.cur]):INK.strokes;
+  all.forEach(st=>{const p=st.pts;if(!p.length)return;
+    g.strokeStyle=st.c;g.lineWidth=st.w;g.beginPath();
+    if(p.length===1){g.arc(p[0][0],p[0][1],st.w/2,0,Math.PI*2);g.fillStyle=st.c;g.fill();return;}
+    g.moveTo(p[0][0],p[0][1]);
+    for(let i=1;i<p.length-1;i++){const mx=(p[i][0]+p[i+1][0])/2,my=(p[i][1]+p[i+1][1])/2;
+      g.quadraticCurveTo(p[i][0],p[i][1],mx,my);}
+    g.lineTo(p[p.length-1][0],p[p.length-1][1]);g.stroke();});
+  g.restore();}
+const dpt=e=>[e.clientX+scrollX,e.clientY+scrollY];
+function eraseAt(x,y){const r=16,before=INK.strokes.length;
+  INK.strokes=INK.strokes.filter(st=>!st.pts.some(p=>Math.hypot(p[0]-x,p[1]-y)<r+st.w/2));
+  if(INK.strokes.length!==before)inkDraw();}
+cv.addEventListener('pointerdown',e=>{
+  if(!INK.on||INK.pid!==null)return;            // 同時只認一根手指 → 手掌放上去不會畫
+  INK.pid=e.pointerId;cv.setPointerCapture(e.pointerId);e.preventDefault();
+  const[x,y]=dpt(e);
+  if(INK.er){eraseAt(x,y);return;}
+  INK.cur={c:INK.col,w:INK.w,pts:[[x,y]]};inkDraw();});
+cv.addEventListener('pointermove',e=>{
+  if(!INK.on||e.pointerId!==INK.pid)return;e.preventDefault();
+  const[x,y]=dpt(e);
+  if(INK.er){eraseAt(x,y);return;}
+  if(!INK.cur)return;const p=INK.cur.pts,l=p[p.length-1];
+  if(Math.hypot(x-l[0],y-l[1])<1.2)return;p.push([x,y]);inkDraw();});
+const inkUp=e=>{if(e.pointerId!==INK.pid)return;INK.pid=null;
+  if(INK.cur){INK.strokes.push(INK.cur);INK.cur=null;inkDraw();}};
+cv.addEventListener('pointerup',inkUp);cv.addEventListener('pointercancel',inkUp);
+
+// 工具列
+const mk=(txt,title,cls)=>{const b=document.createElement('button');b.type='button';b.textContent=txt;
+  if(title)b.title=title;if(cls)b.className=cls;bar.appendChild(b);return b;};
+const COLS=['#e8590c','#1864ab','#2b8a3e','#2b3138'];
+const swa=COLS.map(c=>{const b=mk('','筆的顏色','swatch');b.style.background=c;
+  b.setAttribute('aria-pressed',String(c===INK.col));
+  b.addEventListener('click',()=>{INK.col=c;INK.er=false;syncBar();});return b;});
+bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
+const WS=[[2.5,'細'],[4.5,'中'],[9,'粗']];
+const wbs=WS.map(([w,nm])=>{const b=mk(nm,'筆的粗細');b.setAttribute('aria-pressed',String(w===INK.w));
+  b.addEventListener('click',()=>{INK.w=w;INK.er=false;syncBar();});return b;});
+bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
+const erB=mk('橡皮擦','劃過哪一筆就擦掉哪一筆');
+erB.addEventListener('click',()=>{INK.er=!INK.er;syncBar();});
+const unB=mk('↶ 復原','');
+unB.addEventListener('click',()=>{INK.strokes.pop();inkDraw();});
+const clB=mk('清除','全部清掉（要按兩次）');let clArm=0;
+clB.addEventListener('click',()=>{if(Date.now()-clArm<3000){INK.strokes=[];clArm=0;clB.textContent='清除';inkDraw();}
+  else{clArm=Date.now();clB.textContent='真的清除？';setTimeout(()=>{if(Date.now()-clArm>=3000)clB.textContent='清除';},3100);}});
+bar.appendChild(Object.assign(document.createElement('span'),{className:'sep'}));
+const okB=mk('✓ 完成','回到操作動畫（寫的字會留著）');
+okB.addEventListener('click',()=>setInk(false));
+function syncBar(){swa.forEach((b,i)=>b.setAttribute('aria-pressed',String(!INK.er&&COLS[i]===INK.col)));
+  wbs.forEach((b,i)=>b.setAttribute('aria-pressed',String(!INK.er&&WS[i][0]===INK.w)));
+  erB.setAttribute('aria-pressed',String(INK.er));}
+function setInk(v){INK.on=v;document.documentElement.dataset.ink=v?'1':'';
+  if(!v){INK.pid=null;INK.cur=null;}syncBar();inkDraw();}
+go.addEventListener('click',()=>setInk(true));
+addEventListener('keydown',e=>{if(e.key==='Escape'&&INK.on)setInk(false);});
+addEventListener('resize',inkFit);addEventListener('scroll',inkDraw,{passive:true});
+// 全螢幕時只有全螢幕元素的子孫會被畫出來，所以要把這三個搬進去（site.js 對 stepbar 也是這樣做）
+addEventListener('fullscreenchange',()=>{const fs=document.fullscreenElement||document.body;
+  [cv,go,bar].forEach(el=>fs.appendChild(el));setTimeout(inkFit,60);});
+inkFit();syncBar();
+}
 </script>
 </body>
 </html>
