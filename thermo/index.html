@@ -497,10 +497,11 @@ function sGeom(W,H){const vis=sVis(),n=Math.max(1,vis.length),top=48,bot=H-74;
 DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const{top,bot,cols,y}=sGeom(W,H),tw=Math.min(26,W*.045);
-  const defs=[[0,'冰水混合物'],[100,'水沸騰（1 atm）']];
-  if(S.def)defs.forEach(([c,nm])=>{line(g,8,y(c),W-8,y(c),C.blue,1.5,[6,4]);
-    text(g,nm,10,y(c)-6,{col:C.blue,size:12.5,bold:true});});   // 數值由每一支溫度計自己標
-  const list=sList(),pitch=W/Math.max(1,list.length),tfs=pitch<170?12:17;   // 欄位窄就把字縮小
+  const defs=[[0,'冰水混合物',''],[100,'水沸騰','（1 atm）']];
+  if(S.def)defs.forEach(([c,nm,sub])=>{line(g,8,y(c),W-8,y(c),C.blue,1.5,[6,4]);
+    text(g,nm,10,y(c)-6,{col:C.blue,size:12.5,bold:true});       // 數值由每一支溫度計自己標
+    if(sub)text(g,sub,10,y(c)+13,{col:C.blue,size:11});});       // 條件放第二行，不然會被溫度計的數字壓到
+  const list=sList(),pitch=W/Math.max(1,list.length),tfs=pitch<140?13:pitch<190?17:22;   // 欄位窄就把字縮小
   list.forEach((col,i)=>{const cx=cols[i];
     // 管子
     g.fillStyle=C.panel;g.strokeStyle=C.glassc;g.lineWidth=2;
@@ -516,11 +517,14 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
     // 擠在一起時，名稱與讀數上下錯開，才不會疊字
     const stag=(others.filter(o=>o<cx&&cx-o<78).length%2)?1:0;
     const vlo=col.f(-35),vhi=col.f(125),st=col.step;
+    const pxStep=Math.abs(y(0)-y(st/Math.abs(col.f(1)-col.f(0))||1)),skip=pxStep<tfs*1.45;
     const first=Math.ceil(Math.min(vlo,vhi)/st)*st;
     for(let v=first;v<=Math.max(vlo,vhi)+1e-6;v+=st){
       const c=col.k==='C'?v:col.k==='F'?(v-32)/1.8:col.k==='K'?v-273:(v-S.x1)*100/(S.x2-S.x1);
       const yy=y(c);if(yy<top-1||yy>bot+1)continue;
       if(S.ticks==='two'){line(g,cx+tw/2,yy,cx+tw/2+4,yy,C.line,1);line(g,cx-tw/2-4,yy,cx-tw/2,yy,C.line,1);continue;}
+      if(skip&&(Math.round((v-vlo)/st)%2))                       // 字放大後間距不夠，就隔一格才標數字
+        {line(g,cx+tw/2,yy,cx+tw/2+4,yy,C.line,1);line(g,cx-tw/2-4,yy,cx-tw/2,yy,C.line,1);continue;}
       if(numL){line(g,cx-tw/2-7,yy,cx-tw/2,yy,C.muted,1.3);
         text(g,nf(v,Math.abs(st)<5?1:0),cx-tw/2-10,yy+6,{col:C.ink,size:tfs,mono:true,align:'right'});
         line(g,cx+tw/2,yy,cx+tw/2+5,yy,C.line,1.1);}
@@ -534,15 +538,15 @@ DRAW.scale=()=>{const cv=$('cvScale'),{W,H}=fit(cv,.52,340,470),g=cv.getContext(
       const bx=right?cx+tw/2+10:cx-tw/2-10;
       line(g,cx-tw/2-6,yy,cx+tw/2+6,yy,C.blue,2);
       text(g,nf(vv,Math.abs(vv)<10&&vv%1?1:0)+' '+col.u,bx,yy+(nm==='熔點'?18:-8),
-           {col:C.blue,size:onNum?tfs:Math.min(14,tfs),bold:true,mono:true,align:right?'left':'right',bg:C.panel});});
+           {col:C.blue,size:onNum?tfs:Math.min(18,tfs),bold:true,mono:true,align:right?'left':'right',bg:C.panel});});
     if(list.length>1){const gw=Math.min(86,W/list.length-14);
       if(S.drag===col.k){g.fillStyle=C.accent;g.globalAlpha=.14;g.fillRect(cx-gw/2,top-34,gw,bot-top+54);g.globalAlpha=1;}
       text(g,'⣿',cx-gw/2+6,top-19-stag*16,{col:S.drag===col.k?C.accent:C.line,size:13,bold:true});}
-    text(g,col.nm,cx,top-17-stag*16,{col:S.drag===col.k?C.accent:C.ink,size:15,bold:true,align:'center',bg:C.panel});
+    text(g,col.nm,cx,top-17-stag*16,{col:S.drag===col.k?C.accent:C.ink,size:pitch<190?15:17,bold:true,align:'center',bg:C.panel});
     text(g,col.u,cx,top-3-stag*16,{col:C.muted,size:12,align:'center',bg:C.panel});
     // 讀數
     const v=col.f(S.T);
-    text(g,nf(v,1)+' '+col.u,cx,bot+50+stag*18,{col:C.accent,size:17,bold:true,align:'center',bg:C.panel});});
+    text(g,nf(v,1)+' '+col.u,cx,bot+50+stag*18,{col:C.accent,size:pitch<190?17:21,bold:true,align:'center',bg:C.panel});});
   // 指標
   const my=clamp(y(S.T),top,bot);
   line(g,6,my,W-6,my,C.accent,2,[7,5]);
