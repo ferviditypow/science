@@ -1,0 +1,909 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>原子軌域、量子數與電子組態</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+:root{--s-col:#e8590c;--p-col:#1864ab;--d-col:#2b8a3e;--f-col:#7048e8;
+  --pos:#e03131;--neg:#1c7ed6;--node:#868e96;--boxl:#adb5bd}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--s-col:#ff922b;--p-col:#4dabf7;--d-col:#51cf66;--f-col:#b197fc;
+  --pos:#ff6b6b;--neg:#74c0fc;--node:#868e96;--boxl:#495057}}
+:root[data-theme="dark"]{--s-col:#ff922b;--p-col:#4dabf7;--d-col:#51cf66;--f-col:#b197fc;
+  --pos:#ff6b6b;--neg:#74c0fc;--node:#868e96;--boxl:#495057}
+.wrap{max-width:1500px}
+.obgrid{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:14px}
+@media (max-width:900px){.obgrid{grid-template-columns:1fr}}
+.qtab{width:100%;border-collapse:collapse;font-size:.84rem}
+.qtab th,.qtab td{border:1px solid var(--line);padding:4px 6px;text-align:center}
+.qtab th{background:var(--accent-soft);font-weight:700}
+.qtab tr.on td{background:var(--accent-soft);font-weight:700}
+.qtab td.sub{font-family:var(--f-mono)}
+.orbrow{display:flex;align-items:center;gap:8px;margin:3px 0;flex-wrap:wrap}
+.orbrow .nm{width:34px;font:600 .88rem/1 var(--f-mono);color:var(--ink);text-align:right}
+.obox{display:flex;gap:3px}
+.obox i{width:30px;height:26px;border:1.5px solid var(--boxl);border-radius:4px;display:flex;
+  align-items:center;justify-content:center;font-style:normal;font:600 15px/1 var(--f-mono);background:var(--panel)}
+.obox i.f{border-color:var(--ink)}
+.obox i.s{color:var(--s-col)}.obox i.p{color:var(--p-col)}.obox i.d{color:var(--d-col)}.obox i.f2{color:var(--f-col)}
+.cfg{font:600 1.05rem/1.7 var(--f-mono);word-break:break-all}
+.cfg sup{font-size:.72em}
+.elbig{font:900 2.2rem/1 var(--f-display);color:var(--accent)}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.82rem;color:var(--muted);margin-top:4px}
+.legend b{display:inline-block;width:12px;height:12px;border-radius:50%;vertical-align:-1px;margin-right:4px}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.88rem}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--f-mono);font-weight:600}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高二選修化學 · CH1-2～1-3 · <a href="../spectrum/">上一課：原子光譜與能階</a></div>
+      <h1>原子軌域、量子數與電子組態</h1>
+    </div>
+    <p>四個實驗台：軌道與軌域差在哪（電子雲是怎麼來的）、s／p／d 軌域的 3D 形狀與節面、四個量子數怎麼決定一個軌域、電子組態怎麼填。對應講義〈原子軌域、量子數〉與〈軌域能階、電子組態〉。</p>
+  </header>
+
+  <section class="panel">
+    <div class="toolbar">
+      <span class="tlabel">實驗台</span>
+      <span class="seg" id="benchSeg">
+        <button data-v="cloud" aria-pressed="true"><span class="n">1</span>軌道 vs 軌域</button>
+        <button data-v="shape" aria-pressed="false"><span class="n">2</span>軌域的形狀 3D</button>
+        <button data-v="qn" aria-pressed="false"><span class="n">3</span>四個量子數</button>
+        <button data-v="cfg" aria-pressed="false"><span class="n">4</span>電子組態</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- ===== 1 軌道 vs 軌域 ===== -->
+  <section class="bench" id="b-cloud">
+    <div class="panel">
+      <div class="toolbar">
+        <button class="btn primary" id="clPlay">▶ 持續測量</button>
+        <button class="btn" id="clShot">＋ 測 200 次</button>
+        <button class="btn" id="clClr">⟲ 清空</button>
+        <span class="tlabel">軌域</span>
+        <span class="seg" id="clOrb"><button data-v="1s" aria-pressed="true">1s</button><button data-v="2s" aria-pressed="false">2s</button><button data-v="2p" aria-pressed="false">2p</button></span>
+      </div>
+      <div class="toolbar">
+        <div class="slider" style="min-width:230px"><span class="tlabel">邊界包住的機率</span><input type="range" id="clP" min="50" max="99" step="1" value="90"><output id="clPo"></output></div>
+        <label class="tog"><input type="checkbox" id="clB" checked> 畫出邊界</label>
+        <label class="tog"><input type="checkbox" id="clBohr" checked> 左邊放波耳軌道對照</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvCl" aria-label="軌道與軌域"></canvas></div>
+      <p class="hint">每一點代表「某一次測量時發現電子的位置」。測越多次，點越密的地方就是電子出現機率越大的地方——這團點就是<b>電子雲</b>；把 90～95% 的點包起來的範圍，就是課本說的<b>軌域</b>。</p>
+    </div>
+    <div class="verdict" id="clSay"></div>
+    <div class="obgrid">
+      <section class="panel box"><h3>波耳的「軌道」和量子力學的「軌域」差在哪</h3>
+        <ul>
+          <li><b>軌道（orbit）</b>是空間中一條<b>固定的路徑</b>，電子像行星一樣沿著它跑，位置隨時都算得出來。</li>
+          <li><b>軌域（orbital）</b>是空間中的<b>一片區域</b>，我們只知道電子大概在這片區域裡的某處，無法同時準確知道它的位置與動量（海森堡測不準原理）。</li>
+          <li>1923 德布洛依提出物質波、1926 海森堡提出測不準原理、同年薛丁格用波動方程式解出電子在核外各處出現的<b>機率</b>，量子力學的原子模型就是這樣來的。</li>
+          <li>電子雲較濃密處＝出現機率較大；雲外<b>仍有可能</b>發現電子，只是機率很低——所以才要用「90～95%」來畫邊界，軌域沒有真正的硬邊。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">現在這一團</p><dl class="kv" id="clKV"></dl>
+        <p class="hint" style="margin-top:8px">1s 的最可能半徑剛好是波耳第一軌道的半徑 a₀（0.529 Å）——但意義完全不同：波耳說電子<b>就在</b>那個圓上，量子力學說那裡只是<b>最常被找到</b>的半徑。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== 2 軌域形狀 3D ===== -->
+  <section class="bench" id="b-shape" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">軌域</span>
+        <span class="seg" id="shOrb">
+          <button data-v="1s" aria-pressed="true">1s</button><button data-v="2s">2s</button><button data-v="3s">3s</button>
+          <button data-v="2pz">2p<sub>z</sub></button><button data-v="2px">2p<sub>x</sub></button><button data-v="3pz">3p<sub>z</sub></button>
+          <button data-v="3dz2">3d<sub>z²</sub></button><button data-v="3dxy">3d<sub>xy</sub></button><button data-v="3dxz">3d<sub>xz</sub></button>
+          <button data-v="3dyz">3d<sub>yz</sub></button><button data-v="3dx2">3d<sub>x²－y²</sub></button>
+        </span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">畫法</span>
+        <span class="seg" id="shMode"><button data-v="cloud" aria-pressed="true">電子雲</button><button data-v="shell">邊界面</button><button data-v="slice">切一半看剖面</button></span>
+        <label class="tog"><input type="checkbox" id="shPh" checked> 用顏色分正負相位</label>
+        <label class="tog"><input type="checkbox" id="shNode"> 標出節面</label>
+        <label class="tog"><input type="checkbox" id="shAx" checked> 座標軸</label>
+        <label class="tog"><input type="checkbox" id="shAll"> 整個副殼層一起看</label>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">視角</span>
+        <span class="seg" id="shView"><button data-v="iso" aria-pressed="true">斜上方</button><button data-v="z">沿 z 看</button><button data-v="x">沿 x 看</button><button data-v="y">沿 y 看</button></span>
+        <button class="btn" id="shSpin">⟳ 自轉</button>
+      </div>
+      <div class="cbox three3d"><canvas id="cv3" aria-label="原子軌域 3D"></canvas></div>
+      <p class="hint">可以用手指或滑鼠拖曳旋轉、兩指或滾輪縮放。<b>電子雲</b>的每一點都是照真正的氫原子波函數 |ψ|² 抽樣出來的；<b>邊界面</b>是課本的畫法（半徑正比於角部分 |Y| 的曲面），兩種都不是示意圖。</p>
+    </div>
+    <div class="verdict" id="shSay"></div>
+    <div class="obgrid">
+      <section class="panel box"><h3>形狀是怎麼決定的</h3>
+        <ul>
+          <li><b>s 軌域</b>（ℓ＝0）：球形對稱。同一個球面上各點機率相同，<b>和方向無關</b>。每一個主殼層都有 1 個。</li>
+          <li><b>p 軌域</b>（ℓ＝1）：啞鈴形，沿 x、y、z 三個軸各一個，三者<b>互相垂直</b>、能量與形狀相同，n ≥ 2 才有，共 3 個。</li>
+          <li><b>d 軌域</b>（ℓ＝2）：n ≥ 3 才有，共 5 個。其中 4 個是四葉草形（d<sub>xy</sub>、d<sub>xz</sub>、d<sub>yz</sub>、d<sub>x²－y²</sub>），d<sub>z²</sub> 長得不一樣（上下兩葉加一圈甜甜圈）。</li>
+          <li><b>節面</b>＝電子出現機率為 0 的面。角節面有 ℓ 個（平面或錐面）、徑節面有 n－ℓ－1 個（球面），合起來一定是 n－1 個。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">這個軌域</p><dl class="kv" id="shKV"></dl>
+        <div class="legend"><span><b style="background:var(--pos)"></b>ψ ＞ 0</span><span><b style="background:var(--neg)"></b>ψ ＜ 0</span></div>
+        <p class="hint" style="margin-top:6px">正負號是<b>波函數的相位</b>，不是電荷。電子出現的機率是 |ψ|²，兩種顏色的地方機率都是正的；相位在講共價鍵的軌域重疊時才用得到。</p>
+      </section>
+    </div>
+  </section>
+
+  <!-- ===== 3 四個量子數 ===== -->
+  <section class="bench" id="b-qn" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="slider" style="min-width:250px"><span class="tlabel">主量子數 n</span><input type="range" id="qnN" min="1" max="5" step="1" value="3"><output id="qnNo"></output></div>
+        <span class="tlabel">角量子數 ℓ</span><span class="seg" id="qnL"></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">磁量子數 m<sub>ℓ</sub></span><span class="seg" id="qnM"></span>
+        <span class="tlabel">自旋 m<sub>s</sub></span><span class="seg" id="qnS"><button data-v="1" aria-pressed="true">＋½</button><button data-v="-1">－½</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvQn" aria-label="量子數與軌域"></canvas></div>
+      <p class="hint">（n, ℓ, m<sub>ℓ</sub>）決定<b>一個軌域</b>；再加上 m<sub>s</sub>，（n, ℓ, m<sub>ℓ</sub>, m<sub>s</sub>）決定<b>一個電子</b>。同一個原子裡不可能有兩個電子的四個量子數完全相同（包立不相容原理）。</p>
+    </div>
+    <div class="verdict" id="qnSay"></div>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">能階順序</span>
+        <span class="seg" id="qnE"><button data-v="h" aria-pressed="true">單電子（H、He⁺、Li²⁺…）</button><button data-v="m">多電子原子（n＋ℓ 規則）</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvEn" aria-label="軌域能階圖"></canvas></div>
+      <p class="hint">單電子系：能階<b>只由 n 決定</b>，ns＝np＝nd＝nf。多電子原子：由 <b>n＋ℓ</b> 決定，n＋ℓ 越大能階越高；n＋ℓ 相同時，<b>n 越小</b>能階越低——這就是 4s（4＋0＝4）排在 3d（3＋2＝5）前面的原因。</p>
+    </div>
+    <div class="obgrid">
+      <section class="panel box"><p class="ptitle">量子數整理表 <small>目前這一列會highlight</small></p>
+        <div style="overflow-x:auto"><table class="qtab" id="qnTab"></table></div>
+      </section>
+      <section class="panel box"><p class="ptitle">現在這組</p><dl class="kv" id="qnKV"></dl>
+        <p class="hint" style="margin-top:8px">口訣：ℓ 的允許值是 0 ~ (n－1) 共 <b>n 種</b>；m<sub>ℓ</sub> 是 0、±1 … ±ℓ 共 <b>2ℓ＋1 個</b>；所以一個 n 有 <b>n² 個軌域</b>、可容納 <b>2n² 個電子</b>。</p>
+      </section>
+    </div>
+    <section class="panel" id="qnQp">
+      <p class="ptitle">講義題目 <small>點一下會把量子數設成那組，並說明為什麼可以或不可以</small></p>
+      <div class="cbox" id="qnQ"></div>
+    </section>
+  </section>
+
+  <!-- ===== 4 電子組態 ===== -->
+  <section class="bench" id="b-cfg" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="slider" style="min-width:270px"><span class="tlabel">原子序 Z</span><input type="range" id="cgZ" min="1" max="60" step="1" value="26"><output id="cgZo"></output></div>
+        <button class="btn primary" id="cgFill">▶ 一格一格填</button>
+        <button class="btn" id="cgAll">⏭ 直接填完</button>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">離子</span>
+        <span class="seg" id="cgIon"><button data-v="-2">－2</button><button data-v="-1">－1</button><button data-v="0" aria-pressed="true">中性</button><button data-v="1">＋1</button><button data-v="2">＋2</button><button data-v="3">＋3</button></span>
+        <span class="tlabel">排列方式</span>
+        <span class="seg" id="cgOrd"><button data-v="e" aria-pressed="true">按能階（4s 在 3d 前）</button><button data-v="n">按主殼層（3d 在 4s 前）</button></span>
+      </div>
+      <div class="toolbar">
+        <label class="tog"><input type="checkbox" id="cgEx" checked> 套用半滿／全滿例外（Cr、Cu…）</label>
+        <label class="tog"><input type="checkbox" id="cgNob" checked> 用鈍氣簡寫</label>
+        <span class="tlabel">特別的</span>
+        <span class="chip" data-z="24">₂₄Cr 半滿例外</span><span class="chip" data-z="29">₂₉Cu 全滿例外</span><span class="chip" data-z="26">₂₆Fe 與 Fe²⁺／Fe³⁺</span><span class="chip" data-z="57">₅₇La 鑭例外</span><span class="chip" data-z="60">₆₀Nd</span>
+      </div>
+      <div class="cbox" style="padding:10px 12px">
+        <div style="display:flex;align-items:baseline;gap:12px;flex-wrap:wrap">
+          <span class="elbig" id="cgSym">Fe</span><span id="cgNm" style="color:var(--muted)"></span>
+        </div>
+        <div id="cgBoxes" style="margin-top:8px"></div>
+        <div class="cfg" id="cgTxt" style="margin-top:10px"></div>
+      </div>
+      <p class="hint">↑ 代表 m<sub>s</sub>＝＋½、↓ 代表 －½。一個格子就是一個軌域，最多住兩個自旋相反的電子。</p>
+    </div>
+    <div class="verdict" id="cgSay"></div>
+    <div class="obgrid">
+      <section class="panel box"><h3>填電子的三個原則</h3>
+        <ul>
+          <li><b>遞建（構築）原理</b>：從能量低的軌域先填，再依序往上。能階相同時先填內層（n 小的）。</li>
+          <li><b>洪德（罕德）定則</b>：同一副殼層的幾個軌域能量相同，電子要先<b>以相同自旋各佔一個空軌域</b>（先半滿），全部半滿後才允許自旋相反的電子配對進去。</li>
+          <li><b>包立不相容原理</b>：一個軌域最多 2 個電子，且自旋必須相反；換句話說，一個原子裡任兩個電子的四個量子數不可能完全相同。</li>
+          <li>三個都符合＝<b>基態</b>；違反遞建或洪德＝<b>激發態</b>；用到不存在的軌域（2d、3f…）或一格擠 3 個電子＝<b>不可能存在</b>。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">這個原子／離子</p><dl class="kv" id="cgKV"></dl>
+        <p class="hint" style="margin-top:8px"><b>填的時候</b>先 4s 再 3d，<b>游離的時候</b>卻要先游離 4s 再游離 3d——因為一旦填進去，3d 的能量就比 4s 低了。₂₆Fe：[Ar]4s²3d⁶ → Fe²⁺：[Ar]3d⁶ → Fe³⁺：[Ar]3d⁵。</p>
+      </section>
+    </div>
+    <section class="panel">
+      <p class="ptitle">判斷：基態／激發態／不可能存在 <small>講義 例9 的圖，點一下看判斷</small></p>
+      <div class="cbox" id="cgJ"></div>
+    </section>
+  </section>
+
+  <section class="panel" id="qpanel">
+    <p class="ptitle">講義與考古題情境 <small>點一下會切到對應的實驗台並設定好畫面</small></p>
+    <div class="cbox" id="qbox"></div>
+  </section>
+
+  <div class="notes">
+    <div><h2>軌域沒有硬邊</h2><p>「軌域就是電子跑的範圍」只對一半。軌域是用 90～95% 機率畫出來的<b>統計區域</b>，在邊界外還是有可能找到電子，只是機率很低。所以 s 軌域的圖畫成實心球，不代表電子被關在球裡。</p></div>
+    <div><h2>節面不是「電子穿過去」</h2><p>節面上機率<b>恰好是 0</b>，電子永遠不會出現在那裡。這在古典圖像裡很怪（怎麼從左葉跑到右葉？），但電子不是小球、沒有連續軌跡，問「怎麼穿過去」這個問題本身就預設了軌道的圖像。</p></div>
+    <div><h2>ψ 的正負不是電荷</h2><p>p、d 軌域兩葉常塗不同顏色，那是<b>波函數的相位</b>。機率是 |ψ|²，兩葉的機率都是正的。相位要到講軌域重疊（鍵結軌域／反鍵結軌域、混成）才派上用場。</p></div>
+    <div><h2>4s 比 3d 先填，但不代表 4s 比較低</h2><p>多電子原子的能階用 n＋ℓ 判斷，所以<b>空的時候</b> 4s（4）比 3d（5）低，先填 4s。但電子填進去之後，3d 反而降到 4s 以下，所以<b>游離時先掉 4s</b>。Fe²⁺ 是 [Ar]3d⁶ 而不是 [Ar]3d⁴4s²。</p></div>
+    <div><h2>Cr、Cu 的例外</h2><p>半滿（d⁵）與全滿（d¹⁰）的交換能使系統較穩定，所以 ₂₄Cr 是 [Ar]3d⁵4s¹ 而不是 3d⁴4s²，₂₉Cu 是 [Ar]3d¹⁰4s¹ 而不是 3d⁹4s²。考試常考「哪個原子不成對電子最多」——答案通常是 Cr（6 個）。</p></div>
+    <div><h2>量子數的範圍記法</h2><p>n＝1,2,3…；ℓ＝0 ~ n－1（所以沒有 1p、2d、3f）；m<sub>ℓ</sub>＝－ℓ ~ ＋ℓ（所以 3d 的 m<sub>ℓ</sub> 不可能是 3）；m<sub>s</sub> 只有 ±½（不可能是 ±1 或 3/2）。考試的「不可能的量子數組合」幾乎都是踩這四條其中一條。</p></div>
+  </div>
+</div>
+
+<script type="importmap">{"imports":{"three":"../vendor/three/three.module.min.js"}}</script>
+<script type="module">
+import * as THREE from 'three';
+import {OrbitControls} from '../vendor/three/OrbitControls.js';
+
+/* ---------- 共用小工具 ---------- */
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const segSet=(el,v)=>el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));
+const segOn=(el,f)=>el.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&el.contains(b)&&!b.disabled)f(b.dataset.v);});
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','accent','blue','green','red','purple','accent-soft','s-col','p-col','d-col','f-col','pos','neg','node','boxl'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());
+  C.dark=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);}
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();build3D();kick();});
+new MutationObserver(()=>{readColors();build3D();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+
+function fit(cv,ratio,minH,maxH){const w=cv.parentElement.clientWidth;const dpr=Math.min(2,devicePixelRatio||1);
+  const full=document.fullscreenElement===cv.parentElement;const h=full?innerHeight:Math.round(clamp(w*ratio,minH,maxH));
+  if(cv._w!==w||cv._h!==h){cv._w=w;cv._h=h;cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return {g,w,h};}
+function text(g,s,x,y,col,size=13,al='left',bold=600,mono=false){g.fillStyle=col;g.textAlign=al;g.textBaseline='middle';
+  g.font=`${bold} ${size}px ${mono?'"IBM Plex Mono",monospace':'"Noto Sans TC",sans-serif'}`;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=1.4,dash){g.save();if(dash)g.setLineDash(dash);g.strokeStyle=col;g.lineWidth=w;
+  g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.restore();}
+function rrect(g,x,y,w,h,r,fill,stroke,lw=1.4){g.beginPath();g.roundRect(x,y,w,h,r);if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke();}}
+
+/* ---------- 氫原子波函數（a0 = 1） ---------- */
+const S2=Math.SQRT2,S3=Math.sqrt(3),S6=Math.sqrt(6),S30=Math.sqrt(30);
+function Rnl(n,l,r){
+  if(n===1)return 2*Math.exp(-r);
+  if(n===2)return l===0?(2-r)*Math.exp(-r/2)/(2*S2):r*Math.exp(-r/2)/(2*S6);
+  if(n===3){const e=Math.exp(-r/3);
+    if(l===0)return 2*(27-18*r+2*r*r)*e/(81*S3);
+    if(l===1)return 4*(6*r-r*r)*e/(81*S6);
+    return 4*r*r*e/(81*S30);}
+  return 0;}
+/* 角部分：單位向量進來，最大絕對值都是 1 */
+const ANG={
+  s:()=>1,
+  pz:(x,y,z)=>z, px:(x,y,z)=>x, py:(x,y,z)=>y,
+  dz2:(x,y,z)=>(3*z*z-1)/2, dxy:(x,y,z)=>2*x*y, dxz:(x,y,z)=>2*x*z, dyz:(x,y,z)=>2*y*z,
+  dx2:(x,y,z)=>x*x-y*y};
+/* 軌域定義 */
+const ORB={
+  '1s':{n:1,l:0,a:'s',R:6,  tag:'1s'},
+  '2s':{n:2,l:0,a:'s',R:17, tag:'2s'},
+  '3s':{n:3,l:0,a:'s',R:33, tag:'3s'},
+  '2pz':{n:2,l:1,a:'pz',R:15,tag:'2p<sub>z</sub>'},
+  '2px':{n:2,l:1,a:'px',R:15,tag:'2p<sub>x</sub>'},
+  '2py':{n:2,l:1,a:'py',R:15,tag:'2p<sub>y</sub>'},
+  '3pz':{n:3,l:1,a:'pz',R:30,tag:'3p<sub>z</sub>'},
+  '3px':{n:3,l:1,a:'px',R:30,tag:'3p<sub>x</sub>'},
+  '3py':{n:3,l:1,a:'py',R:30,tag:'3p<sub>y</sub>'},
+  '3dz2':{n:3,l:2,a:'dz2',R:26,tag:'3d<sub>z²</sub>'},
+  '3dxy':{n:3,l:2,a:'dxy',R:26,tag:'3d<sub>xy</sub>'},
+  '3dxz':{n:3,l:2,a:'dxz',R:26,tag:'3d<sub>xz</sub>'},
+  '3dyz':{n:3,l:2,a:'dyz',R:26,tag:'3d<sub>yz</sub>'},
+  '3dx2':{n:3,l:2,a:'dx2',R:26,tag:'3d<sub>x²－y²</sub>'}};
+/* 徑向分布 P(r)=r²R² 的累積分布，用來抽樣與算 90% 半徑 */
+const RCACHE={};
+function radial(n,l){const k=n+'_'+l;if(RCACHE[k])return RCACHE[k];
+  const Rm=n===1?12:n===2?28:46,N=1200,dr=Rm/N,r=[],p=[],cdf=[];let s=0;
+  for(let i=0;i<=N;i++){const rr=i*dr,R=Rnl(n,l,rr),v=rr*rr*R*R;r.push(rr);p.push(v);s+=v*dr;cdf.push(s);}
+  for(let i=0;i<=N;i++)cdf[i]/=s;
+  let pm=0,rmax=0;for(let i=0;i<=N;i++)if(p[i]>pm){pm=p[i];rmax=r[i];}
+  const o={r,p,cdf,dr,N,Rm,pm,rmax,
+    rOf:u=>{let lo=0,hi=N;while(lo<hi-1){const m=(lo+hi)>>1;if(cdf[m]<u)lo=m;else hi=m;}
+      const d=cdf[hi]-cdf[lo];return r[lo]+(d>1e-12?(u-cdf[lo])/d:0)*dr;},
+    qOf:q=>{let lo=0,hi=N;while(lo<hi-1){const m=(lo+hi)>>1;if(cdf[m]<q)lo=m;else hi=m;}return r[hi];}};
+  RCACHE[k]=o;return o;}
+/* 節面 */
+function nodes(o){const rad=[];
+  if(o.n===2&&o.l===0)rad.push(2);
+  if(o.n===3&&o.l===0){rad.push((18-Math.sqrt(108))/4,(18+Math.sqrt(108))/4);}
+  if(o.n===3&&o.l===1)rad.push(6);
+  return {rad,ang:o.l};}
+/* 抽樣：先抽 r，再用拒絕法抽方向 */
+function sample(key,cnt){const o=ORB[key],rd=radial(o.n,o.l),A=ANG[o.a],out=new Float32Array(cnt*4);
+  for(let i=0;i<cnt;i++){const r=rd.rOf(Math.random());let x=0,y=0,z=0,a=0;
+    for(let t=0;t<80;t++){let u=Math.random()*2-1,v=Math.random()*2-1,w=Math.random()*2-1;
+      const L=Math.hypot(u,v,w);if(L<1e-6||L>1)continue;u/=L;v/=L;w/=L;a=A(u,v,w);
+      if(Math.random()<a*a){x=u;y=v;z=w;break;}
+      x=u;y=v;z=w;}
+    const sg=Rnl(o.n,o.l,r)*a;
+    out[i*4]=x*r;out[i*4+1]=y*r;out[i*4+2]=z*r;out[i*4+3]=sg>=0?1:-1;}
+  return out;}
+
+/* ===================== 實驗台 1：軌道 vs 軌域 ===================== */
+const CL={orb:'1s',pts:[],run:false,q:90,bd:true,bohr:true,ph:0,acc:0};
+const CLMAP={'1s':'1s','2s':'2s','2p':'2pz'};
+function clAdd(k){const key=CLMAP[CL.orb],s=sample(key,k);
+  for(let i=0;i<k;i++)CL.pts.push([s[i*4],s[i*4+1],s[i*4+2],s[i*4+3]]);
+  if(CL.pts.length>14000)CL.pts.splice(0,CL.pts.length-14000);CL.acc+=k;}
+function drawCl(){const o=ORB[CLMAP[CL.orb]],rd=radial(o.n,o.l),{g,w,h}=fit($('cvCl'),.52,300,620);
+  const strip=Math.min(120,Math.max(78,h*.26)),top=h-strip-8;
+  const R90=rd.qOf(CL.q/100),bohrR=o.n*o.n;
+  const view=Math.max(R90*1.35,CL.bohr?bohrR*1.3:0);
+  const two=CL.bohr,colW=two?w/2:w;
+  const cx2=two?w*.75:w*.5,cy=top*.46;
+  const sc=Math.min(colW*.42,top*.40)/view;
+  const rB=bohrR*sc,rC=R90*sc,ly=Math.min(top-30,cy+Math.max(rB,rC)+22);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  if(two){const cx1=w*.25;
+    line(g,w/2,8,w/2,top-4,C.line,1,[5,5]);
+    text(g,'波耳模型：固定軌道',cx1,20,C.muted,13,'center',700);
+    g.save();g.strokeStyle=C.blue;g.lineWidth=2;g.setLineDash([]);
+    for(let i=1;i<=o.n;i++){g.beginPath();g.arc(cx1,cy,i*i*sc,0,7);g.globalAlpha=i===o.n?1:.3;g.stroke();}
+    g.restore();
+    g.fillStyle=C.ink;g.beginPath();g.arc(cx1,cy,5,0,7);g.fill();
+    const ang=CL.ph,ex=cx1+Math.cos(ang)*bohrR*sc,ey=cy+Math.sin(ang)*bohrR*sc;
+    g.fillStyle=C.accent;g.beginPath();g.arc(ex,ey,7,0,7);g.fill();
+    line(g,cx1,cy,ex,ey,C.accent,1.2,[4,4]);
+    text(g,'r 永遠 = '+bohrR+' a₀',cx1,ly,C.blue,13,'center',700);
+    text(g,'位置隨時算得出來',cx1,ly+17,C.muted,12,'center');}
+  text(g,'量子力學：電子雲',cx2,20,C.muted,13,'center',700);
+  g.save();
+  for(const p of CL.pts){const px=cx2+p[0]*sc,py=cy-p[2]*sc;
+    g.fillStyle=p[3]>0?C.pos:C.neg;g.globalAlpha=.42;
+    g.fillRect(px-.9,py-.9,1.8,1.8);}
+  g.restore();
+  g.fillStyle=C.ink;g.beginPath();g.arc(cx2,cy,4,0,7);g.fill();
+  if(CL.bd){g.save();g.strokeStyle=C.accent;g.lineWidth=2.2;g.setLineDash([7,5]);
+    g.beginPath();g.arc(cx2,cy,R90*sc,0,7);g.stroke();g.restore();
+    text(g,CL.q+'% 邊界　r = '+R90.toFixed(2)+' a₀',cx2,ly,C.accent,13,'center',700);
+    text(g,'這個範圍就叫「'+CL.orb+' 軌域」',cx2,ly+17,C.muted,12,'center');}
+  /* 徑向分布曲線 */
+  const ml=34,mr=w-14,bb=h-22,bt=top+20;
+  line(g,ml,bb,mr,bb,C.line,1.2);line(g,ml,bt-2,ml,bb,C.line,1.2);
+  text(g,'徑向分布 4πr²R²（電子在半徑 r 處的機率密度）',ml,bt-12,C.muted,11,'left',600);
+  text(g,'r (a₀)',mr,bb+13,C.muted,11,'right');
+  const Rm=view*1.05,sx=r=>ml+(mr-ml)*r/Rm,sy=v=>bb-(bb-bt)*v/rd.pm;
+  g.save();g.beginPath();g.moveTo(sx(0),bb);
+  for(let i=0;i<=rd.N;i++){if(rd.r[i]>Rm)break;g.lineTo(sx(rd.r[i]),sy(rd.p[i]));}
+  g.lineTo(sx(Math.min(Rm,rd.Rm)),bb);g.closePath();
+  g.fillStyle=C.accent;g.globalAlpha=.14;g.fill();g.globalAlpha=1;
+  g.strokeStyle=C.accent;g.lineWidth=2;g.stroke();g.restore();
+  if(R90<Rm)line(g,sx(R90),bt,sx(R90),bb,C.accent,1.6,[5,4]);
+  for(const rn of nodes(o).rad)if(rn<Rm){line(g,sx(rn),bt,sx(rn),bb,C.node,1.4,[3,3]);
+    text(g,'節點',sx(rn),bt+6,C.node,10,'center');}
+  line(g,sx(rd.rmax),sy(rd.pm),sx(rd.rmax),bb,C.blue,1.4);
+  text(g,'最可能 r='+rd.rmax.toFixed(2),sx(rd.rmax)+5,sy(rd.pm)+10,C.blue,11,'left',700);
+  for(let r=0;r<=Rm;r+=(Rm>20?5:Rm>8?2:1)){line(g,sx(r),bb,sx(r),bb+3,C.line,1);text(g,String(r),sx(r),bb+12,C.muted,10,'center');}}
+function clSay(){const o=ORB[CLMAP[CL.orb]],rd=radial(o.n,o.l),R90=rd.qOf(CL.q/100),nd=nodes(o);
+  $('clSay').innerHTML=`已經「測量」<b>${CL.acc.toLocaleString()}</b> 次。要包住 <b>${CL.q}%</b> 的機率，半徑要到 <b>${R90.toFixed(2)} a₀（${(R90*.529).toFixed(2)} Å）</b>`
+    +`；剩下的 ${100-CL.q}% 在這顆球<b>外面</b>——電子還是有機會出現在那裡。`;
+  $('clKV').innerHTML=[['軌域',CL.orb],['最可能的 r',rd.rmax.toFixed(2)+' a₀'],
+    ['平均的 r',(()=>{let s=0;for(let i=0;i<=rd.N;i++)s+=rd.r[i]*rd.p[i]*rd.dr;let z=0;for(let i=0;i<=rd.N;i++)z+=rd.p[i]*rd.dr;return (s/z).toFixed(2)+' a₀';})()],
+    [CL.q+'% 邊界',R90.toFixed(2)+' a₀'],['徑向節點',nd.rad.length?nd.rad.map(r=>r.toFixed(2)).join('、')+' a₀':'無'],
+    ['角節面',nd.ang?nd.ang+' 個':'無（球對稱）'],['累積測量次數',CL.acc.toLocaleString()]]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');}
+
+/* ===================== 實驗台 2：3D 軌域 ===================== */
+let V3=null,SP={orb:'1s',view:'iso',mode:'cloud',ph:true,node:false,ax:true,all:false,spin:false};
+function makeView(cv){const ren=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:false});
+  ren.setPixelRatio(Math.min(2,devicePixelRatio||1));
+  const scene=new THREE.Scene(),cam=new THREE.PerspectiveCamera(40,1,.05,900);cam.position.set(0,0,40);
+  scene.add(new THREE.HemisphereLight(0xffffff,0x667788,1.25));
+  const dl=new THREE.DirectionalLight(0xffffff,1.25);dl.position.set(3,4,6);
+  const ctl=new OrbitControls(cam,cv);ctl.enableDamping=true;ctl.dampingFactor=.12;ctl.rotateSpeed=.9;
+  cam.add(dl);scene.add(cam);
+  const root=new THREE.Group();scene.add(root);
+  ctl.addEventListener('change',()=>kick());
+  return {ren,scene,cam,ctl,root,cv,w:0,h:0};}
+function sizeView(v,ratio,minH,maxH){const w=v.cv.parentElement.clientWidth;
+  const full=document.fullscreenElement===v.cv.parentElement;
+  const h=full?innerHeight:Math.round(clamp(w*ratio,minH,maxH));
+  if(w===v.w&&h===v.h)return;v.w=w;v.h=h;v.ren.setSize(w,h,false);v.cv.style.height=h+'px';
+  v.cam.aspect=w/h;v.cam.updateProjectionMatrix();}
+function clearG(g){while(g.children.length){const o=g.children.pop();
+  o.traverse&&o.traverse(x=>{if(x.geometry)x.geometry.dispose();
+    if(x.material)(Array.isArray(x.material)?x.material:[x.material]).forEach(m=>{if(m.map)m.map.dispose();m.dispose();});});}}
+function mkLabel(txt,col,size){const c=document.createElement('canvas'),fs=72,g0=c.getContext('2d');
+  g0.font=`700 ${fs}px "Noto Sans TC",sans-serif`;const tw=Math.ceil(g0.measureText(txt).width)+20;
+  c.width=tw;c.height=fs*1.4;const g=c.getContext('2d');
+  g.font=`700 ${fs}px "Noto Sans TC",sans-serif`;g.fillStyle=col;g.textAlign='center';g.textBaseline='middle';
+  g.fillText(txt,c.width/2,c.height/2);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c),transparent:true,depthTest:false}));
+  sp.scale.set(size*c.width/c.height,size,1);return sp;}
+const SCACHE={};
+function pts(key,cnt){const k=key+'_'+cnt;if(!SCACHE[k])SCACHE[k]=sample(key,cnt);return SCACHE[k];}
+function cloudObj(key,n,alpha,size,filter,fixed){const raw=pts(key,n);const P=[],Cc=[];
+  const cp=new THREE.Color(fixed||C.pos),cn=new THREE.Color(fixed||C.neg),cg=new THREE.Color(fixed||(C.dark?'#c7cdd4':'#495057'));
+  for(let i=0;i<n;i++){const x=raw[i*4],y=raw[i*4+1],z=raw[i*4+2],s=raw[i*4+3];
+    if(filter&&!filter(x,y,z))continue;P.push(x,y,z);
+    const c=fixed?cg:(SP.ph?(s>0?cp:cn):cg);Cc.push(c.r,c.g,c.b);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(Cc,3));
+  return new THREE.Points(geo,new THREE.PointsMaterial({size,vertexColors:true,transparent:true,opacity:alpha,sizeAttenuation:true,depthWrite:false}));}
+function shellObj(key,n,size,fixed,alpha){/* 邊界面：只留 |ψ|² 接近門檻的點 */
+  const o=ORB[key],rd=radial(o.n,o.l),A=ANG[o.a],R90=rd.qOf(.9);
+  const raw=pts(key,n*3),P=[],Cc=[];
+  const cp=new THREE.Color(fixed||C.pos),cn=new THREE.Color(fixed||C.neg),cg=new THREE.Color(fixed||(C.dark?'#c7cdd4':'#495057'));
+  let thr=0;{const sm=[];for(let i=0;i<4000;i++){const x=raw[i*4],y=raw[i*4+1],z=raw[i*4+2];
+      const r=Math.hypot(x,y,z)||1e-9;const v=Rnl(o.n,o.l,r)*A(x/r,y/r,z/r);sm.push(v*v);}
+    sm.sort((a,b)=>a-b);thr=sm[Math.floor(sm.length*.12)];}
+  for(let i=0;i<n*3;i++){const x=raw[i*4],y=raw[i*4+1],z=raw[i*4+2],s=raw[i*4+3];
+    const r=Math.hypot(x,y,z)||1e-9;const v=Rnl(o.n,o.l,r)*A(x/r,y/r,z/r),q=v*v;
+    if(q<thr*.55||q>thr*1.9)continue;P.push(x,y,z);
+    const c=fixed?cg:(SP.ph?(s>0?cp:cn):cg);Cc.push(c.r,c.g,c.b);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(P,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(Cc,3));
+  return new THREE.Points(geo,new THREE.PointsMaterial({size,vertexColors:true,transparent:true,opacity:alpha||.75,sizeAttenuation:true,depthWrite:false}));}
+function planeN(nx,ny,nz,R,col){const m=new THREE.Mesh(new THREE.PlaneGeometry(R*1.75,R*1.75),
+  new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));
+  m.quaternion.setFromUnitVectors(new THREE.Vector3(0,0,1),new THREE.Vector3(nx,ny,nz).normalize());return m;}
+function coneZ(sign,R,col){/* 頂點在原點、沿 ±z 張開、半頂角 54.74° 的節面圓錐 */
+  const H=R*.62,rad=H*S2;
+  const m=new THREE.Mesh(new THREE.ConeGeometry(rad,H,44,1,true),
+    new THREE.MeshBasicMaterial({color:col,transparent:true,opacity:.16,side:THREE.DoubleSide,depthWrite:false}));
+  m.position.y=-H/2;
+  const gp=new THREE.Group();gp.add(m);gp.rotation.x=sign>0?Math.PI/2:-Math.PI/2;return gp;}
+const SUBSET={1:['px','py','pz'],2:['dz2','dxy','dxz','dyz','dx2']};
+let SUBCOL=null;
+function lobeMesh(key,fixed){/* 課本畫法的邊界面：半徑正比於 |角部分|，顏色分相位 */
+  const o=ORB[key],A=ANG[o.a],rd=radial(o.n,o.l),R0=rd.qOf(.92);
+  const NT=72,NP2=96,pos=[],col=[],idx=[];
+  const cp=new THREE.Color(fixed||C.pos),cn=new THREE.Color(fixed||C.neg);
+  for(let i=0;i<=NT;i++){const th=Math.PI*i/NT,st=Math.sin(th),ct=Math.cos(th);
+    for(let j=0;j<=NP2;j++){const ph=2*Math.PI*j/NP2;
+      const x=st*Math.cos(ph),y=st*Math.sin(ph),z=ct,a=A(x,y,z),r=R0*Math.abs(a);
+      pos.push(x*r,y*r,z*r);const c=(!fixed&&SP.ph&&a<0)?cn:cp;col.push(c.r,c.g,c.b);}}
+  const row=NP2+1;
+  for(let i=0;i<NT;i++)for(let j=0;j<NP2;j++){const a0=i*row+j,b0=a0+1,c0=a0+row,d0=c0+1;
+    idx.push(a0,c0,b0, b0,c0,d0);}
+  const geo=new THREE.BufferGeometry();
+  geo.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  geo.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  geo.setIndex(idx);geo.computeVertexNormals();
+  return new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:.5,metalness:.03,
+    side:THREE.DoubleSide,transparent:!!fixed,opacity:fixed?.78:1}));}
+function build3D(){if(!V3)return;const g=V3.root;clearG(g);
+  const key=SP.orb,o=ORB[key],R=o.R,lw=C.dark?'#dee2e6':'#343a40',sz=R/112;
+  const NP=o.l===0?26000:o.l===1?34000:46000,OP=C.dark?.52:.68;SUBCOL=null;
+  if(SP.all&&o.l>0){const names=SUBSET[o.l].map(a=>Object.keys(ORB).find(k=>ORB[k].n===o.n&&ORB[k].a===a)).filter(Boolean);
+    SUBCOL=names.map((k,i)=>[ORB[k].tag,[C.red,C.green,C.blue,C.purple,C.accent][i%5]]);
+    names.forEach((k,i)=>g.add(lobeMesh(k,[C.red,C.green,C.blue,C.purple,C.accent][i%5])));}
+  else if(SP.mode==='shell')g.add(lobeMesh(key,null));
+  else if(SP.mode==='slice')g.add(cloudObj(key,Math.round(NP*1.6),OP*1.05,sz,(x,y,z)=>y<0));
+  else g.add(cloudObj(key,NP,OP,sz,null));
+  if(SP.ax){const L=R*1.08;
+    [[new THREE.Vector3(L,0,0),'x'],[new THREE.Vector3(0,L,0),'y'],[new THREE.Vector3(0,0,L),'z']].forEach(([v,nm])=>{
+      const ge=new THREE.BufferGeometry().setFromPoints([v.clone().negate(),v]);
+      g.add(new THREE.Line(ge,new THREE.LineBasicMaterial({color:lw,transparent:true,opacity:.45})));
+      const sp=mkLabel(nm,lw,R*.1);sp.position.copy(v).multiplyScalar(1.12);g.add(sp);});}
+  if(SP.node&&!SP.all){const nd=nodes(o),nc=C.node;
+    for(const rn of nd.rad)g.add(new THREE.Mesh(new THREE.SphereGeometry(rn,44,28),
+      new THREE.MeshBasicMaterial({color:nc,transparent:true,opacity:.15,side:THREE.DoubleSide,depthWrite:false})));
+    const a=o.a;
+    if(a==='pz')g.add(planeN(0,0,1,R,nc));
+    if(a==='px')g.add(planeN(1,0,0,R,nc));
+    if(a==='py')g.add(planeN(0,1,0,R,nc));
+    if(a==='dxy'){g.add(planeN(1,0,0,R,nc));g.add(planeN(0,1,0,R,nc));}
+    if(a==='dxz'){g.add(planeN(1,0,0,R,nc));g.add(planeN(0,0,1,R,nc));}
+    if(a==='dyz'){g.add(planeN(0,1,0,R,nc));g.add(planeN(0,0,1,R,nc));}
+    if(a==='dx2'){g.add(planeN(1,1,0,R,nc));g.add(planeN(1,-1,0,R,nc));}
+    if(a==='dz2'){g.add(coneZ(1,R,nc));g.add(coneZ(-1,R,nc));}}
+  fitCam();}
+function fitCam(){if(!V3)return;const R=ORB[SP.orb].R*1.15,t=Math.tan(V3.cam.fov*Math.PI/360);
+  const d=Math.max(R/t,R/(t*Math.max(.5,V3.cam.aspect)))*1.05;
+  const dir={iso:[.9,.5,1],z:[0,.0001,1],x:[1,0,.0001],y:[0,1,.0001]}[SP.view||'iso'];
+  const v=new THREE.Vector3(...dir).normalize().multiplyScalar(d);
+  V3.ctl.target.set(0,0,0);V3.cam.position.copy(v);V3.cam.up.set(0,0,1);V3.ctl.update();kick();}
+function shSay(){const o=ORB[SP.orb],nd=nodes(o),rd=radial(o.n,o.l);
+  const sub=['s','p','d','f'][o.l],cnt=2*o.l+1;
+  $('shSay').innerHTML=`<b>${o.tag}</b>：n＝${o.n}、ℓ＝${o.l}（${sub} 軌域）。`
+    +`角節面 <b>${nd.ang}</b> 個、徑節面 <b>${nd.rad.length}</b> 個，合計 <b>${o.n-1}</b> 個＝n－1。`
+    +`同一個副殼層有 <b>${cnt}</b> 個方向（m<sub>ℓ</sub>＝${mlList(o.l)}），能量與形狀都相同。`;
+  $('shKV').innerHTML=[['軌域',o.tag],['n（主量子數）',o.n],['ℓ（角量子數）',o.l+'（'+sub+'）'],
+    ['這個副殼層的軌域數',cnt+' 個'],['可容納電子',2*cnt+' 個'],
+    ['角節面',nd.ang+' 個'+(o.a==='dz2'?'（圓錐面）':o.l?'（平面）':'')],
+    ['徑節面（球面）',nd.rad.length?nd.rad.map(r=>r.toFixed(2)+' a₀').join('、'):'無'],
+    ['節面總數',(o.n-1)+' 個'],['最可能的 r',rd.rmax.toFixed(2)+' a₀']]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const lg=document.querySelector('#b-shape .legend');
+  if(lg)lg.innerHTML=SUBCOL?SUBCOL.map(([t,c])=>`<span><b style="background:${c}"></b>${t}</span>`).join('')
+    :`<span><b style="background:var(--pos)"></b>ψ ＞ 0</span><span><b style="background:var(--neg)"></b>ψ ＜ 0</span>`;}
+const mlList=l=>Array.from({length:2*l+1},(_,i)=>l-i).map(v=>v>0?'＋'+v:v<0?'－'+(-v):'0').join('、');
+
+/* ===================== 實驗台 3：四個量子數 ===================== */
+const SUB=['s','p','d','f','g'],SUBC=['s-col','p-col','d-col','f-col','f-col'];
+const SHELL=['','K','L','M','N','O','P'];
+const QN={n:3,l:2,m:0,s:1,mode:'h'};
+const half=v=>v>0?'＋½':'－½';
+const msgn=v=>v>0?'＋'+v:v<0?'－'+(-v):'0';
+function qnCheck(n,l,m,s){
+  if(!Number.isInteger(n)||n<1)return[false,'n 必須是 1、2、3… 的正整數'];
+  if(!Number.isInteger(l)||l<0)return[false,'ℓ 必須是 0 或正整數'];
+  if(l>n-1)return[false,`ℓ 只能是 0 ~ n－1，n＝${n} 時 ℓ 最大只能到 ${n-1}，不可能有 ℓ＝${l}（也就是沒有 ${n}${SUB[l]||'?'} 這種軌域）`];
+  if(!Number.isInteger(m))return[false,'m<sub>ℓ</sub> 必須是整數'];
+  if(Math.abs(m)>l)return[false,`m<sub>ℓ</sub> 只能是 －ℓ ~ ＋ℓ，ℓ＝${l} 時最大只到 ${l}，不可能有 m<sub>ℓ</sub>＝${msgn(m)}`];
+  if(Math.abs(Math.abs(s)-.5)>1e-9)return[false,`m<sub>s</sub> 只有 ＋½ 和 －½ 兩個值，不可能是 ${s}`];
+  return[true,''];}
+function buildQnSegs(){const n=QN.n;
+  $('qnL').innerHTML=Array.from({length:n},(_,l)=>`<button data-v="${l}">${l} (${SUB[l]})</button>`).join('');
+  if(QN.l>n-1)QN.l=n-1;segSet($('qnL'),QN.l);
+  const l=QN.l,ms=Array.from({length:2*l+1},(_,i)=>i-l);
+  $('qnM').innerHTML=ms.map(v=>`<button data-v="${v}">${msgn(v)}</button>`).join('');
+  if(Math.abs(QN.m)>l)QN.m=0;segSet($('qnM'),QN.m);segSet($('qnS'),QN.s);}
+function drawQn(){const n=QN.n,{g,w,h}=fit($('cvQn'),.055*n+.10,170+42*n,120+78*n);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const x0=Math.min(74,w*.11),x1=Math.min(x0+104,w*.3),x2=x1+58;
+  const ty=34,rowH=clamp((h-ty-34)/n,34,86),ncy=ty+rowH*n/2,nr=Math.min(32,rowH*.6);
+  g.fillStyle=C.accent;g.beginPath();g.arc(x0,ncy,nr,0,7);g.fill();
+  text(g,'n＝'+n,x0,ncy-9,'#fff',15,'center',700);
+  text(g,SHELL[n]+' 殼層',x0,ncy+10,'#fff',12,'center',600);
+  text(g,'主殼層',x0,16,C.muted,12,'center',700);
+  text(g,'副殼層 (ℓ)',x1+10,16,C.muted,12,'center',700);
+  text(g,'軌域 (m'+'ℓ'+')',Math.min(w-10,x2+140),16,C.muted,12,'left',700);
+  for(let l=0;l<n;l++){const y=ty+rowH*(l+.5);
+    const col=C[SUBC[l]],on=l===QN.l;
+    line(g,x0+nr,ncy,x1-26,y,C.line,on?2:1.2);
+    rrect(g,x1-26,y-14,52,28,8,on?col:'transparent',col,on?2:1.4);
+    text(g,n+SUB[l],x1,y,on?'#fff':col,14,'center',700,true);
+    const cnt=2*l+1,bw=Math.min(34,(w-x2-18)/Math.max(5,cnt)-4);
+    const tot=cnt*(bw+4)-4,bx=x2+6;
+    for(let i=0;i<cnt;i++){const mv=i-l,px=bx+i*(bw+4),sel=on&&mv===QN.m;
+      rrect(g,px,y-14,bw,28,5,sel?C.accent:C.panel,sel?C.accent:C.boxl,sel?2:1.4);
+      text(g,sel?msgn(mv)+(QN.s>0?' ↑':' ↓'):msgn(mv),px+bw/2,y,sel?'#fff':C.muted,sel?12:11,'center',sel?700:600,true);}
+    const tx=bx+tot+10;
+    if(w-tx>170)text(g,`ℓ＝${l}　${cnt} 個軌域　可容納 ${2*cnt} 個電子`,tx,y,on?C.ink:C.muted,12,'left',on?700:500);
+    else if(w-tx>58)text(g,`${cnt} 個軌域`,tx,y,on?C.ink:C.muted,11,'left',on?700:500);}
+  text(g,w<560?`${n} 種副殼層・${n*n} 軌域・最多 ${2*n*n} 電子`:`這個 n：${n} 種副殼層、${n*n} 個軌域、最多 ${2*n*n} 個電子`,
+    w-10,ty+rowH*n+16,C.ink,w<560?12:13,'right',700);}
+const MORD=[];
+(()=>{for(let s=1;s<=9;s++)for(let l=0;l<=3;l++){const n=s-l;if(n>=1&&n>l&&n<=7)MORD.push([n,l]);}
+  MORD.sort((a,b)=>(a[0]+a[1])-(b[0]+b[1])||a[0]-b[0]);})();
+const ONAME=(n,l)=>n+SUB[l];
+function drawEn(){const{g,w,h}=fit($('cvEn'),.42,300,520);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  /* 等距畫法：與講義的能階圖一致，只表示順序不表示真實間距 */
+  const list=MORD.filter(([n,l])=>n<=5&&l<=2&&!(n===5&&l===2)||(n===4&&l===3));
+  const MX=Math.max(...list.map(([n,l])=>MORD.findIndex(o=>o[0]===n&&o[1]===l)));
+  const top=52,bot=h-30,xl=92,xr=w-14,cw=(xr-xl)/4;
+  for(let l=0;l<4;l++)text(g,SUB[l],xl+cw*(l+.5),h-12,C[SUBC[l]],14,'center',700);
+  text(g,'能量',16,top-18,C.muted,12,'left',700);
+  line(g,14,bot,14,top-6,C.line,1.4);
+  g.save();g.beginPath();g.moveTo(10,top-6);g.lineTo(14,top-14);g.lineTo(18,top-6);g.fillStyle=C.line;g.fill();g.restore();
+  const NMAX=Math.max(...list.map(o=>o[0]));
+  const yOf=QN.mode==='h'?(n=>bot-(bot-top)*(n-1)/(NMAX-1))
+    :((n,l)=>{const i=MORD.findIndex(o=>o[0]===n&&o[1]===l);return bot-(bot-top)*i/MX;});
+  for(const[n,l]of list){const y=QN.mode==='h'?yOf(n):yOf(n,l);
+    if(y<top-8||y>bot+8)continue;
+    const col=C[SUBC[l]],on=n===QN.n&&l===QN.l,cnt=2*l+1;
+    const bw=Math.min(cw*.8,cnt*17+6),bx=xl+cw*(l+.5)-bw/2;
+    for(let i=0;i<cnt;i++){const sw=bw/cnt-3,sx=bx+i*(bw/cnt);
+      line(g,sx+1.5,y,sx+sw+1.5,y,on?C.accent:col,on?4:3);}
+    text(g,ONAME(n,l),bx-6,y,on?C.accent:col,on?13:12,'right',on?700:600,true);
+    if(QN.mode==='m')text(g,'n+ℓ='+(n+l),bx+bw+8,y,C.muted,11,'left',500,true);
+    if(QN.mode==='h'&&l===0){const E=(-13.6/(n*n)).toFixed(2);
+      text(g,E+' eV',20,y,C.muted,10,'left',500,true);}}
+  text(g,QN.mode==='h'?'單電子系：同一個 n 的 ns、np、nd、nf 能量完全相同（只看 n）'
+    :'多電子原子：4s（n+ℓ=4）比 3d（n+ℓ=5）低 → 先填 4s',w-12,h-12,C.ink,12,'right',700);
+  text(g,'※ 等距畫法，只表示高低順序',12,h-12,C.muted,10,'left',500);}
+function qnTab(){const rows=[];
+  for(let n=1;n<=5;n++)for(let l=0;l<n;l++){
+    rows.push(`<tr class="${n===QN.n&&l===QN.l?'on':''}" data-n="${n}" data-l="${l}">`
+      +`<td>${l===0?`<b>${n}</b>`:''}</td><td>${l===0?SHELL[n]:''}</td><td>${l}</td>`
+      +`<td class="sub">${n}${SUB[l]}</td><td class="sub">${mlList(l)}</td><td>${2*l+1}</td><td>${2*(2*l+1)}</td>`
+      +`<td>${l===0?n*n:''}</td><td>${l===0?2*n*n:''}</td></tr>`);}
+  $('qnTab').innerHTML='<thead><tr><th>n</th><th>主殼層</th><th>ℓ</th><th>副殼層</th><th>m<sub>ℓ</sub></th>'
+    +'<th>軌域數</th><th>電子數</th><th>n² 軌域</th><th>2n² 電子</th></tr></thead><tbody>'+rows.join('')+'</tbody>';}
+function qnSay(){const{n,l,m,s}=QN,[ok,why]=qnCheck(n,l,m,s===1?.5:-.5);
+  $('qnSay').innerHTML=ok?`（${n}, ${l}, ${msgn(m)}, ${half(s)}）<b style="color:var(--green)">可以存在</b>：`
+      +`這是 <b>${n}${SUB[l]}</b> 其中一個軌域（共 ${2*l+1} 個方向）裡、自旋 ${half(s)} 的那一個電子。`
+      +`（${n}, ${l}, ${msgn(m)}）決定軌域，加上 m<sub>s</sub> 才決定電子。`
+    :`<b style="color:var(--red)">不可能存在</b>：${why}`;
+  $('qnKV').innerHTML=[['軌域名稱',ok?n+SUB[l]:'—'],['n',n+'（'+SHELL[n]+' 殼層）'],
+    ['ℓ',l+'（'+SUB[l]+'，'+(l===0?'球形':l===1?'啞鈴形':l===2?'四葉草／z² 形':'更複雜')+'）'],
+    ['m<sub>ℓ</sub>',msgn(m)+'（共 '+(2*l+1)+' 個方向）'],['m<sub>s</sub>',half(s)],
+    ['這個副殼層',(2*l+1)+' 軌域／'+2*(2*l+1)+' 電子'],
+    ['這個 n',n+' 種／'+n*n+' 軌域／'+2*n*n+' 電子'],
+    ['節面總數',(n-1)+' 個（角 '+l+' ＋徑 '+(n-l-1)+'）']]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');}
+const QNQ=[
+  {t:'單選1-A（4,2,－2,＋½）',n:4,l:2,m:-2,s:.5},
+  {t:'單選1-C（2,2,2,－½）',n:2,l:2,m:2,s:-.5},
+  {t:'單選7-A（3,2,＋2,＋½）',n:3,l:2,m:2,s:.5},
+  {t:'單選7-B（3,3,0,＋½）',n:3,l:3,m:0,s:.5},
+  {t:'單選7-D（3,1,－2,－½）',n:3,l:1,m:-2,s:-.5},
+  {t:'例4(1)-B（3,3,－1,＋½）',n:3,l:3,m:-1,s:.5},
+  {t:'例4(1)-D（5,0,1,－½）',n:5,l:0,m:1,s:-.5},
+  {t:'例4(1)-E（2,1,＋½,－½）',n:2,l:1,m:.5,s:-.5},
+  {t:'例4(2)-B（2,2,－1,－½）',n:2,l:2,m:-1,s:-.5},
+  {t:'例4(2)-D（3,2,－3,－½）',n:3,l:2,m:-3,s:-.5},
+  {t:'多選11-C（3,2,3,－½）',n:3,l:2,m:3,s:-.5},
+  {t:'多選11-D（2,1,－1,3/2）',n:2,l:1,m:-1,s:1.5},
+  {t:'多選11-E（4,3,－2,－½）',n:4,l:3,m:-2,s:-.5}];
+const QNC=[
+  {t:'例3(1) M 殼層有幾種副殼層／幾個軌域？',n:3,l:0,say:'M 殼層就是 n＝3：副殼層有 <b>3 種</b>（3s、3p、3d）、軌域有 <b>n²＝9 個</b>、最多容納 <b>2n²＝18 個</b>電子。'},
+  {t:'例3(1) n＝5 最多幾個電子？',n:5,l:0,say:'n＝5：副殼層 5 種、軌域 <b>25 個</b>、最多 <b>2×5²＝50 個</b>電子。'},
+  {t:'例3(2) 氫原子 －82 kJ/mol 的副層軌域有幾個？',n:4,l:0,say:'氫原子 E<sub>n</sub>＝－1312/n²，－82＝－1312/n² → n²＝16 → <b>n＝4</b>。n＝4 有 4 種副殼層、<b>16 個軌域</b>（4s 1＋4p 3＋4d 5＋4f 7），可容納 32 個電子。'},
+  {t:'例3(3) 氫原子 n＝1~3 共幾個定態？',n:3,l:0,say:'把自旋也算進去：2(1²＋2²＋3²)＝2×14＝<b>28 個</b>。（只算軌域則是 1＋4＋9＝14 個）'},
+  {t:'Ex1(1) n＝3 最多幾個電子？',n:3,l:0,say:'2n²＝<b>18 個</b>。'},
+  {t:'Ex1(2) n＝4、ℓ＝2 最多幾個電子？',n:4,l:2,say:'4d 有 2ℓ＋1＝5 個軌域 → <b>10 個</b>電子。'},
+  {t:'Ex1(3) n＝4、ℓ＝3、m＝2 最多幾個電子？',n:4,l:3,m:2,say:'已經指定到<b>一個軌域</b>（4f 的其中一個方向），所以最多 <b>2 個</b>電子。'},
+  {t:'Ex1(4) n＝2、ℓ＝1、m＝0、s＝½ 呢？',n:2,l:1,m:0,s:.5,say:'四個量子數都指定了＝指定到<b>一個電子</b>，所以只有 <b>1 個</b>。'},
+  {t:'多選9 N 殼層（n＝4）',n:4,l:3,say:'N 殼層＝n＝4：有 s、p、d、f <b>4 種</b>副殼層、<b>16 個</b>軌域、最多 <b>32 個</b>電子 → 選 (B)(D)。'}];
+function fillQnQ(){
+  $('qnQ').innerHTML=QNQ.map((q,i)=>`<span class="chip" data-t="q" data-i="${i}">${q.t}</span>`).join('')
+    +'<span style="flex-basis:100%;height:4px"></span>'
+    +QNC.map((q,i)=>`<span class="chip" data-t="c" data-i="${i}">${q.t}</span>`).join('');
+  $('qnQ').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+    const q=(c.dataset.t==='q'?QNQ:QNC)[+c.dataset.i];
+    const nn=Math.min(5,Math.max(1,q.n));QN.n=nn;$('qnN').value=nn;$('qnNo').textContent=nn;
+    const ll=Math.min(nn-1,Math.max(0,q.l==null?0:q.l));QN.l=ll;
+    QN.m=q.m!=null&&Math.abs(q.m)<=ll&&Number.isInteger(q.m)?q.m:0;
+    QN.s=q.s!=null&&Math.abs(Math.abs(q.s)-.5)<1e-9?(q.s>0?1:-1):1;
+    buildQnSegs();qnTab();
+    const[ok,why]=qnCheck(q.n,q.l==null?ll:q.l,q.m==null?QN.m:q.m,q.s==null?.5:q.s);
+    if(c.dataset.t==='c'){$('qnSay').innerHTML='<b>'+c.textContent+'</b>　'+q.say;}
+    else $('qnSay').innerHTML=ok
+      ?`（${q.n}, ${q.l}, ${msgn(q.m)}, ${half(q.s)}）<b style="color:var(--green)">可以存在</b>——這是 ${q.n}${SUB[q.l]} 的電子。`
+      :`（${q.n}, ${q.l}, ${typeof q.m==='number'&&!Number.isInteger(q.m)?q.m:msgn(q.m)}, ${Math.abs(q.s)===.5?half(q.s):q.s}）<b style="color:var(--red)">不可能</b>：${why}`;
+    kick();});}
+
+/* ===================== 實驗台 4：電子組態 ===================== */
+const SYM='H He Li Be B C N O F Ne Na Mg Al Si P S Cl Ar K Ca Sc Ti V Cr Mn Fe Co Ni Cu Zn Ga Ge As Se Br Kr Rb Sr Y Zr Nb Mo Tc Ru Rh Pd Ag Cd In Sn Sb Te I Xe Cs Ba La Ce Pr Nd'.split(' ');
+const ZHN='氫 氦 鋰 鈹 硼 碳 氮 氧 氟 氖 鈉 鎂 鋁 矽 磷 硫 氯 氬 鉀 鈣 鈧 鈦 釩 鉻 錳 鐵 鈷 鎳 銅 鋅 鎵 鍺 砷 硒 溴 氪 銣 鍶 釔 鋯 鈮 鉬 鎝 釕 銠 鈀 銀 鎘 銦 錫 銻 碲 碘 氙 銫 鋇 鑭 鈰 鐠 釹'.split(' ');
+const NOBLE=[[2,'He'],[10,'Ne'],[18,'Ar'],[36,'Kr'],[54,'Xe']];
+const EXC={24:{'4s':-1,'3d':1},29:{'4s':-1,'3d':1},41:{'5s':-1,'4d':1},42:{'5s':-1,'4d':1},
+  44:{'5s':-1,'4d':1},45:{'5s':-1,'4d':1},46:{'5s':-2,'4d':2},47:{'5s':-1,'4d':1},
+  57:{'4f':-1,'5d':1},58:{'4f':-1,'5d':1}};
+const LOF=nm=>SUB.indexOf(nm.slice(-1)),NOF=nm=>+nm.slice(0,-1);
+const CAP=nm=>2*(2*LOF(nm)+1);
+const CG={z:26,ion:0,ord:'e',exc:true,nob:true,show:1e9,timer:null};
+function madelung(N){const occ={};let left=N;
+  for(const[n,l]of MORD){if(left<=0)break;const nm=ONAME(n,l),k=Math.min(2*(2*l+1),left);
+    if(k>0){occ[nm]=k;left-=k;}}
+  return occ;}
+function configOf(Z,ion,useExc){
+  let occ=madelung(Z);
+  if(useExc&&EXC[Z])for(const[nm,d]of Object.entries(EXC[Z])){occ[nm]=(occ[nm]||0)+d;if(occ[nm]<=0)delete occ[nm];}
+  let q=ion;
+  while(q>0){/* 陽離子：先拿走 n 最大的，同 n 取 ℓ 最大 */
+    const ks=Object.keys(occ).filter(k=>occ[k]>0);if(!ks.length)break;
+    ks.sort((a,b)=>NOF(b)-NOF(a)||LOF(b)-LOF(a));
+    const k=ks[0];occ[k]--;if(!occ[k])delete occ[k];q--;}
+  while(q<0){/* 陰離子：按能階順序補進去 */
+    let done=false;
+    for(const[n,l]of MORD){const nm=ONAME(n,l);if((occ[nm]||0)<2*(2*l+1)){occ[nm]=(occ[nm]||0)+1;done=true;break;}}
+    if(!done)break;q++;}
+  return occ;}
+function orderKeys(occ,ord){const ks=Object.keys(occ);
+  if(ord==='n')ks.sort((a,b)=>NOF(a)-NOF(b)||LOF(a)-LOF(b));
+  else ks.sort((a,b)=>{const ia=MORD.findIndex(o=>ONAME(o[0],o[1])===a),ib=MORD.findIndex(o=>ONAME(o[0],o[1])===b);return ia-ib;});
+  return ks;}
+function unpaired(occ){let u=0;for(const[nm,k]of Object.entries(occ)){const c=2*LOF(nm)+1;u+=k<=c?k:2*c-k;}return u;}
+function arrowsFor(k,c){const a=Array(c).fill('');
+  for(let i=0;i<Math.min(k,c);i++)a[i]='↑';
+  for(let i=0;i<Math.max(0,k-c);i++)a[i]+='↓';
+  return a;}
+function sup(n){return String(n).replace(/[0-9]/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]);}
+function cfgText(occ,ord,nob){const ks=orderKeys(occ,ord);
+  let core='';let use=ks;
+  if(nob){for(let i=NOBLE.length-1;i>=0;i--){const[nz,ns]=NOBLE[i];const nc=madelung(nz);
+      const fits=Object.entries(nc).every(([nm,k])=>(occ[nm]||0)>=k);
+      const tot=Object.values(occ).reduce((a,b)=>a+b,0);
+      if(fits&&tot>=nz){core='['+ns+']';if(tot===nz)return core;
+        const rest={};for(const[nm,k]of Object.entries(occ)){const d=k-(nc[nm]||0);if(d>0)rest[nm]=d;}
+        use=orderKeys(rest,ord);occ=Object.assign({},rest);break;}}}
+  return core+use.map(nm=>nm+sup(occ[nm])).join(' ');}
+function lastElectron(Z,occ,ord,posFirst){
+  /* 依填入順序找最後一個電子的四個量子數 */
+  const ks=orderKeys(occ,'e');const last=ks[ks.length-1];
+  if(!last)return null;const n=NOF(last),l=LOF(last),k=occ[last],c=2*l+1;
+  const ms=[];for(let i=0;i<c;i++)ms.push(posFirst?l-i:i-l);
+  const idx=k<=c?k-1:k-c-1;
+  return {n,l,m:ms[idx],s:k<=c?.5:-.5};}
+function boxRowHTML(nm,arr,hl){const l=LOF(nm),cls=['s','p','d','f2'][l]||'f2';
+  return `<div class="orbrow"><span class="nm">${nm}</span><span class="obox">`
+    +arr.map(a=>`<i class="${a?'f ':''}${cls}">${a}</i>`).join('')+'</span>'
+    +(hl?`<small style="color:var(--muted)">${hl}</small>`:'')+'</div>';}
+function drawCfg(){const Z=CG.z,ion=CG.ion,Ne=Z-ion;
+  const occF=configOf(Z,ion,CG.exc);
+  /* 動畫：只顯示前 CG.show 個電子 */
+  let occ=occF;
+  if(CG.show<Ne){occ={};let left=CG.show;
+    for(const nm of orderKeys(occF,'e')){if(left<=0)break;const k=Math.min(occF[nm],left);if(k>0){occ[nm]=k;left-=k;}}}
+  const sym=SYM[Z-1]||'?',nm=ZHN[Z-1]||'';
+  $('cgSym').textContent=sym;
+  $('cgNm').innerHTML=`${nm}　原子序 Z＝${Z}　電子數 ${Object.values(occ).reduce((a,b)=>a+b,0)}`
+    +(ion?`　<b style="color:var(--accent)">${sym}${ion>0?sup(ion)+'⁺':sup(-ion)+'⁻'}</b>`:'');
+  const ks=orderKeys(occ,CG.ord);
+  $('cgBoxes').innerHTML=ks.map(k=>{const c=2*LOF(k)+1,cnt=occ[k];
+    const note=cnt===2*c?'全滿':cnt===c&&c>1?'半滿':'';
+    return boxRowHTML(k,arrowsFor(cnt,c),note);}).join('');
+  $('cgTxt').innerHTML=cfgText(occ,CG.ord,CG.nob)+(CG.nob?`<br><small style="color:var(--muted);font-weight:500">完整：${cfgText(occ,CG.ord,false)}</small>`:'');
+  const up=unpaired(occ),le=lastElectron(Z,occF,CG.ord,true),le2=lastElectron(Z,occF,CG.ord,false);
+  const core=(()=>{for(let i=NOBLE.length-1;i>=0;i--){const[nz,ns]=NOBLE[i];const nc=madelung(nz);
+      const tot=Object.values(occF).reduce((a,b)=>a+b,0);
+      if(Object.entries(nc).every(([n2,k])=>(occF[n2]||0)>=k)&&tot>=nz)return ns;}return '—';})();
+  const val=(()=>{const c=NOBLE.find(x=>x[1]===core);if(!c)return cfgText(occF,'n',false);
+    const nc=madelung(c[0]),rest={};for(const[n2,k]of Object.entries(occF)){const d=k-(nc[n2]||0);if(d>0)rest[n2]=d;}
+    return orderKeys(rest,'n').map(n2=>n2+sup(rest[n2])).join(' ');})();
+  $('cgKV').innerHTML=[['元素',sym+'（'+nm+'）'],['原子序',Z],['電子數',Ne],
+    ['鈍氣核心',core==='—'?'—':'['+core+']'],['價電子組態',val||'—'],
+    ['不成對電子',up+' 個'+(up?'（順磁性）':'（反磁性）')],
+    ['最後填入的電子<br><small>m 由正→負</small>',le?`(${le.n}, ${le.l}, ${msgn(le.m)}, ${half(le.s>0?1:-1)})`:'—'],
+    ['最後填入的電子<br><small>m 由負→正</small>',le2?`(${le2.n}, ${le2.l}, ${msgn(le2.m)}, ${half(le2.s>0?1:-1)})`:'—'],
+    ['是否為例外',EXC[Z]&&CG.exc?'是（半滿／全滿或鑭系例外）':'否']]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  let say=`<b>${sym}</b>（${nm}，Z＝${Z}）`+(ion?`的 ${ion>0?'＋'+ion:ion} 價離子`:'')
+    +`：<b>${cfgText(occF,CG.ord,CG.nob)}</b>，不成對電子 <b>${up}</b> 個。`;
+  if(EXC[Z]&&CG.exc){const mad=cfgText(configOf(Z,ion,false),CG.ord,CG.nob);
+    say+=`<br>這是<b style="color:var(--accent)">例外</b>：照遞建原理應該是 ${mad}，但 d 軌域<b>半滿／全滿</b>時能量較低，所以 s 的一個電子跑去 d。`;}
+  if(ion>0&&(occF['3d']||occF['4d'])){say+=`<br>注意：填的時候先 4s，<b>游離的時候先掉 4s</b>——所以 ${sym}${sup(ion)}⁺ 沒有 4s 電子。`;}
+  if(CG.show<Ne)say=`正在填第 <b>${CG.show}</b> 個電子……`+say;
+  $('cgSay').innerHTML=say;}
+function cgStep(){if(CG.timer){clearInterval(CG.timer);CG.timer=null;$('cgFill').textContent='▶ 一格一格填';return;}
+  CG.show=0;$('cgFill').textContent='⏸ 暫停';drawCfg();
+  CG.timer=setInterval(()=>{CG.show++;drawCfg();
+    if(CG.show>=CG.z-CG.ion){clearInterval(CG.timer);CG.timer=null;CG.show=1e9;$('cgFill').textContent='▶ 一格一格填';drawCfg();}},230);}
+/* 判斷題（仿講義 例9） */
+const CGJ=[
+  {t:'(A)',r:[['1s',['↑↓']],['2s',['↑↓']],['2p',['↑','↑','']]],v:'基態',
+   why:'6 個電子（C）：由低能階依序填、2p 的兩個電子以相同自旋各佔一個空軌域——遞建、洪德、包立都符合。'},
+  {t:'(B)',r:[['1s',['↑↓']],['2s',['↑↓']],['2p',['↑','↓','']]],v:'激發態',
+   why:'違反<b>洪德定則</b>：2p 的兩個電子進入不同軌域時，自旋方向應該相同（都 ↑ 或都 ↓）。'},
+  {t:'(C)',r:[['1s',['↑↓']],['2s',['↑↓']],['2p',['↑↓','','']]],v:'激發態',
+   why:'違反<b>洪德定則</b>：同能階的 2p 有 3 個空軌域，應該先各放一個（先半滿）才能配對。'},
+  {t:'(D)',r:[['1s',['↑↓']],['2s',['↑']],['2p',['↑','','']]],v:'激發態',
+   why:'違反<b>遞建原理</b>：2s 還沒填滿就跳去填 2p。4 個電子的基態是 1s²2s²。'},
+  {t:'(E)',r:[['1s',['↑↓']],['2s',['↑↓']],['2p',['↑↓','↑','↑']]],v:'基態',
+   why:'8 個電子（O）：2p⁴ 先把三個軌域各放一個同自旋的電子，第四個才配對進第一個軌域。'},
+  {t:'(F)',r:[['1s',['↑↑']]],v:'不可能存在',
+   why:'違反<b>包立不相容原理</b>：同一個軌域裡的兩個電子自旋必須相反。'},
+  {t:'(G)',r:[['1s',['↑↓↑']]],v:'不可能存在',
+   why:'違反<b>包立不相容原理</b>：一個軌域最多只能容納 2 個電子。'},
+  {t:'(H)',r:[['1s',['↑↓']],['2s',['↑↓']],['2d',['↑','','','','']]],v:'不可能存在',
+   why:'<b>沒有 2d 軌域</b>：n＝2 時 ℓ 只能是 0、1，不可能有 ℓ＝2。'},
+  {t:'(I)',r:[['1s',['↑↓']],['2s',['↑↓']],['2p',['↑↓','↑↓','↑↓']],['3s',['↑']],['3p',['','','']],['4s',['↑']]],v:'激發態',
+   why:'違反<b>遞建原理</b>：3p 還空著就先填 4s。12 個電子的基態是 1s²2s²2p⁶3s²。'}];
+function fillCgJ(){
+  $('cgJ').innerHTML=CGJ.map((q,i)=>`<div style="border:1px solid var(--line);border-radius:10px;padding:8px 10px;cursor:pointer;min-width:200px" data-i="${i}">`
+    +`<b style="color:var(--accent)">${q.t}</b>`+q.r.map(([nm,a])=>boxRowHTML(nm,a)).join('')+'</div>').join('');
+  $('cgJ').style.display='flex';$('cgJ').style.flexWrap='wrap';$('cgJ').style.gap='8px';
+  $('cgJ').addEventListener('click',e=>{const d=e.target.closest('[data-i]');if(!d)return;
+    const q=CGJ[+d.dataset.i];const col=q.v==='基態'?'var(--green)':q.v==='激發態'?'var(--accent)':'var(--red)';
+    $('cgSay').innerHTML=`<b>${q.t}</b>　<b style="color:${col}">${q.v}</b>：${q.why}`;
+    $('cgJ').querySelectorAll('[data-i]').forEach(x=>x.style.borderColor='var(--line)');
+    d.style.borderColor=col;});}
+
+/* ===================== 主迴圈與事件 ===================== */
+let BENCH='cloud',need=true,last=0;
+const kick=()=>{need=true;};
+window.kick=kick;
+function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  if(BENCH==='cloud'){
+    if(CL.run){clAdd(90);need=true;}
+    CL.ph+=dt*1.5;if(CL.bohr)need=true;
+    if(need){drawCl();clSay();need=false;}}
+  else if(BENCH==='shape'){
+    if(V3){sizeView(V3,.52,320,660);
+      if(SP.spin){V3.root.rotation.z+=dt*.35;need=true;}
+      V3.ctl.update();if(need){V3.ren.setClearColor(C.panel);V3.ren.render(V3.scene,V3.cam);need=false;}}}
+  else if(BENCH==='qn'){if(need){drawQn();drawEn();need=false;}}
+  requestAnimationFrame(loop);}
+function showBench(v){BENCH=v;
+  ['cloud','shape','qn','cfg'].forEach(k=>$('b-'+k).hidden=(k!==v));
+  segSet($('benchSeg'),v);
+  if(v==='shape'&&!V3){V3=makeView($('cv3'));V3.ren.setClearColor(C.panel);sizeView(V3,.52,320,660);build3D();shSay();}
+  if(v==='shape'){sizeView(V3,.52,320,660);fitCam();}
+  if(v==='cfg')drawCfg();
+  if(v==='qn'){buildQnSegs();qnTab();qnSay();}
+  need=true;}
+segOn($('benchSeg'),showBench);
+
+/* --- 1 --- */
+segOn($('clOrb'),v=>{CL.orb=v;segSet($('clOrb'),v);CL.pts=[];CL.acc=0;clAdd(6000);kick();});
+$('clPlay').onclick=()=>{CL.run=!CL.run;$('clPlay').textContent=CL.run?'⏸ 暫停':'▶ 持續測量';
+  $('clPlay').classList.toggle('primary',!CL.run);kick();};
+$('clShot').onclick=()=>{clAdd(200);kick();};
+$('clClr').onclick=()=>{CL.pts=[];CL.acc=0;kick();};
+$('clP').oninput=e=>{CL.q=+e.target.value;$('clPo').textContent=CL.q+'%';kick();};
+$('clB').onchange=e=>{CL.bd=e.target.checked;kick();};
+$('clBohr').onchange=e=>{CL.bohr=e.target.checked;kick();};
+$('clPo').textContent=CL.q+'%';clAdd(6000);
+
+/* --- 2 --- */
+segOn($('shOrb'),v=>{SP.orb=v;segSet($('shOrb'),v);build3D();shSay();kick();});
+segOn($('shMode'),v=>{SP.mode=v;segSet($('shMode'),v);build3D();kick();});
+segOn($('shView'),v=>{SP.view=v;segSet($('shView'),v);fitCam();});
+$('shPh').onchange=e=>{SP.ph=e.target.checked;build3D();kick();};
+$('shNode').onchange=e=>{SP.node=e.target.checked;build3D();kick();};
+$('shAx').onchange=e=>{SP.ax=e.target.checked;build3D();kick();};
+$('shAll').onchange=e=>{SP.all=e.target.checked;build3D();shSay();kick();};
+$('shSpin').onclick=()=>{SP.spin=!SP.spin;$('shSpin').classList.toggle('primary',SP.spin);kick();};
+
+/* --- 3 --- */
+$('qnN').oninput=e=>{QN.n=+e.target.value;$('qnNo').textContent=QN.n;buildQnSegs();qnTab();qnSay();kick();};
+segOn($('qnL'),v=>{QN.l=+v;if(Math.abs(QN.m)>QN.l)QN.m=0;buildQnSegs();qnTab();qnSay();kick();});
+segOn($('qnM'),v=>{QN.m=+v;segSet($('qnM'),v);qnSay();kick();});
+segOn($('qnS'),v=>{QN.s=+v;segSet($('qnS'),v);qnSay();kick();});
+segOn($('qnE'),v=>{QN.mode=v;segSet($('qnE'),v);kick();});
+$('qnNo').textContent=QN.n;
+$('qnTab').addEventListener('click',e=>{const tr=e.target.closest('tr[data-n]');if(!tr)return;
+  QN.n=+tr.dataset.n;QN.l=+tr.dataset.l;QN.m=0;$('qnN').value=QN.n;$('qnNo').textContent=QN.n;
+  buildQnSegs();qnTab();qnSay();kick();});
+fillQnQ();
+
+/* --- 4 --- */
+$('cgZ').oninput=e=>{CG.z=+e.target.value;$('cgZo').textContent='Z = '+CG.z+'　'+(SYM[CG.z-1]||'');CG.show=1e9;drawCfg();};
+segOn($('cgIon'),v=>{CG.ion=+v;segSet($('cgIon'),v);CG.show=1e9;drawCfg();});
+segOn($('cgOrd'),v=>{CG.ord=v;segSet($('cgOrd'),v);drawCfg();});
+$('cgEx').onchange=e=>{CG.exc=e.target.checked;drawCfg();};
+$('cgNob').onchange=e=>{CG.nob=e.target.checked;drawCfg();};
+$('cgFill').onclick=cgStep;
+$('cgAll').onclick=()=>{if(CG.timer){clearInterval(CG.timer);CG.timer=null;$('cgFill').textContent='▶ 一格一格填';}CG.show=1e9;drawCfg();};
+document.querySelectorAll('#b-cfg .chip[data-z]').forEach(c=>c.onclick=()=>{
+  CG.z=+c.dataset.z;$('cgZ').value=CG.z;$('cgZo').textContent='Z = '+CG.z+'　'+(SYM[CG.z-1]||'');
+  CG.show=1e9;CG.ion=0;segSet($('cgIon'),0);drawCfg();});
+$('cgZo').textContent='Z = '+CG.z+'　'+(SYM[CG.z-1]||'');
+fillCgJ();
+
+/* --- 跨實驗台的講義題目 --- */
+const QALL=[
+  {t:'例1 波耳 vs 量子力學', b:'cloud', say:'(B) 正確。波耳：電子在<b>固定軌道</b>上運轉，軌道半徑固定，不會時而接近時而遠離；量子力學：把電子出現機率大的區域畫出來就是<b>軌域</b>；s 軌域是<b>球形區域</b>不是圓形軌道；電子的運行軌跡<b>無法</b>用儀器觀察（測不準原理）。',
+   f:()=>{CL.orb='1s';segSet($('clOrb'),'1s');CL.bohr=true;$('clBohr').checked=true;CL.pts=[];CL.acc=0;clAdd(4000);}},
+  {t:'例2(1) s 軌域在 (a,0,0) 與 (0,a,0) 的機率', b:'cloud', say:'(C) 一樣是 1×10⁻⁵。s 軌域<b>球形對稱</b>，機率只跟 r 有關、跟方向無關，兩點到核的距離都是 a，所以機率相同。',
+   f:()=>{CL.orb='1s';segSet($('clOrb'),'1s');CL.bohr=false;$('clBohr').checked=false;CL.pts=[];CL.acc=0;clAdd(6000);}},
+  {t:'例2(2) p<sub>x</sub> 軌域在 (a,0,0) 與 (0,a,0) 的機率', b:'shape', say:'(B) 0。p<sub>x</sub> 的兩葉沿 <b>x 軸</b>伸展，yz 平面（x＝0）是它的<b>節面</b>，機率恰好為 0，所以在 (0,a,0) 找不到電子。切到 2p<sub>x</sub> 並打開「標出節面」就看得很清楚。',
+   f:()=>{SP.orb='2px';segSet($('shOrb'),'2px');SP.node=true;$('shNode').checked=true;SP.view='z';segSet($('shView'),'z');build3D();shSay();}},
+  {t:'例6／多選10 軌域的敘述', b:'shape', say:'(A)(B)(C)(D)(E) 都正確：用 <b>3 個</b>量子數 (n, ℓ, m) 描述一個軌域；s 球形對稱、同球面各點機率相同與方向無關；3p 的 ℓ＝1；同軌域兩電子自旋必相反；n＝4 最多 32 個電子（4s 1＋4p 3＋4d 5＋4f 7＝16 軌域）。',
+   f:()=>{SP.orb='3dz2';segSet($('shOrb'),'3dz2');build3D();shSay();}},
+  {t:'單選2 哪個軌域不存在（2d）', b:'qn', say:'(A) 2d 不存在。n＝2 時 ℓ 只能是 0、1，沒有 ℓ＝2，所以沒有 2d。同理沒有 1p、3f。',
+   f:()=>{QN.n=2;$('qnN').value=2;$('qnNo').textContent=2;QN.l=1;QN.m=0;buildQnSegs();qnTab();qnSay();}},
+  {t:'單選4 3d 的敘述哪個錯', b:'qn', say:'(B) 錯。3d 的<b>角量子數 ℓ＝2</b>（不是 3）；主殼層是第 3 層、m<sub>ℓ</sub> 只能到 ±2 所以不可能是 3、空間中共 5 個 d 軌域、不同方位的 3d 能量相同。',
+   f:()=>{QN.n=3;$('qnN').value=3;$('qnNo').textContent=3;QN.l=2;QN.m=2;buildQnSegs();qnTab();qnSay();}},
+  {t:'單選5 哪個是 d 軌域的表示法', b:'qn', say:'(B) (3, 2, 0)。d 軌域要 ℓ＝2，且 n ≥ 3、|m<sub>ℓ</sub>| ≤ 2。(2,2,−1) 的 ℓ 不可超過 n−1；(4,2,+3) 的 m 超出 ±2；(4,3,+2) 是 f 軌域。',
+   f:()=>{QN.n=3;$('qnN').value=3;$('qnNo').textContent=3;QN.l=2;QN.m=0;buildQnSegs();qnTab();qnSay();}},
+  {t:'例1（能階）第 1 族均適用的能階關係', b:'qn', say:'(C) 3s＜4p。關鍵是「第 1 族<b>包含 H</b>」，H 是單電子系、能階<b>只看 n</b>：3s＝3p、4s＝4p＝4d。(A) 4s＝4p 只對 H 成立，對 Na、K 不成立；(B) 對 H 而言 4s（n＝4）比 3d（n＝3）<b>高</b>，不成立；(E) 對 H 而言 3s＝3p，不是小於；(D) 3p 恆大於 2p，寫反了。只有 (C)：H 看 n（3＜4）、多電子看 n＋ℓ（3＜5），兩種都成立。把下面的能階圖在兩個模式之間切換就看得出來。',
+   f:()=>{QN.mode='h';segSet($('qnE'),'h');QN.n=4;$('qnN').value=4;$('qnNo').textContent=4;QN.l=1;QN.m=0;buildQnSegs();qnTab();qnSay();}},
+  {t:'例2（能階）鋰受熱激發，哪個跳躍會放光', b:'qn', say:'<b>❸ 3d→3p 和 ❺ 4s→2p</b> 會放光。放光＝由<b>高能階掉到低能階</b>。Li 是多電子原子，按 n＋ℓ 排：2s(2)＜2p(3)＜3p(4)＜4s(4，n＋ℓ 相同時 n 大者高)＜3d(5)。所以 ❶ 2s→2p、❷ 2p→3d、❹ 3p→4s 都是往上跳＝<b>吸收</b>；❸ 3d→3p（5→4）與 ❺ 4s→2p（4→3）往下掉＝<b>放光</b>。對照下面的多電子能階圖。',
+   f:()=>{QN.mode='m';segSet($('qnE'),'m');QN.n=3;$('qnN').value=3;$('qnNo').textContent=3;QN.l=2;QN.m=0;buildQnSegs();qnTab();qnSay();}},
+  {t:'例3（組態）哪個原子不成對電子最多', b:'cfg', say:'(B) Cr。₂₄Cr 是 [Ar]3d⁵4s¹，3d 五個軌域各一個同自旋電子＋4s 一個＝<b>6 個</b>不成對；N 有 3 個、Mn [Ar]3d⁵4s² 有 5 個、Sc 1 個、Ni 2 個。',
+   f:()=>{CG.z=24;$('cgZ').value=24;CG.ion=0;segSet($('cgIon'),0);CG.show=1e9;}},
+  {t:'₂₆Fe 與 Fe²⁺、Fe³⁺ 的組態', b:'cfg', say:'₂₆Fe：[Ar]4s²3d⁶（照能階寫）＝[Ar]3d⁶4s²（照主殼層寫）。游離時<b>先掉 4s</b>：Fe²⁺＝[Ar]3d⁶、Fe³⁺＝[Ar]3d⁵（半滿較穩定，所以 Fe³⁺ 比 Fe²⁺ 安定）。按右邊的「＋2」「＋3」看變化。',
+   f:()=>{CG.z=26;$('cgZ').value=26;CG.ion=2;segSet($('cgIon'),2);CG.show=1e9;}},
+  {t:'例8 n=1 有 2、n=2 有 8、n=3 有 12 的＋2 價離子', b:'cfg', say:'離子共 2＋8＋12＝22 個電子，所以中性原子有 24 個電子 → <b>₂₄Cr</b>。Cr 基態是 [Ar]3d⁵4s¹，3d 有 <b>5</b> 個電子 → 選 (D)。（離子的 n＝3 有 12 個＝3s²3p⁶3d⁴，正好對應 Cr²⁺＝[Ar]3d⁴）',
+   f:()=>{CG.z=24;$('cgZ').value=24;CG.ion=2;segSet($('cgIon'),2);CG.show=1e9;}},
+  {t:'例10 最後一個電子是 (3,1,＋1,－½) 的元素', b:'cfg', say:'m、s <b>從正值開始</b>填：3p 依 m＝＋1、0、−1 各填一個 ↑（Al、Si、P），第 4 個電子回到 m＝＋1 填 ↓ → <b>S（硫）</b>。若 m <b>從負值開始</b>填：m＝−1、0、＋1 各一個 ↑，再 −1、0、＋1 填 ↓，第 6 個才是 (3,1,＋1,−½) → <b>Ar（氬）</b>。右邊的「最後填入的電子」兩列就是這兩種慣例。',
+   f:()=>{CG.z=16;$('cgZ').value=16;CG.ion=0;segSet($('cgIon'),0);CG.show=1e9;}},
+  {t:'例4（組態）2s²2p¹ 是哪個元素', b:'cfg', say:'價電子組態 2s²2p¹ → 加上 1s² 共 5 個電子 → <b>B（硼）</b>。其餘：3s²3p⁴→S、6s²→Ba、3d⁶4s²→Fe、3s²3p⁶→Ar。把原子序拉到 5、16、56、26、18 對照「價電子組態」那一列。',
+   f:()=>{CG.z=5;$('cgZ').value=5;CG.ion=0;segSet($('cgIon'),0);CG.show=1e9;}},
+  {t:'例7 哪幾組基態電子組態相同（多選）', b:'cfg', say:'<b>(A)(B)(D) 都相同</b>。(A) Al³⁺、Mg²⁺ 都是 10 個電子＝[Ne]；(B) Cu⁺、Zn²⁺ 都是 28 個電子＝[Ar]3d¹⁰；(D) Sc³⁺、K⁺ 都是 18 個電子＝[Ar]。(C) Ni 是 [Ar]3d⁸4s²、Zn²⁺ 是 [Ar]3d¹⁰，電子數一樣但組態不同；(E) Fe 是 [Ar]3d⁶4s²、Ni²⁺ 是 [Ar]3d⁸，也不同。用右邊的離子按鈕一組一組對照。',
+   f:()=>{CG.z=13;$('cgZ').value=13;CG.ion=3;segSet($('cgIon'),3);CG.show=1e9;}},
+  {t:'₅₇La 與 ₆₀Nd 的鑭系例外', b:'cfg', say:'鑭系價電子<b>應該</b>填 4f，但 <b>La 例外</b>：₅₇La＝[Xe]5d¹6s²（不是 4f¹6s²）。₆₀Nd＝[Xe]4f⁴6s² 就照規則。錒系同理：Ac＝[Rn]6d¹7s²、Th＝[Rn]6d²7s² 都是例外。',
+   f:()=>{CG.z=57;$('cgZ').value=57;CG.ion=0;segSet($('cgIon'),0);CG.show=1e9;}}];
+$('qbox').innerHTML=QALL.map((q,i)=>`<span class="chip" data-i="${i}">${q.t}</span>`).join('');
+$('qbox').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+  const q=QALL[+c.dataset.i];
+  $('qbox').querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  q.f&&q.f();showBench(q.b);
+  const tgt={cloud:'clSay',shape:'shSay',qn:'qnSay',cfg:'cgSay'}[q.b];
+  $(tgt).innerHTML='<b>'+c.textContent+'</b>　'+q.say;
+  $('b-'+q.b).scrollIntoView({behavior:'smooth',block:'start'});});
+
+addEventListener('resize',()=>{kick();if(V3)sizeView(V3,.52,320,660);});
+showBench('cloud');
+requestAnimationFrame(loop);
+</script>
+<script src="../shared/site.js"></script>
+</body>
+</html>
