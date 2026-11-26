@@ -79,6 +79,11 @@ header .foldbtn{display:none}
     background:var(--panel);color:var(--ink);font-size:.84rem;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.62}
   .stepbar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
   .stepbar button:hover{opacity:1}
+  .fszoom{transform-origin:0 0;will-change:transform}
+  .fsz11{position:fixed;right:152px;bottom:106px;z-index:61;padding:8px 12px;min-height:40px;display:none;
+    border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
+    font:500 .84rem/1 var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer}
+  html[data-fsz="1"] .fsz11{display:block}
   .fsfix{position:fixed;right:10px;bottom:106px;z-index:60;padding:8px 12px;min-height:40px;
     border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
     font:500 .84rem/1 var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.78}
@@ -201,8 +206,75 @@ header .foldbtn{display:none}
       const el = biggest(); if (el && el.requestFullscreen) el.requestFullscreen(); });
     document.addEventListener('fullscreenchange', () => {
       fx.textContent = document.fullscreenElement ? '⛶ 離開全螢幕' : '⛶ 全螢幕'; });
+    // ---- 全螢幕裡的雙指縮放／平移（瀏覽器在全螢幕時會鎖住原生 pinch-zoom，只能自己來）----
+    const Z = { s: 1, tx: 0, ty: 0, wrap: null, pts: new Map(), d0: 0, s0: 1, mx: 0, my: 0, tx0: 0, ty0: 0 };
+    window.__fsZoom = Z;                                   // 手寫層要用同一組變換才會對齊
+    const SKIP = '.stepbar,.touchbtn,.fsfix,.fsz11,#inkCv,#inkGo,#inkBar';
+    function zApply() {
+      if (!Z.wrap) return;
+      Z.wrap.style.transform = Z.s === 1 ? '' : `translate(${Z.tx}px,${Z.ty}px) scale(${Z.s})`;
+      const fe = document.fullscreenElement;
+      if (fe) fe.style.overflow = Z.s === 1 ? '' : 'hidden';
+      document.documentElement.dataset.fsz = Z.s === 1 ? '' : '1';
+      if (window.__inkRedraw) window.__inkRedraw();
+    }
+    function zReset() { Z.s = 1; Z.tx = 0; Z.ty = 0; zApply(); }
+    function zWrap(fe) {                                   // 把內容包進一層，浮動按鈕留在外面才不會跟著縮放
+      if (!fe || Z.wrap) return;
+      const w = document.createElement('div'); w.className = 'fszoom';
+      [...fe.children].forEach(el => { if (!el.matches(SKIP)) w.appendChild(el); });
+      fe.insertBefore(w, fe.firstChild); Z.wrap = w;
+    }
+    function zUnwrap() {
+      if (!Z.wrap) return;
+      const w = Z.wrap, fe = w.parentElement;
+      while (w.firstChild) fe.insertBefore(w.firstChild, w);
+      w.remove(); Z.wrap = null; Z.s = 1; Z.tx = 0; Z.ty = 0;
+      document.documentElement.dataset.fsz = '';
+      if (fe) fe.style.overflow = '';
+    }
+    const zOn = e => {
+      if (!document.fullscreenElement || e.pointerType === 'mouse') return;
+      // 3D 畫面（OrbitControls）自己要用雙指縮放旋轉，不要搶
+      const t = e.target;
+      if (t && t.closest && (t.closest('.three3d') || (t.tagName === 'CANVAS' &&
+          getComputedStyle(t).touchAction === 'none'))) return;
+      Z.pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (Z.pts.size === 2) {
+        const [a, b] = [...Z.pts.values()];
+        Z.d0 = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; Z.s0 = Z.s;
+        Z.mx = (a[0] + b[0]) / 2; Z.my = (a[1] + b[1]) / 2; Z.tx0 = Z.tx; Z.ty0 = Z.ty;
+        e.preventDefault(); e.stopPropagation();
+      }
+    };
+    const zMove = e => {
+      if (!Z.pts.has(e.pointerId)) return;
+      Z.pts.set(e.pointerId, [e.clientX, e.clientY]);
+      if (Z.pts.size < 2) return;
+      e.preventDefault(); e.stopPropagation();
+      const [a, b] = [...Z.pts.values()];
+      const d = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1;
+      const mx = (a[0] + b[0]) / 2, my = (a[1] + b[1]) / 2;
+      const s = Math.min(4, Math.max(1, Z.s0 * d / Z.d0));
+      // 讓兩指中點下的那一點固定不動，再加上中點自己的位移＝平移
+      Z.tx = mx - (Z.mx - Z.tx0) * (s / Z.s0);
+      Z.ty = my - (Z.my - Z.ty0) * (s / Z.s0);
+      Z.s = s;
+      if (s === 1) { Z.tx = 0; Z.ty = 0; }
+      zApply();
+    };
+    const zOff = e => { Z.pts.delete(e.pointerId); };
+    ['pointerdown'].forEach(t => document.addEventListener(t, zOn, true));
+    document.addEventListener('pointermove', zMove, true);
+    ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, zOff, true));
+    const z11 = document.createElement('button');
+    z11.className = 'fsz11'; z11.type = 'button'; z11.textContent = '↺ 1:1';
+    z11.title = '回到原來的大小'; z11.addEventListener('click', zReset);
+    document.body.appendChild(z11);
+
     document.addEventListener('fullscreenchange', () => {
       const fe = document.fullscreenElement;
+      if (fe) zWrap(fe); else zUnwrap();
       document.querySelectorAll('canvas').forEach(c => { c._fsTop = null; c._fh = 0; });
       // 沒有用共用 fit() 的頁面（畫布高度寫在 CSS 裡）：全螢幕時也讓它長高一點
       if (fe) {
@@ -218,7 +290,7 @@ header .foldbtn{display:none}
       }
       // 全螢幕時只有該元素的子孫會顯示，所以把浮動按鈕搬進去
       const host = fe || document.body;
-      document.querySelectorAll('.stepbar,.touchbtn,.fsfix,#inkCv,#inkGo,#inkBar').forEach(el => host.appendChild(el));
+      document.querySelectorAll('.stepbar,.touchbtn,.fsfix,.fsz11,#inkCv,#inkGo,#inkBar').forEach(el => host.appendChild(el));
       [0, 60, 260, 600].forEach(d => setTimeout(() => dispatchEvent(new Event('resize')), d));
     });
   }
@@ -276,12 +348,16 @@ header .foldbtn{display:none}
     document.body.append(go, bar);
 
     // ---- 幾何：墨水存文件座標，畫布只有視窗大小 ----
+    const Z = () => window.__fsZoom || { s: 1, tx: 0, ty: 0 };     // 全螢幕縮放的狀態
+    window.__inkRedraw = () => { if (cv) draw(); };                 // 縮放時跟著重畫
     const fit = () => { if (!cv) return;
       // 大畫面（例如 4K 電視）用 1 倍就好：全螢幕貼圖愈大，合成愈慢
       const d = Math.min(innerWidth * innerHeight > 2.2e6 ? 1 : 2, devicePixelRatio || 1);
       cv.width = Math.round(innerWidth * d); cv.height = Math.round(innerHeight * d);
       g.setTransform(d, 0, 0, d, 0, 0); draw(); };
-    const pt = e => [e.clientX + scrollX, e.clientY + scrollY, performance.now()];
+    // 墨水存「內容座標」：全螢幕放大／平移後，字才會黏在內容上一起走
+    const pt = e => { const z = Z();
+      return [(e.clientX - z.tx) / z.s + scrollX, (e.clientY - z.ty) / z.s + scrollY, performance.now()]; };
 
     // ---- 鋼筆：用書寫速度算粗細（手指沒有筆壓），起筆收筆收尖 ----
     function widths(st) {
@@ -319,7 +395,8 @@ header .foldbtn{display:none}
     function draw() {
       if (!cv) return; live();
       g.clearRect(0, 0, innerWidth, innerHeight);
-      g.save(); g.translate(-scrollX, -scrollY);
+      const z = Z();
+      g.save(); g.translate(z.tx - scrollX, z.ty - scrollY); if (z.s !== 1) g.scale(z.s, z.s);
       K.strokes.forEach(st => { g.fillStyle = st.c; g.fill(st.path || (st.path = build(st))); });
       if (K.cur) { g.fillStyle = K.cur.c; g.fill(build(K.cur)); }
       const las = K.laser || K.fade;
@@ -340,8 +417,8 @@ header .foldbtn{display:none}
       if (performance.now() - K.fade.t0 > 900) { K.fade = null; draw(); return; }
       draw(); K.tmr = setTimeout(fadeTick, 16);                        // 用計時器，逐幀模式才不會卡住
     }
-    function erase(x, y) { const n = K.strokes.length;
-      K.strokes = K.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < 16 + st.w / 2));
+    function erase(x, y) { const n = K.strokes.length, r = 16 / Z().s;
+      K.strokes = K.strokes.filter(st => !st.pts.some(q => Math.hypot(q[0] - x, q[1] - y) < r + st.w / 2));
       if (K.strokes.length !== n) draw(); }
 
     function wire() {
