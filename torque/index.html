@@ -102,9 +102,11 @@ dl.fk dd{margin:0;font-family:var(--f-mono);font-weight:600;text-align:right}
         <label class="tog"><input type="checkbox" id="tArm" checked> 畫出力臂</label>
         <label class="tog"><input type="checkbox" id="tComp"> 把力分解</label>
         <label class="tog"><input type="checkbox" id="tLine" checked> 畫出力的作用線</label>
+        <label class="tog"><input type="checkbox" id="tFv" checked> 顯示力的大小</label>
+        <button class="btn" id="tHome">⌖ 放回中間</button>
       </div>
       <div class="cbox"><canvas class="cv" id="cvTq" aria-label="力矩與力臂"></canvas></div>
-      <p class="hint">拖曳橘色圓點：靠近螺帽的那個改「施力點到轉軸的距離 r」，箭頭尖端改「力的大小與方向」。綠色虛線是力臂（轉軸到力的作用線的垂直距離）。</p>
+      <p class="hint">拖曳橘色圓點：靠近螺帽的那個改「施力點到轉軸的距離 r」，箭頭尖端改「力的大小與方向」。<b>拖螺帽本體＝整組搬到別的位置；拖扳手桿身＝用手把它轉到任何角度</b>。綠色虛線是力臂（轉軸到力的作用線的垂直距離）。</p>
     </section>
     <div class="grid2">
       <section class="panel box">
@@ -349,7 +351,7 @@ $('storyBack').addEventListener('click',()=>$('qpanel').scrollIntoView({behavior
 // ======================================================================
 // 1 力矩
 // ======================================================================
-const T={F:20,r:30,th:90,scene:'wrench',arm:true,comp:false,ln:true,phi:0,run:false,rows:[]};
+const T={F:20,r:30,th:90,scene:'wrench',arm:true,comp:false,ln:true,fv:true,phi:0,run:false,ox:.27,oy:.6,rows:[]};
 const TFS=1.25;   // 畫面上每 1 N 的箭頭長度（px）
 const setTF=sliderBind('tF',v=>{T.F=v;T.phi=0;T.run=false;},v=>v+' N');
 const setTR=sliderBind('tR',v=>{T.r=v;T.phi=0;T.run=false;},v=>v+' 公分');
@@ -358,6 +360,8 @@ segOn($('tScene'),v=>{T.scene=v;T.phi=0;T.run=false;segSet($('tScene'),v);hideSt
 $('tArm').addEventListener('change',e=>{T.arm=e.target.checked;kick();});
 $('tComp').addEventListener('change',e=>{T.comp=e.target.checked;kick();});
 $('tLine').addEventListener('change',e=>{T.ln=e.target.checked;kick();});
+$('tFv').addEventListener('change',e=>{T.fv=e.target.checked;kick();});
+$('tHome').addEventListener('click',()=>{T.ox=.27;T.oy=.6;T.phi=0;T.run=false;hideStory();kick();});
 $('tPlay').addEventListener('click',()=>{if(T.run){T.run=false;}else{T.phi=0;T.run=true;}UI.tq();kick();});
 $('tRec').addEventListener('click',()=>{const d=T.r*Math.sin(T.th*D2R);T.rows.push({r:T.r,th:T.th,F:T.F,d:d,t:T.F*d/100});if(T.rows.length>8)T.rows.shift();tTab();});
 $('tClr').addEventListener('click',()=>{T.rows=[];tTab();});
@@ -374,7 +378,7 @@ TICK.tq=dt=>{if(!T.run)return false;const d=T.r*Math.sin(T.th*D2R),tq=T.F*d/100;
 DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   g.clearRect(0,0,W,H);
   const sc=(W*.52)/55;
-  const ox=W*.27,oy=H*.6,th=T.th*D2R,phi=T.phi;
+  const ox=W*T.ox,oy=H*T.oy,th=T.th*D2R,phi=T.phi;
   // 背景
   if(T.scene==='door'){g.fillStyle=C.floor;g.globalAlpha=.5;g.fillRect(0,0,W,H);g.globalAlpha=1;
     g.fillStyle=C.steel;g.fillRect(ox-26,oy-H*.42,20,H*.84);text(g,'牆',ox-16,oy-H*.42+14,{col:C.panel,size:12,align:'center',bold:true});}
@@ -403,7 +407,7 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   text(g,'r ＝ '+T.r+' cm',px/2,36,{col:C.muted,size:12,align:'center'});
   // 力
   if(T.F>0){arrow(g,px,py,px+ux*Lf,py+uy*Lf,C.accent,3.4);
-    text(g,'F ＝ '+T.F+' N',px+ux*Lf+(ux>=0?8:-8),py+uy*Lf-6,{col:C.accent,size:13,bold:true,align:ux>=0?'left':'right'});
+    if(T.fv)text(g,'F ＝ '+T.F+' N',px+ux*Lf+(ux>=0?8:-8),py+uy*Lf-6,{col:C.accent,size:13,bold:true,align:ux>=0?'left':'right'});
     if(T.comp){const fpar=T.F*Math.cos(th),fper=T.F*Math.sin(th);
       arrow(g,px,py,px+fpar*TFS,py,C.ghost,2.4);
       arrow(g,px,py,px,py-fper*TFS,C.green,2.6);
@@ -436,16 +440,29 @@ DRAW.tq=()=>{const cv=$('cvTq'),{W,H}=fit(cv,.5,300,470),g=cv.getContext('2d');
   $('tSay').textContent=say;};
 // 拖曳
 dragger($('cvTq'),()=>{const cv=$('cvTq'),W=cv.clientWidth,H=cv._fh||300;
-  const sc=(W*.52)/55,ox=W*.27,oy=H*.6,th=T.th*D2R,phi=T.phi;
+  const sc=(W*.52)/55,ox=W*T.ox,oy=H*T.oy,th=T.th*D2R,phi=T.phi;
   const c=Math.cos(-phi),s=Math.sin(-phi),rp=T.r*sc;
   const pxs=ox+c*rp,pys=oy+s*rp;
   const ux=Math.cos(th),uy=-Math.sin(th),Lf=16+T.F*TFS;
   const hx=pxs+(c*ux-s*uy)*Lf,hy=pys+(s*ux+c*uy)*Lf;
+  let rot=0;
   return [{x:hx,y:hy,r:30,move:(x,y)=>{const dx=x-pxs,dy=y-pys;const lx=c*dx+s*dy,ly=-s*dx+c*dy;
       let F=clamp(Math.round((Math.hypot(lx,ly)-16)/TFS/2)*2,0,200),a=Math.atan2(-ly,lx)/D2R;
-      T.F=F;T.th=Math.round(a/5)*5;setTF(T.F);setTTh(T.th);T.phi=0;T.run=false;}},
-    {x:pxs,y:pys,r:26,move:(x,y)=>{const dx=x-ox,dy=y-oy;const lx=c*dx+s*dy;
-      T.r=clamp(Math.round(lx/sc),5,50);setTR(T.r);T.phi=0;T.run=false;}}];},()=>{hideStory();kick();});
+      T.F=F;T.th=Math.round(a/5)*5;setTF(T.F);setTTh(T.th);T.run=false;}},
+    {x:pxs,y:pys,r:22,move:(x,y)=>{const dx=x-ox,dy=y-oy;const lx=c*dx+s*dy;
+      T.r=clamp(Math.round(lx/sc),5,50);setTR(T.r);T.run=false;}},
+    // 拖螺帽本體＝整組搬家
+    {x:ox,y:oy,r:24,free:true,move:(x,y)=>{T.ox=clamp(x/W,.12,.88);T.oy=clamp(y/H,.14,.86);T.run=false;}},
+    // 拖桿身＝用手轉動（hit 回傳較大的值，所以上面三個圓點優先）
+    {x:ox,y:oy,r:400,free:true,
+     hit:(x,y)=>{const dx=x-ox,dy=y-oy,L=Math.hypot(dx,dy);
+       if(L<18||L>rp+Lf+30)return 999;
+       const along=(c*dx+s*dy),perp=Math.abs(-s*dx+c*dy);
+       return (along>0&&perp<22)?150:999;},
+     start:()=>{rot=NaN;},
+     move:(x,y)=>{const a=Math.atan2(y-oy,x-ox);
+       if(isNaN(rot))rot=a+T.phi;                       // 記住手指與桿身的相對角度
+       T.phi=rot-a;T.run=false;}}];},()=>{hideStory();kick();});
 
 // ======================================================================
 // 2 槓桿平衡
