@@ -163,7 +163,7 @@ header .foldbtn{display:none}
     if (embedded || !document.fullscreenEnabled) return;
     const add = () => {
       document.querySelectorAll('canvas,svg').forEach(cv => {
-        if (cv.dataset.nofs || cv.closest('button,.chip,.seg')) return;
+        if (cv.id === 'inkCv' || cv.dataset.nofs || cv.closest('button,.chip,.seg')) return;   // 手寫層不是內容，不要幫它加全螢幕鈕也不要把它的父層變成 .fsbox
         const box = cv.closest('.cbox') || cv.parentElement;
         if (!box || box.querySelector(':scope > .fsbtn')) return;
         if (cv.clientWidth && cv.clientWidth < 180) return;
@@ -262,8 +262,8 @@ header .foldbtn{display:none}
     let cv = null, g = null;                        // 第一次要寫字才真的建立畫布
     function ensure() {
       if (cv) return cv;
-      cv = document.createElement('canvas'); cv.id = 'inkCv'; g = cv.getContext('2d');
-      document.body.appendChild(cv); wire(); fit(); return cv;
+      cv = document.createElement('canvas'); cv.id = 'inkCv'; cv.dataset.nofs = '1'; g = cv.getContext('2d');
+      (document.fullscreenElement || document.body).appendChild(cv); wire(); fit(); return cv;
     }
     function live() {                                // 有字、正在寫、或雷射還在淡出才需要這張畫布
       if (!cv) return;
@@ -413,7 +413,10 @@ header .foldbtn{display:none}
     lasB.addEventListener('click', () => { K.tool = 'laser'; sync(); });
     erB.addEventListener('click', () => { K.tool = 'er'; sync(); });
     function set(v) { K.on = v; document.documentElement.dataset.ink = v ? '1' : '';
-      if (v) ensure(); else { K.pid = null; K.cur = null; K.laser = null; K.fade = null; clearTimeout(K.tmr); }
+      // 全螢幕時只有全螢幕元素的子孫會顯示，所以每次開啟都把三個元素搬到正確的容器
+      if (v) { ensure(); const host = document.fullscreenElement || document.body;
+        [cv, go, bar].forEach(el => { if (el && el.parentElement !== host) host.appendChild(el); }); fit(); }
+      else { K.pid = null; K.cur = null; K.laser = null; K.fade = null; clearTimeout(K.tmr); }
       sync(); live(); draw(); }
     go.addEventListener('click', () => set(true));
     addEventListener('keydown', e => { if (e.key === 'Escape' && K.on) set(false); });
