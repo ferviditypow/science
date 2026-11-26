@@ -38,26 +38,27 @@ header .foldbtn{display:none}
 .grpnav a.u[aria-current="page"] .no,.grpnav a.u[aria-current="page"] small{color:inherit;opacity:.75}
 @media (max-width:700px){.grpnav{gap:6px 10px}.grpnav>.tlabel{display:none}.grpnav .units{flex-wrap:nowrap;overflow-x:auto;max-width:100%;padding-bottom:4px;scrollbar-width:thin}.grpnav a.u{white-space:nowrap;min-height:34px;padding:5px 11px}}
 
-  /* ---- 手寫批註與雷射筆 ---- */
+  /* ---- 手寫批註與雷射筆（右側直立工具列） ---- */
   #inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom;display:none}
   #inkCv.live{display:block}                      /* 沒有字也沒在寫的時候整張拿掉，不然 4K 螢幕每一幀都要合成一張全螢幕貼圖 */
   html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
-  #inkGo{position:fixed;right:10px;bottom:106px;z-index:60;min-height:40px;padding:8px 12px;border-radius:999px;
-    border:1px solid var(--line);background:var(--panel);color:var(--ink);font:500 .84rem/1 var(--f-body);
-    box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.62}
+  #inkGo{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:60;width:42px;height:54px;padding:0;
+    border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);font-size:19px;line-height:1;
+    box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.72}
   #inkGo:hover{opacity:1}
   html[data-ink="1"] #inkGo{display:none}
-  #inkBar{position:fixed;left:50%;transform:translateX(-50%);bottom:10px;z-index:70;display:none;gap:5px;
-    align-items:center;padding:7px 9px;border-radius:16px;border:1px solid var(--line);background:var(--panel);
-    box-shadow:0 8px 28px rgba(0,0,0,.2);flex-wrap:wrap;max-width:97vw;justify-content:center}
+  #inkBar{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:70;display:none;
+    flex-direction:column;gap:4px;align-items:center;padding:7px 6px;border-radius:18px;
+    border:1px solid var(--line);background:var(--panel);box-shadow:0 8px 28px rgba(0,0,0,.2);
+    max-height:94vh;overflow-y:auto}
   html[data-ink="1"] #inkBar{display:flex}
-  #inkBar button{min-height:44px;min-width:44px;padding:6px 11px;border-radius:11px;border:1px solid var(--line);
-    background:var(--panel);color:var(--ink);font:600 14px/1 var(--f-body);cursor:pointer}
+  #inkBar button{width:40px;height:38px;min-height:0;padding:0;border-radius:10px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);font:600 13px/1 var(--f-body);cursor:pointer}
   #inkBar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-  #inkBar .sw{width:34px;min-width:34px;height:34px;min-height:34px;border-radius:50%;padding:0;border:2px solid var(--line)}
+  #inkBar .sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line)}
   #inkBar .sw[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
-  #inkBar .sep{width:1px;height:30px;background:var(--line);margin:0 3px}
-  #inkBar .more{display:none;gap:5px;align-items:center}
+  #inkBar .sep{width:28px;height:1px;background:var(--line);margin:2px 0;flex:none}
+  #inkBar .more{display:none;flex-direction:column;gap:4px;align-items:center}
   #inkBar.open .more{display:flex}
   @media print{#inkGo,#inkBar,#inkCv{display:none!important}}
   .touchbtn{position:fixed;right:10px;bottom:10px;z-index:60;padding:8px 12px;min-height:40px;
@@ -69,7 +70,7 @@ header .foldbtn{display:none}
 
   .fsbox{position:relative}
   .fsbtn{position:absolute;top:6px;right:6px;z-index:6;width:34px;height:34px;padding:0;border-radius:9px;
-    border:1px solid var(--line);background:var(--panel);color:var(--muted);font-size:15px;line-height:1;cursor:pointer;opacity:.5}
+    border:1.5px solid var(--line);background:var(--panel);color:var(--ink);font-size:16px;line-height:1;cursor:pointer;opacity:.85}
   .fsbtn:hover,.fsbtn:focus-visible{opacity:1;border-color:var(--accent);color:var(--ink)}
   :fullscreen{overflow:auto}
   .panel:fullscreen,.cbox:fullscreen{background:var(--panel);border-radius:0;max-width:none;width:100vw;height:100vh;padding:8px 14px 14px}
@@ -78,7 +79,11 @@ header .foldbtn{display:none}
     background:var(--panel);color:var(--ink);font-size:.84rem;font-weight:500;box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.62}
   .stepbar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
   .stepbar button:hover{opacity:1}
-  @media print{.stepbar,.fsbtn{display:none}}
+  .fsfix{position:fixed;right:10px;bottom:106px;z-index:60;padding:8px 12px;min-height:40px;
+    border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
+    font:500 .84rem/1 var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.78}
+  .fsfix:hover{opacity:1}
+  @media print{.stepbar,.fsbtn,.fsfix{display:none}}
 `;
   const st = document.createElement('style');
   st.textContent = css;
@@ -178,6 +183,24 @@ header .foldbtn{display:none}
     add();
     let t = 0;
     addEventListener('click', () => { clearTimeout(t); t = setTimeout(add, 300); }, true);
+    // 固定在右下角的一顆：對「現在畫面上最大的那張圖」所在的面板全螢幕
+    const fx = document.createElement('button');
+    fx.className = 'fsfix'; fx.type = 'button'; fx.textContent = '⛶ 全螢幕';
+    fx.title = '把目前這個實驗台放到最大';
+    document.body.appendChild(fx);
+    const biggest = () => { let best = null, ba = 0;
+      document.querySelectorAll('canvas,svg').forEach(el => {
+        if (el.id === 'inkCv') return;
+        const r = el.getBoundingClientRect();
+        if (r.width < 180 || r.bottom < 0 || r.top > innerHeight) return;
+        const vis = Math.min(r.bottom, innerHeight) - Math.max(r.top, 0);
+        const a = r.width * Math.max(0, vis); if (a > ba) { ba = a; best = el; } });
+      return best && (best.closest('.panel') || best.closest('.cbox') || best); };
+    fx.addEventListener('click', () => {
+      if (document.fullscreenElement) { document.exitFullscreen(); return; }
+      const el = biggest(); if (el && el.requestFullscreen) el.requestFullscreen(); });
+    document.addEventListener('fullscreenchange', () => {
+      fx.textContent = document.fullscreenElement ? '⛶ 離開全螢幕' : '⛶ 全螢幕'; });
     document.addEventListener('fullscreenchange', () => {
       const fe = document.fullscreenElement;
       document.querySelectorAll('canvas').forEach(c => { c._fsTop = null; c._fh = 0; });
@@ -195,7 +218,7 @@ header .foldbtn{display:none}
       }
       // 全螢幕時只有該元素的子孫會顯示，所以把浮動按鈕搬進去
       const host = fe || document.body;
-      document.querySelectorAll('.stepbar,.touchbtn,#inkCv,#inkGo,#inkBar').forEach(el => host.appendChild(el));
+      document.querySelectorAll('.stepbar,.touchbtn,.fsfix,#inkCv,#inkGo,#inkBar').forEach(el => host.appendChild(el));
       [0, 60, 260, 600].forEach(d => setTimeout(() => dispatchEvent(new Event('resize')), d));
     });
   }
@@ -247,7 +270,7 @@ header .foldbtn{display:none}
       cv.classList.toggle('live', K.on || K.strokes.length > 0 || !!K.cur || !!K.laser || !!K.fade);
     }
     const go = document.createElement('button'); go.id = 'inkGo'; go.type = 'button';
-    go.textContent = '✏️ 寫字／雷射筆';
+    go.textContent = '✏️';
     go.title = '整頁都可以用手指寫字；寫字時不會動到動畫。再按「完成」回到操作模式。';
     const bar = document.createElement('div'); bar.id = 'inkBar';
     document.body.append(go, bar);
@@ -353,37 +376,38 @@ header .foldbtn{display:none}
       b.textContent = txt; if (title) b.title = title; if (cls) b.className = cls;
       (host || bar).appendChild(b); return b; };
     const sep = host => (host || bar).appendChild(Object.assign(document.createElement('span'), { className: 'sep' }));
-    const penB = mk('✒️ 鋼筆', '寫得慢的地方粗、快的地方細');
-    const lasB = mk('🔦 雷射筆', '手指按著時軌跡會留著，放開後約 1 秒淡出');
-    const erB = mk('橡皮擦', '劃過哪一筆就擦掉哪一筆');
+    const penB = mk('✒️', '鋼筆：寫得慢的地方粗、快的地方細');
+    const lasB = mk('🔦', '雷射筆：手指按著時軌跡會留著，放開後約 1 秒淡出');
+    const erB = mk('⌫', '橡皮擦：劃過哪一筆就擦掉哪一筆');
     sep();
     const swaps = [], mkSw = (c, host) => { const b = mk('', '筆的顏色', 'sw', host); b.style.background = c;
       b.addEventListener('click', () => { K.col = c; K.tool = 'pen'; sync(); }); swaps.push([b, c]); return b; };
     COLS.forEach(c => mkSw(c));
     const moreWrap = document.createElement('span'); moreWrap.className = 'more'; bar.appendChild(moreWrap);
     MORE.forEach(c => mkSw(c, moreWrap));
-    const moreB = mk('更多色', '展開其他顏色');
+    const moreB = mk('＋', '展開其他顏色');
     moreB.addEventListener('click', () => { bar.classList.toggle('open');
       moreB.setAttribute('aria-pressed', String(bar.classList.contains('open'))); });
     sep();
     const WS = [[2.5, '細'], [4.5, '中'], [9, '粗']];
-    const wbs = WS.map(([w, nm]) => { const b = mk(nm, '筆的粗細');
-      b.addEventListener('click', () => { K.w = w; K.tool = 'pen'; sync(); }); return b; });
+    const wB = mk('中', '筆的粗細：按一下換細／中／粗');
+    wB.addEventListener('click', () => { const i = WS.findIndex(w => w[0] === K.w);
+      [K.w] = WS[(i + 1) % WS.length]; K.tool = 'pen'; sync(); });
     sep();
-    const unB = mk('↶ 復原', ''); unB.addEventListener('click', () => { K.strokes.pop(); draw(); });
-    let arm = 0; const clB = mk('清除', '全部清掉（要按兩次）');
+    const unB = mk('↶', '復原上一筆'); unB.addEventListener('click', () => { K.strokes.pop(); draw(); });
+    let arm = 0; const clB = mk('🗑', '全部清掉（要按兩次）');
     clB.addEventListener('click', () => {
-      if (Date.now() - arm < 3000) { K.strokes = []; arm = 0; clB.textContent = '清除'; draw(); }
-      else { arm = Date.now(); clB.textContent = '真的清除？';
-        setTimeout(() => { if (Date.now() - arm >= 3000) clB.textContent = '清除'; }, 3100); } });
-    mk('✓ 完成', '回到操作動畫（寫的字會留著）').addEventListener('click', () => set(false));
+      if (Date.now() - arm < 3000) { K.strokes = []; arm = 0; clB.textContent = '🗑'; clB.style.color = ''; draw(); }
+      else { arm = Date.now(); clB.textContent = '確定'; clB.style.color = 'var(--red,#e03131)';
+        setTimeout(() => { if (Date.now() - arm >= 3000) { clB.textContent = '🗑'; clB.style.color = ''; } }, 3100); } });
+    mk('✓', '完成：回到操作動畫（寫的字會留著）').addEventListener('click', () => set(false));
 
     function sync() {
       penB.setAttribute('aria-pressed', String(K.tool === 'pen'));
       lasB.setAttribute('aria-pressed', String(K.tool === 'laser'));
       erB.setAttribute('aria-pressed', String(K.tool === 'er'));
       swaps.forEach(([b, c]) => b.setAttribute('aria-pressed', String(K.tool === 'pen' && c === K.col)));
-      wbs.forEach((b, i) => b.setAttribute('aria-pressed', String(K.tool === 'pen' && WS[i][0] === K.w)));
+      wB.textContent = (WS.find(w => w[0] === K.w) || WS[1])[1];
     }
     penB.addEventListener('click', () => { K.tool = 'pen'; sync(); });
     lasB.addEventListener('click', () => { K.tool = 'laser'; sync(); });
