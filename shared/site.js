@@ -258,7 +258,7 @@ header .foldbtn{display:none}
     const COLS = ['#2b3138', '#e03131', '#e8590c', '#1864ab', '#2b8a3e', '#7048e8'];
     const MORE = ['#f59f00', '#e64980', '#0ca678', '#a9754a', '#868e96', '#ffffff'];
     const K = { on: false, tool: 'pen', col: COLS[1], w: 4.5, strokes: [], cur: null, pid: null,
-                laser: null, fade: null, tmr: 0 };
+                laser: null, fade: null, tmr: 0, act: new Set(), multi: false };
     let cv = null, g = null;                        // 第一次要寫字才真的建立畫布
     function ensure() {
       if (cv) return cv;
@@ -346,8 +346,18 @@ header .foldbtn{display:none}
 
     function wire() {
     cv.addEventListener('pointerdown', e => {
-      if (!K.on || K.pid !== null) return;                             // 同時只認一根手指＝手掌不會畫到
-      K.pid = e.pointerId; cv.setPointerCapture(e.pointerId); e.preventDefault();
+      if (!K.on) return;
+      K.act.add(e.pointerId);
+      if (K.act.size >= 2) {            // 第二根手指下去＝要縮放／平移，不是要寫字
+        K.multi = true;                 // 把剛剛畫到一半的那一筆丟掉，才不會留下一條雜線
+        if (K.cur) { K.cur = null; }
+        if (K.laser) { K.laser = null; }
+        if (K.pid !== null) { try { cv.releasePointerCapture(K.pid); } catch (_) {} K.pid = null; }
+        draw(); return;
+      }
+      if (K.multi || K.pid !== null) return;                           // 同時只認一根手指＝手掌不會畫到
+      K.pid = e.pointerId; try { cv.setPointerCapture(e.pointerId); } catch (_) {}   // 抓不到就算了，不能讓它中斷後面的程式（否則 K.pid 卡住就再也寫不了）
+      e.preventDefault();
       const q = pt(e);
       if (K.tool === 'er') { erase(q[0], q[1]); return; }
       if (K.tool === 'laser') { clearTimeout(K.tmr); K.fade = null; K.laser = { pts: [q] }; draw(); return; }
@@ -363,6 +373,8 @@ header .foldbtn{display:none}
       t.pts.push(q); draw();
     });
     const up = e => {
+      K.act.delete(e.pointerId);
+      if (K.act.size === 0) K.multi = false;        // 手指全部離開才解除「多指手勢中」
       if (e.pointerId !== K.pid) return; K.pid = null;
       if (K.laser) { K.fade = { pts: K.laser.pts, t0: performance.now() }; K.laser = null;
         clearTimeout(K.tmr); K.tmr = setTimeout(fadeTick, 16); return; }
