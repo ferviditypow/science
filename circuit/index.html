@@ -694,9 +694,9 @@ cvS.addEventListener('pointerup',tEnd,true);cvS.addEventListener('pointercancel'
 cvS.addEventListener('pointerdown',ev=>{if(ev.button===2||gest)return;const [x,y]=posS(ev);cvS.setPointerCapture(ev.pointerId);cvS.focus({preventScroll:true});ev.preventDefault();const snap=snapState();
   for(const h of probeH()){const p=probePos(h);if(p&&Math.hypot(x-p[0],y-p[1])<11){drg={k:'probe',h,x,y};return;}}
   if(SP.tool==='wire'){drg={k:'wire',x,y,cx:x,cy:y,snap};return;}
-  if(SP.tool==='grp'){const hit=nodeAt(x,y,10)||((q)=>q?q.a:null)(elAt(x,y));
+  if(SP.tool==='grp'){const he=elAt(x,y),hit=nodeAt(x,y,10)||(he?he.a:null);
     if(hit){const ids=connNodes(hit);
-      drg={k:'grp',ids,o0:ids.map(k=>[SP.N[k].x,SP.N[k].y]),x,y,snap};return;}
+      drg={k:'grp',ids,o0:ids.map(k=>[SP.N[k].x,SP.N[k].y]),e:he,x,y,snap};return;}
     drg={k:'pan',x,y,ox:SP.ox,oy:SP.oy};return;}
   {const rb=rotBtn(selEl());if(rb&&Math.hypot(x-rb[0],y-rb[1])<13){const e=selEl();pushHist(snap);rotEl(e);dropEl(e,true);edSolve();edPanel();kick();return;}}
   for(const h of endHandles(selEl())){if(Math.hypot(x-h.x,y-h.y)<8){drg={k:'end',e:selEl(),end:h.end,x,y,snap};return;}}
@@ -726,6 +726,7 @@ function ptrUp(ev){if(!drg)return;const [x,y]=ev?posS(ev):[drg.x,drg.y];const d=
   else if(!d.moved){// 點一下
     if(d.k==='el'){SP.sel=d.e.id;SP.selN=null;if(d.e.t==='sw'||d.e.t==='jump'){pushHist(d.snap);d.e.on=!d.e.on;}}
     else if(d.k==='node'){SP.selN=d.id;SP.sel=null;}else if(d.k==='lab'){if(d.L.e){SP.sel=d.L.e.id;SP.selN=null;}else{SP.selN=d.L.n;SP.sel=null;}}
+    else if(d.k==='grp'){if(d.e){SP.sel=d.e.id;SP.selN=null;}else{SP.sel=null;SP.selN=null;}}
     else if(d.k==='pan'){SP.sel=null;SP.selN=null;}}
   else{if(d.k==='end'||d.k==='node'){tryMerge(d.id);changed=true;}else if(d.k==='el'){dropEl(d.e);changed=true;}else if(d.k==='lab')changed=true;}
   if(changed)pushHist(d.snap);edSolve();edPanel();spUI();kick();}
