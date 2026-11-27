@@ -141,7 +141,7 @@ kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);bord
       <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
         <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button><button data-v="off">不顯示</button></span></div>
       <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
-      <details class="edhelp"><summary>怎麼操作（點開看說明）</summary><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動；拖黑色接點＝整個接點一起移動；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li><li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>觸控螢幕：兩根手指旋轉、縮放、移動整個畫面（接近 0°、90° 會自動對齊）；滑鼠用 Shift＋滾輪旋轉。</li><li>串接進去的元件和安培計：拖離電路或刪除時，原位置會自動用導線接回去。</li><li>選取元件後點旁邊的 ↻ 可以轉 90°；元件放到導線上會自動串接進去。</li><li><b>「⬚ 框選」</b>：拖出一個方框，完全落在框裡的元件會一起被選起來；<b>「◌ 套索」</b>：手指圈一圈，圈起來的一起選。在這兩個模式下<b>點一下元件＝選取整個電路</b>。</li><li>選起來之後會自動回到「選取／移動」：<b>直接拖其中任何一個就整組移動</b>，Del 整組刪除、R 整組旋轉、F 整組左右翻、Ctrl＋D 整組複製、Esc 取消選取。</li><li>複製：<b>Ctrl＋C</b> 複製（有選元件就複製那一個，沒選就複製整個畫面）、<b>Ctrl＋V</b> 貼上、<b>Ctrl＋D</b> 直接複製一份。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、B 框選、L 套索、Ctrl＋Z 復原。</li></ul></details>
+      <details class="edhelp"><summary>怎麼操作（點開看說明）</summary><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動（串在電路中間的會自動用導線接回去）；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li><li><b>黑色接點與導線不能拖</b>，所以電路的形狀不會被不小心拉歪；點一下它們仍然可以選取、刪除。</li><li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>觸控螢幕：兩根手指旋轉、縮放、移動整個畫面（接近 0°、90° 會自動對齊）；滑鼠用 Shift＋滾輪旋轉。</li><li>串接進去的元件和安培計：拖離電路或刪除時，原位置會自動用導線接回去。</li><li>選取元件後點旁邊的 ↻ 可以轉 90°；元件放到導線上會自動串接進去。</li><li><b>「⬚ 框選」</b>：拖出一個方框，完全落在框裡的元件會一起被選起來；<b>「◌ 套索」</b>：手指圈一圈，圈起來的一起選。在這兩個模式下<b>點一下元件＝選取整個電路</b>。</li><li>選起來之後會自動回到「選取／移動」：<b>直接拖其中任何一個就整組移動</b>，Del 整組刪除、R 整組旋轉、F 整組左右翻、Ctrl＋D 整組複製、Esc 取消選取。</li><li>複製：<b>Ctrl＋C</b> 複製（有選元件就複製那一個，沒選就複製整個畫面）、<b>Ctrl＋V</b> 貼上、<b>Ctrl＋D</b> 直接複製一份。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、B 框選、L 套索、Ctrl＋Z 復原。</li></ul></details>
     </div>
     <div class="grid2">
       <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF"></div><ul class="checks" id="spC"></ul></section>
@@ -731,15 +731,20 @@ cvS.addEventListener('pointerdown',ev=>{if(ev.button===2||gest)return;const [x,y
   if(SP.tool==='box'||SP.tool==='lasso'){drg={k:SP.tool,x,y,cx:x,cy:y,pts:[[x,y]],e:elAt(x,y),snap};return;}
   {const rb=rotBtn(selEl());if(rb&&Math.hypot(x-rb[0],y-rb[1])<13){const e=selEl();pushHist(snap);rotEl(e);dropEl(e,true);edSolve();edPanel();kick();return;}}
   for(const h of endHandles(selEl())){if(Math.hypot(x-h.x,y-h.y)<8){drg={k:'end',e:selEl(),end:h.end,x,y,snap};return;}}
-  const n=nodeAt(x,y,8);if(n){drg={k:'node',id:n,x,y,snap};return;}
+  /* 接點與導線不給拖：拖它們會把電路拉成斜的。點一下仍可選取，拖曳則變成移動畫面 */
+  const n=nodeAt(x,y,8);if(n){drg={k:'pan',n,x,y,ox:SP.ox,oy:SP.oy};return;}
   const L=labAt(x,y);if(L){const o=L.e||SP.N[L.n];drg={k:'lab',L,x,y,lo:(o.lo||[0,0]).slice(),snap};return;}
   const e=elAt(x,y);
   if(e&&inSel(e)&&SP.selSet.length>1){const ids=selNodes();
     drg={k:'gset',ids,o0:ids.map(k=>[SP.N[k].x,SP.N[k].y]),e,x,y,snap};return;}
+  if(e&&(e.t==='wire'||e.t==='jump')){drg={k:'pan',e,x,y,ox:SP.ox,oy:SP.oy,snap};return;}
   if(e){if(SP.selSet.length)clrSet();drg={k:'el',e,x,y,a0:Object.assign({},SP.N[e.a]),b0:Object.assign({},SP.N[e.b]),snap};return;}
   drg={k:'pan',x,y,ox:SP.ox,oy:SP.oy};});
 cvS.addEventListener('pointermove',ev=>{const [x,y]=posS(ev);
-  if(!drg){let cur='default';if(SP.tool==='wire')cur='crosshair';else if((()=>{const rb=rotBtn(selEl());return rb&&Math.hypot(x-rb[0],y-rb[1])<13;})())cur='pointer';else if(probeH().some(h=>{const p=probePos(h);return p&&Math.hypot(x-p[0],y-p[1])<11;})||nodeAt(x,y,8)||labAt(x,y))cur='grab';else if(elAt(x,y))cur='pointer';else cur='move';cvS.style.cursor=cur;
+  if(!drg){let cur='default';if(SP.tool==='wire')cur='crosshair';
+    else if(SP.tool==='box')cur="url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><rect x='4.5' y='4.5' width='19' height='19' fill='none' stroke='white' stroke-width='3.4' stroke-dasharray='4 3'/><rect x='4.5' y='4.5' width='19' height='19' fill='none' stroke='%23e8590c' stroke-width='1.8' stroke-dasharray='4 3'/><path d='M14 1v6M14 21v6M1 14h6M21 14h6' stroke='white' stroke-width='3.4'/><path d='M14 1v6M14 21v6M1 14h6M21 14h6' stroke='%23e8590c' stroke-width='1.6'/></svg>\") 14 14, crosshair";
+    else if(SP.tool==='lasso')cur="url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='28' height='28'><ellipse cx='14' cy='11' rx='10' ry='7.5' fill='none' stroke='white' stroke-width='3.4' stroke-dasharray='4 3'/><ellipse cx='14' cy='11' rx='10' ry='7.5' fill='none' stroke='%23e8590c' stroke-width='1.8' stroke-dasharray='4 3'/><path d='M14 18.5c0 4 -3 5 -5 8.5' stroke='white' stroke-width='3.4' fill='none'/><path d='M14 18.5c0 4 -3 5 -5 8.5' stroke='%23e8590c' stroke-width='1.6' fill='none'/></svg>\") 14 14, crosshair";
+    else if(inSel(elAt(x,y))&&SP.selSet.length>1)cur='move';else if((()=>{const rb=rotBtn(selEl());return rb&&Math.hypot(x-rb[0],y-rb[1])<13;})())cur='pointer';else if(probeH().some(h=>{const p=probePos(h);return p&&Math.hypot(x-p[0],y-p[1])<11;})||labAt(x,y))cur='grab';else if(nodeAt(x,y,8)||elAt(x,y))cur='pointer';else cur='move';cvS.style.cursor=cur;
     if(SP.tool==='wire'){hov=[x,y];kick();}return;}
   const mv=Math.hypot(x-drg.x,y-drg.y)>4;drg.moved=drg.moved||mv;if(!drg.moved)return;const [wx,wy]=wxy(x,y);
   switch(drg.k){
@@ -776,7 +781,10 @@ function ptrUp(ev){if(!drg)return;const [x,y]=ev?posS(ev):[drg.x,drg.y];const d=
   else if(!d.moved){// 點一下
     if(d.k==='el'){SP.sel=d.e.id;SP.selN=null;if(d.e.t==='sw'||d.e.t==='jump'){pushHist(d.snap);d.e.on=!d.e.on;}}
     else if(d.k==='node'){SP.selN=d.id;SP.sel=null;}else if(d.k==='lab'){if(d.L.e){SP.sel=d.L.e.id;SP.selN=null;}else{SP.selN=d.L.n;SP.sel=null;}}
-    else if(d.k==='pan'){SP.sel=null;SP.selN=null;clrSet();}}
+    else if(d.k==='pan'){clrSet();
+      if(d.e){SP.sel=d.e.id;SP.selN=null;if(d.e.t==='jump'){pushHist(d.snap);d.e.on=!d.e.on;}}
+      else if(d.n){SP.selN=d.n;SP.sel=null;}
+      else{SP.sel=null;SP.selN=null;}}}
   else{if(d.k==='end'||d.k==='node'){tryMerge(d.id);changed=true;}else if(d.k==='el'){dropEl(d.e);changed=true;}else if(d.k==='lab')changed=true;}
   if(changed)pushHist(d.snap);edSolve();edPanel();spUI();kick();}
 cvS.addEventListener('pointerup',ptrUp);cvS.addEventListener('pointercancel',()=>ptrUp(null));
