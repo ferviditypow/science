@@ -1,0 +1,844 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>電解質、pH 值與酸鹼中和</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Noto+Sans+TC:wght@400;500;700&family=Noto+Serif+TC:wght@700;900&display=swap">
+<link rel="stylesheet" href="../shared/ui.css">
+<style>
+:root{--acid:#e03131;--base:#1864ab;--neut:#2b8a3e;--ion-p:#e8590c;--ion-n:#1c7ed6;
+  --mol:#868e96;--wire:#495057;--glass:#dee2e6;--liq:#a5d8ff}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){--acid:#ff6b6b;--base:#4dabf7;--neut:#51cf66;
+  --ion-p:#ff922b;--ion-n:#74c0fc;--mol:#868e96;--wire:#adb5bd;--glass:#495057;--liq:#1b3a52}}
+:root[data-theme="dark"]{--acid:#ff6b6b;--base:#4dabf7;--neut:#51cf66;--ion-p:#ff922b;--ion-n:#74c0fc;
+  --mol:#868e96;--wire:#adb5bd;--glass:#495057;--liq:#1b3a52}
+.wrap{max-width:1500px}
+.abgrid{display:grid;grid-template-columns:minmax(0,1fr) 310px;gap:14px}
+@media (max-width:900px){.abgrid{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:auto 1fr;gap:3px 10px;font-size:.88rem}
+.kv dt{color:var(--muted)}.kv dd{margin:0;font-family:var(--f-mono);font-weight:600}
+.subtab{width:100%;border-collapse:collapse;font-size:.84rem}
+.subtab th,.subtab td{border:1px solid var(--line);padding:4px 7px;text-align:center}
+.subtab th{background:var(--accent-soft);font-weight:700}
+.subtab tr.on td{background:var(--accent-soft);font-weight:700}
+.subtab td.l{text-align:left}
+.calc{display:flex;align-items:center;gap:6px;flex-wrap:wrap;font-family:var(--f-mono);font-size:1.02rem}
+.calc input{width:70px;padding:6px 8px;border:1.5px solid var(--line);border-radius:7px;background:var(--panel);
+  color:var(--ink);font:600 1rem var(--f-mono);text-align:center;min-height:var(--tap)}
+.work{font:600 1.02rem/2 var(--f-mono);margin-top:8px}
+.work b{color:var(--accent)}
+.swatch{display:inline-block;width:15px;height:15px;border-radius:4px;border:1px solid var(--line);vertical-align:-3px;margin-right:5px}
+.indrow{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:.86rem;flex-wrap:wrap}
+.indrow .nm{width:62px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <div class="eyebrow"><a href="../">自然科模擬動畫</a> · 高一化學 · 電解質、酸鹼、pH 值 · <a href="../combustion/">燃燒與化學式</a></div>
+      <h1>電解質、pH 值與酸鹼中和</h1>
+    </div>
+    <p>四個實驗台：哪些東西的水溶液會導電（固態、熔融態、水溶液差在哪）、pH 值怎麼算怎麼看、水本身也會解離所以中性不一定是 pH 7、以及酸鹼中和時溶液裡發生什麼事。對應講義〈電解質、酸鹼命名、pH 值計算、鹽類酸鹼性〉。</p>
+  </header>
+
+  <section class="panel">
+    <div class="toolbar">
+      <span class="tlabel">實驗台</span>
+      <span class="seg" id="benchSeg">
+        <button data-v="elec" aria-pressed="true"><span class="n">1</span>電解質與導電</button>
+        <button data-v="ph" aria-pressed="false"><span class="n">2</span>pH 值</button>
+        <button data-v="kw" aria-pressed="false"><span class="n">3</span>水的解離與溫度</button>
+        <button data-v="neut" aria-pressed="false"><span class="n">4</span>酸鹼中和</button>
+      </span>
+    </div>
+  </section>
+
+  <!-- ===== 1 電解質與導電 ===== -->
+  <section class="bench" id="b-elec">
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">放進去的東西</span>
+        <span class="seg" id="elSub"></span>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">狀態</span>
+        <span class="seg" id="elSt"><button data-v="s" aria-pressed="true">固態</button><button data-v="l">液態（熔融態）</button><button data-v="aq">水溶液</button></span>
+        <div class="slider" style="min-width:230px"><span class="tlabel">濃度</span><input type="range" id="elC" min="0.01" max="1" step="0.01" value="1"><output id="elCo"></output></div>
+        <label class="tog"><input type="checkbox" id="elZ" checked> 放大看粒子</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvEl" aria-label="電解質導電實驗"></canvas></div>
+      <p class="hint">電路：1.5 V 電池 → 安培計 → 燈泡 → 兩根鉑電極。溶液裡<b>有可以自由移動的離子</b>才會形成電流：正離子往負極跑、負離子往正極跑。電流大小看的是<b>離子的總量</b>，所以同樣 1.0 M，完全解離的強電解質電流大、只解離一點點的弱電解質電流很小。</p>
+    </div>
+    <div class="verdict" id="elSay"></div>
+    <div class="abgrid">
+      <section class="panel box"><h3>為什麼要分固態、熔融態、水溶液</h3>
+        <ul>
+          <li><b>離子化合物</b>（NaCl、KNO₃、CuSO₄…）：固態時離子被鎖在晶格上<b>不能移動</b>，所以不導電；熔化或溶於水後離子鬆開可以跑，就能導電。</li>
+          <li><b>分子化合物</b>（HCl、CH₃COOH、蔗糖…）：本身由分子組成，固態、純液態<b>都沒有離子</b>，一律不導電；只有溶於水後會解離的（HCl、醋酸）水溶液才導電。</li>
+          <li>所以「HCl(l) 不導電、HCl(aq) 導電」不是矛盾——純的氯化氫液體裡只有 HCl 分子，是水把它拆成 H⁺ 和 Cl⁻ 的。</li>
+          <li><b>非電解質</b>（蔗糖、乙醇）：溶在水裡仍然是完整的分子，沒有離子，所以水溶液也不導電。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">現在這一杯</p><dl class="kv" id="elKV"></dl>
+        <div style="overflow-x:auto;margin-top:10px"><table class="subtab" id="elTab"></table></div>
+      </section>
+    </div>
+    <section class="panel"><p class="ptitle">講義題目 <small>點一下會設定好實驗並說明</small></p><div class="cbox" id="elQ"></div></section>
+  </section>
+
+  <!-- ===== 2 pH 值 ===== -->
+  <section class="bench" id="b-ph" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="slider" style="min-width:300px"><span class="tlabel">pH</span><input type="range" id="phV" min="0" max="14" step="0.01" value="7"><output id="phVo"></output></div>
+        <button class="btn" id="phD10">加水稀釋 10 倍</button>
+        <button class="btn" id="phD100">稀釋 100 倍</button>
+        <label class="tog"><input type="checkbox" id="phInd" checked> 顯示指示劑</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvPh" aria-label="pH 值尺"></canvas></div>
+      <p class="hint">拖滑桿或直接點 pH 尺。<b>pH 每差 1，[H⁺] 就差 10 倍</b>——pH 2 的溶液氫離子濃度是 pH 5 的 1000 倍。稀釋只會讓 pH 往 7 靠近，<b>永遠不會越過 7</b>（酸再怎麼稀釋也不會變鹼）。</p>
+    </div>
+    <div class="verdict" id="phSay"></div>
+    <div class="abgrid">
+      <section class="panel box"><p class="ptitle">pH 計算練習 <small>講義例 1、例 2 的題型</small></p>
+        <div class="toolbar" style="padding:0 0 8px">
+          <span class="seg" id="phMode"><button data-v="h2p" aria-pressed="true">給 [H⁺] 求 pH</button><button data-v="p2h">給 pH 求 [H⁺]</button></span>
+        </div>
+        <div id="phCalcH" class="calc">[H⁺] ＝ <input id="phA" type="number" value="2" step="0.1" min="1" max="9.99"> × 10<sup>−</sup><input id="phB" type="number" value="4" step="1" min="0" max="14"> M</div>
+        <div id="phCalcP" class="calc" hidden>pH ＝ <input id="phP" type="number" value="4.7" step="0.1" min="0" max="14"></div>
+        <div class="work" id="phWork"></div>
+        <p class="hint" style="margin-top:6px">常用的對數值：log 2＝0.30、log 3＝0.48、log 4＝0.60、log 5＝0.70、log 6＝0.78、log 7＝0.85、log 8＝0.90、log 9＝0.95。</p>
+      </section>
+      <section class="panel box"><p class="ptitle">現在這杯溶液</p><dl class="kv" id="phKV"></dl>
+        <p class="ptitle" style="margin-top:12px">酸鹼指示劑</p><div id="phIndList"></div>
+      </section>
+    </div>
+    <section class="panel"><p class="ptitle">講義題目</p><div class="cbox" id="phQ"></div></section>
+  </section>
+
+  <!-- ===== 3 水的解離與溫度 ===== -->
+  <section class="bench" id="b-kw" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <div class="slider" style="min-width:300px"><span class="tlabel">溫度</span><input type="range" id="kwT" min="0" max="100" step="1" value="25"><output id="kwTo"></output></div>
+        <span class="chip" data-t="0">0 ℃</span><span class="chip" data-t="25">25 ℃</span><span class="chip" data-t="50">50 ℃</span><span class="chip" data-t="100">100 ℃</span>
+        <label class="tog"><input type="checkbox" id="kwP" checked> 畫出水分子的解離</label>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvKw" aria-label="水的離子積與溫度"></canvas></div>
+      <p class="hint">純水本身就會有極少量自我解離：H₂O ＋ H₂O ⇌ H₃O⁺ ＋ OH⁻。25 ℃ 時十億個水分子裡大約只有兩個解離，但<b>溫度越高解離越多</b>，所以 K<sub>w</sub> 變大、pK<sub>w</sub> 變小、純水的 pH 變小——<b>但純水永遠是中性的</b>，因為 [H⁺] 始終等於 [OH⁻]。</p>
+    </div>
+    <div class="verdict" id="kwSay"></div>
+    <div class="abgrid">
+      <section class="panel box"><h3>「中性」到底怎麼判斷</h3>
+        <ul>
+          <li>真正的定義是 <b>[H⁺] ＝ [OH⁻]</b>，也就是 <b>pH ＝ pOH</b>，等於 <b>pH ＝ pK<sub>w</sub>／2</b>。</li>
+          <li>「pH ＝ 7 是中性」<b>只在 25 ℃ 成立</b>，因為那時 pK<sub>w</sub> 剛好是 14。</li>
+          <li>50 ℃ 時 pK<sub>w</sub> ＝ 13.26，純水的 pH 是 6.63——pH 小於 7，<b>但它還是中性</b>。</li>
+          <li>所以考題問「必為酸性」時，可靠的判斷是 <b>pH ＜ pOH</b> 或 <b>pH ＜ pK<sub>w</sub>／2</b>；用「pH ＜ 7」在非 25 ℃ 會答錯。</li>
+          <li>升溫使 K<sub>w</sub> 變大，代表水的解離是<b>吸熱</b>反應（勒沙特列原理：升溫往吸熱方向移動）。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">這個溫度下的純水</p><dl class="kv" id="kwKV"></dl>
+        <p class="ptitle" style="margin-top:12px">三種判斷式比一比</p><div id="kwJudge" style="font-size:.88rem;line-height:1.9"></div>
+      </section>
+    </div>
+    <section class="panel"><p class="ptitle">講義題目</p><div class="cbox" id="kwQ"></div></section>
+  </section>
+
+  <!-- ===== 4 酸鹼中和 ===== -->
+  <section class="bench" id="b-neut" hidden>
+    <div class="panel">
+      <div class="toolbar">
+        <span class="tlabel">燒杯裡（被滴定）</span>
+        <span class="seg" id="nuA"><button data-v="HCl" aria-pressed="true">鹽酸 HCl（強酸）</button><button data-v="HAc">醋酸 CH₃COOH（弱酸）</button></span>
+        <div class="slider" style="min-width:200px"><span class="tlabel">濃度</span><input type="range" id="nuCa" min="0.01" max="1" step="0.01" value="0.1"><output id="nuCao"></output></div>
+      </div>
+      <div class="toolbar">
+        <span class="tlabel">滴管裡（滴下去）</span>
+        <span class="seg" id="nuB"><button data-v="NaOH" aria-pressed="true">氫氧化鈉 NaOH（強鹼）</button><button data-v="NH3">氨水 NH₃（弱鹼）</button></span>
+        <div class="slider" style="min-width:200px"><span class="tlabel">濃度</span><input type="range" id="nuCb" min="0.01" max="1" step="0.01" value="0.1"><output id="nuCbo"></output></div>
+      </div>
+      <div class="toolbar">
+        <button class="btn primary" id="nuRun">▶ 連續滴</button>
+        <button class="btn" id="nuDrop">＋ 滴 1 mL</button>
+        <button class="btn" id="nuEq">⇥ 滴到當量點</button>
+        <button class="btn" id="nuRst">⟲ 重來</button>
+        <span class="tlabel">指示劑</span>
+        <span class="seg" id="nuInd"><button data-v="none" aria-pressed="true">不加</button><button data-v="mo">甲基橙</button><button data-v="li">石蕊</button><button data-v="pp">酚酞</button></span>
+      </div>
+      <div class="cbox"><canvas class="cv" id="cvNu" aria-label="酸鹼中和"></canvas></div>
+      <p class="hint">H⁺ 與 OH⁻ 碰在一起變成水（H⁺ ＋ OH⁻ → H₂O），這個反應<b>放熱</b>，所以溫度會上升。剩下的陽離子與陰離子組成<b>鹽</b>。注意：<b>中和後不一定是中性</b>——要看生成的鹽會不會水解。</p>
+    </div>
+    <div class="verdict" id="nuSay"></div>
+    <div class="abgrid">
+      <section class="panel box"><h3>中和後是酸性還是鹼性</h3>
+        <ul>
+          <li><b>強酸 ＋ 強鹼</b> → 鹽不水解，<b>中性</b>。例：NaCl、KNO₃、Na₂SO₄。</li>
+          <li><b>強酸 ＋ 弱鹼</b> → 鹽水解呈<b>酸性</b>。例：NH₄Cl（NH₄⁺ 會放出 H⁺）。</li>
+          <li><b>弱酸 ＋ 強鹼</b> → 鹽水解呈<b>鹼性</b>。例：CH₃COONa、Na₂CO₃（CH₃COO⁻ 會搶走水的 H⁺）。</li>
+          <li><b>弱酸 ＋ 弱鹼</b> → 看誰比較強。CH₃COOH 與 NH₃ 的 K<sub>a</sub>、K<sub>b</sub> 剛好都是 1.8×10⁻⁵，所以 CH₃COONH₄ 接近中性。</li>
+          <li>生活應用：胃酸過多吃 Mg(OH)₂、Al(OH)₃；酸性土壤加草木灰 K₂CO₃；胰液的 HCO₃⁻ 中和流進十二指腸的胃酸。</li>
+        </ul>
+      </section>
+      <section class="panel box"><p class="ptitle">現在的狀態</p><dl class="kv" id="nuKV"></dl></section>
+    </div>
+    <section class="panel"><p class="ptitle">講義題目</p><div class="cbox" id="nuQ"></div></section>
+  </section>
+
+  <div class="notes">
+    <div><h2>導電的不是「電子在水裡跑」</h2><p>金屬導電靠自由電子，<b>溶液導電靠離子移動</b>。正離子往負極、負離子往正極，兩邊電極上再發生得失電子的反應，電路才通。所以沒有離子就沒有電流——這也是為什麼糖水不導電。</p></div>
+    <div><h2>強弱不是濃稀</h2><p>「強酸」指的是<b>解離程度</b>幾乎 100%，「濃」指的是<b>濃度</b>大。0.001 M 的鹽酸是<b>稀的強酸</b>，18 M 的醋酸是<b>濃的弱酸</b>。同樣 1.0 M，鹽酸的電流遠大於醋酸，就是因為醋酸只解離了約 0.4%。</p></div>
+    <div><h2>pH 7 不等於中性</h2><p>中性的定義是 [H⁺]＝[OH⁻]，寫成 pH＝pK<sub>w</sub>／2。只有 25 ℃ 時 pK<sub>w</sub>＝14，中性才剛好是 7。100 ℃ 的純水 pH 約 6.13，仍然是中性的。考題只要出現「50 ℃」「90 ℃」就是在考這件事。</p></div>
+    <div><h2>稀釋不會變號</h2><p>pH 3 的鹽酸稀釋 1000 倍會接近 pH 6，再稀釋下去只會無限逼近 7，<b>不會變成 8</b>。因為水本身會提供 10⁻⁷ M 的 H⁺，稀釋到後來是水說了算。計算時酸要用 [H⁺] 算、鹼要用 [OH⁻] 算，算完再換回 pH。</p></div>
+    <div><h2>中和不一定中性</h2><p>「恰好中和」是指酸與鹼的莫耳數剛好相等，不是指 pH＝7。弱酸配強鹼（醋酸＋NaOH）在當量點是<b>鹼性</b>的，因為生成的醋酸根會水解。只有強酸配強鹼才會落在中性。</p></div>
+    <div><h2>指示劑要選對</h2><p>指示劑是弱酸或弱鹼，在不同 pH 呈現不同顏色。測強酸強鹼用石蕊就夠，但弱酸配強鹼的當量點在鹼性區，要用<b>酚酞</b>（8.3～10.0）才準；用甲基橙（3.1～4.5）會太早變色。</p></div>
+  </div>
+</div>
+
+<script>
+(()=>{
+const $=id=>document.getElementById(id);
+const clamp=(v,a,b)=>v<a?a:v>b?b:v;
+const segSet=(el,v)=>el.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.v===String(v))));
+const segOn=(el,f)=>el.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&el.contains(b)&&!b.disabled)f(b.dataset.v);});
+const C={};
+function readColors(){const s=getComputedStyle(document.documentElement);
+  ['bg','panel','ink','muted','line','accent','blue','green','red','purple','accent-soft','blue-soft',
+   'acid','base','neut','ion-p','ion-n','mol','wire','glass','liq'].forEach(k=>C[k]=s.getPropertyValue('--'+k).trim());
+  C.dark=document.documentElement.dataset.theme==='dark'||(document.documentElement.dataset.theme!=='light'&&matchMedia('(prefers-color-scheme: dark)').matches);}
+readColors();
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{readColors();kick();});
+new MutationObserver(()=>{readColors();kick();}).observe(document.documentElement,{attributes:true,attributeFilter:['data-theme']});
+const DPR=()=>Math.min(3,(devicePixelRatio||1)*((window.visualViewport&&visualViewport.scale)||1));
+function fit(cv,ratio,minH,maxH){const w=cv.parentElement.clientWidth,dpr=DPR();
+  const mh=window.FSH?FSH(cv,maxH):maxH;const h=Math.round(clamp(w*ratio,minH,mh));
+  if(Math.abs((cv._w||0)-w)>2||Math.abs((cv._h||0)-h)>2){cv._w=w;cv._h=h;
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);cv.style.height=h+'px';}
+  else if(Math.abs(cv.width-w*dpr)>2){cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);}
+  const g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return {g,w,h};}
+function text(g,s,x,y,col,size=13,al='left',bold=600,mono=false){g.fillStyle=col;g.textAlign=al;g.textBaseline='middle';
+  g.font=`${bold} ${size}px ${mono?'"IBM Plex Mono",monospace':'"Noto Sans TC",sans-serif'}`;g.fillText(s,x,y);}
+function line(g,x1,y1,x2,y2,col,w=1.4,dash){g.save();if(dash)g.setLineDash(dash);g.strokeStyle=col;g.lineWidth=w;
+  g.lineCap='round';g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.restore();}
+function rrect(g,x,y,w,h,r,fill,stroke,lw=1.4){g.beginPath();g.roundRect(x,y,w,h,r);
+  if(fill){g.fillStyle=fill;g.fill();}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke();}}
+function dot(g,x,y,r,fill,stroke,lw=1.2){g.beginPath();g.arc(x,y,r,0,7);if(fill){g.fillStyle=fill;g.fill();}
+  if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke();}}
+const hsh=(i,k)=>{const v=Math.sin(i*127.1+k*311.7)*43758.5453;return v-Math.floor(v);};
+const sci=(v,d=2)=>{if(v===0)return '0';const e=Math.floor(Math.log10(Math.abs(v)));const m=v/Math.pow(10,e);
+  return (+m.toFixed(d))+'×10'+sup(e);};
+const sup=n=>String(n).replace(/-/g,'⁻').replace(/[0-9]/g,d=>'⁰¹²³⁴⁵⁶⁷⁸⁹'[+d]);
+
+/* ---------- 化學資料 ---------- */
+const KWT=[0,10,20,25,30,40,50,60,70,80,90,100],
+      KWP=[14.943,14.534,14.167,13.997,13.833,13.535,13.262,13.017,12.80,12.60,12.42,12.26];
+function pKw(T){T=clamp(T,0,100);let i=0;while(i<KWT.length-2&&KWT[i+1]<T)i++;
+  const f=(T-KWT[i])/(KWT[i+1]-KWT[i]);return KWP[i]+(KWP[i+1]-KWP[i])*f;}
+const KwOf=T=>Math.pow(10,-pKw(T));
+const IND=[
+  {k:'mo',nm:'甲基橙',lo:3.1,hi:4.5,ca:'紅',cb:'黃',pa:'#e8590c',pb:'#f3d000'},
+  {k:'mr',nm:'甲基紅',lo:4.2,hi:6.3,ca:'紅',cb:'黃',pa:'#e03131',pb:'#f3d000'},
+  {k:'li',nm:'石蕊',  lo:5.0,hi:8.0,ca:'紅',cb:'藍',pa:'#e03131',pb:'#1c7ed6'},
+  {k:'pp',nm:'酚酞',  lo:8.3,hi:10.0,ca:'無',cb:'紅',pa:'#00000000',pb:'#e64980'},
+  {k:'az',nm:'茜素黃',lo:10.0,hi:12.1,ca:'黃',cb:'淡紫',pa:'#f3d000',pb:'#b197fc'}];
+function indColor(ind,ph){const f=clamp((ph-ind.lo)/(ind.hi-ind.lo),0,1);
+  const hex=c=>c==='#00000000'?[255,255,255,0]:[parseInt(c.slice(1,3),16),parseInt(c.slice(3,5),16),parseInt(c.slice(5,7),16),1];
+  const A=hex(ind.pa),B=hex(ind.pb);
+  return `rgba(${Math.round(A[0]+(B[0]-A[0])*f)},${Math.round(A[1]+(B[1]-A[1])*f)},${Math.round(A[2]+(B[2]-A[2])*f)},${(A[3]+(B[3]-A[3])*f).toFixed(2)})`;}
+const indState=(ind,ph)=>ph<=ind.lo?ind.ca+'（酸型）':ph>=ind.hi?ind.cb+'（鹼型）':'變色中';
+
+const SUBS=[
+ {k:'NaCl',nm:'氯化鈉',f:'NaCl',ty:'ion',el:'strong',mp:'801 ℃',
+  ions:[['Na⁺',1,50],['Cl⁻',-1,76]],note:'最典型的鹽類'},
+ {k:'KNO3',nm:'硝酸鉀',f:'KNO₃',ty:'ion',el:'strong',mp:'334 ℃',
+  ions:[['K⁺',1,74],['NO₃⁻',-1,71]],note:'鹽類'},
+ {k:'CuSO4',nm:'硫酸銅',f:'CuSO₄',ty:'ion',el:'strong',mp:'（加熱先分解）',
+  ions:[['Cu²⁺',2,54],['SO₄²⁻',-2,80]],note:'帶 2 價的離子，同濃度電流更大'},
+ {k:'NaOH',nm:'氫氧化鈉',f:'NaOH',ty:'ion',el:'strong',mp:'318 ℃',
+  ions:[['Na⁺',1,50],['OH⁻',-1,198]],note:'強鹼'},
+ {k:'HCl',nm:'氯化氫',f:'HCl',ty:'mol',el:'strong',mp:'沸點 −85 ℃',
+  ions:[['H⁺',1,350],['Cl⁻',-1,76]],note:'分子化合物，但在水中完全解離＝強電解質'},
+ {k:'HAc',nm:'醋酸',f:'CH₃COOH',ty:'mol',el:'weak',Ka:1.8e-5,mp:'沸點 118 ℃',
+  ions:[['H⁺',1,350],['CH₃COO⁻',-1,41]],note:'弱酸，只解離一點點'},
+ {k:'NH3',nm:'氨',f:'NH₃',ty:'mol',el:'weak',Kb:1.8e-5,mp:'沸點 −33 ℃',
+  ions:[['NH₄⁺',1,73],['OH⁻',-1,198]],note:'弱鹼'},
+ {k:'sug',nm:'蔗糖',f:'C₁₂H₂₂O₁₁',ty:'mol',el:'non',mp:'（加熱先分解）',ions:[],note:'非電解質，溶在水裡還是完整的分子'},
+ {k:'EtOH',nm:'乙醇',f:'C₂H₅OH',ty:'mol',el:'non',mp:'沸點 78 ℃',ions:[],note:'非電解質'}];
+const SUBOF=k=>SUBS.find(s=>s.k===k);
+function alphaOf(s,Cc){
+  if(s.el==='non')return 0;
+  if(s.el==='strong')return 1;
+  const K=s.Ka||s.Kb;const x=(-K+Math.sqrt(K*K+4*K*Cc))/2;return Cc>0?x/Cc:0;}
+function current(s,Cc,st){/* 相對電流：以 1.0 M NaCl ＝ 1.00 為基準 */
+  if(st==='s')return 0;
+  if(st==='l')return s.ty==='ion'?1.35:0;
+  if(!s.ions.length)return 0;
+  const a=alphaOf(s,Cc);
+  return s.ions.reduce((t,[,z,lam])=>t+Cc*a*Math.abs(z)*lam,0)/126;}
+
+/* ===================== 1 電解質與導電 ===================== */
+const EL={sub:'NaCl',st:'aq',C:1,zoom:true,t:0,pts:null};
+function elAvail(s,st){
+  if(st==='s')return false;
+  if(st==='l')return s.ty==='ion';
+  return s.el!=='non';}
+function elMake(){const s=SUBOF(EL.sub),n=EL.zoom?26:60,a=alphaOf(s,EL.C),P=[];
+  const ionFrac=s.el==='non'?0:(s.el==='strong'?1:Math.min(.5,Math.max(.08,a*14)));
+  const nIon=s.ions.length?Math.max(2,Math.round(n*ionFrac/2)*2):0;
+  for(let i=0;i<n;i++){const isIon=s.ions.length&&i<nIon;
+    P.push({x:hsh(i,1),y:hsh(i,2),v:.3+hsh(i,4)*.9,ph:hsh(i,5)*6.28,ion:isIon,pos:i%2===0});}
+  EL.pts=P;}
+elMake();
+function drawEl(){const s=SUBOF(EL.sub),st=EL.st,{g,w,h}=fit($('cvEl'),.46,320,560);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const on=elAvail(s,st),I=on?current(s,EL.C,st):0,br=clamp(Math.pow(I/1.6,.55),0,1);
+  const bw=Math.min(w*.52,430),bx=(w-bw)/2,btop=Math.round(h*.30),bbot=h-34,bh=bbot-btop;
+  const exL=bx+bw*.3,exR=bx+bw*.7,wi=C.wire;
+  /* 電路：單一串聯迴路　電池 → 安培計 → 燈泡 → 電極 */
+  const cy=Math.round(Math.min(46,h*.10));
+  line(g,exL,cy,exR,cy,wi,2.4);
+  line(g,exL,cy,exL,btop+6,wi,2.4);line(g,exR,cy,exR,btop+6,wi,2.4);
+  const bat=bx+bw*.3+(bw*.4)*.16,ax=bx+bw*.5,lx=bx+bw*.5+(bw*.4)*.46;
+  g.fillStyle=C.panel;g.fillRect(bat-16,cy-13,32,26);
+  line(g,bat-7,cy-12,bat-7,cy+12,wi,3.4);line(g,bat-1,cy-6,bat-1,cy+6,wi,2);
+  line(g,bat+5,cy-12,bat+5,cy+12,wi,3.4);line(g,bat+11,cy-6,bat+11,cy+6,wi,2);
+  text(g,'1.5 V',bat,cy-24,C.muted,11,'center',600);
+  text(g,'－',bat-9,cy+24,C.muted,12,'center',700);text(g,'＋',bat+13,cy+24,C.muted,12,'center',700);
+  dot(g,ax,cy,23,C.panel,wi,2.2);
+  text(g,'A',ax,cy-8,C.muted,11,'center',700);
+  text(g,I>0?(I<0.0005?'≈0':I.toFixed(I<1?3:2)):'0',ax,cy+8,I>0.0005?C.accent:C.muted,11,'center',700,true);
+  text(g,'安培計',ax,cy-27,C.muted,11,'center',500);
+  if(br>.02){g.save();g.globalAlpha=br*.5;dot(g,lx,cy,20+br*16,'#ffd43b');g.restore();}
+  dot(g,lx,cy,15,br>.02?`rgba(255,212,59,${.3+br*.7})`:C.panel,wi,2.2);
+  line(g,lx-6,cy+5,lx,cy-6,wi,1.6);line(g,lx,cy-6,lx+6,cy+5,wi,1.6);
+  text(g,br>.5?'亮':br>.08?'微亮':'不亮',lx,cy-27,br>.08?C.accent:C.muted,11,'center',700);
+  /* 杯身 */
+  rrect(g,bx,btop,bw,bh,10,st==='s'?'transparent':(st==='l'?'rgba(230,120,60,.13)':(C.dark?'rgba(80,140,190,.2)':'rgba(165,216,255,.4)')),C.glass,2.6);
+  const liqTop=btop+(st==='s'?bh*.5:bh*.2);
+  if(st!=='s')line(g,bx+3,liqTop,bx+bw-3,liqTop,C.glass,1.6);
+  text(g,st==='s'?s.f+'　固態粉末':st==='l'?s.f+'　加熱熔化成液態':s.f+'　溶於水（'+EL.C.toFixed(2)+' M）',
+    bx+bw/2,btop-14,C.ink,13,'center',700);
+  /* 電極：從杯口插到液面下 60% */
+  const edTop=btop+6,edBot=liqTop+(bbot-liqTop)*.62;
+  [[exL,'－',C.base],[exR,'＋',C.acid]].forEach(([x,p,c])=>{
+    rrect(g,x-9,edTop,18,edBot-edTop,3,C.dark?'#868e96':'#ced4da',wi,1.6);
+    rrect(g,x-13,edTop-2,26,20,5,C.panel,c,1.8);
+    text(g,p,x,edTop+8,c,14,'center',700);});
+  text(g,'鉑電極',bx-6,edTop+8,C.muted,11,'right',500);
+  /* 粒子 */
+  const px0=bx+16,px1=bx+bw-16,py0=liqTop+14,py1=bbot-14,R=EL.zoom?11:6.5;
+  g.save();g.beginPath();g.rect(bx+2,btop+2,bw-4,bh-4);g.clip();
+  if(st==='s'){const cols=EL.zoom?8:14,rows=EL.zoom?4:6,gw=Math.min(bw*.62,cols*R*2.3),gh=rows*R*2.3;
+    const gx=bx+(bw-gw)/2,gy=bbot-gh-18;
+    for(let r=0;r<rows;r++)for(let c2=0;c2<cols;c2++){
+      const x=gx+(c2+.5)*gw/cols,y=gy+(r+.5)*gh/rows;
+      if(s.ty==='ion')ionDot(g,x,y,R,(r+c2)%2===0);
+      else dot(g,x,y,R*.92,C.mol,C.line,1.2);}
+    text(g,s.ty==='ion'?'離子被鎖在晶格上，不能移動':'分子固體，本來就沒有離子',bx+bw/2,gy-16,C.muted,12,'center',600);}
+  else{const drift=on?clamp(I*.10,.012,.09):0,span=px1-px0-20;
+    for(const p of EL.pts){
+      const isIon=(st==='l'&&s.ty==='ion')||p.ion;
+      let x,y=py0+p.y*(py1-py0)+Math.cos(EL.t*p.v*.6+p.ph*1.7)*(EL.zoom?7:4);
+      if(isIon&&drift>0){let t=(p.x+EL.t*drift*p.v*(p.pos?-1:1))%1;if(t<0)t+=1;x=px0+10+t*span;}
+      else x=px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.8+p.ph)*(EL.zoom?9:5);
+      if(isIon)ionDot(g,x,y,R,p.pos);else dot(g,x,y,R*.92,C.mol,C.line,1.2);}}
+  g.restore();
+  const lgy=bbot+16;
+  if(st!=='s'&&s.ions.length){const lab=s.ions.map(i=>i[0]);
+    text(g,'●',bx,lgy-2,C['ion-p'],14,'left');text(g,lab[0],bx+14,lgy,C.ink,12,'left',600);
+    text(g,'●',bx+78,lgy-2,C['ion-n'],14,'left');text(g,lab[1],bx+92,lgy,C.ink,12,'left',600);
+    if(s.el==='weak'){text(g,'●',bx+176,lgy-2,C.mol,14,'left');text(g,'未解離的 '+s.f,bx+190,lgy,C.ink,12,'left',600);}}
+  else if(st!=='s')text(g,'只有完整的分子，沒有離子',bx,lgy,C.muted,12,'left',600);}
+function ionDot(g,x,y,r,pos){dot(g,x,y,r,pos?C['ion-p']:C['ion-n'],'rgba(0,0,0,.12)',1);
+  text(g,pos?'＋':'－',x,y,'#fff',r*1.15,'center',700);}
+function elSay(){const s=SUBOF(EL.sub),st=EL.st,on=elAvail(s,st),I=on?current(s,EL.C,st):0,a=alphaOf(s,EL.C);
+  const stn={s:'固態',l:'液態（熔融態）',aq:'水溶液'}[st];
+  let v=`<b>${s.f}</b>（${s.nm}）的<b>${stn}</b>：`;
+  if(!on){v+=`<b style="color:var(--red)">不導電</b>——`;
+    v+= st==='s'?(s.ty==='ion'?'離子雖然存在，但被鎖在晶格上<b>不能自由移動</b>。':'分子固體，裡面根本沒有離子。')
+      : st==='l'?(s.ty==='ion'?'':'純液態只有分子，<b>沒有離子</b>（所以 HCl(l) 不導電、HCl(aq) 才導電）。')
+      : '它是<b>非電解質</b>，溶在水裡還是完整的分子。';}
+  else{v+=`<b style="color:var(--green)">會導電</b>，相對電流 <b>${I<0.0005?'≈0':I.toFixed(I<1?3:2)}</b>`
+    +`（以 1.0 M NaCl ＝ 1.00 為基準）。`;
+    if(st==='l')v+='熔化後離子鬆開可以自由移動，所以導電。';
+    else if(s.el==='strong')v+=`<b>強電解質</b>，幾乎 100% 解離成 ${s.ions[0][0]} 與 ${s.ions[1][0]}。`;
+    else v+=`<b>弱電解質</b>，${EL.C.toFixed(2)} M 時只解離 <b>${(a*100).toFixed(2)}%</b>，`
+      +`大部分還是 ${s.f} 分子，所以同濃度的電流遠小於強電解質。`;}
+  $('elSay').innerHTML=v;
+  const ref=current(SUBOF('NaCl'),EL.C,'aq');
+  $('elKV').innerHTML=[['物質',s.f+'（'+s.nm+'）'],['鍵結類型',s.ty==='ion'?'離子化合物':'分子化合物'],
+    ['電解質分類',{strong:'強電解質',weak:'弱電解質',non:'非電解質'}[s.el]],
+    ['熔／沸點',s.mp],
+    ['解離度 α',s.el==='non'?'0（不解離）':s.el==='strong'?'≈100%':(a*100).toFixed(2)+'%'],
+    ['溶液中的離子',s.ions.length?s.ions.map(i=>i[0]).join('、'):'無'],
+    ['相對電流',on?(I<0.0005?'≈0':I.toFixed(I<1?3:2)):'0（不導電）'],
+    ['同濃度 NaCl 的幾倍',on&&ref>0?(I/ref).toFixed(I/ref<1?3:2)+' 倍':'—']]
+    .map(([k,v2])=>`<dt>${k}</dt><dd>${v2}</dd>`).join('');
+  $('elTab').innerHTML='<thead><tr><th></th><th>固態</th><th>熔融態</th><th>水溶液</th></tr></thead><tbody>'
+    +`<tr class="${s.ty==='ion'?'on':''}"><td class="l">離子化合物</td><td>✗</td><td>✓</td><td>✓</td></tr>`
+    +`<tr class="${s.ty==='mol'?'on':''}"><td class="l">分子化合物</td><td>✗</td><td>✗</td><td>${s.el==='non'?'✗':'✓'}</td></tr>`
+    +'</tbody>';}
+
+/* ===================== 2 pH 值 ===================== */
+const PH={v:7,ind:true,mode:'h2p'};
+const PHREF=[[1.0,'0.1 M 鹽酸'],[2.0,'胃液'],[2.2,'檸檬汁'],[2.5,'可樂'],[2.9,'食醋'],[3.5,'柳橙汁'],
+  [4.2,'番茄汁'],[5.0,'黑咖啡'],[5.6,'天然雨水'],[6.6,'牛奶'],[7.0,'純水（25 ℃）'],[7.4,'血液'],
+  [8.1,'海水'],[8.4,'小蘇打水'],[10.0,'肥皂水'],[11.5,'氨水'],[12.5,'漂白水'],[13.0,'0.1 M NaOH']];
+function drawPh(){const {g,w,h}=fit($('cvPh'),PH.ind?.40:.26,PH.ind?300:190,PH.ind?500:300);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const ml=PH.ind?64:30,mr=w-16,sw=mr-ml,X=p=>ml+sw*p/14;
+  const by=Math.round(h*(PH.ind?.30:.40)),bh=38;
+  /* 彩虹 pH 條 */
+  const grad=g.createLinearGradient(ml,0,mr,0);
+  [[0,'#c92a2a'],[.21,'#f76707'],[.36,'#f3d000'],[.5,'#2b8a3e'],[.64,'#1098ad'],[.79,'#1864ab'],[1,'#5f3dc4']]
+    .forEach(([s2,c])=>grad.addColorStop(s2,c));
+  rrect(g,ml,by,sw,bh,7,null,null);g.save();g.beginPath();g.roundRect(ml,by,sw,bh,7);g.clip();
+  g.fillStyle=grad;g.fillRect(ml,by,sw,bh);g.restore();
+  rrect(g,ml,by,sw,bh,7,null,C.line,1.4);
+  for(let p=0;p<=14;p++){line(g,X(p),by+bh,X(p),by+bh+6,C.line,1.2);
+    text(g,String(p),X(p),by+bh+16,C.muted,11,'center',600,true);}
+  text(g,'酸性',X(3.5),by+bh+34,C.acid,13,'center',700);
+  text(g,'中性',X(7),by+bh+34,C.neut,13,'center',700);
+  text(g,'鹼性',X(10.5),by+bh+34,C.base,13,'center',700);
+  line(g,X(7),by-6,X(7),by+bh+24,C.ink,1.4,[4,4]);
+  /* 常見物質 */
+  let lastX=-99,row=0;
+  for(const [p,nm] of PHREF){const x=X(p);
+    if(x-lastX<58){row=(row+1)%3;}else row=0;lastX=x;
+    const yy=by-18-row*17;
+    line(g,x,by-2,x,yy+6,C.line,1,[2,3]);
+    text(g,nm,x,yy,C.muted,11,'center',500);}
+  /* 游標 */
+  const cx=X(PH.v);
+  g.save();g.beginPath();g.moveTo(cx,by-4);g.lineTo(cx-8,by-16);g.lineTo(cx+8,by-16);g.closePath();
+  g.fillStyle=C.accent;g.fill();g.restore();
+  line(g,cx,by,cx,by+bh,C.accent,3);
+  rrect(g,cx-38,by+bh+44,76,26,7,C.accent,null);
+  text(g,'pH '+PH.v.toFixed(2),cx,by+bh+57,'#fff',14,'center',700,true);
+  /* 指示劑帶 */
+  if(PH.ind){const iy0=by+bh+80,ih=20;
+    IND.forEach((ind,i)=>{const y=iy0+i*(ih+6);
+      text(g,ind.nm,ml-6,y+ih/2,C.ink,12,'right',700);
+      for(let k=0;k<=60;k++){const p=k/60*14,x=X(p),wv=sw/60+1;
+        g.fillStyle=indColor(ind,p);g.fillRect(x,y,wv,ih);}
+      rrect(g,ml,y,sw,ih,4,null,C.line,1.1);
+      line(g,X(ind.lo),y,X(ind.lo),y+ih,C.ink,1.2,[3,3]);
+      line(g,X(ind.hi),y,X(ind.hi),y+ih,C.ink,1.2,[3,3]);
+      text(g,ind.lo+'～'+ind.hi,X((ind.lo+ind.hi)/2),y+ih/2,'#000',10,'center',700,true);
+      line(g,cx,y-2,cx,y+ih+2,C.accent,2);});
+    text(g,'指示劑在這個 pH 的顏色',ml,iy0-12,C.muted,12,'left',600);}
+  $('cvPh')._X=X;$('cvPh')._by=[by,by+bh];}
+function phSay(){const p=PH.v,Kw=1e-14,H=Math.pow(10,-p),OH=Kw/H;
+  const st=p<6.995?'酸性':p>7.005?'鹼性':'中性',col=p<6.995?'--red':p>7.005?'--blue':'--green';
+  $('phSay').innerHTML=`pH ＝ <b>${p.toFixed(2)}</b>　→　[H⁺] ＝ <b>${sci(H)}</b> M、[OH⁻] ＝ <b>${sci(OH)}</b> M，`
+    +`25 ℃ 時是<b style="color:var(${col})">${st}</b>。`
+    +(p<6.995?`　氫離子濃度是純水的 <b>${sci(H/1e-7,1)}</b> 倍。`:p>7.005?`　氫氧離子濃度是純水的 <b>${sci(OH/1e-7,1)}</b> 倍。`:'　[H⁺] 剛好等於 [OH⁻]。');
+  $('phKV').innerHTML=[['pH',p.toFixed(2)],['pOH',(14-p).toFixed(2)],['[H⁺]',sci(H)+' M'],['[OH⁻]',sci(OH)+' M'],
+    ['酸鹼性',st+'（25 ℃）'],['與純水比',p<7?sci(H/1e-7,1)+' 倍的 H⁺':p>7?sci(OH/1e-7,1)+' 倍的 OH⁻':'相同']]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  $('phIndList').innerHTML=IND.map(i=>
+    `<div class="indrow"><span class="nm">${i.nm}</span>`
+    +`<span class="swatch" style="background:${indColor(i,p)}"></span>`
+    +`<span>${indState(i,p)}</span>`
+    +`<small style="color:var(--muted);margin-left:auto">${i.ca} ${i.lo}～${i.hi} ${i.cb}</small></div>`).join('');}
+function phWork(){const el=$('phWork');
+  if(PH.mode==='h2p'){const a=clamp(+$('phA').value||1,1,9.99),b=Math.round(clamp(+$('phB').value||0,0,14));
+    const lg=Math.log10(a),ph=b-lg;
+    el.innerHTML=`pH ＝ −log(${a} × 10<sup>−${b}</sup>)<br>`
+      +`　　＝ −log ${a} − log 10<sup>−${b}</sup><br>`
+      +`　　＝ ${b} − log ${a} ＝ ${b} − ${lg.toFixed(2)}<br>`
+      +`　　＝ <b>${ph.toFixed(2)}</b>　（pOH ＝ ${(14-ph).toFixed(2)}）`;
+    PH.v=clamp(ph,0,14);}
+  else{const p=clamp(+$('phP').value||0,0,14),e=Math.ceil(p),m=Math.pow(10,e-p);
+    el.innerHTML=`[H⁺] ＝ 10<sup>−${p}</sup> ＝ 10<sup>${(e-p).toFixed(2)}</sup> × 10<sup>−${e}</sup><br>`
+      +`　　　＝ <b>${(+m.toFixed(2))} × 10<sup>−${e}</sup> M</b><br>`
+      +`[OH⁻] ＝ 10<sup>−${(14-p).toFixed(2)}</sup> ＝ <b>${sci(Math.pow(10,-(14-p)))} M</b>`;
+    PH.v=p;}
+  $('phV').value=PH.v;$('phVo').textContent=PH.v.toFixed(2);phSay();kick();}
+
+/* ===================== 3 水的解離與溫度 ===================== */
+const KW={T:25,part:true,t:0};
+function drawKw(){const {g,w,h}=fit($('cvKw'),KW.part?.38:.20,KW.part?290:160,KW.part?460:250);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const pk=pKw(KW.T),Kw=Math.pow(10,-pk),nt=pk/2;
+  /* 上半：水分子解離示意 */
+  const ph2=KW.part?Math.round(h*.44):0;
+  if(KW.part){const bx=14,bw=w-28,by=10,bh=ph2-20;
+    rrect(g,bx,by,bw,bh,10,C.dark?'rgba(80,140,190,.16)':'rgba(165,216,255,.3)',C.glass,2);
+    /* 解離的離子數隨溫度（示意：以 25℃ 為 1 個） */
+    const nIon=Math.max(1,Math.round(Math.sqrt(Kw/1e-14)*1.6));
+    const N=52;
+    for(let i=0;i<N;i++){const x=bx+14+hsh(i,1)*(bw-28),y=by+16+hsh(i,2)*(bh-32);
+      const jx=Math.sin(KW.t*(.4+hsh(i,3)*.5)+hsh(i,4)*6.3)*5,jy=Math.cos(KW.t*(.35+hsh(i,5)*.5)+hsh(i,6)*6.3)*4;
+      dot(g,x+jx,y+jy,7,C.dark?'#4a6f8a':'#8fc3e8','rgba(0,0,0,.08)',1);}
+    for(let i=0;i<nIon&&i<14;i++){const x=bx+24+hsh(i,11)*(bw-48),y=by+22+hsh(i,12)*(bh-44);
+      const jx=Math.sin(KW.t*.7+i*1.3)*7,jy=Math.cos(KW.t*.6+i*2.1)*5;
+      ionDot(g,x+jx,y+jy,9,true);
+      ionDot(g,x+jx+22,y+jy+9,9,false);}
+    text(g,'H₂O ＋ H₂O ⇌ H₃O⁺ ＋ OH⁻',bx+bw/2,by+15,C.ink,14,'center',700);
+    text(g,`示意：溫度越高，解離出來的 H₃O⁺／OH⁻ 對數越多（目前畫 ${Math.min(nIon,14)} 對，25 ℃ 時畫 1～2 對）`,
+      bx+bw/2,by+bh-13,C.muted,11,'center',500);}
+  /* 下半：pH 軸 */
+  const ml=30,mr=w-16,sw=mr-ml,X=p=>ml+sw*p/15,by2=ph2+Math.round((h-ph2)*.34),bh2=30;
+  const acidW=X(nt)-ml,baseW=X(pk)-X(nt);
+  rrect(g,ml,by2,acidW,bh2,0,C.dark?'rgba(255,107,107,.26)':'rgba(224,49,49,.16)',null);
+  rrect(g,X(nt),by2,baseW,bh2,0,C.dark?'rgba(77,171,247,.26)':'rgba(24,100,171,.16)',null);
+  rrect(g,X(pk),by2,mr-X(pk),bh2,0,C.dark?'rgba(255,255,255,.04)':'rgba(0,0,0,.04)',null);
+  rrect(g,ml,by2,sw,bh2,0,null,C.line,1.4);
+  for(let p=0;p<=15;p++){line(g,X(p),by2+bh2,X(p),by2+bh2+5,C.line,1.1);
+    if(p%1===0)text(g,String(p),X(p),by2+bh2+15,C.muted,11,'center',600,true);}
+  text(g,'pH',ml-6,by2+bh2/2,C.muted,12,'right',700);
+  text(g,'酸性',X(nt/2),by2+bh2/2,C.acid,13,'center',700);
+  text(g,'鹼性',X((nt+pk)/2),by2+bh2/2,C.base,13,'center',700);
+  /* 中性線 */
+  line(g,X(nt),by2-26,X(nt),by2+bh2+22,C.neut,3);
+  text(g,`中性 pH ＝ pK𝑤/2 ＝ ${nt.toFixed(2)}`,X(nt),by2-36,C.neut,14,'center',700);
+  /* 25℃ 的 7 做對照 */
+  line(g,X(7),by2-6,X(7),by2+bh2+6,C.muted,1.6,[4,4]);
+  text(g,'7',X(7),by2+bh2+30,C.muted,12,'center',700,true);
+  text(g,'（25 ℃ 的中性點）',X(7),by2+bh2+44,C.muted,11,'center',500);
+  if(mr-X(pk)>26)text(g,'pH 到不了這裡',(X(pk)+mr)/2,by2+bh2/2,C.muted,10,'center',500);
+  /* 右下讀數 */
+  const ry=by2+bh2+66;
+  text(g,`${KW.T} ℃　K𝑤 ＝ ${sci(Kw)}　pK𝑤 ＝ ${pk.toFixed(2)}`,w/2,ry,C.ink,15,'center',700);
+  text(g,`純水的 [H⁺] ＝ [OH⁻] ＝ √K𝑤 ＝ ${sci(Math.sqrt(Kw))} M　→　pH ＝ pOH ＝ ${nt.toFixed(2)}（中性）`,
+    w/2,ry+20,C.muted,12,'center',500);}
+function kwSay(){const pk=pKw(KW.T),nt=pk/2,Kw=Math.pow(10,-pk);
+  $('kwSay').innerHTML=`<b>${KW.T} ℃</b>：K<sub>w</sub> ＝ <b>${sci(Kw)}</b>、pK<sub>w</sub> ＝ <b>${pk.toFixed(2)}</b>，`
+    +`純水的 pH ＝ pOH ＝ <b>${nt.toFixed(2)}</b>。`
+    +(KW.T>25.5?`　比 25 ℃ 時小，<b>但純水還是中性</b>——因為 [H⁺] 仍然等於 [OH⁻]。這時 pH ＝ 7 的溶液反而是<b style="color:var(--blue)">鹼性</b>的。`
+     :KW.T<24.5?`　比 25 ℃ 時大。這時 pH ＝ 7 的溶液是<b style="color:var(--red)">酸性</b>的。`
+     :`　這是課本預設的溫度，中性剛好落在 7。`);
+  $('kwKV').innerHTML=[['溫度',KW.T+' ℃'],['K𝑤',sci(Kw)],['pK𝑤',pk.toFixed(3)],
+    ['[H⁺] ＝ [OH⁻]',sci(Math.sqrt(Kw))+' M'],['中性 pH',nt.toFixed(3)],
+    ['pH ＝ 7 的溶液',Math.abs(nt-7)<.01?'中性':nt>7?'酸性':'鹼性']]
+    .map(([k,v])=>`<dt>${k}</dt><dd>${v}</dd>`).join('');
+  const ok='<b style="color:var(--green)">✓ 可靠</b>',ng='<b style="color:var(--red)">✗ 只在 25 ℃ 對</b>';
+  $('kwJudge').innerHTML=
+    `「pH ＜ 7 就是酸性」　${Math.abs(nt-7)<.01?ok:ng}<br>`
+    +`「pH ＜ pOH 就是酸性」　${ok}<br>`
+    +`「pH ＜ pK𝑤／2 就是酸性」　${ok}<br>`
+    +`「[H⁺] ＞ [OH⁻] 就是酸性」　${ok}（這就是定義）`;}
+
+/* ===================== 4 酸鹼中和 ===================== */
+const ACID={HCl:{nm:'鹽酸',f:'HCl',strong:true,an:'Cl⁻'},
+            HAc:{nm:'醋酸',f:'CH₃COOH',strong:false,Ka:1.8e-5,an:'CH₃COO⁻'}};
+const BASE={NaOH:{nm:'氫氧化鈉',f:'NaOH',strong:true,ca:'Na⁺'},
+            NH3:{nm:'氨水',f:'NH₃',strong:false,Kb:1.8e-5,ca:'NH₄⁺'}};
+const NU={a:'HCl',b:'NaOH',Ca:.1,Cb:.1,Va:25,Vb:0,ind:'none',run:false,t:0,drop:0};
+const KW25=1e-14;
+function hFromC(c){return (c+Math.sqrt(c*c+4*KW25))/2;}
+function titr(){const A=ACID[NU.a],B=BASE[NU.b],na=NU.Ca*NU.Va,nb=NU.Cb*NU.Vb,V=NU.Va+NU.Vb;
+  const Ka=A.Ka,Kb=B.Kb;let H;
+  if(A.strong&&B.strong){
+    H=na>nb?hFromC((na-nb)/V):na<nb?KW25/hFromC((nb-na)/V):1e-7;}
+  else if(!A.strong&&B.strong){
+    if(nb<=0)H=(-Ka+Math.sqrt(Ka*Ka+4*Ka*na/V))/2;
+    else if(nb<na)H=Ka*(na-nb)/nb;
+    else if(Math.abs(nb-na)<1e-9){const Kb2=KW25/Ka,oh=Math.sqrt(Kb2*na/V);H=KW25/oh;}
+    else H=KW25/hFromC((nb-na)/V);}
+  else if(A.strong&&!B.strong){
+    if(nb<na)H=hFromC((na-nb)/V);
+    else if(Math.abs(nb-na)<1e-9){const Ka2=KW25/Kb;H=Math.sqrt(Ka2*na/V);}
+    else {const oh=Kb*(nb-na)/na;H=KW25/oh;}}
+  else{
+    if(nb<=0)H=(-Ka+Math.sqrt(Ka*Ka+4*Ka*na/V))/2;
+    else if(nb<na)H=Ka*(na-nb)/nb;
+    else if(Math.abs(nb-na)<1e-9)H=Math.pow(10,-(14+(-Math.log10(Ka))-(-Math.log10(Kb)))/2);
+    else {const oh=Kb*(nb-na)/na;H=KW25/oh;}}
+  H=clamp(H,1e-14,1);
+  const ph=clamp(-Math.log10(H),0,14);
+  const dH=(A.strong&&B.strong)?57.3:55.2;
+  const dT=V>0?Math.min(na,nb)*dH/(V*4.18):0;
+  return {ph,H,na,nb,V,dT,A,B,eq:NU.Ca*NU.Va/NU.Cb};}
+function saltName(){const A=ACID[NU.a],B=BASE[NU.b];
+  const m={'HCl|NaOH':['NaCl（氯化鈉）','中性'],'HCl|NH3':['NH₄Cl（氯化銨）','酸性'],
+    'HAc|NaOH':['CH₃COONa（醋酸鈉）','鹼性'],'HAc|NH3':['CH₃COONH₄（醋酸銨）','接近中性']};
+  return m[NU.a+'|'+NU.b];}
+function drawNu(){const {g,w,h}=fit($('cvNu'),.50,340,620);
+  g.fillStyle=C.panel;g.fillRect(0,0,w,h);
+  const S=titr(),narrow=w<720;
+  const lw2=narrow?w:w*.46,rx=narrow?0:lw2+8;
+  /* ---- 左：滴定裝置 ---- */
+  const bw=Math.min(lw2*.62,230),bx=(lw2-bw)/2,btop=Math.round(h*(narrow?.32:.30)),bbot=h-(narrow?h*.42:30),bh=bbot-btop;
+  /* 滴管 */
+  const dx=bx+bw/2,dtop=8,dh=btop-34;
+  rrect(g,dx-19,dtop,38,dh,6,C.dark?'rgba(80,140,190,.22)':'rgba(165,216,255,.45)',C.glass,2);
+  text(g,BASE[NU.b].f,dx,dtop+13,C.ink,13,'center',700);
+  text(g,NU.Cb.toFixed(2)+' M',dx,dtop+29,C.muted,11,'center',600);
+  text(g,'已滴',dx,dtop+dh-26,C.accent,11,'center',600);
+  text(g,NU.Vb.toFixed(1)+' mL',dx,dtop+dh-12,C.accent,13,'center',700,true);
+  g.beginPath();g.moveTo(dx-19,dtop+dh);g.lineTo(dx,dtop+dh+15);g.lineTo(dx+19,dtop+dh);g.closePath();
+  g.fillStyle=C.glass;g.fill();
+  if(NU.drop>0){const yd=dtop+dh+14+(1-NU.drop)*(btop+bh*.22-dtop-dh-14);
+    dot(g,dx,yd,5,C.base);}
+  /* 燒杯 */
+  const liqTop=btop+bh*.22;
+  const ind=IND.find(i=>i.k===NU.ind);
+  const liq=ind?indColor(ind,S.ph):(C.dark?'rgba(80,140,190,.22)':'rgba(165,216,255,.4)');
+  g.save();g.beginPath();g.roundRect(bx,btop,bw,bh,9);g.clip();
+  g.fillStyle=liq;g.fillRect(bx,liqTop,bw,bh);g.restore();
+  rrect(g,bx,btop,bw,bh,9,null,C.glass,2.6);
+  line(g,bx+3,liqTop,bx+bw-3,liqTop,C.glass,1.5);
+  text(g,ACID[NU.a].f+' '+NU.Ca.toFixed(2)+' M　'+NU.Va+' mL',bx+bw/2,btop-13,C.ink,13,'center',700);
+  /* 粒子：剩餘的 H⁺ / OH⁻ 與生成的水 */
+  const exH=Math.max(0,S.na-S.nb),exO=Math.max(0,S.nb-S.na),made=Math.min(S.na,S.nb);
+  const scale=Math.max(S.na,S.nb,1e-9);
+  const nH=Math.round(clamp(exH/scale*16,0,16)),nO=Math.round(clamp(exO/scale*16,0,16));
+  const nW=Math.round(clamp(made/scale*14,0,14));
+  g.save();g.beginPath();g.rect(bx+2,liqTop,bw-4,bbot-liqTop-2);g.clip();
+  const px0=bx+16,px1=bx+bw-16,py0=liqTop+14,py1=bbot-14;
+  for(let i=0;i<nW;i++){const x=px0+hsh(i,21)*(px1-px0),y=py0+hsh(i,22)*(py1-py0);
+    dot(g,x+Math.sin(NU.t*.5+i)*4,y+Math.cos(NU.t*.4+i*2)*3,6,C.dark?'#4a6f8a':'#8fc3e8','rgba(0,0,0,.08)',1);}
+  for(let i=0;i<nH;i++){const x=px0+hsh(i,31)*(px1-px0),y=py0+hsh(i,32)*(py1-py0);
+    ionDot(g,x+Math.sin(NU.t*.7+i)*5,y+Math.cos(NU.t*.6+i*1.7)*4,9,true);}
+  for(let i=0;i<nO;i++){const x=px0+hsh(i,41)*(px1-px0),y=py0+hsh(i,42)*(py1-py0);
+    ionDot(g,x+Math.sin(NU.t*.7+i*1.3)*5,y+Math.cos(NU.t*.6+i*2.2)*4,9,false);}
+  g.restore();
+  const lgy=bbot+15;
+  if(!narrow||true){text(g,'●',bx,lgy-2,C['ion-p'],14,'left');text(g,'H⁺',bx+13,lgy,C.ink,11,'left',600);
+    text(g,'●',bx+40,lgy-2,C['ion-n'],14,'left');text(g,'OH⁻',bx+53,lgy,C.ink,11,'left',600);
+    text(g,'●',bx+88,lgy-2,C.dark?'#4a6f8a':'#8fc3e8',14,'left');text(g,'生成的 H₂O',bx+101,lgy,C.ink,11,'left',600);}
+  /* 溫度計 */
+  const tx=bx+bw+18,tty=btop+10,tth=bh*.8;
+  if(tx+26<lw2){rrect(g,tx,tty,13,tth,6,C.panel,C.glass,1.6);
+    const fr=clamp(S.dT/8,0,1);
+    rrect(g,tx+3,tty+tth-6-(tth-12)*fr,7,(tth-12)*fr+4,3,C.red,null);
+    dot(g,tx+6.5,tty+tth+4,8,C.red);
+    text(g,'＋'+S.dT.toFixed(2),tx+6,tty-9,C.red,12,'center',700,true);
+    text(g,'℃',tx+6,tty+tth+22,C.muted,11,'center',600);}
+  /* ---- 右：滴定曲線 ---- */
+  const cl=rx+44,cr=w-14,ct=narrow?h*.60:26,cb2=narrow?h-30:h-40;
+  if(cr-cl>120){
+    const vmax=Math.max(S.eq*2,1);
+    const PX=v=>cl+(cr-cl)*v/vmax,PY=p=>cb2-(cb2-ct)*p/14;
+    line(g,cl,cb2,cr,cb2,C.line,1.4);line(g,cl,ct,cl,cb2,C.line,1.4);
+    for(let p=0;p<=14;p+=2){line(g,cl-4,PY(p),cl,PY(p),C.line,1);text(g,String(p),cl-7,PY(p),C.muted,10,'right',500,true);}
+    for(let k=0;k<=4;k++){const v=vmax*k/4;line(g,PX(v),cb2,PX(v),cb2+4,C.line,1);
+      text(g,v.toFixed(0),PX(v),cb2+13,C.muted,10,'center',500,true);}
+    text(g,'pH',cl-7,ct-10,C.muted,11,'right',700);
+    text(g,'滴入的 '+BASE[NU.b].f+' 體積（mL）',(cl+cr)/2,cb2+28,C.muted,11,'center',600);
+    /* 中性線與當量點 */
+    line(g,cl,PY(7),cr,PY(7),C.muted,1,[3,3]);
+    line(g,PX(S.eq),ct,PX(S.eq),cb2,C.neut,1.4,[5,4]);
+    text(g,'當量點 '+S.eq.toFixed(1)+' mL',PX(S.eq),ct-10,C.neut,11,'center',700);
+    /* 指示劑變色帶 */
+    if(ind){g.save();g.globalAlpha=.18;g.fillStyle=C.accent;
+      g.fillRect(cl,PY(ind.hi),cr-cl,PY(ind.lo)-PY(ind.hi));g.restore();
+      text(g,ind.nm+' 變色區',cr-4,PY((ind.lo+ind.hi)/2),C.accent,10,'right',700);}
+    /* 曲線 */
+    const sv=NU.Vb;g.save();g.beginPath();
+    for(let k=0;k<=240;k++){const v=vmax*k/240;NU.Vb=v;const p=titr().ph;
+      k?g.lineTo(PX(v),PY(p)):g.moveTo(PX(v),PY(p));}
+    g.strokeStyle=C.accent;g.lineWidth=2.4;g.stroke();g.restore();NU.Vb=sv;
+    dot(g,PX(NU.Vb),PY(S.ph),6,C.accent,C.panel,2);
+    rrect(g,PX(NU.Vb)-30,PY(S.ph)-32,60,20,6,C.accent,null);
+    text(g,'pH '+S.ph.toFixed(2),PX(NU.Vb),PY(S.ph)-22,'#fff',12,'center',700,true);}}
+function nuSay(){const S=titr(),[salt,acidity]=saltName();
+  const A=ACID[NU.a],B=BASE[NU.b];
+  const d=S.na-S.nb;
+  let v=`滴入 <b>${NU.Vb.toFixed(1)} mL</b>　pH ＝ <b>${S.ph.toFixed(2)}</b>　`;
+  if(Math.abs(d)<1e-9&&NU.Vb>0)v+=`<b style="color:var(--green)">恰好中和</b>：酸鹼莫耳數都是 ${S.na.toFixed(2)} 毫莫耳。`
+    +`生成的鹽是 <b>${salt}</b>，水解後溶液呈<b>${acidity}</b>`
+    +(Math.abs(S.ph-7)>.15?`（pH ${S.ph.toFixed(2)}，<b>不是 7</b>）`:'（pH ≈ 7）')+`。`;
+  else if(d>0)v+=`酸過量 <b>${d.toFixed(3)}</b> 毫莫耳`+(A.strong?`，[H⁺] ＝ ${d.toFixed(3)}／${S.V} ＝ ${sci(d/S.V)} M。`
+    :`。弱酸只部分解離，所以 pH 不是直接用濃度算的。`);
+  else v+=`鹼過量 <b>${(-d).toFixed(3)}</b> 毫莫耳`+(B.strong?`，[OH⁻] ＝ ${(-d).toFixed(3)}／${S.V} ＝ ${sci(-d/S.V)} M。`:`。`);
+  v+=`　溫度上升 <b>${S.dT.toFixed(2)} ℃</b>（中和是放熱反應）。`;
+  $('nuSay').innerHTML=v;
+  $('nuKV').innerHTML=[['酸',A.f+'（'+(A.strong?'強酸':'弱酸 Ka＝1.8×10⁻⁵')+'）'],
+    ['鹼',B.f+'（'+(B.strong?'強鹼':'弱鹼 Kb＝1.8×10⁻⁵')+'）'],
+    ['酸的莫耳數',S.na.toFixed(3)+' mmol'],['鹼的莫耳數',S.nb.toFixed(3)+' mmol'],
+    ['總體積',S.V.toFixed(1)+' mL'],['當量點',S.eq.toFixed(2)+' mL'],
+    ['pH',S.ph.toFixed(2)],['pOH',(14-S.ph).toFixed(2)],
+    ['[H⁺]',sci(S.H)+' M'],['[OH⁻]',sci(KW25/S.H)+' M'],
+    ['生成的鹽',salt],['當量點時呈',acidity],
+    ['溫度上升','＋'+S.dT.toFixed(2)+' ℃'],
+    ['中和熱',(A.strong&&B.strong)?'57.3 kJ/mol':'約 55 kJ/mol（弱電解質要先解離，吸掉一些熱）']]
+    .map(([k,v2])=>`<dt>${k}</dt><dd>${v2}</dd>`).join('');}
+
+/* ===================== 主迴圈與事件 ===================== */
+let BENCH='elec',need=true,last=0;
+const kick=()=>{need=true;};
+function loop(t){const dt=Math.min(.05,(t-last)/1000||0);last=t;
+  if(BENCH==='elec'){EL.t+=dt;drawEl();}
+  else if(BENCH==='ph'){if(need){drawPh();need=false;}}
+  else if(BENCH==='kw'){KW.t+=dt;if(KW.part)drawKw();else if(need){drawKw();need=false;}}
+  else if(BENCH==='neut'){NU.t+=dt;
+    if(NU.drop>0){NU.drop=Math.max(0,NU.drop-dt*2.6);if(NU.drop===0)nuSay();}
+    if(NU.run&&NU.drop===0&&NU.Vb<NU.Ca*NU.Va/NU.Cb*2){nuAdd(.5);}
+    drawNu();}
+  requestAnimationFrame(loop);}
+function showBench(v){BENCH=v;
+  ['elec','ph','kw','neut'].forEach(k=>$('b-'+k).hidden=(k!==v));
+  segSet($('benchSeg'),v);need=true;
+  if(v==='ph'){phSay();}if(v==='kw')kwSay();if(v==='neut')nuSay();if(v==='elec')elSay();}
+segOn($('benchSeg'),showBench);
+
+/* --- 1 --- */
+$('elSub').innerHTML=SUBS.map(s=>`<button data-v="${s.k}">${s.f}</button>`).join('');
+segSet($('elSub'),EL.sub);
+function elSync(){const s=SUBOF(EL.sub);
+  $('elSt').querySelectorAll('button').forEach(b=>{
+    const dis=b.dataset.v==='l'&&(s.k==='sug'||s.k==='CuSO4');b.disabled=dis;b.style.opacity=dis?.4:1;});
+  if(EL.st==='l'&&(s.k==='sug'||s.k==='CuSO4')){EL.st='aq';segSet($('elSt'),'aq');}
+  $('elC').disabled=EL.st!=='aq';
+  elMake();elSay();kick();}
+segOn($('elSub'),v=>{EL.sub=v;segSet($('elSub'),v);elSync();});
+segOn($('elSt'),v=>{EL.st=v;segSet($('elSt'),v);elSync();});
+$('elC').oninput=e=>{EL.C=+e.target.value;$('elCo').textContent=EL.C.toFixed(2)+' M';elMake();elSay();kick();};
+$('elZ').onchange=e=>{EL.zoom=e.target.checked;elMake();kick();};
+$('elCo').textContent=EL.C.toFixed(2)+' M';segSet($('elSt'),EL.st);elSync();
+
+/* --- 2 --- */
+$('phV').oninput=e=>{PH.v=+e.target.value;$('phVo').textContent=PH.v.toFixed(2);phSay();kick();};
+$('phVo').textContent=PH.v.toFixed(2);
+$('phInd').onchange=e=>{PH.ind=e.target.checked;kick();};
+const phSet=p=>{PH.v=clamp(p,0,14);$('phV').value=PH.v;$('phVo').textContent=PH.v.toFixed(2);phSay();kick();};
+$('phD10').onclick=()=>phSet(PH.v<7?Math.min(PH.v+1,6.96):Math.max(PH.v-1,7.04));
+$('phD100').onclick=()=>phSet(PH.v<7?Math.min(PH.v+2,6.96):Math.max(PH.v-2,7.04));
+segOn($('phMode'),v=>{PH.mode=v;segSet($('phMode'),v);$('phCalcH').hidden=v!=='h2p';$('phCalcP').hidden=v==='h2p';phWork();});
+['phA','phB','phP'].forEach(id=>$(id).addEventListener('input',phWork));
+$('cvPh').addEventListener('pointerdown',e=>{const r=e.target.getBoundingClientRect(),X=$('cvPh')._X;
+  if(!X)return;const x=e.clientX-r.left,ml=X(0),sw=X(14)-X(0);
+  phSet((x-ml)/sw*14);});
+phWork();
+
+/* --- 3 --- */
+$('kwT').oninput=e=>{KW.T=+e.target.value;$('kwTo').textContent=KW.T+' ℃';kwSay();kick();};
+$('kwTo').textContent=KW.T+' ℃';
+$('kwP').onchange=e=>{KW.part=e.target.checked;kick();};
+document.querySelectorAll('#b-kw .chip[data-t]').forEach(c=>c.onclick=()=>{
+  KW.T=+c.dataset.t;$('kwT').value=KW.T;$('kwTo').textContent=KW.T+' ℃';kwSay();kick();});
+
+/* --- 4 --- */
+function nuAdd(v){NU.Vb=Math.min(999,+(NU.Vb+v).toFixed(2));NU.drop=1;nuSay();}
+segOn($('nuA'),v=>{NU.a=v;segSet($('nuA'),v);NU.Vb=0;nuSay();kick();});
+segOn($('nuB'),v=>{NU.b=v;segSet($('nuB'),v);NU.Vb=0;nuSay();kick();});
+segOn($('nuInd'),v=>{NU.ind=v;segSet($('nuInd'),v);kick();});
+$('nuCa').oninput=e=>{NU.Ca=+e.target.value;$('nuCao').textContent=NU.Ca.toFixed(2)+' M';NU.Vb=0;nuSay();kick();};
+$('nuCb').oninput=e=>{NU.Cb=+e.target.value;$('nuCbo').textContent=NU.Cb.toFixed(2)+' M';NU.Vb=0;nuSay();kick();};
+$('nuCao').textContent=NU.Ca.toFixed(2)+' M';$('nuCbo').textContent=NU.Cb.toFixed(2)+' M';
+$('nuDrop').onclick=()=>nuAdd(1);
+$('nuEq').onclick=()=>{NU.Vb=+(NU.Ca*NU.Va/NU.Cb).toFixed(2);NU.drop=1;NU.run=false;
+  $('nuRun').textContent='▶ 連續滴';$('nuRun').classList.add('primary');nuSay();};
+$('nuRst').onclick=()=>{NU.Vb=0;NU.run=false;$('nuRun').textContent='▶ 連續滴';$('nuRun').classList.add('primary');nuSay();};
+$('nuRun').onclick=()=>{NU.run=!NU.run;$('nuRun').textContent=NU.run?'⏸ 暫停':'▶ 連續滴';
+  $('nuRun').classList.toggle('primary',!NU.run);};
+
+/* ===================== 講義題目 ===================== */
+function chips(host,arr,fn){$(host).innerHTML=arr.map((q,i)=>`<span class="chip" data-i="${i}">${q.t}</span>`).join('');
+  $(host).addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;
+    $(host).querySelectorAll('.chip').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+    const q=arr[+c.dataset.i];q.f&&q.f();fn(q,c);kick();});}
+const setEl=(sub,st,Cc)=>{EL.sub=sub;segSet($('elSub'),sub);EL.st=st;segSet($('elSt'),st);
+  if(Cc!=null){EL.C=Cc;$('elC').value=Cc;$('elCo').textContent=Cc.toFixed(2)+' M';}elSync();};
+const ELQ=[
+ {t:'97學測 例1：既非導體亦非電解質',f:()=>setEl('EtOH','aq',1),
+  say:'(C) 酒精。食鹽與醋酸鉀是電解質、黃銅（銅鋅合金）與石墨是<b>導體</b>，只有酒精兩者都不是——它溶在水裡還是完整的 C₂H₅OH 分子，電流是 0。'},
+ {t:'95學測 例2(1)：最可能是離子化合物的是',f:()=>setEl('NaCl','aq',1),
+  say:'(A) 甲。判斷依據有兩個：<b>沸點很高</b>（400 ℃ 才分解，離子鍵很強）＋<b>水溶液導電大</b>（1.10×10⁻¹ A）。乙丙丁的沸點都在 140 ℃ 以下，是分子化合物。'},
+ {t:'95學測 例2(2)：分子化合物又是強電解質的是',f:()=>setEl('HCl','aq',1),
+  say:'(E) 戊。沸點 −84.8 ℃ 代表它是<b>分子化合物</b>，但導電電流 2.59×10⁻¹ A 是五者最大 → 在水中<b>完全解離</b>＝強電解質。HCl 就是這種：純液態不導電，水溶液導電力極強。'},
+ {t:'Ex1：哪些狀態可以導電',f:()=>setEl('NaCl','l',1),
+  say:'(B)(C)(D)。NaCl(s) 離子被鎖在晶格不導電；<b>NaCl(l) 熔融後離子可動 → 導電</b>；NaCl(aq) 導電；Cu(s) 是金屬靠自由電子導電；<b>HCl(l) 純液態只有分子 → 不導電</b>。'},
+ {t:'Ex2：鍵結種類與導電性',f:()=>setEl('HAc','aq',1),
+  say:'(D)。1.0 M HCl ＞ 1.0 M CH₃COOH，因為鹽酸完全解離、醋酸只解離約 0.4%。(A) NaCl 晶體不導電；(B) 熔融 K₂SO₄ 可以導電；(C) CaC₂ 是離子化合物（Ca²⁺ 與 C₂²⁻）。把這一台的物質在 HCl 與 CH₃COOH 之間切換就看得出電流差了幾百倍。'},
+ {t:'練習1：水溶液導電，固態與熔融態都不導電',f:()=>setEl('HCl','l',1),
+  say:'(B) HI。這是<b>分子化合物的強電解質</b>的特徵：本身沒有離子（固態、純液態都不導電），溶於水才被水拆開。CaCl₂ 是離子化合物（熔融會導電）、CF₄ 與 C₂H₅OH 是非電解質。'},
+ {t:'練習2：何者無法導電',f:()=>setEl('NaCl','s',1),
+  say:'(B) NaCl(s)。離子固體的離子被鎖在晶格上無法移動。Al(s) 是金屬、NH₄Cl(l) 是熔融離子化合物、HCl(aq) 與 NH₃(aq) 都解離出離子（NH₃ 是弱電解質，導電弱但還是會導）。'},
+ {t:'練習3：何者的水溶液不是電解質溶液',f:()=>setEl('sug','aq',1),
+  say:'(A) 蔗糖。食鹽是強電解質，氨、醋酸是弱電解質，氯化氫是強電解質，只有蔗糖完全不解離。'},
+ {t:'練習5：哪一種是可溶於水的離子化合物',f:()=>setEl('NaCl','aq',1),
+  say:'(C) Ⅲ。離子化合物的特徵是<b>熔點高</b>（離子鍵強）＋<b>固體不導電</b>＋<b>水溶液導電</b>。Ⅱ 熔點低是分子化合物的強電解質；Ⅳ 固體就會導電，是金屬。'},
+ {t:'練習6：電解質溶於水，何者敘述錯誤',f:()=>setEl('CuSO4','aq',1),
+  say:'(D) 錯。陰陽離子<b>總電量</b>相等，但<b>數目不一定相同</b>。例如 CaCl₂ → Ca²⁺ ＋ 2Cl⁻，數目是 1：2。這一台切到 CuSO₄ 看：Cu²⁺ 與 SO₄²⁻ 剛好 1：1，但換成 CaCl₂ 就不是了。'}];
+chips('elQ',ELQ,(q,c)=>{$('elSay').innerHTML='<b>'+c.textContent+'</b>　'+q.say;});
+
+const setPh=(p,mode,a,b)=>()=>{if(mode){PH.mode=mode;segSet($('phMode'),mode);
+    $('phCalcH').hidden=mode!=='h2p';$('phCalcP').hidden=mode==='h2p';
+    if(mode==='h2p'){$('phA').value=a;$('phB').value=b;}else $('phP').value=a;phWork();}
+  else phSet(p);};
+const PHQ=[
+ {t:'例1(1) [H⁺]＝2×10⁻⁴',f:setPh(0,'h2p',2,4),say:'pH ＝ 4 − log 2 ＝ 4 − 0.30 ＝ <b>3.70</b>'},
+ {t:'例1(2) [H⁺]＝5×10⁻⁵',f:setPh(0,'h2p',5,5),say:'pH ＝ 5 − log 5 ＝ 5 − 0.70 ＝ <b>4.30</b>'},
+ {t:'例1(3) [H⁺]＝3×10⁻³',f:setPh(0,'h2p',3,3),say:'pH ＝ 3 − log 3 ＝ 3 − 0.48 ＝ <b>2.52</b>'},
+ {t:'例1(4) [H⁺]＝8×10⁻²',f:setPh(0,'h2p',8,2),say:'pH ＝ 2 − log 8 ＝ 2 − 0.90 ＝ <b>1.10</b>'},
+ {t:'例1(5) [H⁺]＝6×10⁻⁶',f:setPh(0,'h2p',6,6),say:'pH ＝ 6 − log 6 ＝ 6 − 0.78 ＝ <b>5.22</b>'},
+ {t:'例1(6) [H⁺]＝4.5×10⁻⁶',f:setPh(0,'h2p',4.5,6),say:'pH ＝ 6 − log 4.5 ＝ 6 − 0.65 ＝ <b>5.35</b>。（log 4.5 ＝ log 9 − log 2 ＝ 0.95 − 0.30 ＝ 0.65）'},
+ {t:'例2(1) pH＝13.5',f:setPh(0,'p2h',13.5),say:'[H⁺] ＝ 10⁻¹³·⁵ ＝ 10⁰·⁵ × 10⁻¹⁴ ＝ <b>3.2×10⁻¹⁴ M</b>'},
+ {t:'例2(2) pH＝4.7',f:setPh(0,'p2h',4.7),say:'[H⁺] ＝ 10⁻⁴·⁷ ＝ 10⁰·³ × 10⁻⁵ ＝ <b>2×10⁻⁵ M</b>'},
+ {t:'例2(3) pH＝8.3',f:setPh(0,'p2h',8.3),say:'[H⁺] ＝ 10⁻⁸·³ ＝ 10⁰·⁷ × 10⁻⁹ ＝ <b>5×10⁻⁹ M</b>'},
+ {t:'例2(4) pH＝3.4',f:setPh(0,'p2h',3.4),say:'[H⁺] ＝ 10⁻³·⁴ ＝ 10⁰·⁶ × 10⁻⁴ ＝ <b>4×10⁻⁴ M</b>'},
+ {t:'例2(5) pH＝4.2',f:setPh(0,'p2h',4.2),say:'[H⁺] ＝ 10⁻⁴·² ＝ 10⁰·⁸ × 10⁻⁵ ＝ <b>6.3×10⁻⁵ M</b>'},
+ {t:'例2(6) pH＝11.1',f:setPh(0,'p2h',11.1),say:'[H⁺] ＝ 10⁻¹¹·¹ ＝ 10⁰·⁹ × 10⁻¹² ＝ <b>7.9×10⁻¹² M</b>'},
+ {t:'例3 pH＝11 的 NaOH 100 mL 稀釋到 1.0 L',f:setPh(10),
+  say:'鹼要用 <b>[OH⁻]</b> 算。pH 11 → pOH 3 → [OH⁻] ＝ 10⁻³ M；稀釋 10 倍 → 10⁻⁴ M → pOH ＝ 4 → <b>pH ＝ 10</b>。（直接拿 pH 11 減 1 得 10 這次剛好對，但觀念上一定要先換成 [OH⁻]）'},
+ {t:'例4 [H⁺]＝2×10⁻¹¹ 的溶液 100 mL 稀釋到 1.0 L',f:setPh(14-Math.log10(1/(5e-5))),
+  say:'[H⁺] ＝ 2×10⁻¹¹ 代表這是<b>鹼性</b>溶液，要用 [OH⁻] 算：[OH⁻] ＝ 10⁻¹⁴ ÷ 2×10⁻¹¹ ＝ 5×10⁻⁴ M。稀釋 10 倍 → 5×10⁻⁵ M。再換回來：[H⁺] ＝ 10⁻¹⁴ ÷ 5×10⁻⁵ ＝ <b>2×10⁻¹⁰ M</b>。（若誤用 [H⁺] 直接除以 10 會得到 2×10⁻¹²，方向完全相反）'},
+ {t:'Ex3 pH 一定大於純水的是（應選二項）',f:setPh(11.5),
+  say:'(A) 氨水、(H) 蘇打粉水溶液。pH 大於純水＝<b>鹼性</b>。天然雨水（溶了 CO₂，約 5.6）、蕃茄汁、可樂、胃液、鹽酸、檸檬汁全都是酸性。把游標拖到 11.5 看氨水的位置。'},
+ {t:'指示劑 Ex：石蕊試紙的敘述',f:setPh(7.4),
+  say:'(B) 正確。胃乳液含制酸劑是<b>鹼性</b>，滴在紅色石蕊上會變藍。(A) 血漿 pH 7.4 大於 4.5，藍色石蕊不會變紅；(C) 石蕊不會變白；(D) 乙酸乙酯是中性的酯；(E) pH 6.4 小於 8.3，紅色石蕊不會變藍。'}];
+chips('phQ',PHQ,(q,c)=>{$('phSay').innerHTML='<b>'+c.textContent+'</b>　'+q.say;});
+
+const setKw=T=>()=>{KW.T=T;$('kwT').value=T;$('kwTo').textContent=T+' ℃';kwSay();};
+const KWQ=[
+ {t:'例5 在 50 ℃ 時，何種水溶液必呈酸性',f:setKw(50),
+  say:'(D) pOH ＞ 7。50 ℃ 時 pK𝑤 ＝ 13.26，中性是 pH ＝ pOH ＝ <b>6.63</b>。pOH ＞ 7 → pH ＝ 13.26 − pOH ＜ 6.26 ＜ 6.63 → <b>一定酸性</b>。'
+    +'(A) pH ＜ 7 不一定（pH 6.8 其實是鹼性）；(B) pH ＞ pOH 是鹼性；(C) pH ＞ pK𝑤/2 也是鹼性。'},
+ {t:'例6 各溫度下水與水溶液的酸鹼度',f:setKw(50),
+  say:'<b>(A)(B)(C)(D) 都正確，只有 (E) 錯</b>。(A) 純水 [H⁺] ＝ √K𝑤 ＝ [OH⁻] ✓；(B) 酸性 [H⁺] ＞ √K𝑤 ＞ [OH⁻] ✓；'
+    +'(C) 鹼性反過來 ✓；(D) 純水 pH ＝ pK𝑤/2 ＝ pOH ✓；(E) <b>pK𝑤 隨溫度上升而減小</b>（K𝑤 變大），所以錯。'},
+ {t:'體溫 37 ℃ 的純水',f:setKw(37),
+  say:'37 ℃ 時 pK𝑤 ＝ 13.62，純水的 pH ＝ <b>6.81</b>，仍然是中性。順帶一提，人體血液 pH 約 7.4，所以在體溫下血液是<b>偏鹼</b>的（7.4 ＞ 6.81）。'},
+ {t:'100 ℃ 的水還是中性嗎',f:setKw(100),
+  say:'是。100 ℃ 時 K𝑤 ＝ 5.5×10⁻¹³，pK𝑤 ＝ 12.26，純水的 pH ＝ <b>6.13</b>。pH 掉了快 1，但 [H⁺] 始終等於 [OH⁻]，所以<b>還是中性</b>。這也說明升溫讓水解離得更多 → 水的解離是<b>吸熱</b>反應。'},
+ {t:'0 ℃ 的冰水',f:setKw(0),
+  say:'0 ℃ 時 pK𝑤 ＝ 14.94，純水的 pH ＝ <b>7.47</b>。這時 pH ＝ 7 的溶液反而是<b>酸性</b>的。'}];
+chips('kwQ',KWQ,(q,c)=>{$('kwSay').innerHTML='<b>'+c.textContent+'</b>　'+q.say;});
+
+const setNu=(a,b,Ca,Cb,Va,Vb,ind)=>()=>{NU.a=a;NU.b=b;NU.Ca=Ca;NU.Cb=Cb;NU.Va=Va;NU.Vb=Vb;NU.run=false;
+  if(ind){NU.ind=ind;segSet($('nuInd'),ind);}
+  segSet($('nuA'),a);segSet($('nuB'),b);
+  $('nuCa').value=Ca;$('nuCao').textContent=Ca.toFixed(2)+' M';
+  $('nuCb').value=Cb;$('nuCbo').textContent=Cb.toFixed(2)+' M';
+  $('nuRun').textContent='▶ 連續滴';$('nuRun').classList.add('primary');nuSay();};
+const NUQ=[
+ {t:'例7 pH＝0 鹽酸 5 mL ＋ pH＝13 NaOH 5 mL',f:setNu('HCl','NaOH',1,.1,5,5,'none'),
+  say:'pH 0 → [H⁺] ＝ 1 M，5 mL 有 <b>5 毫莫耳</b>；pH 13 → pOH 1 → [OH⁻] ＝ 0.1 M，5 mL 有 <b>0.5 毫莫耳</b>。'
+    +'中和掉 0.5，酸還剩 <b>4.5 毫莫耳</b>在 10 mL 裡 → [H⁺] ＝ 0.45 M → pH ＝ −log 0.45 ＝ <b>0.35</b>。'
+    +'注意不能把 pH 直接平均成 6.5。'},
+ {t:'Ex1 下列何者是「酸鹼中和」反應',f:setNu('HAc','NaOH',.1,.1,25,25,'pp'),
+  say:'(C) CH₃COOH ＋ NaOH → CH₃COONa ＋ H₂O。<b>酸 ＋ 鹼 → 鹽 ＋ 水</b>才是中和。'
+    +'(A) 是合成氨；(B) 是金屬與酸反應放出氫氣（氧化還原）；(D) 是<b>酯化</b>反應（羧酸 ＋ 醇），雖然也生成水但不是中和。'},
+ {t:'強酸＋強鹼 → 中性（NaCl）',f:setNu('HCl','NaOH',.1,.1,25,25,'li'),
+  say:'HCl ＋ NaOH → NaCl ＋ H₂O。Na⁺ 與 Cl⁻ 都<b>不水解</b>，所以當量點剛好 <b>pH ＝ 7</b>。這是唯一會落在 7 的組合。'},
+ {t:'弱酸＋強鹼 → 鹼性（CH₃COONa）',f:setNu('HAc','NaOH',.1,.1,25,25,'pp'),
+  say:'當量點 <b>pH ＝ 8.72</b>，是<b>鹼性</b>。因為生成的 CH₃COO⁻ 會水解搶走水的 H⁺：CH₃COO⁻ ＋ H₂O ⇌ CH₃COOH ＋ OH⁻。'
+    +'所以這種滴定要用<b>酚酞</b>（8.3～10.0）當指示劑，用甲基橙會太早變色。'},
+ {t:'強酸＋弱鹼 → 酸性（NH₄Cl）',f:setNu('HCl','NH3',.1,.1,25,25,'mo'),
+  say:'當量點 <b>pH ＝ 5.28</b>，是<b>酸性</b>。生成的 NH₄⁺ 會放出 H⁺：NH₄⁺ ⇌ NH₃ ＋ H⁺。'
+    +'這種滴定要用<b>甲基橙</b>（3.1～4.5）或甲基紅，用酚酞會太晚變色。'},
+ {t:'弱酸＋弱鹼 → 看誰強（CH₃COONH₄）',f:setNu('HAc','NH3',.1,.1,25,25,'li'),
+  say:'CH₃COOH 的 Kₐ 與 NH₃ 的 K_b 剛好都是 1.8×10⁻⁵，酸鹼強度相當，所以當量點 <b>pH ＝ 7.00</b> 接近中性。'
+    +'但注意曲線在當量點附近<b>非常平緩</b>，沒有明顯的跳躍，所以弱酸配弱鹼<b>不適合做滴定</b>。'},
+ {t:'緩衝：滴到一半時 pH ＝ pKa',f:setNu('HAc','NaOH',.1,.1,25,12.5,'none'),
+  say:'弱酸滴到<b>一半</b>（12.5 mL）時，剩下的 CH₃COOH 與生成的 CH₃COO⁻ 莫耳數相等，'
+    +'[H⁺] ＝ Kₐ × (酸/鹽) ＝ Kₐ，所以 <b>pH ＝ pKₐ ＝ 4.74</b>。這一段曲線特別平，就是<b>緩衝溶液</b>。'},
+ {t:'中和熱：為什麼弱酸的比較小',f:setNu('HAc','NaOH',1,1,25,25,'none'),
+  say:'強酸強鹼的中和熱固定是 <b>57.3 kJ/mol</b>，因為反應實際上只有 H⁺ ＋ OH⁻ → H₂O 這一步。'
+    +'弱酸（醋酸）要先<b>解離</b>成離子，解離是吸熱的，所以淨放熱少一些，約 55 kJ/mol。把濃度拉到 1.0 M 看溫度計升得最明顯。'}];
+chips('nuQ',NUQ,(q,c)=>{$('nuSay').innerHTML='<b>'+c.textContent+'</b>　'+q.say;});
+
+addEventListener('resize',kick);
+showBench('elec');
+requestAnimationFrame(loop);
+})();
+</script>
+<script src="../shared/site.js"></script>
+</body>
+</html>
