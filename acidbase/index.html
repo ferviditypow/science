@@ -76,7 +76,7 @@
         <span class="chip" data-p="HAc|l|1">冰醋酸</span>
       </div>
       <div class="cbox"><canvas class="cv" id="cvEl" aria-label="電解質導電實驗"></canvas></div>
-      <p class="hint">電路：電池 → 安培計 → 燈泡 → 兩根鉑電極。<b>電流隨電壓成正比</b>（歐姆定律），但<b>會不會導電</b>完全由溶液裡有沒有離子決定——電壓再大，糖水還是 0。溶液裡<b>有可以自由移動的離子</b>才會形成電流：正離子往負極跑、負離子往正極跑。電流大小看的是<b>離子的總量</b>，所以同樣 1.0 M，完全解離的強電解質電流大、只解離一點點的弱電解質電流很小。<b>「純液態」不是只有一種</b>：離子化合物要加熱到幾百度才熔化（熔融態，整杯都是離子，導電）；氯化氫、氨要冷卻到零下才液化（只有分子，不導電）；醋酸、乙醇室溫就是液體（也只有分子，不導電）。</p>
+      <p class="hint">電路：電池 → 安培計 → 燈泡 → 兩根鉑電極。<b>電流隨電壓成正比</b>（歐姆定律），但<b>會不會導電</b>完全由溶液裡有沒有離子決定——電壓再大，糖水還是 0。看粒子的時候注意這個差別：<b>電壓變大 → 每顆離子跑得更快</b>（電場變強）；<b>濃度變大 → 離子變多，但每顆的速度不變</b>。兩者都會讓電流變大，但原因不一樣。溶液裡<b>有可以自由移動的離子</b>才會形成電流：正離子往負極跑、負離子往正極跑。電流大小看的是<b>離子的總量</b>，所以同樣 1.0 M，完全解離的強電解質電流大、只解離一點點的弱電解質電流很小。<b>「純液態」不是只有一種</b>：離子化合物要加熱到幾百度才熔化（熔融態，整杯都是離子，導電）；氯化氫、氨要冷卻到零下才液化（只有分子，不導電）；醋酸、乙醇室溫就是液體（也只有分子，不導電）。</p>
     </div>
     <div class="verdict" id="elSay"></div>
     <div class="abgrid">
@@ -397,7 +397,9 @@ function drawEl(){const s=SUBOF(EL.sub),st=EL.st,{g,w,h}=fit($('cvEl'),.50,340,6
       if(s.ty==='ion')ionDot(g,x,y,RR,(r+c2)%2===0);else dot(g,x,y,RR*.92,C.mol,C.line,1.2);}
     text(g,s.ty==='ion'?'離子被鎖在晶格上，不能移動':'分子固體，本來就沒有離子',bx+bw/2,gy-16,C.muted,12,'center',600);}
   else{
-    const drift=on?clamp(I*.055,.010,.075):0,span=px1-px0-20;
+    /* 漂移速率由電場（電壓）決定，與離子多少無關：
+       濃度只改變「離子數」＝電流變大，每顆離子的速度不變；電壓才會讓每顆跑得更快 */
+    const drift=on?clamp(EL.V/1.5*.055,.015,.42):0,span=px1-px0-20;
     const jig=(p,k)=>Math.cos(EL.t*p.v*.6+p.ph*1.7)*(EL.zoom?6:3.5);
     for(const p of P.w)dot(g,px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.5+p.ph)*5,
       py0+p.y*(py1-py0)+jig(p),R*.62,C.dark?'#3d5c75':'#bcdcf5','rgba(0,0,0,.05)',.8);
@@ -442,6 +444,7 @@ function elSay(){const s=SUBOF(EL.sub),st=EL.st,on=elAvail(s,st),I=on?current(s,
     ['電解質分類',{strong:'強電解質',weak:'弱電解質',non:'非電解質'}[s.el]],
     ['熔／沸點',s.mp],['純液態的條件',s.liq?s.liq.d+'（'+s.liq.t+'）':'（加熱先分解，沒有純液態）'],
     ['電壓',EL.V.toFixed(1)+' V'],
+    ['離子漂移速率',on?(EL.V/1.5).toFixed(2)+' 倍（1.5 V ＝ 1）':'—'],
     ['解離度 α',s.el==='non'?'0（不解離）':s.el==='strong'?'≈100%':(a*100).toFixed(2)+'%'],
     ['溶液中的離子',s.ions.length?s.ions.map(i=>i[0]).join('、'):'無'],
     ['相對電流',on?(I<0.0005?'≈0':I.toFixed(I<1?3:2)):'0（不導電）'],
