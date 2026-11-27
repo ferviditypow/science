@@ -130,7 +130,7 @@ kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);bord
       <div class="toolbar"><button class="btn" id="spUndo">↶ 復原</button><button class="btn" id="spFix">全部修好</button><button class="btn" id="spFit">⤢ 符合畫面</button><button class="btn" id="spRl">⟲ 15°</button><button class="btn" id="spRr">⟳ 15°</button><button class="btn" id="spR0">轉正</button><button class="btn" id="spZout">－</button><button class="btn" id="spZin">＋</button>
         <label class="tog"><input type="checkbox" id="spSnap">對齊格點</label><label class="tog"><input type="checkbox" id="spLet">接點字母</label><label class="tog"><input type="checkbox" id="spVm">伏特計探棒</label>
         <label class="tog"><input type="checkbox" id="spV">電位顏色</label><label class="tog"><input type="checkbox" id="spHide">先猜再看</label><button class="btn primary" id="spReveal">揭曉</button></div>
-        <div class="toolbar"><span class="tlabel">元件字級</span><span class="seg" id="spLF"><button data-v="1" aria-pressed="true">標準</button><button data-v="1.3" aria-pressed="false">大</button><button data-v="1.65" aria-pressed="false">特大</button></span><span class="tlabel">顯示讀數</span><label class="tog"><input type="checkbox" id="spSV">燈泡／電阻的電壓</label><label class="tog"><input type="checkbox" id="spSI">燈泡／電阻的電流</label><label class="tog"><input type="checkbox" id="spMR" checked>安培計／伏特計</label></div>
+        <div class="toolbar"><span class="tlabel">元件字級</span><span class="seg" id="spLF"><button data-v="1" aria-pressed="true">標準</button><button data-v="1.3" aria-pressed="false">大</button><button data-v="1.65" aria-pressed="false">特大</button></span><span class="tlabel">顯示讀數</span><label class="tog"><input type="checkbox" id="spSV">燈泡／電阻的電壓</label><label class="tog"><input type="checkbox" id="spSI">燈泡／電阻的電流</label><label class="tog"><input type="checkbox" id="spMR">安培計／伏特計</label></div>
       <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
         <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button><button data-v="off">不顯示</button></span></div>
       <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
@@ -466,7 +466,7 @@ const TP={
 const DEF={bat:{E:3},bulb:{R:5,Vr:3,Pr:1.8},res:{R:5},rheo:{R:10},sw:{on:true},jump:{on:true},amm:{rng:5},vm:{rng:15},fuse:{Ir:1},wire:{}};
 const TNAME={bat:'電池',bulb:'燈泡',res:'電阻器',rheo:'滑線變阻器',sw:'開關',jump:'跨接導線（弧形）',amm:'安培計',vm:'伏特計',fuse:'保險絲',wire:'導線'};
 const PRE={bulb:'L',res:'R',amm:'A',vm:'V',sw:'S',rheo:'Rv',fuse:'F'};
-const SP={lf:1,meter:true,tpl:'ser2',kind:'bulb',mode:'e',showV:false,sV:true,sI:true,cells:'s2',vm:false,vp:null,vn:null,letters:false,snap:true,hide:false,tool:'sel',
+const SP={lf:1,meter:false,tpl:'ser2',kind:'bulb',mode:'off',showV:false,sV:false,sI:false,cells:'s2',vm:false,vp:null,vn:null,letters:false,snap:true,hide:false,tool:'sel',
   sel:null,selN:null,N:{},E:[],z:44,ox:0,oy:0,c:null,hist:[],nid:0,eid:0,tp:null,tn:null,edited:false};let WS=900,HS=520;
 const LET='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 function newLab(){const used=new Set(Object.values(SP.N).map(n=>n.lab));for(let i=0;;i++){const s=i<26?LET[i]:LET[i%26]+Math.floor(i/26);if(!used.has(s))return s;}}
