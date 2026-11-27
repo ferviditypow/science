@@ -64,12 +64,19 @@
       </div>
       <div class="toolbar">
         <span class="tlabel">狀態</span>
-        <span class="seg" id="elSt"><button data-v="s" aria-pressed="true">固態</button><button data-v="l">液態（熔融態）</button><button data-v="aq">水溶液</button></span>
-        <div class="slider" style="min-width:230px"><span class="tlabel">濃度</span><input type="range" id="elC" min="0.01" max="1" step="0.01" value="1"><output id="elCo"></output></div>
+        <span class="seg" id="elSt"><button data-v="s" aria-pressed="true">固態</button><button data-v="l">純液態</button><button data-v="aq">水溶液</button></span>
+        <div class="slider" style="min-width:210px"><span class="tlabel">濃度</span><input type="range" id="elC" min="0.05" max="6" step="0.05" value="1"><output id="elCo"></output></div>
+        <div class="slider" style="min-width:190px"><span class="tlabel">電壓</span><input type="range" id="elV" min="0.5" max="9" step="0.1" value="1.5"><output id="elVo"></output></div>
+      </div>
+      <div class="toolbar">
         <label class="tog"><input type="checkbox" id="elZ" checked> 放大看粒子</label>
+        <label class="tog"><input type="checkbox" id="elW" checked> 畫出水分子</label>
+        <span class="chip" data-p="NaCl|aq|1">1 M 食鹽水</span><span class="chip" data-p="NaCl|aq|6">6 M 飽和食鹽水</span>
+        <span class="chip" data-p="NaCl|l|1">熔融 NaCl</span><span class="chip" data-p="HCl|l|1">液態 HCl</span>
+        <span class="chip" data-p="HAc|l|1">冰醋酸</span>
       </div>
       <div class="cbox"><canvas class="cv" id="cvEl" aria-label="電解質導電實驗"></canvas></div>
-      <p class="hint">電路：1.5 V 電池 → 安培計 → 燈泡 → 兩根鉑電極。溶液裡<b>有可以自由移動的離子</b>才會形成電流：正離子往負極跑、負離子往正極跑。電流大小看的是<b>離子的總量</b>，所以同樣 1.0 M，完全解離的強電解質電流大、只解離一點點的弱電解質電流很小。</p>
+      <p class="hint">電路：電池 → 安培計 → 燈泡 → 兩根鉑電極。<b>電流隨電壓成正比</b>（歐姆定律），但<b>會不會導電</b>完全由溶液裡有沒有離子決定——電壓再大，糖水還是 0。溶液裡<b>有可以自由移動的離子</b>才會形成電流：正離子往負極跑、負離子往正極跑。電流大小看的是<b>離子的總量</b>，所以同樣 1.0 M，完全解離的強電解質電流大、只解離一點點的弱電解質電流很小。<b>「純液態」不是只有一種</b>：離子化合物要加熱到幾百度才熔化（熔融態，整杯都是離子，導電）；氯化氫、氨要冷卻到零下才液化（只有分子，不導電）；醋酸、乙醇室溫就是液體（也只有分子，不導電）。</p>
     </div>
     <div class="verdict" id="elSay"></div>
     <div class="abgrid">
@@ -251,130 +258,195 @@ const indState=(ind,ph)=>ph<=ind.lo?ind.ca+'（酸型）':ph>=ind.hi?ind.cb+'（
 
 const SUBS=[
  {k:'NaCl',nm:'氯化鈉',f:'NaCl',ty:'ion',el:'strong',mp:'801 ℃',
-  ions:[['Na⁺',1,50],['Cl⁻',-1,76]],note:'最典型的鹽類'},
+  ions:[['Na⁺',1,50],['Cl⁻',-1,76]],note:'最典型的鹽類',liq:{m:'hot',t:'801 ℃',d:'加熱到 801 ℃ 以上才熔化'}},
  {k:'KNO3',nm:'硝酸鉀',f:'KNO₃',ty:'ion',el:'strong',mp:'334 ℃',
-  ions:[['K⁺',1,74],['NO₃⁻',-1,71]],note:'鹽類'},
+  ions:[['K⁺',1,74],['NO₃⁻',-1,71]],note:'鹽類',liq:{m:'hot',t:'334 ℃',d:'加熱到 334 ℃ 以上才熔化'}},
  {k:'CuSO4',nm:'硫酸銅',f:'CuSO₄',ty:'ion',el:'strong',mp:'（加熱先分解）',
   ions:[['Cu²⁺',2,54],['SO₄²⁻',-2,80]],note:'帶 2 價的離子，同濃度電流更大'},
  {k:'NaOH',nm:'氫氧化鈉',f:'NaOH',ty:'ion',el:'strong',mp:'318 ℃',
-  ions:[['Na⁺',1,50],['OH⁻',-1,198]],note:'強鹼'},
+  ions:[['Na⁺',1,50],['OH⁻',-1,198]],note:'強鹼',liq:{m:'hot',t:'318 ℃',d:'加熱到 318 ℃ 以上才熔化'}},
  {k:'HCl',nm:'氯化氫',f:'HCl',ty:'mol',el:'strong',mp:'沸點 −85 ℃',
-  ions:[['H⁺',1,350],['Cl⁻',-1,76]],note:'分子化合物，但在水中完全解離＝強電解質'},
+  ions:[['H⁺',1,350],['Cl⁻',-1,76]],note:'分子化合物，但在水中完全解離＝強電解質',liq:{m:'cold',t:'−85 ℃',d:'冷卻到 −85 ℃ 以下才液化'}},
  {k:'HAc',nm:'醋酸',f:'CH₃COOH',ty:'mol',el:'weak',Ka:1.8e-5,mp:'沸點 118 ℃',
-  ions:[['H⁺',1,350],['CH₃COO⁻',-1,41]],note:'弱酸，只解離一點點'},
+  ions:[['H⁺',1,350],['CH₃COO⁻',-1,41]],note:'弱酸，只解離一點點',liq:{m:'room',t:'室溫',d:'純醋酸（冰醋酸）室溫就是液體'}},
  {k:'NH3',nm:'氨',f:'NH₃',ty:'mol',el:'weak',Kb:1.8e-5,mp:'沸點 −33 ℃',
-  ions:[['NH₄⁺',1,73],['OH⁻',-1,198]],note:'弱鹼'},
+  ions:[['NH₄⁺',1,73],['OH⁻',-1,198]],note:'弱鹼',liq:{m:'cold',t:'−33 ℃',d:'冷卻到 −33 ℃ 以下才液化'}},
  {k:'sug',nm:'蔗糖',f:'C₁₂H₂₂O₁₁',ty:'mol',el:'non',mp:'（加熱先分解）',ions:[],note:'非電解質，溶在水裡還是完整的分子'},
- {k:'EtOH',nm:'乙醇',f:'C₂H₅OH',ty:'mol',el:'non',mp:'沸點 78 ℃',ions:[],note:'非電解質'}];
+ {k:'EtOH',nm:'乙醇',f:'C₂H₅OH',ty:'mol',el:'non',mp:'沸點 78 ℃',ions:[],note:'非電解質',liq:{m:'room',t:'室溫',d:'室溫就是液體'}}];
 const SUBOF=k=>SUBS.find(s=>s.k===k);
 function alphaOf(s,Cc){
   if(s.el==='non')return 0;
   if(s.el==='strong')return 1;
   const K=s.Ka||s.Kb;const x=(-K+Math.sqrt(K*K+4*K*Cc))/2;return Cc>0?x/Cc:0;}
-function current(s,Cc,st){/* 相對電流：以 1.0 M NaCl ＝ 1.00 為基準 */
+function current(s,Cc,st,V){/* 相對電流：1.0 M NaCl 在 1.5 V 時 ＝ 1.00；電流與電壓成正比 */
+  const k=(V||1.5)/1.5;
   if(st==='s')return 0;
-  if(st==='l')return s.ty==='ion'?1.35:0;
+  if(st==='l')return (s.liq&&s.ty==='ion')?1.35*k:0;
   if(!s.ions.length)return 0;
   const a=alphaOf(s,Cc);
-  return s.ions.reduce((t,[,z,lam])=>t+Cc*a*Math.abs(z)*lam,0)/126;}
+  return s.ions.reduce((t,[,z,lam])=>t+Cc*a*Math.abs(z)*lam,0)/126*k;}
 
 /* ===================== 1 電解質與導電 ===================== */
-const EL={sub:'NaCl',st:'aq',C:1,zoom:true,t:0,pts:null};
+const EL={sub:'NaCl',st:'aq',C:1,V:1.5,zoom:true,wat:true,t:0,pts:null};
 function elAvail(s,st){
   if(st==='s')return false;
-  if(st==='l')return s.ty==='ion';
+  if(st==='l')return !!(s.liq&&s.ty==='ion');
   return s.el!=='non';}
-function elMake(){const s=SUBOF(EL.sub),n=EL.zoom?26:60,a=alphaOf(s,EL.C),P=[];
-  const ionFrac=s.el==='non'?0:(s.el==='strong'?1:Math.min(.5,Math.max(.08,a*14)));
-  const nIon=s.ions.length?Math.max(2,Math.round(n*ionFrac/2)*2):0;
-  for(let i=0;i<n;i++){const isIon=s.ions.length&&i<nIon;
-    P.push({x:hsh(i,1),y:hsh(i,2),v:.3+hsh(i,4)*.9,ph:hsh(i,5)*6.28,ion:isIon,pos:i%2===0});}
+function elMake(){const s=SUBOF(EL.sub),P={w:[],i:[],m:[]},Z=EL.zoom;
+  const mk=(n,k0)=>Array.from({length:n},(_,i)=>({x:hsh(i,k0),y:hsh(i,k0+1),
+    v:.3+hsh(i,k0+2)*.9,ph:hsh(i,k0+3)*6.28}));
+  if(EL.st==='l'){
+    if(s.ty==='ion'){const n=Z?70:190;P.i=mk(n,1).map((p,i)=>(p.pos=i%2===0,p));}
+    else P.m=mk(Z?60:160,5);}
+  else if(EL.st==='aq'){
+    if(EL.wat)P.w=mk(Z?34:92,9);
+    const unit=clamp(Math.round((Z?6:16)*EL.C),1,Z?18:48);
+    if(s.el==='strong'){P.i=mk(unit*2,13).map((p,i)=>(p.pos=i%2===0,p));}
+    else if(s.el==='weak'){
+      const pair=Math.max(1,Math.round(unit*.22));
+      P.i=mk(pair*2,13).map((p,i)=>(p.pos=i%2===0,p));
+      P.m=mk(Math.max(1,unit-pair),17);}
+    else P.m=mk(unit,17);}
   EL.pts=P;}
 elMake();
-function drawEl(){const s=SUBOF(EL.sub),st=EL.st,{g,w,h}=fit($('cvEl'),.46,320,560);
+function flame(g,x,y,sc,t,i){const H=22*sc,W=10*sc;
+  const f=1+Math.sin(t*5+i*2.1)*.12;
+  g.save();g.beginPath();g.moveTo(x,y-H*f);
+  g.bezierCurveTo(x+W,y-H*.55*f,x+W*.8,y,x,y);
+  g.bezierCurveTo(x-W*.8,y,x-W,y-H*.55*f,x,y-H*f);g.closePath();
+  g.fillStyle='rgba(255,140,30,.85)';g.fill();
+  g.beginPath();g.moveTo(x,y-H*.55*f);
+  g.bezierCurveTo(x+W*.45,y-H*.3*f,x+W*.4,y,x,y);
+  g.bezierCurveTo(x-W*.4,y,x-W*.45,y-H*.3*f,x,y-H*.55*f);g.closePath();
+  g.fillStyle='rgba(255,220,90,.9)';g.fill();g.restore();}
+function drawEl(){const s=SUBOF(EL.sub),st=EL.st,{g,w,h}=fit($('cvEl'),.50,340,600);
   g.fillStyle=C.panel;g.fillRect(0,0,w,h);
-  const on=elAvail(s,st),I=on?current(s,EL.C,st):0,br=clamp(Math.pow(I/1.6,.55),0,1);
-  const bw=Math.min(w*.52,430),bx=(w-bw)/2,btop=Math.round(h*.30),bbot=h-34,bh=bbot-btop;
+  const on=elAvail(s,st),I=on?current(s,EL.C,st,EL.V):0,br=clamp(Math.pow(I/1.6,.55),0,1);
+  const hot=st==='l'&&s.liq&&s.liq.m==='hot',cold=st==='l'&&s.liq&&s.liq.m==='cold';
+  const bw=Math.min(w*.52,430),bx=(w-bw)/2,btop=Math.round(h*.30),bbot=h-(hot?58:40),bh=bbot-btop;
   const exL=bx+bw*.3,exR=bx+bw*.7,wi=C.wire;
-  /* 電路：單一串聯迴路　電池 → 安培計 → 燈泡 → 電極 */
+  /* ---- 電路（單一串聯迴路） ---- */
   const cy=Math.round(Math.min(46,h*.10));
   line(g,exL,cy,exR,cy,wi,2.4);
   line(g,exL,cy,exL,btop+6,wi,2.4);line(g,exR,cy,exR,btop+6,wi,2.4);
   const bat=bx+bw*.3+(bw*.4)*.16,ax=bx+bw*.5,lx=bx+bw*.5+(bw*.4)*.46;
-  g.fillStyle=C.panel;g.fillRect(bat-16,cy-13,32,26);
-  line(g,bat-7,cy-12,bat-7,cy+12,wi,3.4);line(g,bat-1,cy-6,bat-1,cy+6,wi,2);
-  line(g,bat+5,cy-12,bat+5,cy+12,wi,3.4);line(g,bat+11,cy-6,bat+11,cy+6,wi,2);
-  text(g,'1.5 V',bat,cy-24,C.muted,11,'center',600);
-  text(g,'－',bat-9,cy+24,C.muted,12,'center',700);text(g,'＋',bat+13,cy+24,C.muted,12,'center',700);
+  const nCell=clamp(Math.round(EL.V/1.5),1,6);
+  g.fillStyle=C.panel;g.fillRect(bat-8-nCell*6,cy-13,16+nCell*12,26);
+  for(let c2=0;c2<nCell;c2++){const bxx=bat-nCell*6+c2*12+3;
+    line(g,bxx,cy-12,bxx,cy+12,wi,3.2);line(g,bxx+6,cy-6,bxx+6,cy+6,wi,2);}
+  text(g,EL.V.toFixed(1)+' V',bat,cy-24,C.accent,12,'center',700,true);
+  text(g,'－',bat-nCell*6-4,cy+24,C.muted,12,'center',700);
+  text(g,'＋',bat+nCell*6+4,cy+24,C.muted,12,'center',700);
   dot(g,ax,cy,23,C.panel,wi,2.2);
   text(g,'A',ax,cy-8,C.muted,11,'center',700);
   text(g,I>0?(I<0.0005?'≈0':I.toFixed(I<1?3:2)):'0',ax,cy+8,I>0.0005?C.accent:C.muted,11,'center',700,true);
   text(g,'安培計',ax,cy-27,C.muted,11,'center',500);
-  if(br>.02){g.save();g.globalAlpha=br*.5;dot(g,lx,cy,20+br*16,'#ffd43b');g.restore();}
+  if(br>.02){g.save();g.globalAlpha=br*.5;dot(g,lx,cy,20+br*18,'#ffd43b');g.restore();}
   dot(g,lx,cy,15,br>.02?`rgba(255,212,59,${.3+br*.7})`:C.panel,wi,2.2);
   line(g,lx-6,cy+5,lx,cy-6,wi,1.6);line(g,lx,cy-6,lx+6,cy+5,wi,1.6);
-  text(g,br>.5?'亮':br>.08?'微亮':'不亮',lx,cy-27,br>.08?C.accent:C.muted,11,'center',700);
-  /* 杯身 */
-  rrect(g,bx,btop,bw,bh,10,st==='s'?'transparent':(st==='l'?'rgba(230,120,60,.13)':(C.dark?'rgba(80,140,190,.2)':'rgba(165,216,255,.4)')),C.glass,2.6);
-  const liqTop=btop+(st==='s'?bh*.5:bh*.2);
-  if(st!=='s')line(g,bx+3,liqTop,bx+bw-3,liqTop,C.glass,1.6);
-  text(g,st==='s'?s.f+'　固態粉末':st==='l'?s.f+'　加熱熔化成液態':s.f+'　溶於水（'+EL.C.toFixed(2)+' M）',
-    bx+bw/2,btop-14,C.ink,13,'center',700);
-  /* 電極：從杯口插到液面下 60% */
+  text(g,br>.6?'很亮':br>.25?'亮':br>.06?'微亮':'不亮',lx,cy-27,br>.06?C.accent:C.muted,11,'center',700);
+  /* ---- 容器 ---- */
+  if(hot){/* 坩堝＋酒精燈 */
+    for(let k=0;k<3;k++)flame(g,bx+bw*(.3+k*.2),bbot+34,bh/190+.75,EL.t,k);
+    rrect(g,bx+bw*.22,bbot+34,bw*.56,10,4,C.dark?'#495057':'#adb5bd',null);
+    g.save();g.beginPath();g.moveTo(bx-6,btop);g.lineTo(bx+bw+6,btop);
+    g.lineTo(bx+bw-10,bbot);g.lineTo(bx+10,bbot);g.closePath();
+    g.fillStyle=C.dark?'rgba(255,140,30,.26)':'rgba(255,160,60,.30)';g.fill();
+    g.strokeStyle=C.dark?'#868e96':'#868e96';g.lineWidth=4;g.stroke();g.restore();
+    text(g,'坩堝（陶瓷）',bx-10,btop+bh*.72,C.muted,11,'right',500);
+}
+  else if(cold){/* 冷卻浴 */
+    rrect(g,bx-14,btop-6,bw+28,bh+16,12,C.dark?'rgba(120,180,230,.14)':'rgba(190,225,250,.55)',C.glass,2);
+    for(let k=0;k<10;k++){const sidL=k%2===0;
+      const ix=sidL?bx-13+hsh(k,61)*6:bx+bw+1+hsh(k,61)*6,iy=btop-2+hsh(k,62)*(bh-6);
+      rrect(g,ix,iy,12,9,3,C.dark?'rgba(200,235,255,.5)':'rgba(255,255,255,.9)','rgba(140,190,230,.8)',1);}
+    for(let k=0;k<4;k++)rrect(g,bx+10+hsh(k,63)*(bw-34),btop-5,12,9,3,
+      C.dark?'rgba(200,235,255,.5)':'rgba(255,255,255,.9)','rgba(140,190,230,.8)',1);
+    rrect(g,bx,btop,bw,bh,10,C.dark?'rgba(80,140,190,.2)':'rgba(205,235,255,.6)',C.glass,2.6);
+    text(g,'冷卻浴',bx-20,btop+bh*.72,C.muted,11,'right',500);}
+  else{rrect(g,bx,btop,bw,bh,10,st==='s'?'transparent':(C.dark?'rgba(80,140,190,.2)':'rgba(165,216,255,.4)'),C.glass,2.6);}
+  const liqTop=btop+(st==='s'?bh*.5:(st==='l'?bh*.10:bh*.2));
+  if(st!=='s'&&!hot)line(g,bx+3,liqTop,bx+bw-3,liqTop,C.glass,1.6);
+  /* 標題與溫度 */
+  const title=st==='s'?s.f+'　固態粉末'
+    :st==='l'?s.f+'　純液態'
+    :s.f+'　溶於水（'+EL.C.toFixed(2)+' M）';
+  text(g,title,bx+bw/2,btop-30,C.ink,14,'center',700);
+  const sub2=st==='l'?(s.liq?s.liq.d+'（'+s.liq.t+'）':'')
+    :st==='aq'?'水分子把它拆開／包起來':'室溫下的晶體';
+  if(sub2)text(g,sub2,bx+bw/2,btop-13,hot?'#e8590c':cold?'#1c7ed6':C.muted,12,'center',600);
+  /* 電極 */
   const edTop=btop+6,edBot=liqTop+(bbot-liqTop)*.62;
   [[exL,'－',C.base],[exR,'＋',C.acid]].forEach(([x,p,c])=>{
     rrect(g,x-9,edTop,18,edBot-edTop,3,C.dark?'#868e96':'#ced4da',wi,1.6);
     rrect(g,x-13,edTop-2,26,20,5,C.panel,c,1.8);
     text(g,p,x,edTop+8,c,14,'center',700);});
-  text(g,'鉑電極',bx-6,edTop+8,C.muted,11,'right',500);
-  /* 粒子 */
-  const px0=bx+16,px1=bx+bw-16,py0=liqTop+14,py1=bbot-14,R=EL.zoom?11:6.5;
-  g.save();g.beginPath();g.rect(bx+2,btop+2,bw-4,bh-4);g.clip();
-  if(st==='s'){const cols=EL.zoom?8:14,rows=EL.zoom?4:6,gw=Math.min(bw*.62,cols*R*2.3),gh=rows*R*2.3;
-    const gx=bx+(bw-gw)/2,gy=bbot-gh-18;
+  text(g,'鉑電極',bx-(hot?12:cold?24:6),edTop+8,C.muted,11,'right',500);
+  /* ---- 粒子 ---- */
+  const px0=bx+16,px1=bx+bw-16,py0=liqTop+14,py1=bbot-14;
+  const P=EL.pts,tot=Math.max(1,P.w.length+P.i.length+P.m.length);
+  const R=clamp(Math.sqrt((px1-px0)*(py1-py0)/(tot*(EL.zoom?9:26))),3.4,13);
+  g.save();g.beginPath();
+  if(hot){g.moveTo(bx-2,btop+2);g.lineTo(bx+bw+2,btop+2);g.lineTo(bx+bw-13,bbot-3);g.lineTo(bx+13,bbot-3);g.closePath();}
+  else g.rect(bx+2,btop+2,bw-4,bh-4);
+  g.clip();
+  if(st==='s'){const cols=EL.zoom?9:15,rows=EL.zoom?5:7,RR=EL.zoom?10:6;
+    const gw=Math.min(bw*.66,cols*RR*2.3),gh=rows*RR*2.3,gx=bx+(bw-gw)/2,gy=bbot-gh-18;
     for(let r=0;r<rows;r++)for(let c2=0;c2<cols;c2++){
       const x=gx+(c2+.5)*gw/cols,y=gy+(r+.5)*gh/rows;
-      if(s.ty==='ion')ionDot(g,x,y,R,(r+c2)%2===0);
-      else dot(g,x,y,R*.92,C.mol,C.line,1.2);}
+      if(s.ty==='ion')ionDot(g,x,y,RR,(r+c2)%2===0);else dot(g,x,y,RR*.92,C.mol,C.line,1.2);}
     text(g,s.ty==='ion'?'離子被鎖在晶格上，不能移動':'分子固體，本來就沒有離子',bx+bw/2,gy-16,C.muted,12,'center',600);}
-  else{const drift=on?clamp(I*.10,.012,.09):0,span=px1-px0-20;
-    for(const p of EL.pts){
-      const isIon=(st==='l'&&s.ty==='ion')||p.ion;
-      let x,y=py0+p.y*(py1-py0)+Math.cos(EL.t*p.v*.6+p.ph*1.7)*(EL.zoom?7:4);
-      if(isIon&&drift>0){let t=(p.x+EL.t*drift*p.v*(p.pos?-1:1))%1;if(t<0)t+=1;x=px0+10+t*span;}
-      else x=px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.8+p.ph)*(EL.zoom?9:5);
-      if(isIon)ionDot(g,x,y,R,p.pos);else dot(g,x,y,R*.92,C.mol,C.line,1.2);}}
+  else{
+    const drift=on?clamp(I*.055,.010,.075):0,span=px1-px0-20;
+    const jig=(p,k)=>Math.cos(EL.t*p.v*.6+p.ph*1.7)*(EL.zoom?6:3.5);
+    for(const p of P.w)dot(g,px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.5+p.ph)*5,
+      py0+p.y*(py1-py0)+jig(p),R*.62,C.dark?'#3d5c75':'#bcdcf5','rgba(0,0,0,.05)',.8);
+    for(const p of P.m)dot(g,px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.7+p.ph)*(EL.zoom?8:4),
+      py0+p.y*(py1-py0)+jig(p),R*.92,C.mol,C.line,1.1);
+    for(const p of P.i){let x;
+      if(drift>0){let t=(p.x+EL.t*drift*p.v*(p.pos?-1:1))%1;if(t<0)t+=1;x=px0+10+t*span;}
+      else x=px0+p.x*(px1-px0)+Math.sin(EL.t*p.v*.8+p.ph)*6;
+      ionDot(g,x,py0+p.y*(py1-py0)+jig(p),R,p.pos);}}
   g.restore();
-  const lgy=bbot+16;
-  if(st!=='s'&&s.ions.length){const lab=s.ions.map(i=>i[0]);
-    text(g,'●',bx,lgy-2,C['ion-p'],14,'left');text(g,lab[0],bx+14,lgy,C.ink,12,'left',600);
-    text(g,'●',bx+78,lgy-2,C['ion-n'],14,'left');text(g,lab[1],bx+92,lgy,C.ink,12,'left',600);
-    if(s.el==='weak'){text(g,'●',bx+176,lgy-2,C.mol,14,'left');text(g,'未解離的 '+s.f,bx+190,lgy,C.ink,12,'left',600);}}
-  else if(st!=='s')text(g,'只有完整的分子，沒有離子',bx,lgy,C.muted,12,'left',600);}
+  /* ---- 圖例 ---- */
+  const lgy=bbot+(hot?34:16);let lgx=bx;
+  const leg=(col,txt,ring)=>{dot(g,lgx+6,lgy-2,6,col,ring?C.line:null,1);
+    text(g,txt,lgx+16,lgy,C.ink,12,'left',600);lgx+=22+txt.length*12.5;};
+  if(st==='s')text(g,s.ty==='ion'?'●＋／●－ 是被固定住的離子':'●是分子',bx,lgy,C.muted,12,'left',600);
+  else{
+    if(P.i.length){leg(C['ion-p'],s.ions[0][0]);leg(C['ion-n'],s.ions[1][0]);}
+    if(P.m.length)leg(C.mol,(s.el==='weak'?'未解離的 ':'')+s.f);
+    if(P.w.length)leg(C.dark?'#3d5c75':'#bcdcf5','水分子',true);
+    if(!P.i.length)text(g,'　→ 沒有離子，不導電',lgx,lgy,C.red,12,'left',700);}
+  if(st==='aq'&&s.el==='weak')
+    text(g,`※ 畫面上的離子比例已放大，實際只解離 ${(alphaOf(s,EL.C)*100).toFixed(2)}%`,bx+bw,lgy,C.muted,11,'right',500);}
 function ionDot(g,x,y,r,pos){dot(g,x,y,r,pos?C['ion-p']:C['ion-n'],'rgba(0,0,0,.12)',1);
   text(g,pos?'＋':'－',x,y,'#fff',r*1.15,'center',700);}
-function elSay(){const s=SUBOF(EL.sub),st=EL.st,on=elAvail(s,st),I=on?current(s,EL.C,st):0,a=alphaOf(s,EL.C);
-  const stn={s:'固態',l:'液態（熔融態）',aq:'水溶液'}[st];
+function elSay(){const s=SUBOF(EL.sub),st=EL.st,on=elAvail(s,st),I=on?current(s,EL.C,st,EL.V):0,a=alphaOf(s,EL.C);
+  const stn={s:'固態',l:'純液態'+(s.liq?'（'+s.liq.t+'）':''),aq:'水溶液'}[st];
   let v=`<b>${s.f}</b>（${s.nm}）的<b>${stn}</b>：`;
   if(!on){v+=`<b style="color:var(--red)">不導電</b>——`;
     v+= st==='s'?(s.ty==='ion'?'離子雖然存在，但被鎖在晶格上<b>不能自由移動</b>。':'分子固體，裡面根本沒有離子。')
-      : st==='l'?(s.ty==='ion'?'':'純液態只有分子，<b>沒有離子</b>（所以 HCl(l) 不導電、HCl(aq) 才導電）。')
-      : '它是<b>非電解質</b>，溶在水裡還是完整的分子。';}
+      : st==='l'?`${s.liq?s.liq.d+'，':''}但純液態裡只有 ${s.f} <b>分子</b>，<b>沒有離子</b>——所以 ${s.f}(l) 不導電、${s.f}(aq) 才導電。`
+      : '它是<b>非電解質</b>，溶在水裡還是完整的分子。';
+    v+=' 把電壓調到 9 V 也一樣是 0。';}
   else{v+=`<b style="color:var(--green)">會導電</b>，相對電流 <b>${I<0.0005?'≈0':I.toFixed(I<1?3:2)}</b>`
     +`（以 1.0 M NaCl ＝ 1.00 為基準）。`;
-    if(st==='l')v+='熔化後離子鬆開可以自由移動，所以導電。';
+    if(st==='l')v+=`${s.liq?s.liq.d+'（'+s.liq.t+'）':''}，熔化後離子<b>鬆開可以自由移動</b>，整杯都是離子（沒有水），所以導電力很強。`;
     else if(s.el==='strong')v+=`<b>強電解質</b>，幾乎 100% 解離成 ${s.ions[0][0]} 與 ${s.ions[1][0]}。`;
     else v+=`<b>弱電解質</b>，${EL.C.toFixed(2)} M 時只解離 <b>${(a*100).toFixed(2)}%</b>，`
       +`大部分還是 ${s.f} 分子，所以同濃度的電流遠小於強電解質。`;}
   $('elSay').innerHTML=v;
-  const ref=current(SUBOF('NaCl'),EL.C,'aq');
+  const ref=current(SUBOF('NaCl'),EL.C,'aq',EL.V);
   $('elKV').innerHTML=[['物質',s.f+'（'+s.nm+'）'],['鍵結類型',s.ty==='ion'?'離子化合物':'分子化合物'],
     ['電解質分類',{strong:'強電解質',weak:'弱電解質',non:'非電解質'}[s.el]],
-    ['熔／沸點',s.mp],
+    ['熔／沸點',s.mp],['純液態的條件',s.liq?s.liq.d+'（'+s.liq.t+'）':'（加熱先分解，沒有純液態）'],
+    ['電壓',EL.V.toFixed(1)+' V'],
     ['解離度 α',s.el==='non'?'0（不解離）':s.el==='strong'?'≈100%':(a*100).toFixed(2)+'%'],
     ['溶液中的離子',s.ions.length?s.ions.map(i=>i[0]).join('、'):'無'],
     ['相對電流',on?(I<0.0005?'≈0':I.toFixed(I<1?3:2)):'0（不導電）'],
-    ['同濃度 NaCl 的幾倍',on&&ref>0?(I/ref).toFixed(I/ref<1?3:2)+' 倍':'—']]
+    ['同濃度 NaCl 的幾倍',on&&ref>0?(I/ref).toFixed(I/ref<1?3:2)+' 倍':'—'],
+    ['畫面上的粒子',EL.pts?`水 ${EL.pts.w.length}　離子 ${EL.pts.i.length}　分子 ${EL.pts.m.length}`:'—']]
     .map(([k,v2])=>`<dt>${k}</dt><dd>${v2}</dd>`).join('');
   $('elTab').innerHTML='<thead><tr><th></th><th>固態</th><th>熔融態</th><th>水溶液</th></tr></thead><tbody>'
     +`<tr class="${s.ty==='ion'?'on':''}"><td class="l">離子化合物</td><td>✗</td><td>✓</td><td>✓</td></tr>`
@@ -467,19 +539,22 @@ function drawKw(){const {g,w,h}=fit($('cvKw'),KW.part?.38:.20,KW.part?290:160,KW
   const ph2=KW.part?Math.round(h*.44):0;
   if(KW.part){const bx=14,bw=w-28,by=10,bh=ph2-20;
     rrect(g,bx,by,bw,bh,10,C.dark?'rgba(80,140,190,.16)':'rgba(165,216,255,.3)',C.glass,2);
-    /* 解離的離子數隨溫度（示意：以 25℃ 為 1 個） */
-    const nIon=Math.max(1,Math.round(Math.sqrt(Kw/1e-14)*1.6));
-    const N=52;
-    for(let i=0;i<N;i++){const x=bx+14+hsh(i,1)*(bw-28),y=by+16+hsh(i,2)*(bh-32);
-      const jx=Math.sin(KW.t*(.4+hsh(i,3)*.5)+hsh(i,4)*6.3)*5,jy=Math.cos(KW.t*(.35+hsh(i,5)*.5)+hsh(i,6)*6.3)*4;
+    /* 解離的對數：比例＝真實的 [H⁺] 比例（25 ℃ 畫 3 對） */
+    const ratio=Math.sqrt(Kw/1e-14),nIon=clamp(Math.round(3*ratio),1,26);
+    const N=70;
+    for(let i=0;i<N;i++){const x=bx+14+hsh(i,1)*(bw-28),y=by+26+hsh(i,2)*(bh-52);
+      const jx=Math.sin(KW.t*(.4+hsh(i,3)*.5)+hsh(i,4)*6.3)*5,jy=Math.cos(KW.t*(.35+hsh(i,5)*.5)+hsh(i,6)*4.3)*4;
       dot(g,x+jx,y+jy,7,C.dark?'#4a6f8a':'#8fc3e8','rgba(0,0,0,.08)',1);}
-    for(let i=0;i<nIon&&i<14;i++){const x=bx+24+hsh(i,11)*(bw-48),y=by+22+hsh(i,12)*(bh-44);
-      const jx=Math.sin(KW.t*.7+i*1.3)*7,jy=Math.cos(KW.t*.6+i*2.1)*5;
-      ionDot(g,x+jx,y+jy,9,true);
-      ionDot(g,x+jx+22,y+jy+9,9,false);}
-    text(g,'H₂O ＋ H₂O ⇌ H₃O⁺ ＋ OH⁻',bx+bw/2,by+15,C.ink,14,'center',700);
-    text(g,`示意：溫度越高，解離出來的 H₃O⁺／OH⁻ 對數越多（目前畫 ${Math.min(nIon,14)} 對，25 ℃ 時畫 1～2 對）`,
-      bx+bw/2,by+bh-13,C.muted,11,'center',500);}
+    for(let i=0;i<nIon;i++){const x=bx+30+hsh(i,11)*(bw-70),y=by+30+hsh(i,12)*(bh-64);
+      const jx=Math.sin(KW.t*.7+i*1.3)*6,jy=Math.cos(KW.t*.6+i*2.1)*5;
+      const sp=13+Math.sin(KW.t*.9+i)*2;
+      line(g,x+jx,y+jy,x+jx+sp,y+jy+5,C.muted,1,[2,2]);
+      ionDot(g,x+jx,y+jy,8,true);ionDot(g,x+jx+sp,y+jy+5,8,false);}
+    text(g,'H₂O ＋ H₂O ⇌ H₃O⁺ ＋ OH⁻',bx+bw/2,by+14,C.ink,14,'center',700);
+    text(g,`目前畫 ${nIon} 對　|　0 ℃ 1 對 → 25 ℃ 3 對 → 50 ℃ 7 對 → 100 ℃ 22 對`,
+      bx+bw/2,by+bh-24,C.accent,12,'center',700);
+    text(g,'（水分子固定畫 70 個；對數的比例＝真實的 [H⁺] 比例，實際上 25 ℃ 要五億多個水分子才有一對解離）',
+      bx+bw/2,by+bh-9,C.muted,11,'center',500);}
   /* 下半：pH 軸 */
   const ml=30,mr=w-16,sw=mr-ml,X=p=>ml+sw*p/15,by2=ph2+Math.round((h-ph2)*.34),bh2=30;
   const acidW=X(nt)-ml,baseW=X(pk)-X(nt);
@@ -682,15 +757,24 @@ $('elSub').innerHTML=SUBS.map(s=>`<button data-v="${s.k}">${s.f}</button>`).join
 segSet($('elSub'),EL.sub);
 function elSync(){const s=SUBOF(EL.sub);
   $('elSt').querySelectorAll('button').forEach(b=>{
-    const dis=b.dataset.v==='l'&&(s.k==='sug'||s.k==='CuSO4');b.disabled=dis;b.style.opacity=dis?.4:1;});
-  if(EL.st==='l'&&(s.k==='sug'||s.k==='CuSO4')){EL.st='aq';segSet($('elSt'),'aq');}
-  $('elC').disabled=EL.st!=='aq';
+    const dis=b.dataset.v==='l'&&!s.liq;b.disabled=dis;b.style.opacity=dis?.4:1;});
+  if(EL.st==='l'&&!s.liq){EL.st='aq';segSet($('elSt'),'aq');}
+  $('elC').disabled=EL.st!=='aq';$('elW').disabled=EL.st!=='aq';
   elMake();elSay();kick();}
 segOn($('elSub'),v=>{EL.sub=v;segSet($('elSub'),v);elSync();});
 segOn($('elSt'),v=>{EL.st=v;segSet($('elSt'),v);elSync();});
 $('elC').oninput=e=>{EL.C=+e.target.value;$('elCo').textContent=EL.C.toFixed(2)+' M';elMake();elSay();kick();};
+$('elV').oninput=e=>{EL.V=+e.target.value;$('elVo').textContent=EL.V.toFixed(1)+' V';elSay();kick();};
 $('elZ').onchange=e=>{EL.zoom=e.target.checked;elMake();kick();};
-$('elCo').textContent=EL.C.toFixed(2)+' M';segSet($('elSt'),EL.st);elSync();
+$('elW').onchange=e=>{EL.wat=e.target.checked;elMake();kick();};
+document.querySelectorAll('#b-elec .chip[data-p]').forEach(c=>c.onclick=()=>{
+  const [sub,st,cc]=c.dataset.p.split('|');
+  EL.sub=sub;segSet($('elSub'),sub);EL.st=st;segSet($('elSt'),st);
+  EL.C=+cc;$('elC').value=EL.C;$('elCo').textContent=EL.C.toFixed(2)+' M';
+  document.querySelectorAll('#b-elec .chip[data-p]').forEach(x=>x.classList.remove('on'));c.classList.add('on');
+  elSync();});
+$('elCo').textContent=EL.C.toFixed(2)+' M';$('elVo').textContent=EL.V.toFixed(1)+' V';
+segSet($('elSt'),EL.st);elSync();
 
 /* --- 2 --- */
 $('phV').oninput=e=>{PH.v=+e.target.value;$('phVo').textContent=PH.v.toFixed(2);phSay();kick();};
@@ -701,9 +785,16 @@ $('phD10').onclick=()=>phSet(PH.v<7?Math.min(PH.v+1,6.96):Math.max(PH.v-1,7.04))
 $('phD100').onclick=()=>phSet(PH.v<7?Math.min(PH.v+2,6.96):Math.max(PH.v-2,7.04));
 segOn($('phMode'),v=>{PH.mode=v;segSet($('phMode'),v);$('phCalcH').hidden=v!=='h2p';$('phCalcP').hidden=v==='h2p';phWork();});
 ['phA','phB','phP'].forEach(id=>$(id).addEventListener('input',phWork));
-$('cvPh').addEventListener('pointerdown',e=>{const r=e.target.getBoundingClientRect(),X=$('cvPh')._X;
-  if(!X)return;const x=e.clientX-r.left,ml=X(0),sw=X(14)-X(0);
-  phSet((x-ml)/sw*14);});
+(()=>{const cv=$('cvPh');let drag=false;
+  const at=e=>{const r=cv.getBoundingClientRect(),X=cv._X;if(!X)return;
+    const x=e.clientX-r.left,ml=X(0),sw=X(14)-X(0);phSet((x-ml)/sw*14);};
+  cv.style.touchAction='pinch-zoom';
+  cv.addEventListener('pointerdown',e=>{drag=true;try{cv.setPointerCapture(e.pointerId);}catch(_){}
+    at(e);e.preventDefault();});
+  cv.addEventListener('pointermove',e=>{if(drag)at(e);else{const r=cv.getBoundingClientRect(),yb=cv._by;
+    cv.style.cursor=(yb&&e.clientY-r.top>yb[0]-22&&e.clientY-r.top<yb[1]+10)?'ew-resize':'';}});
+  const end=e=>{drag=false;try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
+  cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);})();
 phWork();
 
 /* --- 3 --- */

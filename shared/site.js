@@ -42,23 +42,23 @@ header .foldbtn{display:none}
   #inkCv{position:fixed;inset:0;width:100vw;height:100vh;z-index:55;pointer-events:none;touch-action:pinch-zoom;display:none}
   #inkCv.live{display:block}                      /* 沒有字也沒在寫的時候整張拿掉，不然 4K 螢幕每一幀都要合成一張全螢幕貼圖 */
   html[data-ink="1"] #inkCv{pointer-events:auto;cursor:crosshair}
-  #inkGo{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:60;width:42px;height:54px;padding:0;
-    border:1px solid var(--line);border-radius:14px;background:var(--panel);color:var(--ink);font-size:19px;line-height:1;
+  #inkGo{position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:60;width:34px;height:44px;padding:0;
+    border:1px solid var(--line);border-radius:12px;background:var(--panel);color:var(--ink);font-size:16px;line-height:1;
     box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer;opacity:.72}
   #inkGo:hover{opacity:1}
   html[data-ink="1"] #inkGo{display:none}
-  #inkBar{position:fixed;right:8px;top:50%;transform:translateY(-50%);z-index:70;display:none;
-    flex-direction:column;gap:4px;align-items:center;padding:7px 6px;border-radius:18px;
-    border:1px solid var(--line);background:var(--panel);box-shadow:0 8px 28px rgba(0,0,0,.2);
+  #inkBar{position:fixed;right:6px;top:50%;transform:translateY(-50%);z-index:70;display:none;
+    flex-direction:column;gap:3px;align-items:center;padding:5px 4px;border-radius:14px;
+    border:1px solid var(--line);background:var(--panel);box-shadow:0 6px 22px rgba(0,0,0,.2);
     max-height:94vh;overflow-y:auto}
   html[data-ink="1"] #inkBar{display:flex}
-  #inkBar button{width:40px;height:38px;min-height:0;padding:0;border-radius:10px;border:1px solid var(--line);
-    background:var(--panel);color:var(--ink);font:600 13px/1 var(--f-body);cursor:pointer}
+  #inkBar button{width:34px;height:31px;min-height:0;padding:0;border-radius:9px;border:1px solid var(--line);
+    background:var(--panel);color:var(--ink);font:600 12px/1 var(--f-body);cursor:pointer;flex:none}
   #inkBar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
-  #inkBar .sw{width:30px;height:30px;border-radius:50%;border:2px solid var(--line)}
-  #inkBar .sw[aria-pressed="true"]{outline:3px solid var(--ink);outline-offset:2px}
-  #inkBar .sep{width:28px;height:1px;background:var(--line);margin:2px 0;flex:none}
-  #inkBar .more{display:none;flex-direction:column;gap:4px;align-items:center}
+  #inkBar .sw{width:24px;height:24px;border-radius:50%!important;border:1.5px solid var(--line);margin:1px 0}
+  #inkBar .sw[aria-pressed="true"]{box-shadow:0 0 0 2.5px var(--panel),0 0 0 5px var(--ink);margin:4px 0}
+  #inkBar .sep{width:22px;height:1px;background:var(--line);margin:2px 0;flex:none}
+  #inkBar .more{display:none;flex-direction:column;gap:3px;align-items:center}
   #inkBar.open .more{display:flex}
   @media print{#inkGo,#inkBar,#inkCv{display:none!important}}
   .touchbtn{position:fixed;right:10px;bottom:10px;z-index:60;padding:8px 12px;min-height:40px;
@@ -80,6 +80,7 @@ header .foldbtn{display:none}
   .stepbar button[aria-pressed="true"]{background:var(--ink);color:var(--panel);border-color:var(--ink)}
   .stepbar button:hover{opacity:1}
   .fszoom{transform-origin:0 0;will-change:transform}
+  html[data-fsz="1"] #inkCv{will-change:transform}
   .fsz11{position:fixed;right:152px;bottom:106px;z-index:61;padding:8px 12px;min-height:40px;display:none;
     border:1px solid var(--line);border-radius:999px;background:var(--panel);color:var(--ink);
     font:500 .84rem/1 var(--f-body);box-shadow:0 2px 10px rgba(0,0,0,.14);cursor:pointer}
@@ -210,15 +211,29 @@ header .foldbtn{display:none}
     const Z = { s: 1, tx: 0, ty: 0, wrap: null, pts: new Map(), d0: 0, s0: 1, mx: 0, my: 0, tx0: 0, ty0: 0 };
     window.__fsZoom = Z;                                   // 手寫層要用同一組變換才會對齊
     const SKIP = '.stepbar,.touchbtn,.fsfix,.fsz11,#inkCv,#inkGo,#inkBar';
-    function zApply() {
+    Z.ix = 0; Z.iy = 0; Z.is = 1;                          // 墨水層上一次「真的重畫」時的變換
+    let zq = 0;
+    function zApply(now) {                                 // now=true：立刻套用（手勢結束、重設）
       if (!Z.wrap) return;
-      Z.wrap.style.transform = Z.s === 1 ? '' : `translate(${Z.tx}px,${Z.ty}px) scale(${Z.s})`;
-      const fe = document.fullscreenElement;
-      if (fe) fe.style.overflow = Z.s === 1 ? '' : 'hidden';
-      document.documentElement.dataset.fsz = Z.s === 1 ? '' : '1';
-      if (window.__inkRedraw) window.__inkRedraw();
+      if (!now) { if (zq) return; zq = (window.__rafRaw || requestAnimationFrame)(() => { zq = 0; zApply(true); }); return; }
+      const one = Z.s === 1 && !Z.tx && !Z.ty;
+      Z.wrap.style.transform = one ? '' : `translate(${Z.tx}px,${Z.ty}px) scale(${Z.s})`;
+      const fe = document.fullscreenElement, ov = one ? '' : 'hidden';
+      if (fe && fe.style.overflow !== ov) fe.style.overflow = ov;
+      const fz = one ? '' : '1';
+      if (document.documentElement.dataset.fsz !== fz) document.documentElement.dataset.fsz = fz;
+      const ink = document.getElementById('inkCv');
+      if (Z.live) {                                        // 手勢進行中：墨水層只套 CSS 變換，不重畫
+        if (ink) { const k = Z.s / Z.is;
+          ink.style.transform = `translate(${Z.tx - k * Z.ix}px,${Z.ty - k * Z.iy}px) scale(${k})`;
+          ink.style.transformOrigin = '0 0'; }
+      } else {
+        if (ink) ink.style.transform = '';
+        Z.ix = Z.tx; Z.iy = Z.ty; Z.is = Z.s;
+        if (window.__inkRedraw) window.__inkRedraw();
+      }
     }
-    function zReset() { Z.s = 1; Z.tx = 0; Z.ty = 0; zApply(); }
+    function zReset() { Z.s = 1; Z.tx = 0; Z.ty = 0; Z.live = false; zApply(true); }
     function zWrap(fe) {                                   // 把內容包進一層，浮動按鈕留在外面才不會跟著縮放
       if (!fe || Z.wrap) return;
       const w = document.createElement('div'); w.className = 'fszoom';
@@ -229,7 +244,9 @@ header .foldbtn{display:none}
       if (!Z.wrap) return;
       const w = Z.wrap, fe = w.parentElement;
       while (w.firstChild) fe.insertBefore(w.firstChild, w);
-      w.remove(); Z.wrap = null; Z.s = 1; Z.tx = 0; Z.ty = 0;
+      w.remove(); Z.wrap = null; Z.s = 1; Z.tx = 0; Z.ty = 0; Z.ix = 0; Z.iy = 0; Z.is = 1;
+      Z.live = false; window.__rafHold = false;
+      const ink0 = document.getElementById('inkCv'); if (ink0) ink0.style.transform = '';
       document.documentElement.dataset.fsz = '';
       if (fe) fe.style.overflow = '';
     }
@@ -244,6 +261,7 @@ header .foldbtn{display:none}
         const [a, b] = [...Z.pts.values()];
         Z.d0 = Math.hypot(a[0] - b[0], a[1] - b[1]) || 1; Z.s0 = Z.s;
         Z.mx = (a[0] + b[0]) / 2; Z.my = (a[1] + b[1]) / 2; Z.tx0 = Z.tx; Z.ty0 = Z.ty;
+        Z.live = true; window.__rafHold = true;            // 手勢中暫停頁面動畫，不然全螢幕的大畫布每幀重畫會很卡
         e.preventDefault(); e.stopPropagation();
       }
     };
@@ -263,7 +281,13 @@ header .foldbtn{display:none}
       if (s === 1) { Z.tx = 0; Z.ty = 0; }
       zApply();
     };
-    const zOff = e => { Z.pts.delete(e.pointerId); };
+    const zEnd = () => {
+      if (!Z.live) return;
+      Z.live = false; window.__rafHold = false;
+      zApply(true);
+      if (window.__rafResume) window.__rafResume();
+    };
+    const zOff = e => { Z.pts.delete(e.pointerId); if (Z.pts.size < 2) zEnd(); };
     ['pointerdown'].forEach(t => document.addEventListener(t, zOn, true));
     document.addEventListener('pointermove', zMove, true);
     ['pointerup', 'pointercancel'].forEach(t => document.addEventListener(t, zOff, true));
@@ -297,12 +321,14 @@ header .foldbtn{display:none}
 
   // ---- 逐幀播放：全站共用。開啟後所有動畫停住，按「下一幀」才前進一格 ----
   function frameStep() {
-    if (embedded) return;
+    if (embedded) { window.__rafRaw = window.requestAnimationFrame.bind(window); return; }
     const raf0 = window.requestAnimationFrame.bind(window);
+    window.__rafRaw = raf0;
     let on = false, q = [], vt = performance.now(), idc = 1, pend = 0;
-    window.requestAnimationFrame = cb => { if (!on) return raf0(cb); q.push(cb); return idc++; };
+    window.requestAnimationFrame = cb => { if (!on && !window.__rafHold) return raf0(cb); q.push(cb); return idc++; };
     const flush = adv => { vt += adv; const l = q; q = []; l.forEach(cb => { try { cb(vt); } catch (e) { console.error(e); } }); };
-    const soon = () => { if (!on) return; clearTimeout(pend); pend = setTimeout(() => flush(0), 0); };
+    const soon = () => { if (!on || window.__rafHold) return; clearTimeout(pend); pend = setTimeout(() => flush(0), 0); };
+    window.__rafResume = () => { if (on) return; const l = q; q = []; l.forEach(cb => raf0(cb)); };
     ['pointerdown', 'pointerup', 'pointermove', 'input', 'change', 'keydown', 'wheel'].forEach(t =>
       addEventListener(t, soon, { passive: true, capture: true }));
     const wrap = document.createElement('div');
@@ -329,7 +355,7 @@ header .foldbtn{display:none}
     if (document.getElementById('inkCv')) return;
     const COLS = ['#2b3138', '#e03131', '#e8590c', '#1864ab', '#2b8a3e', '#7048e8'];
     const MORE = ['#f59f00', '#e64980', '#0ca678', '#a9754a', '#868e96', '#ffffff'];
-    const K = { on: false, tool: 'pen', col: COLS[1], w: 4.5, strokes: [], cur: null, pid: null,
+    const K = { on: false, tool: 'pen', col: COLS[1], w: 2.5, strokes: [], cur: null, pid: null,
                 laser: null, fade: null, tmr: 0, act: new Set(), multi: false };
     let cv = null, g = null;                        // 第一次要寫字才真的建立畫布
     function ensure() {
@@ -396,6 +422,8 @@ header .foldbtn{display:none}
       if (!cv) return; live();
       g.clearRect(0, 0, innerWidth, innerHeight);
       const z = Z();
+      const zz = window.__fsZoom;                                   // 真的重畫了，CSS 代用變換就要歸零
+      if (zz) { zz.ix = z.tx; zz.iy = z.ty; zz.is = z.s; if (cv.style.transform) cv.style.transform = ''; }
       g.save(); g.translate(z.tx - scrollX, z.ty - scrollY); if (z.s !== 1) g.scale(z.s, z.s);
       K.strokes.forEach(st => { g.fillStyle = st.c; g.fill(st.path || (st.path = build(st))); });
       if (K.cur) { g.fillStyle = K.cur.c; g.fill(build(K.cur)); }
@@ -467,7 +495,7 @@ header .foldbtn{display:none}
     const sep = host => (host || bar).appendChild(Object.assign(document.createElement('span'), { className: 'sep' }));
     const penB = mk('✒️', '鋼筆：寫得慢的地方粗、快的地方細');
     const lasB = mk('🔦', '雷射筆：手指按著時軌跡會留著，放開後約 1 秒淡出');
-    const erB = mk('⌫', '橡皮擦：劃過哪一筆就擦掉哪一筆');
+    const erB = mk('擦', '橡皮擦：劃過哪一筆就整筆擦掉');
     sep();
     const swaps = [], mkSw = (c, host) => { const b = mk('', '筆的顏色', 'sw', host); b.style.background = c;
       b.addEventListener('click', () => { K.col = c; K.tool = 'pen'; sync(); }); swaps.push([b, c]); return b; };
