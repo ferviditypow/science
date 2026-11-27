@@ -55,8 +55,15 @@
 .otab{border-collapse:collapse;font-size:.88rem;margin-top:8px;width:100%;font-family:var(--f-mono)}
 .otab th,.otab td{border:1px solid var(--line);padding:3px 6px;text-align:center}
 .otab th{font-family:var(--f-body,inherit);font-weight:600}
-.edgrid{display:grid;grid-template-columns:minmax(0,1fr) 290px;align-items:stretch}
-@media (max-width:900px){.edgrid{grid-template-columns:minmax(0,1fr)}}
+.edgrid{position:relative}
+.edgrid .cbox{min-width:0}
+.eprop{position:absolute;right:0;top:0;bottom:0;width:286px;overflow-y:auto;z-index:5;
+  background:var(--panel);box-shadow:-8px 0 20px rgba(0,0,0,.10)}
+.edgrid.solo .eprop{display:none}
+@media (max-width:900px){.eprop{position:static;width:auto;box-shadow:none}}
+.edhelp{border-top:1px solid var(--line);padding:8px 12px 12px;font-size:.9rem}
+.edhelp>summary{cursor:pointer;font-weight:700;padding:4px 0;list-style:revert}
+.edhelp .pnote{margin:6px 0 0}
 .edgrid canvas{outline:none}
 .eprop{border-left:1px solid var(--line);padding:10px 12px 14px;font-size:.9rem;min-width:0}
 @media (max-width:900px){.eprop{border-left:0;border-top:1px solid var(--line)}}
@@ -134,6 +141,7 @@ kbd{font-family:var(--f-mono);font-size:.72rem;border:1px solid var(--line);bord
       <div class="toolbar"><span class="tlabel">元件</span><span class="seg" id="spKind"><button data-v="bulb">全部用燈泡</button><button data-v="res">全部用電阻器</button></span>
         <span class="tlabel">顯示</span><span class="seg" id="spMode"><button data-v="e">電子流</button><button data-v="c">電流方向</button><button data-v="off">不顯示</button></span></div>
       <div class="edgrid"><div class="cbox"><canvas id="cvSp" aria-label="電路編輯器"></canvas></div><aside class="eprop" id="spProp"></aside></div>
+      <details class="edhelp"><summary>怎麼操作（點開看說明）</summary><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動；拖黑色接點＝整個接點一起移動；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li><li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>觸控螢幕：兩根手指旋轉、縮放、移動整個畫面（接近 0°、90° 會自動對齊）；滑鼠用 Shift＋滾輪旋轉。</li><li>串接進去的元件和安培計：拖離電路或刪除時，原位置會自動用導線接回去。</li><li>選取元件後點旁邊的 ↻ 可以轉 90°；元件放到導線上會自動串接進去。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、Ctrl＋Z 復原。</li></ul></details>
     </div>
     <div class="grid2">
       <section class="panel box"><p class="big" id="spBig"></p><div class="formula2" id="spF"></div><ul class="checks" id="spC"></ul></section>
@@ -661,9 +669,8 @@ function edPanel(){const P=$('spProp');const e=selEl();let h='';
     h+=`<button class="btn" data-act="del">🗑 刪除 <kbd>Del</kbd></button></div><div class="pread" id="spPR"></div>`;}
   else if(SP.selN&&SP.N[SP.selN]){const n=SP.N[SP.selN];h+=`<p class="ptype">接點 ${n.lab}（連著 ${degN(SP.selN)} 個元件）</p><div class="prow2"><span>名稱</span><input type="text" data-n="lab" value="${n.lab}"></div>`;
     h+=`<div class="pbtns">${degN(SP.selN)>1?'<button class="btn" data-act="split">拆開這個接點</button>':''}<button class="btn" data-act="del">🗑 刪除接點與相連元件</button></div><div class="pread" id="spPR"></div>`;}
-  else h+=`<p class="ptype">怎麼操作</p><ul class="pnote"><li>上方工具列：點一下加入元件，或直接拖到畫布上。</li><li>拖元件本體＝移動；拖黑色接點＝整個接點一起移動；選取元件後拖兩端的橘點＝把那一端拆下來，放到別的接點上就接起來。</li>
-    <li>放到導線中間會自動分岔（T 字接點）。</li><li>「✎ 畫導線」：從一點拖到另一點。</li><li>點開關、跨接導線＝切換；點其他元件＝選取後在這裡改數值。</li><li>拖標籤可以移動文字；拖空白處移動畫面，Ctrl＋滾輪縮放。</li><li>觸控螢幕：兩根手指旋轉、縮放、移動整個畫面（接近 0°、90° 會自動對齊）；滑鼠用 Shift＋滾輪旋轉。</li><li>串接進去的元件和安培計：拖離電路或刪除時，原位置會自動用導線接回去。</li><li>選取元件後點旁邊的 ↻ 可以轉 90°；元件放到導線上會自動串接進去。</li><li>鍵盤：R 旋轉、F 對調、Del 刪除、W 畫導線、Ctrl＋Z 復原。</li></ul>`;
-  P.innerHTML=h;edRead();}
+  else h='';
+  P.innerHTML=h;P.closest('.edgrid').classList.toggle('solo',!h);edRead();}
 function edRead(){const el=$('spPR');if(!el)return;const e=selEl();if(SP.hide){el.innerHTML='<span class="pnote">先猜再看：按「揭曉」才會顯示讀數</span>';return;}
   if(e){const L=[];const v=Math.abs(e.dV||0),i=Math.abs(e.I||0);
     if(e.t==='bat')L.push(`輸出電流 ${fI(i)}`);else if(e.t==='amm')L.push(`讀數 ${fI(e.I)}`);else if(e.t==='vm')L.push(`讀數 ${fV(e.dV)}`);
