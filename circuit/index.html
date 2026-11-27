@@ -349,19 +349,41 @@ function drawEl(g,c,e,o,lc){const s=c.s,P=c.P[e.a],Q=c.P[e.b],L=e.L,ux=(Q[0]-P[0
     text(g,'+',mx-ux*(s+7)+nx*7,my-uy*(s+7)+ny*7+4,{size:11,bold:true,col:CC.pos,align:'center'});
     if(e.burnt){line(g,mx-s,my-s,mx+s,my+s,CC.pos,3);line(g,mx-s,my+s,mx+s,my-s,CC.pos,3);}break;}}}
 function labelEl(g,c,e,o){const s=c.s,P=c.P[e.a],Q=c.P[e.b];const hz=Math.abs(Q[0]-P[0])>=Math.abs(Q[1]-P[1]);const lp=e.lp||(hz?'u':'r');
-  const [mx,my]=e.M;const isR=e.t==='bulb'||e.t==='res'||e.t==='rheo';
-  const lines=(isR&&o.sN===false)?[]:[e.lab+(isR?(o.showR===false?'':' '+nf(e.R,1)+'Ω'):'')];
-  const hr=o.hideR,hm=o.hideM;if(e.t==='amm'&&(!hm||e.burnt||e.broken))lines.push(e.burnt||e.broken?'燒毀！':hr?'？ A':fI(e.I)+(e.rng&&Math.abs(e.I)>e.rng*1.02?' 超過量程':''));if(e.t==='vm'&&!hm)lines.push(hr?'？ V':fV(e.dV)+(e.rng&&Math.abs(e.dV)>e.rng*1.02?' 超過量程':''));
-  if(e.t==='fuse')lines.push(e.broken?'熔斷':'額定 '+nf(e.Ir,2)+' A');if(e.t==='bulb'&&e.rate&&lines.length)lines[0]=e.lab+' '+nf(e.Vr,1)+'V '+nf(e.Pr,1)+'W';
-  if(!hr&&(e.t==='bulb'||e.t==='res'||e.t==='rheo')&&!e.off&&!e.broken){const pp=[];
+  const [mx,my]=e.M;const isR=e.t==='bulb'||e.t==='res'||e.t==='rheo';const hr=o.hideR,hm=o.hideM;
+  /* 名稱永遠只有一行、位置固定，不會因為打開讀數就被往上推 */
+  let nm=(isR&&o.sN===false)?'':e.lab+(isR?(o.showR===false?'':' '+nf(e.R,1)+'Ω'):'');
+  if(e.t==='bulb'&&e.rate&&nm)nm=e.lab+' '+nf(e.Vr,1)+'V '+nf(e.Pr,1)+'W';
+  /* 讀數另外一塊，放在元件的另一側 */
+  const rd=[];
+  if(e.t==='amm'&&(!hm||e.burnt||e.broken))rd.push(e.burnt||e.broken?'燒毀！':hr?'？ A':fI(e.I)+(e.rng&&Math.abs(e.I)>e.rng*1.02?' 超過量程':''));
+  if(e.t==='vm'&&!hm)rd.push(hr?'？ V':fV(e.dV)+(e.rng&&Math.abs(e.dV)>e.rng*1.02?' 超過量程':''));
+  if(e.t==='fuse')rd.push(e.broken?'熔斷':'額定 '+nf(e.Ir,2)+' A');
+  if(!hr&&isR&&!e.off&&!e.broken){const pp=[];
     if(o.sV)pp.push(fV(Math.abs(e.dV)));if(o.sI)pp.push(fI(Math.abs(e.I)));
-    if(pp.length)lines.push(pp.join('，'));}
+    if(pp.length)rd.push(pp.join('，'));}
+  if(!nm&&!rd.length){e.lbox=null;return;}
   const lf=o.lf||1,LH=14*lf,F1=12.5*lf,F2=11.5*lf;        // 元件字級（標準／大／特大）
-  const d=s+(e.t==='bulb'?10:e.t==='bat'?14:8);let x=mx,y=my,al='center';
-  if(lp==='u')y=my-d-(lines.length-1)*LH;else if(lp==='d')y=my+d+10;else if(lp==='r'){x=mx+d;al='left';y=my-(lines.length-1)*LH/2+4;}else{x=mx-d;al='right';y=my-(lines.length-1)*LH/2+4;}
-  if(e.lo&&c.z){x+=e.lo[0]*c.z;y+=e.lo[1]*c.z;}
-  g.font=`700 ${F1}px ${FONT}`;const w=Math.max(...lines.map(t=>g.measureText(t).width))+6;const bx=al==='center'?x-w/2:al==='right'?x-w:x;e.lbox=[bx,y-LH,bx+w,y+(lines.length-1)*LH+4];
-  lines.forEach((t,i)=>text(g,t,x,y+i*LH,{size:i?F2:F1,bold:!i,align:al,col:i?(e.t==='amm'||e.t==='vm'||e.t==='fuse'?(/超過|燒毀|熔斷/.test(t)?CC.pos:C.blue):C.muted):C.ink,bg:C.panel}));}
+  const d=s+(e.t==='bulb'?10:e.t==='bat'?14:8);
+  let nx=mx,ny=my,al='center',rx=mx,ry=my;
+  if(lp==='u'){ny=my-d;ry=my+d+10;}
+  else if(lp==='d'){ny=my+d+10;ry=ny+LH;}
+  else if(lp==='r'){nx=rx=mx+d;al='left';ny=my+4;ry=ny+LH;}
+  else{nx=rx=mx-d;al='right';ny=my+4;ry=ny+LH;}
+  /* 位置完全固定：不管名稱、電壓、電流哪個開著，每一塊都待在原地不會跑 */
+  const ox=e.lo&&c.z?e.lo[0]*c.z:0,oy=e.lo&&c.z?e.lo[1]*c.z:0;
+  nx+=ox;ny+=oy;rx+=ox;ry+=oy;
+  const col=t=>e.t==='amm'||e.t==='vm'||e.t==='fuse'?(/超過|燒毀|熔斷/.test(t)?CC.pos:C.blue):C.muted;
+  g.font=`700 ${F1}px ${FONT}`;
+  const boxes=[];
+  if(nm){const w=g.measureText(nm).width+6,bx=al==='center'?nx-w/2:al==='right'?nx-w:nx;
+    boxes.push([bx,ny-LH,bx+w,ny+4]);
+    text(g,nm,nx,ny,{size:F1,bold:true,align:al,col:C.ink,bg:C.panel});}
+  if(rd.length){g.font=`600 ${F2}px ${FONT}`;
+    const w=Math.max(...rd.map(t=>g.measureText(t).width))+6,bx=al==='center'?rx-w/2:al==='right'?rx-w:rx;
+    boxes.push([bx,ry-LH,bx+w,ry+(rd.length-1)*LH+4]);
+    rd.forEach((t,i)=>text(g,t,rx,ry+i*LH,{size:F2,bold:false,align:al,col:col(t),bg:C.panel}));}
+  e.lbox=[Math.min(...boxes.map(b=>b[0])),Math.min(...boxes.map(b=>b[1])),
+          Math.max(...boxes.map(b=>b[2])),Math.max(...boxes.map(b=>b[3]))];}
 function drawDots(g,c,o,vmin,vmax){if(o.noDots)return;const sp=18;for(const e of c.E){if(!e.L||e.t==='vm'||Math.abs(e.I)<2e-5||e.off||(e.t==='jump'&&!e.on))continue;
   const ph=((e.ph%sp)+sp)%sp;const el=o.mode!=='c';const fwd=(e.I>0)!==el;
   for(let d=ph;d<e.L;d+=sp){const t=d/e.L,[x,y]=e.pt(t);
